@@ -16,9 +16,9 @@ OptionsConfig.__index = OptionsConfig
 --
 -- Example:
 --   local options = OptionsConfig:new {
---     section = "FXPermutator.Options",
+--     section = "ReaSpeech.Options",
 --     options = {
---       plugins_per_chain = {'number', 2},
+--       patties_per_burger = {'number', 2},
 --       ...
 --     }
 --   }

@@ -30,8 +30,6 @@ COPY --from=swagger-ui /usr/share/nginx/html/swagger-ui-bundle.js swagger-ui-ass
 RUN poetry config virtualenvs.in-project true
 RUN poetry install && rm -rf /root/.cache/pypoetry
 
-WORKDIR /app/reascripts/FXPerm
-RUN make publish
 WORKDIR /app/reascripts/ReaSpeech
 RUN make publish
 WORKDIR /app

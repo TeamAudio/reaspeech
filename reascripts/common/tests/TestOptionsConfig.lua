@@ -9,10 +9,10 @@ require('OptionsConfig')
 
 TestOptionsConfig = {
   options = OptionsConfig:new {
-    section = 'FXPermutator.Options',
+    section = 'ReaSpeech.Options',
     options = {
-      plugins_per_chain = {'number', 2},
-      num_iterations = {'number', 2},
+      patties_per_burger = {'number', 2},
+      num_pickles = {'number', 2},
     }
   }
 }

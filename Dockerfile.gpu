@@ -42,8 +42,6 @@ COPY --from=swagger-ui /usr/share/nginx/html/swagger-ui-bundle.js swagger-ui-ass
 RUN poetry install && rm -rf /root/.cache/pypoetry
 RUN $POETRY_VENV/bin/pip install --no-cache-dir torch==1.13.1+cu117 -f https://download.pytorch.org/whl/torch
 
-WORKDIR /app/reascripts/FXPerm
-RUN make publish
 WORKDIR /app/reascripts/ReaSpeech
 RUN make publish
 WORKDIR /app
