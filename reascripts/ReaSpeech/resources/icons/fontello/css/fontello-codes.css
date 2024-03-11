@@ -1,0 +1,5 @@
+
+.icon-pencil:before { content: '\61'; } /* 'a' */
+.icon-cog:before { content: '\62'; } /* 'b' */
+.icon-play-circled:before { content: '\63'; } /* 'c' */
+.icon-stop-circle:before { content: '\64'; } /* 'd' */

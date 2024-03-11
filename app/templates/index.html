@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="container">
+    <div class="mt-4 p-5 bg-dark text-white rounded">
+      <h1 class="text-info">
+        <i class="bi-card-text"></i>
+        ReaSpeech
+      </h1>
+      
+      <p>
+        ReaSpeech is a REAPER extension for Automatic Speech Recognition.
+      </p>
+
+      <h2>1. Install ReaImGui</h2>
+      <p>
+        ReaSpeech depends on the ReaImGui REAPER extension, which is distributed
+        via <b>ReaPack</b> through the default <b>ReaTeam Extensions</b> repository.
+      </p>
+      <ul>
+        <li>
+          <i class="bi-box"></i>
+          <a href="https://reapack.com/" class="link-light" target="_blank">Install ReaPack</a> if necessary
+        </li>
+        <li>In REAPER, go to Extensions &gt; ReaPack &gt; Browse packages...</li>
+        <li>Type "imgui" into the Filter box</li>
+        <li>Right-click on "ReaImGui: ReaScript binding for Dear ImGui"</li>
+        <li>Select "Install", and then click the "Apply" button on the bottom-right</li>
+      </ul>
+
+      <h2>2. Install ReaScript</h2>
+      <ul>
+        <li>
+          <i class="bi-download"></i>
+          <a href="#" class="reascript-link link-light" data-name="ReaSpeech">Download ReaScript</a>
+        </li>
+        <li>Save the script to your REAPER Scripts folder (%APPDATA%\REAPER\Scripts on Windows)</li>
+        <li>Actions &gt; Show action list... &gt; New action... &gt; Load ReaScript...</li>
+      </ul>
+
+      <h2>3. Run ReaSpeech</h2>
+      <ul>
+        <li>Actions &gt; Show action list...</li>
+        <li>Click "Script: ReaSpeech.lua" and then click "Run"</li>
+      </ul>
+    </div>
+  </div>
+{% endblock %}

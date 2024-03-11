@@ -1,0 +1,21 @@
+version: "3.4"
+
+services:
+  reaspeech:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - ASR_MODEL=small
+      - ASR_ENGINE=faster_whisper
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./app:/app/app
+      - ./reascripts:/app/reascripts
+      - cache-pip:/root/.cache/pip
+      - cache-whisper:/root/.cache/whisper
+
+volumes:
+  cache-pip:
+  cache-whisper:

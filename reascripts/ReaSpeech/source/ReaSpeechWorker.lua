@@ -1,0 +1,179 @@
+--[[
+
+  ReaSpeechWorker.lua - Speech transcription worker
+
+]]--
+
+ReaSpeechWorker = {}
+
+ReaSpeechWorker.__index = ReaSpeechWorker
+ReaSpeechWorker.new = function (o)
+  o = o or {}
+  setmetatable(o, ReaSpeechWorker)
+  o:init()
+  return o
+end
+
+function ReaSpeechWorker:init()
+  assert(self.requests, 'missing requests')
+  assert(self.responses, 'missing responses')
+  assert(self.logs, 'missing logs')
+  assert(self.asr_url, 'missing asr_url')
+
+  self.active_job = nil
+  self.pending_jobs = {}
+  self.job_count = 0
+end
+
+function ReaSpeechWorker:react()
+  -- Handle next request
+  local request = table.remove(self.requests, 1)
+  if request then
+    self:handle_request(request)
+  end
+
+  -- Make progress on jobs
+  if self.active_job then
+    self:check_active_job()
+  else
+    local pending_job = table.remove(self.pending_jobs, 1)
+    if pending_job then
+      self.active_job = pending_job
+      self:start_active_job()
+    elseif self.job_count ~= 0 then
+      app:log('Processing finished')
+      self.job_count = 0
+    end
+  end
+end
+
+function ReaSpeechWorker:progress()
+  local job_count = self.job_count
+  if job_count == 0 then
+    return nil
+  end
+  local pending_job_count = #self.pending_jobs
+  if self.active_job then
+    pending_job_count = pending_job_count + 1
+  end
+  local completed_job_count = job_count - pending_job_count
+  return completed_job_count / job_count
+end
+
+function ReaSpeechWorker:cancel()
+  self.active_job = nil
+  self.pending_jobs = {}
+  self.job_count = 0
+end
+
+function ReaSpeechWorker:handle_request(request)
+  app:log('Processing speech...')
+  self.job_count = #request.jobs
+
+  local data = {
+    task = request.translate and 'translate' or 'transcribe',
+    output = 'json',
+    vad_filter = 'true',
+    word_timestamps = 'true',
+  }
+
+  if request.language and request.language ~= '' then
+    data.language = request.language
+  end
+
+  if request.initial_prompt and request.initial_prompt ~= '' then
+    data.initial_prompt = request.initial_prompt
+  end
+
+  local seen_path = {}
+  for _, job in pairs(request.jobs) do
+    if not seen_path[job.path] then
+      seen_path[job.path] = true
+      table.insert(self.pending_jobs, {job = job, data = data})
+    end
+  end
+end
+
+function ReaSpeechWorker:handle_response(active_job, response)
+  response._job = active_job.job
+  table.insert(self.responses, response)
+end
+
+function ReaSpeechWorker:start_active_job()
+  if not self.active_job then
+    return
+  end
+
+  local active_job = self.active_job
+  local output_file = self:post_request(active_job.data, active_job.job.path)
+
+  if output_file then
+    active_job.output_file = output_file
+  else
+    self.active_job = nil
+  end
+end
+
+function ReaSpeechWorker:check_active_job()
+  if not (self.active_job and self.active_job.output_file) then
+    return
+  end
+
+  local active_job = self.active_job
+  local output_file = active_job.output_file
+
+  local f = io.open(output_file, 'r')
+  if f then
+    local response_text = f:read('*a')
+    f:close()
+
+    if #response_text > 0 then
+      local response = nil
+      if app:trap(function ()
+        response = json.decode(response_text)
+      end) then
+        Tempfile:remove(output_file)
+        self.active_job = nil
+        self:handle_response(active_job, response)
+      else
+        app:debug("JSON parse error, trying again later")
+      end
+    end
+  end
+end
+
+function ReaSpeechWorker:post_request(data, path)
+  local curl = "curl"
+  if not reaper.GetOS():find("Win") then
+    curl = "/usr/bin/curl"
+  end
+  local query = {}
+  for k, v in pairs(data) do
+    table.insert(query, k .. '=' .. url.quote(v))
+  end
+  local output_file = Tempfile:name()
+  local command = (
+    curl
+    .. ' "' .. self.asr_url .. '?' .. table.concat(query, '&') .. '"'
+    .. ' -H "accept: application/json"'
+    .. ' -H "Content-Type: multipart/form-data"'
+    .. ' -F ' .. self:_maybe_quote('audio_file=@"' .. path .. '"')
+    .. ' -o "' .. output_file .. '"'
+  )
+  app:log(path)
+  app:debug('Command: ' .. command)
+  if reaper.ExecProcess(command, -2) then
+    return output_file
+  else
+    app:log("Unable to run curl")
+    return nil
+  end
+end
+
+function ReaSpeechWorker:_maybe_quote(arg)
+  if reaper.GetOS():find("Win") then
+    return arg
+  else
+    return "'" .. arg .. "'"
+  end
+end
