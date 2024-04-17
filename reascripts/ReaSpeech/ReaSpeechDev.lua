@@ -4,6 +4,9 @@ ReaSpeechDev.lua - ReaSpeech UI development version
 
 ]]--
 
+-- Set to true to enable product activation flow, false to disable
+local ENABLE_ACTIVATION = true
+
 local script_path, _ = ({reaper.get_action_context()})[2]:match("(.-)([^/\\]+).lua$")
 
 dofile(script_path .. 'source/include/globals.lua')
@@ -22,6 +25,15 @@ for _, source_dir in pairs({'resources/images', '../common/libs', 'source'}) do
     end
     source_index = source_index + 1
   end
+end
+
+-- Might be time before too long to standardize this interface across apps.
+if not ENABLE_ACTIVATION then
+  function ReaSpeechProductActivation:activation_state_check() end
+  ReaSpeechProductActivation.state = 'activated'
+
+  local activation = ReaSpeechProductActivation:new()
+  activation.config:set('eula_signed', true)
 end
 
 -- We're not inside of docker! We're undocked!

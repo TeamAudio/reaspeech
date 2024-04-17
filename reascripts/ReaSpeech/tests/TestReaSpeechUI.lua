@@ -6,6 +6,7 @@ require('OptionsConfig')
 require('mock_reaper')
 
 require('source/AlertPopup')
+require('source/ReaSpeechProductActivation')
 require('source/ReaSpeechUI')
 require('source/ReaSpeechWorker')
 require('source/Transcript')
