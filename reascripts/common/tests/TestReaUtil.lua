@@ -12,6 +12,45 @@ function TestReaUtil:setUp()
   reaper.__test_setUp()
 end
 
+function TestReaUtil:testProxyMainOnCommand()
+  local proxy = ReaUtil.proxy_main_on_command(1, 0)
+  lu.assertEquals(type(proxy), "function")
+end
+
+function TestReaUtil:testProxyMainOnCommandProjectArgument()
+  local proxy = ReaUtil.proxy_main_on_command(1, 0)
+
+  reaper.Main_OnCommandEx = function(_command_number, _flag, proj)
+    lu.assertEquals(proj, 0)
+  end
+  proxy()
+
+  reaper.Main_OnCommandEx = function(_command_number, _flag, proj)
+    lu.assertEquals(proj, 1)
+  end
+  proxy(1)
+end
+
+function TestReaUtil:testProxyMainOnCommandCallsMainOnCommandEx()
+  local proxy = ReaUtil.proxy_main_on_command(1, 0)
+
+  local main_on_command_ex_called = false
+
+  reaper.Main_OnCommandEx = function(command_number, flag, _proj)
+    main_on_command_ex_called = true
+    lu.assertEquals(command_number, 1)
+    lu.assertEquals(flag, 0)
+  end
+
+  proxy()
+  lu.assertEquals(main_on_command_ex_called, true)
+end
+
+function TestReaUtil:testDisablerReturnsFunction()
+  local disabler = ReaUtil.disabler("imgui context")
+  lu.assertEquals(type(disabler), "function")
+end
+
 function TestReaUtil:testDisablerContext()
   local disabler = ReaUtil.disabler("imgui context")
 
