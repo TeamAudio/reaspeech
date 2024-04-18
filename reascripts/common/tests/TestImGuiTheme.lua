@@ -49,7 +49,7 @@ function TestImGuiTheme:testColors()
   local theme = ImGuiTheme.new {
     colors = {
         { function() return "some key" end, 0xFF0000FF },
-        { "just a key", 0x00FF0000 } 
+        { "just a key", 0x00FF0000 }
     }
   }
 
@@ -60,13 +60,13 @@ function TestImGuiTheme:testColors()
 
   local i = 1
 
-  ImGuiTheme.f_color_push = function(ctx, key, value)
+  ImGuiTheme.f_color_push = function(_ctx, key, value)
     lu.assertEquals(key, expectations[i][1])
     lu.assertEquals(value, expectations[i][2])
     i = i + 1
   end
 
-  ImGuiTheme.f_color_pop = function(ctx, count)
+  ImGuiTheme.f_color_pop = function(_ctx, count)
     lu.assertEquals(count, 2)
   end
 
@@ -105,14 +105,14 @@ function TestImGuiTheme:testStyles()
 
   local i = 1
 
-  ImGuiTheme.f_style_push = function(ctx, key, ...)
+  ImGuiTheme.f_style_push = function(_ctx, key, ...)
     local values = ...
     lu.assertEquals(key, expectations[i][1])
     lu.assertEquals(values, table.unpack(expectations[i], 2))
     i = i + 1
   end
 
-  ImGuiTheme.f_style_pop = function(ctx, count)
+  ImGuiTheme.f_style_pop = function(_ctx, count)
     lu.assertEquals(count, 2)
   end
 

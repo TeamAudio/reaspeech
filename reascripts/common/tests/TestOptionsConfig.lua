@@ -13,6 +13,7 @@ TestOptionsConfig = {
     options = {
       patties_per_burger = {'number', 2},
       num_pickles = {'number', 2},
+      num_iterations = {'number', 2},
     }
   }
 }
