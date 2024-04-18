@@ -436,13 +436,36 @@ function ReaSpeechUI:render_actions()
     ImGui.BeginDisabled(ctx)
   end
 
-  if ImGui.Button(ctx, "Process Selected Tracks") then
-    self:process_selected_tracks()
-  end
+  local disable_if = ReaUtil.disabler(ctx)
+
+  local selected_track_count = reaper.CountSelectedTracks(ReaUtil.ACTIVE_PROJECT)
+  disable_if(selected_track_count == 0, function()
+    local button_text = string.format("Process %d Selected Tracks", selected_track_count)
+
+    if selected_track_count == 1 then
+      button_text = "Process 1 Selected Track"
+    end
+
+    if ImGui.Button(ctx, button_text) then
+      self:process_selected_tracks()
+    end
+  end)
+
   ImGui.SameLine(ctx)
-  if ImGui.Button(ctx, "Process Selected Items") then
-    self:process_selected_items()
-  end
+
+  local selected_item_count = reaper.CountSelectedMediaItems(ReaUtil.ACTIVE_PROJECT)
+  disable_if(selected_item_count == 0, function()
+    local button_text = string.format("Process %d Selected Items", selected_item_count)
+
+    if selected_item_count == 1 then
+      button_text = "Process 1 Selected Item"
+    end
+
+    if ImGui.Button(ctx, button_text) then
+      self:process_selected_items()
+    end
+  end)
+
   ImGui.SameLine(ctx)
   if ImGui.Button(ctx, "Process All Items") then
     self:process_all_items()

@@ -5,6 +5,7 @@ globals = {
   "url",
   "ImGuiTheme",
   "IMAGES",
+  "ReaUtil",
 }
 
 allow_defined = true

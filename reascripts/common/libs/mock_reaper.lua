@@ -65,7 +65,10 @@ reaper = reaper or {
   get_action_context = function ()
     local path = debug.getinfo(2, "S").source:sub(2)
     return false, path
-  end
+  end,
+
+  ImGui_BeginDisabled = function(context, disabled) end,
+  ImGui_EndDisabled = function(context) end,
 }
 
 if reaper.__test_setUp then reaper.__test_setUp() end
