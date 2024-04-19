@@ -247,21 +247,21 @@ end
 
 function ReaSpeechUI:render()
   ImGui.PushItemWidth(ctx, self.ITEM_WIDTH)
+
   self:trap(function ()
-
-    if(self.product_activation.state == 'activated') then
-
-      if not self.product_activation.config:get('eula_signed') then
-        self:render_EULA_inputs()
-      else
-        self:render_main()
-      end
-    else
+    if self.product_activation.state ~= "activated" then
       self:render_activation_inputs()
+      return
     end
 
+    if not self.product_activation.config:get('eula_signed') then
+      self:render_EULA_inputs()
+      return
+    end
 
+    self:render_main()
   end)
+
   ImGui.PopItemWidth(ctx)
 end
 
