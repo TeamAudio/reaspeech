@@ -293,6 +293,18 @@ function ReaSpeechUI:render_inputs()
     -- second column
     ImGui.TableNextColumn(ctx)
     -- start language selection
+    self:render_language_controls()
+    ImGui.Dummy(ctx,0, 10)
+    self:render_advanced_controls()
+    ImGui.EndTable(ctx)
+  end
+  -- end input table
+  ImGui.SameLine(ctx, ImGui.GetWindowWidth(ctx) - self.ITEM_WIDTH + 65)
+  app.png_from_bytes('heading-logo-tech-audio')
+end
+
+function ReaSpeechUI:render_language_controls()
+  if ImGui.TreeNode(ctx, 'Language Options', ImGui.TreeNodeFlags_DefaultOpen()) then
     if ImGui.BeginCombo(ctx, "language", self.LANGUAGES[self.language]) then
       local combo_items = self.LANGUAGE_CODES
       for _, combo_item in pairs(combo_items) do
@@ -309,42 +321,40 @@ function ReaSpeechUI:render_inputs()
     if rv then
       self.translate = value
     end
-    ImGui.Dummy(ctx,0, 10)
-    -- start advanced options
-    if ImGui.TreeNode(ctx, 'Advanced Options') then
-      ImGui.Dummy(ctx,0, 25)
-      ImGui.SameLine(ctx)
-      ImGui.PushItemWidth(ctx, self.LARGE_ITEM_WIDTH)
-      self:trap(function ()
-        rv, value = ImGui.InputText(ctx, 'initial prompt', self.initial_prompt)
-        if rv then
-          self.initial_prompt = value
-        end
-      end)
-      ImGui.PopItemWidth(ctx)
 
-      ImGui.SameLine(ctx)
-      rv, value = ImGui.Checkbox(ctx, "log", self.log_enable)
-      if rv then
-        self.log_enable = value
-      end
-
-      if self.log_enable then
-        ImGui.SameLine(ctx)
-        rv, value = ImGui.Checkbox(ctx, "debug", self.log_debug)
-        if rv then
-          self.log_debug = value
-        end
-      end
-      ImGui.TreePop(ctx)
-      ImGui.Spacing(ctx)
-    end
-    -- end advanced options
-    ImGui.EndTable(ctx)
+    ImGui.TreePop(ctx)
   end
-  -- end input table
-  ImGui.SameLine(ctx, ImGui.GetWindowWidth(ctx) - self.ITEM_WIDTH + 65)
-  app.png_from_bytes('heading-logo-tech-audio')
+end
+
+function ReaSpeechUI:render_advanced_controls()
+  if ImGui.TreeNode(ctx, 'Advanced Options') then
+    ImGui.Dummy(ctx,0, 25)
+    ImGui.SameLine(ctx)
+    ImGui.PushItemWidth(ctx, self.LARGE_ITEM_WIDTH)
+    self:trap(function ()
+      rv, value = ImGui.InputText(ctx, 'initial prompt', self.initial_prompt)
+      if rv then
+        self.initial_prompt = value
+      end
+    end)
+    ImGui.PopItemWidth(ctx)
+
+    ImGui.SameLine(ctx)
+    rv, value = ImGui.Checkbox(ctx, "log", self.log_enable)
+    if rv then
+      self.log_enable = value
+    end
+
+    if self.log_enable then
+      ImGui.SameLine(ctx)
+      rv, value = ImGui.Checkbox(ctx, "debug", self.log_debug)
+      if rv then
+        self.log_debug = value
+      end
+    end
+    ImGui.TreePop(ctx)
+    ImGui.Spacing(ctx)
+  end
 end
 
 function ReaSpeechUI:render_activation_inputs()
