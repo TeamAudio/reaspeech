@@ -18,6 +18,7 @@ File.open(output_filename, 'w') do |f|
   f.write("IMAGES['#{image_name}'] = {\n")
   f.write("  width = #{image.width},\n")
   f.write("  height = #{image.height},\n")
+
   f.write("  pixels = {\n")
   (0...image.height).each do |y|
     row = '{'
@@ -39,9 +40,12 @@ File.open(output_filename, 'w') do |f|
     f.write("    #{row},\n")
   end
   f.write("  },\n")
-  f.write(" bytes = ''\n")
-  f.write("}\n")
+
+  f.write("  bytes = table.concat({\n")
   image.to_blob.bytes.each_slice(100) do |slice|
-    f.write("IMAGES['#{image_name}'].bytes = IMAGES['#{image_name}'].bytes .. string.char(#{slice.join(",")})\n")
+    f.write("string.char(#{slice.join(",")}),\n")
   end
+  f.write("  })\n")
+
+  f.write("}\n")
 end
