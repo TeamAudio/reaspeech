@@ -305,6 +305,8 @@ end
 
 function ReaSpeechUI:render_language_controls()
   if ImGui.TreeNode(ctx, 'Language Options', ImGui.TreeNodeFlags_DefaultOpen()) then
+    ImGui.Dummy(ctx, 0, 25)
+    ImGui.SameLine(ctx)
     if ImGui.BeginCombo(ctx, "language", self.LANGUAGES[self.language]) then
       local combo_items = self.LANGUAGE_CODES
       for _, combo_item in pairs(combo_items) do
@@ -328,7 +330,7 @@ end
 
 function ReaSpeechUI:render_advanced_controls()
   if ImGui.TreeNode(ctx, 'Advanced Options') then
-    ImGui.Dummy(ctx,0, 25)
+    ImGui.Dummy(ctx, 0, 25)
     ImGui.SameLine(ctx)
     ImGui.PushItemWidth(ctx, self.LARGE_ITEM_WIDTH)
     self:trap(function ()
