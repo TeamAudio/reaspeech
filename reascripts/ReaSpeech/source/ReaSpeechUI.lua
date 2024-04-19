@@ -440,10 +440,14 @@ function ReaSpeechUI:render_actions()
 
   local selected_track_count = reaper.CountSelectedTracks(ReaUtil.ACTIVE_PROJECT)
   disable_if(selected_track_count == 0, function()
-    local button_text = string.format("Process %d Selected Tracks", selected_track_count)
+    local button_text
 
-    if selected_track_count == 1 then
+    if selected_track_count == 0 then
+      button_text = "Process Selected Tracks"
+    elseif selected_track_count == 1 then
       button_text = "Process 1 Selected Track"
+    else
+      button_text = string.format("Process %d Selected Tracks", selected_track_count)
     end
 
     if ImGui.Button(ctx, button_text) then
@@ -455,10 +459,14 @@ function ReaSpeechUI:render_actions()
 
   local selected_item_count = reaper.CountSelectedMediaItems(ReaUtil.ACTIVE_PROJECT)
   disable_if(selected_item_count == 0, function()
-    local button_text = string.format("Process %d Selected Items", selected_item_count)
+    local button_text
 
-    if selected_item_count == 1 then
+    if selected_item_count == 0 then
+      button_text = "Process Selected Items"
+    elseif selected_item_count == 1 then
       button_text = "Process 1 Selected Item"
+    else
+      button_text = string.format("Process %d Selected Items", selected_item_count)
     end
 
     if ImGui.Button(ctx, button_text) then
