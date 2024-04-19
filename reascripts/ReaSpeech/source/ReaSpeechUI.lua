@@ -192,48 +192,57 @@ function ReaSpeechUI:tooltip(text)
 end
 
 function ReaSpeechUI:react()
-  -- Handle responses from worker
-  self:trap(function ()
-    local response = table.remove(self.responses, 1)
-    if response then
-      self:debug('Response: ' .. dump(response))
-      if response.segments then
-        for _, segment in pairs(response.segments) do
-          for _, s in pairs(
-            TranscriptSegment.from_whisper(segment, response._job.item, response._job.take)
-          ) do
-            if s:get('text') then
-              self.transcript:add_segment(s)
-            end
-          end
-        end
-        self.transcript:update()
+  for _, handler in pairs(self:react_handlers()) do
+    self:trap(handler)
+  end
+end
+
+function ReaSpeechUI:react_handlers()
+  return {
+    function() self:react_to_worker_response() end,
+    function() self:react_to_logging() end,
+    function() self.worker:react() end,
+    function() self:render() end
+  }
+end
+
+function ReaSpeechUI:react_to_worker_response()
+  local response = table.remove(self.responses, 1)
+
+  if not response then
+    return
+  end
+
+  self:debug('Response: ' .. dump(response))
+
+  if not response.segments then
+    return
+  end
+
+  for _, segment in pairs(response.segments) do
+    for _, s in pairs(
+      TranscriptSegment.from_whisper(segment, response._job.item, response._job.take)
+    ) do
+      if s:get('text') then
+        self.transcript:add_segment(s)
       end
     end
-  end)
+  end
 
-  -- Handle logs
-  self:trap(function ()
-    for _, log in pairs(self.logs) do
-      local msg, dbg = table.unpack(log)
-      if dbg and self.log_enable and self.log_debug then
-        reaper.ShowConsoleMsg(self:log_time() .. ' [DBG] ' .. tostring(msg) .. '\n')
-      elseif not dbg and self.log_enable then
-        reaper.ShowConsoleMsg(self:log_time() .. ' [LOG] ' .. tostring(msg) .. '\n')
-      end
+  self.transcript:update()
+end
+
+function ReaSpeechUI:react_to_logging()
+  for _, log in pairs(self.logs) do
+    local msg, dbg = table.unpack(log)
+    if dbg and self.log_enable and self.log_debug then
+      reaper.ShowConsoleMsg(self:log_time() .. ' [DBG] ' .. tostring(msg) .. '\n')
+    elseif not dbg and self.log_enable then
+      reaper.ShowConsoleMsg(self:log_time() .. ' [LOG] ' .. tostring(msg) .. '\n')
     end
-    self.logs = {}
-  end)
+  end
 
-  -- Allow worker to make progress
-  self:trap(function ()
-    self.worker:react()
-  end)
-
-  -- Render UI
-  self:trap(function ()
-    self:render()
-  end)
+  self.logs = {}
 end
 
 function ReaSpeechUI:render()
