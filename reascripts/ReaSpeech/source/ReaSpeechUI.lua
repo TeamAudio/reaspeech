@@ -268,7 +268,7 @@ function ReaSpeechUI:render_main()
   self.transcript_exporter:render()
 end
 
-function ReaSpeechUI.png_from_bytes(image_key, offset_x, offset_y)
+function ReaSpeechUI.png_from_bytes(image_key)
     if not IMAGES[image_key] or not IMAGES[image_key].bytes then
       return
     end
