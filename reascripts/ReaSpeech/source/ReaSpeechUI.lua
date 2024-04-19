@@ -268,57 +268,16 @@ function ReaSpeechUI:render_main()
   self.transcript_exporter:render()
 end
 
-function ReaSpeechUI.png_from_rle(image_key, offset_x, offset_y)
-  if not IMAGES[image_key] then
-    return
-  end
-
-  local image = IMAGES[image_key]
-  local pixels = image.pixels
-
-  offset_x = offset_x or 0
-  offset_y = offset_y or 0
-
-  -- Cache arguments to pass to ImGui_DrawList_AddRectFilled
-  if not image.draw_list_rectangles then
-    image.draw_list_rectangles = {}
-
-    for i = 1, #pixels do
-      local row = pixels[i]
-      local x = 0
-      local y = i - 1
-
-      for j = 1, #row, 5 do
-        local length = row[j]
-
-        local color = row[j + 1] << 24
-                    | row[j + 2] << 16
-                    | row[j + 3] << 8
-                    | row[j + 4]
-
-        table.insert(image.draw_list_rectangles, {
-          x, y, x + length, y + 1, color
-        })
-
-        x = x + length
-      end
+function ReaSpeechUI.png_from_bytes(image_key, offset_x, offset_y)
+    if not IMAGES[image_key] or not IMAGES[image_key].bytes then
+      return
     end
-  end
 
-  local draw_list = ImGui.GetWindowDrawList(ctx)
-  local origin_x, origin_y = ImGui.GetCursorScreenPos(ctx)
+    local image = IMAGES[image_key]
 
-  for i = 1, #image.draw_list_rectangles do
-    local start_x, start_y, end_x, end_y, color = table.unpack(image.draw_list_rectangles[i])
+    image.imgui_image = image.imgui_image or ImGui.CreateImageFromMem(image.bytes)
 
-    start_x = start_x + origin_x + offset_x
-    start_y = start_y + origin_y + offset_y
-    end_x = end_x + origin_x + offset_x
-    end_y = end_y + origin_y + offset_y
-
-    ImGui.DrawList_AddRectFilled(draw_list, start_x, start_y, end_x, end_y, color)
-  end
-  ImGui.Dummy(ctx, image.width, image.height)
+    ImGui.Image(ctx, image.imgui_image, image.width, image.height)
 end
 
 function ReaSpeechUI:render_inputs()
@@ -330,7 +289,7 @@ function ReaSpeechUI:render_inputs()
     -- first column
     ImGui.TableNextColumn(ctx)
     ImGui.SameLine(ctx, -10)
-    app.png_from_rle('reaspeech-logo-small')
+    app.png_from_bytes('reaspeech-logo-small')
     -- second column
     ImGui.TableNextColumn(ctx)
     -- start language selection
@@ -385,7 +344,7 @@ function ReaSpeechUI:render_inputs()
   end
   -- end input table
   ImGui.SameLine(ctx, ImGui.GetWindowWidth(ctx) - self.ITEM_WIDTH + 65)
-  app.png_from_rle('heading-logo-tech-audio')
+  app.png_from_bytes('heading-logo-tech-audio')
 end
 
 function ReaSpeechUI:render_activation_inputs()

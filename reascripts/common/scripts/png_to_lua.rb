@@ -38,6 +38,10 @@ File.open(output_filename, 'w') do |f|
     row << '}'
     f.write("    #{row},\n")
   end
-  f.write("  }\n")
+  f.write("  },\n")
+  f.write(" bytes = ''\n")
   f.write("}\n")
+  image.to_blob.bytes.each_slice(100) do |slice|
+    f.write("IMAGES['#{image_name}'].bytes = IMAGES['#{image_name}'].bytes .. string.char(#{slice.join(",")})\n")
+  end
 end
