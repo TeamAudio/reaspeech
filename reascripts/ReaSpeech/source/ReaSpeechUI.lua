@@ -268,11 +268,16 @@ end
 function ReaSpeechUI:render_main()
   self:render_inputs()
   self:render_actions()
+  self:render_transcript_section()
+end
+
+function ReaSpeechUI:render_transcript_section()
   if self.transcript:has_segments() then
     ImGui.SeparatorText(ctx, "Transcript")
     self:render_result_actions()
     self:render_table()
   end
+
   self.transcript_editor:render()
   self.transcript_exporter:render()
 end
