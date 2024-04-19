@@ -52,11 +52,11 @@ reaper = reaper or {
   ShowConsoleMsg = print,
   ShowMessageBox = print,
 
-  ImGui_PushStyleColor = function (context, key, value) end,
-  ImGui_PopStyleColor = function (context, count) end,
+  ImGui_PushStyleColor = function (_context, _key, _value) end,
+  ImGui_PopStyleColor = function (_context, _count) end,
 
-  ImGui_PushStyleVar = function (context, key, ...) end,
-  ImGui_PopStyleVar = function (context, count) end,
+  ImGui_PushStyleVar = function (_context, _key, _varlength) end,
+  ImGui_PopStyleVar = function (_context, _count) end,
 
   defer = function (f)
     f()
@@ -65,7 +65,10 @@ reaper = reaper or {
   get_action_context = function ()
     local path = debug.getinfo(2, "S").source:sub(2)
     return false, path
-  end
+  end,
+
+  ImGui_BeginDisabled = function(_context, _disabled) end,
+  ImGui_EndDisabled = function(_context) end,
 }
 
 if reaper.__test_setUp then reaper.__test_setUp() end

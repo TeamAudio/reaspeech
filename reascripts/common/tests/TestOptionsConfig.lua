@@ -23,35 +23,35 @@ function TestOptionsConfig:setUp()
 end
 
 function TestOptionsConfig:testDefault()
-  local num_iterations = self.options:get('num_iterations')
-  lu.assertEquals(num_iterations, 2)
+  local num_pickles = self.options:get('num_pickles')
+  lu.assertEquals(num_pickles, 2)
 end
 
 function TestOptionsConfig:testGet()
-  reaper.__ext_state__[self.options.section].num_iterations = '3'
-  local num_iterations = self.options:get('num_iterations')
-  lu.assertEquals(num_iterations, 3)
-  lu.assertEquals(reaper.__ext_state__[self.options.section].num_iterations, '3')
+  reaper.__ext_state__[self.options.section].num_pickles = '3'
+  local num_pickles = self.options:get('num_pickles')
+  lu.assertEquals(num_pickles, 3)
+  lu.assertEquals(reaper.__ext_state__[self.options.section].num_pickles, '3')
 end
 
 function TestOptionsConfig:testSet()
-  self.options:set('num_iterations', 4)
-  lu.assertEquals(self.options:get('num_iterations'), 4)
-  lu.assertEquals(reaper.__ext_state__[self.options.section].num_iterations, '4')
+  self.options:set('num_pickles', 4)
+  lu.assertEquals(self.options:get('num_pickles'), 4)
+  lu.assertEquals(reaper.__ext_state__[self.options.section].num_pickles, '4')
 end
 
 function TestOptionsConfig:testDelete()
-  self.options:set('num_iterations', 4)
-  self.options:delete('num_iterations')
-  lu.assertNil(reaper.__ext_state__[self.options.section].num_iterations)
+  self.options:set('num_pickles', 4)
+  self.options:delete('num_pickles')
+  lu.assertNil(reaper.__ext_state__[self.options.section].num_pickles)
 end
 
 function TestOptionsConfig:testExists()
-  lu.assertFalse(self.options:exists('num_iterations'))
-  self.options:set('num_iterations', 4)
-  lu.assertTrue(self.options:exists('num_iterations'))
-  self.options:delete('num_iterations')
-  lu.assertFalse(self.options:exists('num_iterations'))
+  lu.assertFalse(self.options:exists('num_pickles'))
+  self.options:set('num_pickles', 4)
+  lu.assertTrue(self.options:exists('num_pickles'))
+  self.options:delete('num_pickles')
+  lu.assertFalse(self.options:exists('num_pickles'))
 end
 
 function TestOptionsConfig:testToString()

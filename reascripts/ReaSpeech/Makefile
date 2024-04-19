@@ -4,7 +4,7 @@ LUA54=lua5.4
 LUAC54=luac5.4
 LUACHECK=luacheck
 
-LIBS=OptionsConfig.lua ReaIter.lua ImGuiTheme.lua Tempfile.lua
+LIBS=ImGuiTheme.lua OptionsConfig.lua ReaIter.lua ReaUtil.lua Tempfile.lua
 VENDOR=json.lua url.lua
 
 source:=$(wildcard source/*.lua source/include/*.lua)
