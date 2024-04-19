@@ -51,6 +51,30 @@ function TestReaUtil:testDisablerReturnsFunction()
   lu.assertEquals(type(disabler), "function")
 end
 
+function TestReaUtil:testDisablerDefaultErrorHandler()
+  local disabler = ReaUtil.disabler("imgui context")
+
+  local default_handler_called = false
+
+  reaper.ShowConsoleMsg = function(_msg)
+    default_handler_called = true
+  end
+
+  disabler(true, function() error("error") end)
+  lu.assertEquals(default_handler_called, true)
+end
+
+function TestReaUtil:testDisablerCustomErrorHandler()
+  local custom_handler_called = false
+  local disabler = ReaUtil.disabler("imgui context", function(msg)
+    custom_handler_called = true
+    lu.assertEquals(msg, "error")
+  end)
+
+  disabler(true, function() error("error") end)
+  lu.assertEquals(custom_handler_called, true)
+end
+
 function TestReaUtil:testDisablerContext()
   local disabler = ReaUtil.disabler("imgui context")
 

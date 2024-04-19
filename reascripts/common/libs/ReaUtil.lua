@@ -15,15 +15,23 @@ function ReaUtil.proxy_main_on_command(command_number, flag)
   end
 end
 
-function ReaUtil.disabler(context)
+function ReaUtil.disabler(context, error_handler)
+  error_handler = error_handler or function(msg)
+    reaper.ShowConsoleMsg(msg .. '\n')
+  end
+
   return function(predicate, f)
+    local safe_f = function()
+      xpcall(f, error_handler)
+    end
+
     if not predicate then
-      f()
+      safe_f()
       return
     end
 
     reaper.ImGui_BeginDisabled(context, true)
-    f()
+    safe_f()
     reaper.ImGui_EndDisabled(context)
   end
 end
