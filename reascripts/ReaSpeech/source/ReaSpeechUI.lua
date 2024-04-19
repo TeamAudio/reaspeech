@@ -436,7 +436,7 @@ function ReaSpeechUI:render_actions()
     end
 
     if ImGui.Button(ctx, button_text) then
-      self:process_selected_tracks()
+      self:process_jobs(ReaSpeechUI.jobs_for_selected_items)
     end
   end)
 
@@ -455,13 +455,13 @@ function ReaSpeechUI:render_actions()
     end
 
     if ImGui.Button(ctx, button_text) then
-      self:process_selected_items()
+      self:process_jobs(ReaSpeechUI.jobs_for_selected_items)
     end
   end)
 
   ImGui.SameLine(ctx)
   if ImGui.Button(ctx, "Process All Items") then
-    self:process_all_items()
+    self:process_jobs(ReaSpeechUI.jobs_for_all_items)
   end
 
   if progress then
@@ -743,48 +743,60 @@ function ReaSpeechUI:sort_table()
   end
 end
 
-function ReaSpeechUI:process_selected_tracks()
+function ReaSpeechUI.make_job(media_item, take)
+  local path = ReaSpeechUI.get_source_path(take)
+
+  if path then
+    return {item = media_item, take = take, path = path}
+  else
+    return nil
+  end
+end
+
+function ReaSpeechUI.jobs_for_selected_tracks()
   local jobs = {}
   for track in ReaIter.each_selected_track() do
     for item in ReaIter.each_track_item(track) do
       for take in ReaIter.each_take(item) do
-        local path = self:get_source_path(take)
-        if path then
-          table.insert(jobs, {item = item, take = take, path = path})
+        local job = ReaSpeechUI.make_job(item, take)
+        if job then
+          table.insert(jobs, job)
         end
       end
     end
   end
-  self:process_jobs(jobs)
+  return jobs
 end
 
-function ReaSpeechUI:process_selected_items()
+function ReaSpeechUI.jobs_for_selected_items()
   local jobs = {}
   for item in ReaIter.each_selected_media_item() do
     for take in ReaIter.each_take(item) do
-      local path = self:get_source_path(take)
-      if path then
-        table.insert(jobs, {item = item, take = take, path = path})
+      local job = ReaSpeechUI.make_job(item, take)
+      if job then
+        table.insert(jobs, job)
       end
     end
   end
-  self:process_jobs(jobs)
+  return jobs
 end
 
-function ReaSpeechUI:process_all_items()
+function ReaSpeechUI.jobs_for_all_items()
   local jobs = {}
   for item in ReaIter.each_media_item() do
     for take in ReaIter.each_take(item) do
-      local path = self:get_source_path(take)
-      if path then
-        table.insert(jobs, {item = item, take = take, path = path})
+      local job = ReaSpeechUI.make_job(item, take)
+      if job then
+        table.insert(jobs, job)
       end
     end
   end
-  self:process_jobs(jobs)
+  return jobs
 end
 
-function ReaSpeechUI:process_jobs(jobs)
+function ReaSpeechUI:process_jobs(job_generator)
+  local jobs = job_generator()
+
   if #jobs == 0 then
     reaper.MB("No media found to process.", "No media", 0)
     return
@@ -800,7 +812,7 @@ function ReaSpeechUI:process_jobs(jobs)
   table.insert(self.requests, request)
 end
 
-function ReaSpeechUI:get_source_path(take)
+function ReaSpeechUI.get_source_path(take)
   local source = reaper.GetMediaItemTake_Source(take)
   if source then
     local source_path = reaper.GetMediaSourceFileName(source)
