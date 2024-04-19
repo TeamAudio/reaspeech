@@ -635,9 +635,7 @@ function ReaSpeechUI:render_link(text, onclick, text_color, underline_color)
   text_color = text_color or 0xffffffff
   underline_color = underline_color or 0xffffffa0
 
-  ImGui.PushStyleColor(ctx, ImGui.Col_Text(), text_color)
-  ImGui.Text(ctx, text)
-  ImGui.PopStyleColor(ctx, 1)
+  ImGui.TextColored(ctx, text_color, text)
 
   if ImGui.IsItemHovered(ctx) then
     local rect_min_x, rect_min_y = ImGui.GetItemRectMin(ctx)
@@ -698,15 +696,24 @@ function ReaSpeechUI:render_score(value)
   ImGui.Dummy(ctx, w, h)
 end
 
+ReaSpeechUI.SCORE_COLORS = {
+  bright_green = 0xa3ff00a6,
+  dark_green = 0x2cba00a6,
+  orange = 0xffa700a6,
+  red = 0xff0000a6
+}
+
 function ReaSpeechUI:score_color(value)
+  local colors = ReaSpeechUI.SCORE_COLORS
+
   if value > 0.9 then
-    return 0xa3ff00a6
+    return colors.bright_green
   elseif value > 0.8 then
-    return 0x2cba00a6
+    return colors.dark_green
   elseif value > 0.7 then
-    return 0xffa700a6
+    return colors.orange
   elseif value > 0.0 then
-    return 0xff0000a6
+    return colors.red
   else
     return nil
   end
@@ -716,8 +723,8 @@ function ReaSpeechUI:sort_table()
   local specs_dirty, has_specs = ImGui.TableNeedSort(ctx)
   if has_specs and specs_dirty then
     local columns = self.transcript:get_columns()
-    column = nil
-    ascending = true
+    local column = nil
+    local ascending = true
 
     for next_id = 0, math.huge do
       local ok, _, col_idx, _, sort_direction =
