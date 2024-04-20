@@ -59,6 +59,13 @@ ReaSpeechUI = {
 
   ITEM_WIDTH = 125,
   LARGE_ITEM_WIDTH = 375,
+
+  SCORE_COLORS = {
+    bright_green = 0xa3ff00a6,
+    dark_green = 0x2cba00a6,
+    orange = 0xffa700a6,
+    red = 0xff0000a6
+  }
 }
 
 ReaSpeechUI._init_languages = function ()
@@ -695,13 +702,6 @@ function ReaSpeechUI:render_score(value)
   end
   ImGui.Dummy(ctx, w, h)
 end
-
-ReaSpeechUI.SCORE_COLORS = {
-  bright_green = 0xa3ff00a6,
-  dark_green = 0x2cba00a6,
-  orange = 0xffa700a6,
-  red = 0xff0000a6
-}
 
 function ReaSpeechUI:score_color(value)
   local colors = ReaSpeechUI.SCORE_COLORS
