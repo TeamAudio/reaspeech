@@ -443,7 +443,7 @@ function ReaSpeechUI:render_actions()
     end
 
     if ImGui.Button(ctx, button_text) then
-      self:process_jobs(ReaSpeechUI.jobs_for_selected_items)
+      self:process_jobs(ReaSpeechUI.jobs_for_selected_tracks)
     end
   end)
 
