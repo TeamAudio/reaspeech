@@ -16,30 +16,32 @@ function ReaSpeechMain:main()
   ctx = ImGui.CreateContext(ReaSpeechUI.TITLE, ReaSpeechUI.config_flags())
   Fonts:load()
   app = ReaSpeechUI.new()
-  reaper.defer(function () self:loop() end)
+  reaper.defer(self:loop())
 end
 
 function ReaSpeechMain:loop()
-  ImGui.PushFont(ctx, Fonts.main)
-  Theme():push(ctx)
+  return function()
+    ImGui.PushFont(ctx, Fonts.main)
+    Theme():push(ctx)
 
-  if ReaSpeechUI.METRICS then
-    ImGui.ShowMetricsWindow(ctx)
-  end
+    if ReaSpeechUI.METRICS then
+      ImGui.ShowMetricsWindow(ctx)
+    end
 
-  ImGui.SetNextWindowSize(ctx, app.WIDTH, app.HEIGHT, ImGui.Cond_FirstUseEver())
-  local visible, open = ImGui.Begin(ctx, ReaSpeechUI.TITLE, true)
+    ImGui.SetNextWindowSize(ctx, app.WIDTH, app.HEIGHT, ImGui.Cond_FirstUseEver())
+    local visible, open = ImGui.Begin(ctx, ReaSpeechUI.TITLE, true)
 
-  if visible then
-    app:react()
-    ImGui.End(ctx)
-  end
+    if visible then
+      app:react()
+      ImGui.End(ctx)
+    end
 
-  Theme():pop(ctx)
-  ImGui.PopFont(ctx)
+    Theme():pop(ctx)
+    ImGui.PopFont(ctx)
 
-  if open then
-    reaper.defer(function () self:loop() end)
+    if open then
+      reaper.defer(self:loop())
+    end
   end
 end
 

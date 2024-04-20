@@ -15,39 +15,39 @@ ReaSpeechUI = {
 
   -- Copied from whisper.tokenizer.LANGUAGES
   LANGUAGES = {
-    ['en'] = 'english', ['zh'] = 'chinese', ['de'] = 'german',
-    ['es'] = 'spanish', ['ru'] = 'russian', ['ko'] = 'korean',
-    ['fr'] = 'french', ['ja'] = 'japanese', ['pt'] = 'portuguese',
-    ['tr'] = 'turkish', ['pl'] = 'polish', ['ca'] = 'catalan',
-    ['nl'] = 'dutch', ['ar'] = 'arabic', ['sv'] = 'swedish',
-    ['it'] = 'italian', ['id'] = 'indonesian', ['hi'] = 'hindi',
-    ['fi'] = 'finnish', ['vi'] = 'vietnamese', ['he'] = 'hebrew',
-    ['uk'] = 'ukrainian', ['el'] = 'greek', ['ms'] = 'malay',
-    ['cs'] = 'czech', ['ro'] = 'romanian', ['da'] = 'danish',
-    ['hu'] = 'hungarian', ['ta'] = 'tamil', ['no'] = 'norwegian',
-    ['th'] = 'thai', ['ur'] = 'urdu', ['hr'] = 'croatian',
-    ['bg'] = 'bulgarian', ['lt'] = 'lithuanian', ['la'] = 'latin',
-    ['mi'] = 'maori', ['ml'] = 'malayalam', ['cy'] = 'welsh',
-    ['sk'] = 'slovak', ['te'] = 'telugu', ['fa'] = 'persian',
-    ['lv'] = 'latvian', ['bn'] = 'bengali', ['sr'] = 'serbian',
-    ['az'] = 'azerbaijani', ['sl'] = 'slovenian', ['kn'] = 'kannada',
-    ['et'] = 'estonian', ['mk'] = 'macedonian', ['br'] = 'breton',
-    ['eu'] = 'basque', ['is'] = 'icelandic', ['hy'] = 'armenian',
-    ['ne'] = 'nepali', ['mn'] = 'mongolian', ['bs'] = 'bosnian',
-    ['kk'] = 'kazakh', ['sq'] = 'albanian', ['sw'] = 'swahili',
-    ['gl'] = 'galician', ['mr'] = 'marathi', ['pa'] = 'punjabi',
-    ['si'] = 'sinhala', ['km'] = 'khmer', ['sn'] = 'shona',
-    ['yo'] = 'yoruba', ['so'] = 'somali', ['af'] = 'afrikaans',
-    ['oc'] = 'occitan', ['ka'] = 'georgian', ['be'] = 'belarusian',
-    ['tg'] = 'tajik', ['sd'] = 'sindhi', ['gu'] = 'gujarati',
-    ['am'] = 'amharic', ['yi'] = 'yiddish', ['lo'] = 'lao',
-    ['uz'] = 'uzbek', ['fo'] = 'faroese', ['ht'] = 'haitian creole',
-    ['ps'] = 'pashto', ['tk'] = 'turkmen', ['nn'] = 'nynorsk',
-    ['mt'] = 'maltese', ['sa'] = 'sanskrit', ['lb'] = 'luxembourgish',
-    ['my'] = 'myanmar', ['bo'] = 'tibetan', ['tl'] = 'tagalog',
-    ['mg'] = 'malagasy', ['as'] = 'assamese', ['tt'] = 'tatar',
-    ['haw'] = 'hawaiian', ['ln'] = 'lingala', ['ha'] = 'hausa',
-    ['ba'] = 'bashkir', ['jw'] = 'javanese', ['su'] = 'sundanese'
+    en = 'english', zh = 'chinese', de = 'german',
+    es = 'spanish', ru = 'russian', ko = 'korean',
+    fr = 'french', ja = 'japanese', pt = 'portuguese',
+    tr = 'turkish', pl = 'polish', ca = 'catalan',
+    nl = 'dutch', ar = 'arabic', sv = 'swedish',
+    it = 'italian', id = 'indonesian', hi = 'hindi',
+    fi = 'finnish', vi = 'vietnamese', he = 'hebrew',
+    uk = 'ukrainian', el = 'greek', ms = 'malay',
+    cs = 'czech', ro = 'romanian', da = 'danish',
+    hu = 'hungarian', ta = 'tamil', no = 'norwegian',
+    th = 'thai', ur = 'urdu', hr = 'croatian',
+    bg = 'bulgarian', lt = 'lithuanian', la = 'latin',
+    mi = 'maori', ml = 'malayalam', cy = 'welsh',
+    sk = 'slovak', te = 'telugu', fa = 'persian',
+    lv = 'latvian', bn = 'bengali', sr = 'serbian',
+    az = 'azerbaijani', sl = 'slovenian', kn = 'kannada',
+    et = 'estonian', mk = 'macedonian', br = 'breton',
+    eu = 'basque', is = 'icelandic', hy = 'armenian',
+    ne = 'nepali', mn = 'mongolian', bs = 'bosnian',
+    kk = 'kazakh', sq = 'albanian', sw = 'swahili',
+    gl = 'galician', mr = 'marathi', pa = 'punjabi',
+    si = 'sinhala', km = 'khmer', sn = 'shona',
+    yo = 'yoruba', so = 'somali', af = 'afrikaans',
+    oc = 'occitan', ka = 'georgian', be = 'belarusian',
+    tg = 'tajik', sd = 'sindhi', gu = 'gujarati',
+    am = 'amharic', yi = 'yiddish', lo = 'lao',
+    uz = 'uzbek', fo = 'faroese', ht = 'haitian creole',
+    ps = 'pashto', tk = 'turkmen', nn = 'nynorsk',
+    mt = 'maltese', sa = 'sanskrit', lb = 'luxembourgish',
+    my = 'myanmar', bo = 'tibetan', tl = 'tagalog',
+    mg = 'malagasy', as = 'assamese', tt = 'tatar',
+    haw = 'hawaiian', ln = 'lingala', ha = 'hausa',
+    ba = 'bashkir', jw = 'javanese', su = 'sundanese'
   },
   LANGUAGE_CODES = {},
   DEFAULT_LANGUAGE = 'en',
@@ -59,6 +59,13 @@ ReaSpeechUI = {
 
   ITEM_WIDTH = 125,
   LARGE_ITEM_WIDTH = 375,
+
+  SCORE_COLORS = {
+    bright_green = 0xa3ff00a6,
+    dark_green = 0x2cba00a6,
+    orange = 0xffa700a6,
+    red = 0xff0000a6
+  }
 }
 
 ReaSpeechUI._init_languages = function ()
@@ -192,78 +199,92 @@ function ReaSpeechUI:tooltip(text)
 end
 
 function ReaSpeechUI:react()
-  -- Handle responses from worker
-  self:trap(function ()
-    local response = table.remove(self.responses, 1)
-    if response then
-      self:debug('Response: ' .. dump(response))
-      if response.segments then
-        for _, segment in pairs(response.segments) do
-          for _, s in pairs(
-            TranscriptSegment.from_whisper(segment, response._job.item, response._job.take)
-          ) do
-            if s:get('text') then
-              self.transcript:add_segment(s)
-            end
-          end
-        end
-        self.transcript:update()
+  for _, handler in pairs(self:react_handlers()) do
+    self:trap(handler)
+  end
+end
+
+function ReaSpeechUI:react_handlers()
+  return {
+    function() self:react_to_worker_response() end,
+    function() self:react_to_logging() end,
+    function() self.worker:react() end,
+    function() self:render() end
+  }
+end
+
+function ReaSpeechUI:react_to_worker_response()
+  local response = table.remove(self.responses, 1)
+
+  if not response then
+    return
+  end
+
+  self:debug('Response: ' .. dump(response))
+
+  if not response.segments then
+    return
+  end
+
+  for _, segment in pairs(response.segments) do
+    for _, s in pairs(
+      TranscriptSegment.from_whisper(segment, response._job.item, response._job.take)
+    ) do
+      if s:get('text') then
+        self.transcript:add_segment(s)
       end
     end
-  end)
+  end
 
-  -- Handle logs
-  self:trap(function ()
-    for _, log in pairs(self.logs) do
-      local msg, dbg = table.unpack(log)
-      if dbg and self.log_enable and self.log_debug then
-        reaper.ShowConsoleMsg(self:log_time() .. ' [DBG] ' .. tostring(msg) .. '\n')
-      elseif not dbg and self.log_enable then
-        reaper.ShowConsoleMsg(self:log_time() .. ' [LOG] ' .. tostring(msg) .. '\n')
-      end
+  self.transcript:update()
+end
+
+function ReaSpeechUI:react_to_logging()
+  for _, log in pairs(self.logs) do
+    local msg, dbg = table.unpack(log)
+    if dbg and self.log_enable and self.log_debug then
+      reaper.ShowConsoleMsg(self:log_time() .. ' [DBG] ' .. tostring(msg) .. '\n')
+    elseif not dbg and self.log_enable then
+      reaper.ShowConsoleMsg(self:log_time() .. ' [LOG] ' .. tostring(msg) .. '\n')
     end
-    self.logs = {}
-  end)
+  end
 
-  -- Allow worker to make progress
-  self:trap(function ()
-    self.worker:react()
-  end)
-
-  -- Render UI
-  self:trap(function ()
-    self:render()
-  end)
+  self.logs = {}
 end
 
 function ReaSpeechUI:render()
   ImGui.PushItemWidth(ctx, self.ITEM_WIDTH)
+
   self:trap(function ()
-
-    if(self.product_activation.state == 'activated') then
-
-      if not self.product_activation.config:get('eula_signed') then
-        self:render_EULA_inputs()
-      else
-        self:render_main()
-      end
-    else
+    if self.product_activation.state ~= "activated" then
       self:render_activation_inputs()
+      return
     end
 
+    if not self.product_activation.config:get('eula_signed') then
+      self:render_EULA_inputs()
+      return
+    end
 
+    self:render_main()
   end)
+
   ImGui.PopItemWidth(ctx)
 end
 
 function ReaSpeechUI:render_main()
   self:render_inputs()
   self:render_actions()
+  self:render_transcript_section()
+end
+
+function ReaSpeechUI:render_transcript_section()
   if self.transcript:has_segments() then
     ImGui.SeparatorText(ctx, "Transcript")
     self:render_result_actions()
     self:render_table()
   end
+
   self.transcript_editor:render()
   self.transcript_exporter:render()
 end
@@ -422,7 +443,7 @@ function ReaSpeechUI:render_actions()
     end
 
     if ImGui.Button(ctx, button_text) then
-      self:process_selected_tracks()
+      self:process_jobs(ReaSpeechUI.jobs_for_selected_tracks)
     end
   end)
 
@@ -441,13 +462,13 @@ function ReaSpeechUI:render_actions()
     end
 
     if ImGui.Button(ctx, button_text) then
-      self:process_selected_items()
+      self:process_jobs(ReaSpeechUI.jobs_for_selected_items)
     end
   end)
 
   ImGui.SameLine(ctx)
   if ImGui.Button(ctx, "Process All Items") then
-    self:process_all_items()
+    self:process_jobs(ReaSpeechUI.jobs_for_all_items)
   end
 
   if progress then
@@ -621,9 +642,7 @@ function ReaSpeechUI:render_link(text, onclick, text_color, underline_color)
   text_color = text_color or 0xffffffff
   underline_color = underline_color or 0xffffffa0
 
-  ImGui.PushStyleColor(ctx, ImGui.Col_Text(), text_color)
-  ImGui.Text(ctx, text)
-  ImGui.PopStyleColor(ctx, 1)
+  ImGui.TextColored(ctx, text_color, text)
 
   if ImGui.IsItemHovered(ctx) then
     local rect_min_x, rect_min_y = ImGui.GetItemRectMin(ctx)
@@ -685,14 +704,16 @@ function ReaSpeechUI:render_score(value)
 end
 
 function ReaSpeechUI:score_color(value)
+  local colors = ReaSpeechUI.SCORE_COLORS
+
   if value > 0.9 then
-    return 0xa3ff00a6
+    return colors.bright_green
   elseif value > 0.8 then
-    return 0x2cba00a6
+    return colors.dark_green
   elseif value > 0.7 then
-    return 0xffa700a6
+    return colors.orange
   elseif value > 0.0 then
-    return 0xff0000a6
+    return colors.red
   else
     return nil
   end
@@ -702,8 +723,8 @@ function ReaSpeechUI:sort_table()
   local specs_dirty, has_specs = ImGui.TableNeedSort(ctx)
   if has_specs and specs_dirty then
     local columns = self.transcript:get_columns()
-    column = nil
-    ascending = true
+    local column = nil
+    local ascending = true
 
     for next_id = 0, math.huge do
       local ok, _, col_idx, _, sort_direction =
@@ -722,48 +743,60 @@ function ReaSpeechUI:sort_table()
   end
 end
 
-function ReaSpeechUI:process_selected_tracks()
+function ReaSpeechUI.make_job(media_item, take)
+  local path = ReaSpeechUI.get_source_path(take)
+
+  if path then
+    return {item = media_item, take = take, path = path}
+  else
+    return nil
+  end
+end
+
+function ReaSpeechUI.jobs_for_selected_tracks()
   local jobs = {}
   for track in ReaIter.each_selected_track() do
     for item in ReaIter.each_track_item(track) do
       for take in ReaIter.each_take(item) do
-        local path = self:get_source_path(take)
-        if path then
-          table.insert(jobs, {item = item, take = take, path = path})
+        local job = ReaSpeechUI.make_job(item, take)
+        if job then
+          table.insert(jobs, job)
         end
       end
     end
   end
-  self:process_jobs(jobs)
+  return jobs
 end
 
-function ReaSpeechUI:process_selected_items()
+function ReaSpeechUI.jobs_for_selected_items()
   local jobs = {}
   for item in ReaIter.each_selected_media_item() do
     for take in ReaIter.each_take(item) do
-      local path = self:get_source_path(take)
-      if path then
-        table.insert(jobs, {item = item, take = take, path = path})
+      local job = ReaSpeechUI.make_job(item, take)
+      if job then
+        table.insert(jobs, job)
       end
     end
   end
-  self:process_jobs(jobs)
+  return jobs
 end
 
-function ReaSpeechUI:process_all_items()
+function ReaSpeechUI.jobs_for_all_items()
   local jobs = {}
   for item in ReaIter.each_media_item() do
     for take in ReaIter.each_take(item) do
-      local path = self:get_source_path(take)
-      if path then
-        table.insert(jobs, {item = item, take = take, path = path})
+      local job = ReaSpeechUI.make_job(item, take)
+      if job then
+        table.insert(jobs, job)
       end
     end
   end
-  self:process_jobs(jobs)
+  return jobs
 end
 
-function ReaSpeechUI:process_jobs(jobs)
+function ReaSpeechUI:process_jobs(job_generator)
+  local jobs = job_generator()
+
   if #jobs == 0 then
     reaper.MB("No media found to process.", "No media", 0)
     return
@@ -779,7 +812,7 @@ function ReaSpeechUI:process_jobs(jobs)
   table.insert(self.requests, request)
 end
 
-function ReaSpeechUI:get_source_path(take)
+function ReaSpeechUI.get_source_path(take)
   local source = reaper.GetMediaItemTake_Source(take)
   if source then
     local source_path = reaper.GetMediaSourceFileName(source)
