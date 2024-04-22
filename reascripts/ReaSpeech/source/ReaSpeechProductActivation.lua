@@ -10,8 +10,6 @@ ReaSpeechProductActivation = {
   PRODUCT_ID = 79004057,
   PRODUCT_CHECK_COUNT = 4,
   PRODUCT_NAME = "ReaSpeech",
-  --TODO Remove for official release
-  PRODUCT_DEVELOPERLICENSE ="576D-C7C1-6C5A-429D",
 
   config = nil,
 
