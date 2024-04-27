@@ -8,6 +8,8 @@ services:
     environment:
       - ASR_MODEL=small
       - ASR_ENGINE=faster_whisper
+      - OUTPUT_DIRECTORY=/app/app/output
+      - OUPUT_URL_PREFIX=/output
     ports:
       - "9000:9000"
     volumes:
@@ -15,6 +17,26 @@ services:
       - ./reascripts:/app/reascripts
       - cache-pip:/root/.cache/pip
       - cache-whisper:/root/.cache/whisper
+
+  worker:
+    build: ./app
+    command: celery -A app.worker.celery worker --loglevel=info
+    volumes:
+      - ./app:/app/app
+      - cache-pip:/root/.cache/pip
+      - cache-whisper:/root/.cache/whisper
+    environment:
+      - ASR_MODEL=small
+      - ASR_ENGINE=faster_whisper
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - OUTPUT_DIRECTORY=/app/app/output
+      - OUPUT_URL_PREFIX=/output
+    depends_on:
+      - reaspeech
+
+  redis:
+    image: redis:7
 
 volumes:
   cache-pip:
