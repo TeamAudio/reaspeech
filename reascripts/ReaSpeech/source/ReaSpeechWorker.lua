@@ -102,23 +102,28 @@ end
 function ReaSpeechWorker:handle_response(active_job, response)
   app:debug('Active job: ' .. dump(active_job))
   app:debug('Response: ' .. dump(response))
-  if active_job.job and active_job.job.use_job_queue then
-    if not response.job_status or response.job_status == 'PENDING' then
-      active_job.job.job_id = response.job_id
-      return nil
-    elseif response.job_status == 'SUCCESS' then
-      local transcript_url_path = response.job_result.url
-      response._job = active_job.job
-      local transcript = self:fetch_json(transcript_url_path)
-      transcript._job = active_job.job
-      table.insert(self.responses, transcript)
-      return true
-    end
-  else
+
+  if not ReaSpeechWorker.is_async_job(active_job.job) then
     response._job = active_job.job
     table.insert(self.responses, response)
     return true
   end
+
+  if not response.job_status or response.job_status == 'PENDING' then
+    active_job.job.job_id = response.job_id
+    return false
+  end
+
+  if response.job_status == 'SUCCESS' then
+    local transcript_url_path = response.job_result.url
+    response._job = active_job.job
+    local transcript = self:fetch_json(transcript_url_path)
+    transcript._job = active_job.job
+    table.insert(self.responses, transcript)
+    return true
+  end
+
+  -- We should handle some failure cases here
 end
 
 function ReaSpeechWorker:start_active_job()
@@ -147,19 +152,33 @@ function ReaSpeechWorker:check_active_job()
     return
   end
 
+  local job = self.active_job.job
+
+  if ReaSpeechWorker.is_async_job(job) and job.job_id then
+    self:check_active_job_async()
+  else
+    self:check_active_job_output_file()
+  end
+end
+
+function ReaSpeechWorker.is_async_job(job)
+  return job.use_job_queue
+end
+
+function ReaSpeechWorker:check_active_job_async()
   local active_job = self.active_job
 
-  -- should probably extract this
-  if active_job.job.use_job_queue and active_job.job.job_id then
-    local response = self:get_job_status(active_job.job.job_id)
-    if response then
-      if self:handle_response(active_job, response) then
-        self.active_job = nil
-      end
-    end
-    return
-  end
+  local response = self:get_job_status(active_job.job.job_id)
 
+  if response then
+    if self:handle_response(active_job, response) then
+      self.active_job = nil
+    end
+  end
+end
+
+function ReaSpeechWorker:check_active_job_output_file()
+  local active_job = self.active_job
   local output_file = active_job.output_file
 
   local f = io.open(output_file, 'r')
