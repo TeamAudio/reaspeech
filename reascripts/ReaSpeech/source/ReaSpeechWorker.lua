@@ -26,16 +26,38 @@ function ReaSpeechWorker:init()
 end
 
 function ReaSpeechWorker:react()
-  -- Handle next request
-  local request = table.remove(self.requests, 1)
-  if request then
-    self:handle_request(request)
+  for _, handler in pairs(self:react_handlers()) do
+    app:trap(handler)
   end
+end
 
-  -- Make progress on jobs
-  if self.active_job then
-    self:check_active_job()
-  else
+function ReaSpeechWorker:react_handlers()
+  return {
+    self:react_handle_request(),
+    self:react_handle_jobs(),
+    self:react_handle_interval_functions(),
+  }
+end
+
+-- Handle next request
+function ReaSpeechWorker:react_handle_request()
+  return function()
+    -- Handle next request
+    local request = table.remove(self.requests, 1)
+    if request then
+      self:handle_request(request)
+    end
+  end
+end
+
+-- Make progress on jobs
+function ReaSpeechWorker:react_handle_jobs()
+  return function()
+    if self.active_job then
+      self:check_active_job()
+      return
+    end
+
     local pending_job = table.remove(self.pending_jobs, 1)
     if pending_job then
       self.active_job = pending_job
@@ -45,6 +67,27 @@ function ReaSpeechWorker:react()
       self.job_count = 0
     end
   end
+end
+
+function ReaSpeechWorker:react_handle_interval_functions()
+  return function()
+    local time = reaper.time_precise()
+    local fs = self:interval_functions()
+    for i = 1, #fs do
+      fs[i]:react(time)
+    end
+  end
+end
+
+function ReaSpeechWorker:interval_functions()
+  if self._interval_functions then
+    return self._interval_functions
+  end
+
+  self._interval_functions = {
+  }
+
+  return self._interval_functions
 end
 
 function ReaSpeechWorker:progress()
