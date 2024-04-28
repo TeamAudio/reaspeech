@@ -147,6 +147,8 @@ function ReaSpeechWorker:check_active_job()
     return
   end
 
+  local active_job = self.active_job
+
   -- should probably extract this
   if active_job.job.use_job_queue and active_job.job.job_id then
     local response = self:get_job_status(active_job.job.job_id)
@@ -226,10 +228,7 @@ end
 
 function ReaSpeechWorker:post_request(data, path, remote_url)
   remote_url = remote_url or self.asr_url
-  local curl = "curl"
-  if not reaper.GetOS():find("Win") then
-    curl = "/usr/bin/curl"
-  end
+  local curl = ReaSpeechWorker.get_curl_cmd()
   local query = {}
   for k, v in pairs(data) do
     table.insert(query, k .. '=' .. url.quote(v))
