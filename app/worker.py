@@ -11,20 +11,22 @@ from .util.audio import load_audio
 
 # monkeypatch tqdm to fool whisper's `transcribe` function
 class _TQDM(tqdm.tqdm):
+    progress_function = None
+
     def __init__(self, *argv, total=0, unit="", **kwargs):
         self._total = total
         self._unit = unit
         self._progress = 0
+        self.progress_function = _TQDM.progress_function or None
         super().__init__(*argv, **kwargs)
 
     def set_progress_function(progress_function: Callable[[str, int, int], None]):
         _TQDM.progress_function = progress_function
 
     def update(self, progress):
-        print(f"{progress}\n")
         self._progress += progress
-        if _TQDM.progress_function is not None:
-            _TQDM.progress_function(self._unit, self._total, self._progress)
+        if self.progress_function is not None:
+            self.progress_function(self._unit, self._total, self._progress)
         else:
             super().update(self, progress)
 
