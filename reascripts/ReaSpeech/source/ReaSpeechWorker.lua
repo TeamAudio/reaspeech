@@ -33,26 +33,24 @@ end
 
 function ReaSpeechWorker:react_handlers()
   return {
-    self:react_handle_request(),
-    self:react_handle_jobs(),
     self:react_handle_interval_functions(),
   }
 end
 
 -- Handle next request
 function ReaSpeechWorker:react_handle_request()
-  return function()
+  return IntervalFunction.new(0.3, function()
     -- Handle next request
     local request = table.remove(self.requests, 1)
     if request then
       self:handle_request(request)
     end
-  end
+  end)
 end
 
 -- Make progress on jobs
 function ReaSpeechWorker:react_handle_jobs()
-  return function()
+  return IntervalFunction.new(0.5, function()
     if self.active_job then
       self:check_active_job()
       return
@@ -66,7 +64,7 @@ function ReaSpeechWorker:react_handle_jobs()
       app:log('Processing finished')
       self.job_count = 0
     end
-  end
+  end)
 end
 
 function ReaSpeechWorker:react_handle_interval_functions()
@@ -85,6 +83,8 @@ function ReaSpeechWorker:interval_functions()
   end
 
   self._interval_functions = {
+    self:react_handle_request(),
+    self:react_handle_jobs(),
   }
 
   return self._interval_functions
