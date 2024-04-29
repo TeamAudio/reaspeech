@@ -11,6 +11,7 @@ from .util.audio import load_audio
 
 # monkeypatch tqdm to fool whisper's `transcribe` function
 class _TQDM(tqdm.tqdm):
+    _tqdm = tqdm.tqdm
     progress_function = None
 
     def __init__(self, *argv, total=0, unit="", **kwargs):
@@ -28,7 +29,7 @@ class _TQDM(tqdm.tqdm):
         if self.progress_function is not None:
             self.progress_function(self._unit, self._total, self._progress)
         else:
-            super().update(self, progress)
+            _TQDM._tqdm.update(self, progress)
 
 tqdm.tqdm = _TQDM
 
