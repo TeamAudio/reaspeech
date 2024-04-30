@@ -95,6 +95,12 @@ function ReaSpeechWorker:progress()
   if job_count == 0 then
     return nil
   end
+
+  if self.active_job and self.active_job.job.progress then
+    local progress = self.active_job.job.progress
+    return progress.current / progress.total
+  end
+
   local pending_job_count = #self.pending_jobs
   if self.active_job then
     pending_job_count = pending_job_count + 1
@@ -152,8 +158,10 @@ function ReaSpeechWorker:handle_response(active_job, response)
     return true
   end
 
-  if not response.job_status or response.job_status == 'PENDING' then
-    active_job.job.job_id = response.job_id
+  active_job.job.job_id = response.job_id
+
+  if not response.job_status then
+    -- don't think this is reachable but not 100% on that
     return false
   end
 
@@ -167,6 +175,10 @@ function ReaSpeechWorker:handle_response(active_job, response)
   end
 
   -- We should handle some failure cases here
+
+  if response.job_result and response.job_result.progress then
+    active_job.job.progress = response.job_result.progress
+  end
 end
 
 function ReaSpeechWorker:start_active_job()

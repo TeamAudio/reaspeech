@@ -57,7 +57,7 @@ def transcribe(
     vad_filter: Union[bool, None],
     word_timestamps: Union[bool, None]
 ):
-    self.update_state(state="ENCODING", meta={"units": "files", "total": 1, "current": 0})
+    self.update_state(state="ENCODING", meta={"progress": {"units": "files", "total": 1, "current": 0}})
     audio_file = open(audio_file_path, "rb")
 
     _TQDM.set_progress_function(update_progress(self))
@@ -90,4 +90,5 @@ def get_output_url_path(job_id: str):
     return os.environ.get("OUTPUT_URL", "/output") + "/" + job_id
 
 def update_progress(context):
-    return lambda units, total, current: context.update_state(state="TRANSCRIBING", meta={"units": units, "total": total, "current": current})
+    return lambda units, total, current: context.update_state(
+        state="TRANSCRIBING", meta={"progress": {"units": units, "total": total, "current": current}})
