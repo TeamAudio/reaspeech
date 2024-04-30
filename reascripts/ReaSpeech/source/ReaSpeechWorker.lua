@@ -110,9 +110,19 @@ function ReaSpeechWorker:progress()
 end
 
 function ReaSpeechWorker:cancel()
-  self.active_job = nil
+  if self.active_job then
+    if self.active_job.job and self.active_job.job.job_id then
+      self:cancel_job(self.active_job.job.job_id)
+    end
+    self.active_job = nil
+  end
   self.pending_jobs = {}
   self.job_count = 0
+end
+
+function ReaSpeechWorker:cancel_job(job_id)
+  local url_path = "/jobs/" .. job_id
+  self:fetch_json(url_path, 'DELETE')
 end
 
 function ReaSpeechWorker:handle_request(request)
@@ -257,13 +267,22 @@ function ReaSpeechWorker:check_active_job_output_file()
   end
 end
 
-function ReaSpeechWorker:fetch_json(url_path)
+function ReaSpeechWorker:fetch_json(url_path, http_method)
+  http_method = http_method or 'GET'
+
   local curl = ReaSpeechWorker.get_curl_cmd()
   local url = ("http://%s%s"):format(Script.host, url.quote(url_path))
+
+  local http_method_argument = ""
+  if http_method ~= 'GET' then
+    http_method_argument = " -X " .. http_method
+  end
+
   local command = (
     curl
     .. ' "' .. url .. '"'
     .. ' -H "accept: application/json"'
+    .. http_method_argument
     .. ' -s'
   )
 

@@ -146,6 +146,17 @@ async def job_status(job_id: str):
     }
     return JSONResponse(result)
 
+@app.delete("/jobs/{job_id}", tags=["Endpoints"])
+async def revoke_job(job_id: str):
+    job = AsyncResult(job_id)
+    job.revoke(terminate=True)
+
+    result = {
+        "job_id": job_id,
+        "job_status": job.status
+    }
+    return JSONResponse(result)
+
 @app.post("/detect-language", tags=["Endpoints"])
 async def detect_language(
         audio_file: UploadFile = File(...),
