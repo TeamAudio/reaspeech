@@ -4,7 +4,9 @@
 
 ]]--
 
-ReaSpeechWorker = {}
+ReaSpeechWorker = {
+  CURL_TIMEOUT_MS = 5000
+}
 
 ReaSpeechWorker.__index = ReaSpeechWorker
 ReaSpeechWorker.new = function (o)
@@ -290,7 +292,7 @@ function ReaSpeechWorker:fetch_json(url_path, http_method)
     .. ' -s'
   )
 
-  local exec_result = reaper.ExecProcess(command, 0)
+  local exec_result = reaper.ExecProcess(command, ReaSpeechWorker.CURL_TIMEOUT_MS)
 
   if exec_result == nil then
     return nil
