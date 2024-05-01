@@ -62,13 +62,16 @@ def transcribe(
     vad_filter: Union[bool, None],
     word_timestamps: Union[bool, None]
 ):
-    self.update_state(state="ENCODING", meta={"progress": {"units": "files", "total": 1, "current": 0}})
 
     with open(audio_file_path, "rb") as audio_file:
         _TQDM.set_progress_function(update_progress(self))
 
         try:
-            result = whisper_transcribe(load_audio(audio_file, encode), "transcribe", language, initial_prompt, vad_filter, word_timestamps, output_format)
+            self.update_state(state=STATES["encoding"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
+            audio_data = load_audio(audio_file, encode)
+
+            self.update_state(state=STATES["transcribing"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
+            result = whisper_transcribe(audio_data, "transcribe", language, initial_prompt, vad_filter, word_timestamps, output_format)
         finally:
             _TQDM.set_progress_function(None)
     os.remove(audio_file_path)
@@ -97,4 +100,4 @@ def get_output_url_path(job_id: str):
 
 def update_progress(context):
     return lambda units, total, current: context.update_state(
-        state="TRANSCRIBING", meta={"progress": {"units": units, "total": total, "current": current}})
+        state=STATES["transcribing"], meta={"progress": {"units": units, "total": total, "current": current}})
