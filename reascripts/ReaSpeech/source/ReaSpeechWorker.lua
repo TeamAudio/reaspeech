@@ -200,7 +200,7 @@ function ReaSpeechWorker:start_active_job()
 
   local remote_url = nil
   if active_job.job.use_job_queue then
-    remote_url = table.concat({"http://", Script.host, "/transcribe"}, "")
+    remote_url = ReaSpeechWorker.get_api_url('transcribe')
   end
 
   local output_file = self:post_request(active_job.data, active_job.job.path, remote_url)
@@ -210,6 +210,10 @@ function ReaSpeechWorker:start_active_job()
   else
     self.active_job = nil
   end
+end
+
+function ReaSpeechWorker.get_api_url(remote_path_no_leading_slash)
+  return ("http://%s/%s"):format(Script.host, url.quote(remote_path_no_leading_slash))
 end
 
 function ReaSpeechWorker:check_active_job()
@@ -271,7 +275,7 @@ function ReaSpeechWorker:fetch_json(url_path, http_method)
   http_method = http_method or 'GET'
 
   local curl = ReaSpeechWorker.get_curl_cmd()
-  local url = ("http://%s%s"):format(Script.host, url.quote(url_path))
+  local url = ReaSpeechWorker.get_api_url(url_path)
 
   local http_method_argument = ""
   if http_method ~= 'GET' then
