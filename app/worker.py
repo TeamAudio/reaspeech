@@ -58,12 +58,14 @@ def transcribe(
     word_timestamps: Union[bool, None]
 ):
     self.update_state(state="ENCODING", meta={"progress": {"units": "files", "total": 1, "current": 0}})
-    audio_file = open(audio_file_path, "rb")
 
-    _TQDM.set_progress_function(update_progress(self))
-    result = whisper_transcribe(load_audio(audio_file, encode), "transcribe", language, initial_prompt, vad_filter, word_timestamps, output_format)
-    _TQDM.set_progress_function(None)
-    audio_file.close()
+    with open(audio_file_path, "rb") as audio_file:
+        _TQDM.set_progress_function(update_progress(self))
+
+        try:
+            result = whisper_transcribe(load_audio(audio_file, encode), "transcribe", language, initial_prompt, vad_filter, word_timestamps, output_format)
+        finally:
+            _TQDM.set_progress_function(None)
     os.remove(audio_file_path)
 
     filename = f"{original_filename.encode('latin-1', 'ignore').decode()}.{output_format}"
@@ -73,9 +75,8 @@ def transcribe(
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
 
-    f = open(output_path, "w")
-    f.write(result.read())
-    f.close()
+    with open(output_path, "w") as f:
+        f.write(result.read())
 
     url = f"{get_output_url_path(transcribe.request.id)}/{filename}"
 
