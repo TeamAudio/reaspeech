@@ -28,7 +28,7 @@ def load_audio(file: BinaryIO, encode=True, sr: int = SAMPLE_RATE):
             out, _ = (
                 ffmpeg.input("pipe:", threads=0)
                 .output("-", format="s16le", acodec="pcm_s16le", ac=1, ar=sr)
-                .run(cmd="/Users/mike/Downloads/ffmpeg", capture_stdout=True, capture_stderr=True, input=file.read())
+                .run(cmd="ffmpeg", capture_stdout=True, capture_stderr=True, input=file.read())
             )
         except ffmpeg.Error as e:
             raise RuntimeError(f"Failed to load audio: {e.stderr.decode()}") from e
