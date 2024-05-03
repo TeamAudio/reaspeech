@@ -39,6 +39,8 @@ torch = [
   {markers = "sys_platform == 'win' and platform_machine == 'amd64'", url="https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp310-cp310-win_amd64.whl"},
 ]
 jinja2 = "^3.1.2"
+celery = "^5.2.7"
+redis = "^4.5.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"

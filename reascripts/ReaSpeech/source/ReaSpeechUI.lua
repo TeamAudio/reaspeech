@@ -129,6 +129,8 @@ function ReaSpeechUI:init()
   self.log_enable = false
   self.log_debug = false
 
+  self.use_job_queue = false
+
   self.words = false
   self.colorize_words = false
   self.autoplay = true
@@ -434,6 +436,12 @@ function ReaSpeechUI:render_advanced_controls()
         self.log_debug = value
       end
     end
+
+    rv, value = ImGui.Checkbox(ctx, "use job queue", self.use_job_queue)
+    if rv then
+      self.use_job_queue = value
+    end
+
     ImGui.TreePop(ctx)
     ImGui.Spacing(ctx)
   end
@@ -861,6 +869,7 @@ function ReaSpeechUI:process_jobs(job_generator)
     return
   end
   local request = {
+    use_job_queue = self.use_job_queue,
     language = self.language,
     translate = self.translate,
     initial_prompt = self.initial_prompt,
