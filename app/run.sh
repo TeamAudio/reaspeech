@@ -1,11 +1,20 @@
 #!/bin/bash
 
+export CELERY_BROKER_URL=redis://localhost:6379/0
+export CELERY_RESULT_BACKEND=redis://localhost:6379/0
+export OUTPUT_DIRECTORY=/app/app/output
+export OUPUT_URL_PREFIX=/output
+
 # Start Redis
-echo Starting Redis...
+echo Starting database...
 redis-server &
 
-# Start application
-echo Starting Gunicorn...
+# Start Celery
+echo Starting workers...
+celery -A app.worker.celery worker --loglevel=info &
+
+# Start Gunicorn
+echo Starting application...
 gunicorn --bind 0.0.0.0:9000 --workers 1 --timeout 0 app.webservice:app -k uvicorn.workers.UvicornWorker &
 
 # Wait for any process to exit
