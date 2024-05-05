@@ -39,7 +39,7 @@ end
 -- We're not inside of docker! We're undocked!
 Script = {
   name = "ReaSpeechDev",
-  host = "",
+  host = "localhost:9000",
   lua = _VERSION:match('[%d.]+'),
   timeout = 30000,
 }
