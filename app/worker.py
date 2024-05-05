@@ -96,7 +96,7 @@ def get_output_path(job_id: str):
     return os.environ.get("OUTPUT_DIRECTORY", os.getcwd() + "/app/output") + "/" + job_id
 
 def get_output_url_path(job_id: str):
-    return os.environ.get("OUTPUT_URL", "output") + "/" + job_id
+    return os.environ.get("OUTPUT_URL_PREFIX", "/output") + "/" + job_id
 
 def update_progress(context):
     return lambda units, total, current: context.update_state(

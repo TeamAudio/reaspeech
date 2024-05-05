@@ -36,6 +36,6 @@ RUN make publish
 WORKDIR /app
 RUN rm -rf reascripts
 
-ENTRYPOINT ["/bin/bash", "app/run.sh"]
+ENTRYPOINT ["/bin/bash", "scripts/run.sh"]
 
 EXPOSE 9000

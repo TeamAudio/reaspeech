@@ -3,7 +3,7 @@
 export CELERY_BROKER_URL=redis://localhost:6379/0
 export CELERY_RESULT_BACKEND=redis://localhost:6379/0
 export OUTPUT_DIRECTORY=/app/app/output
-export OUPUT_URL_PREFIX=/output
+export OUTPUT_URL_PREFIX=/output
 
 # Start Redis
 echo Starting database...
