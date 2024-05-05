@@ -293,6 +293,8 @@ function ReaSpeechWorker:fetch_json(url_path, http_method)
     .. ' -s'
   )
 
+  app:debug('Fetching JSON: ' .. command)
+
   local exec_result = reaper.ExecProcess(command, ReaSpeechWorker.CURL_TIMEOUT_MS)
 
   if exec_result == nil then

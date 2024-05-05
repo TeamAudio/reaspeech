@@ -11,7 +11,7 @@ redis-server &
 
 # Start Celery
 echo Starting workers...
-celery -A app.worker.celery worker --loglevel=info &
+celery -A app.worker.celery worker -P solo --loglevel=info &
 
 # Start Gunicorn
 echo Starting application...
