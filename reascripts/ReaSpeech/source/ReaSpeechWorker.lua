@@ -123,7 +123,7 @@ function ReaSpeechWorker:cancel()
 end
 
 function ReaSpeechWorker:cancel_job(job_id)
-  local url_path = "/jobs/" .. job_id
+  local url_path = "jobs/" .. job_id
   self:fetch_json(url_path, 'DELETE')
 end
 
@@ -321,7 +321,7 @@ function ReaSpeechWorker.get_curl_cmd()
 end
 
 function ReaSpeechWorker:get_job_status(job_id)
-  local url_path = "/jobs/" .. job_id
+  local url_path = "jobs/" .. job_id
   return self:fetch_json(url_path)
 end
 
