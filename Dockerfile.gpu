@@ -16,6 +16,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     fswatch \
     make \
     ffmpeg \
+    redis \
     && rm -rf /var/lib/apt/lists/*
 
 RUN ln -s -f /usr/bin/python${PYTHON_VERSION} /usr/bin/python3 && \
@@ -47,6 +48,6 @@ RUN make publish
 WORKDIR /app
 RUN rm -rf reascripts
 
-CMD gunicorn --bind 0.0.0.0:9000 --workers 1 --timeout 0 app.webservice:app -k uvicorn.workers.UvicornWorker
+ENTRYPOINT ["/bin/bash", "scripts/run.sh"]
 
 EXPOSE 9000

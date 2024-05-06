@@ -67,7 +67,8 @@ templates_path = os.getcwd() + "/app/templates"
 templates = Jinja2Templates(directory=templates_path)
 
 output_directory = os.environ.get("OUTPUT_DIRECTORY", os.getcwd() + "/app/output")
-app.mount("/output", StaticFiles(directory=output_directory), name="output")
+output_url_prefix = os.environ.get("OUTPUT_URL_PREFIX", "/output")
+app.mount(output_url_prefix, StaticFiles(directory=output_directory), name="output")
 
 @app.get("/", response_class=RedirectResponse, include_in_schema=False)
 async def index():

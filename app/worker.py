@@ -1,10 +1,9 @@
+import logging
 import os
+
 from celery import Celery
 from typing import Union, Callable
-
 from whisper import tokenizer
-
-
 import tqdm
 
 from .util.audio import load_audio
@@ -15,6 +14,7 @@ class _TQDM(tqdm.tqdm):
     progress_function = None
 
     def __init__(self, *argv, total=0, unit="", **kwargs):
+        logging.info(f"Creating TQDM with total={total}, unit={unit}")
         self._total = total
         self._unit = unit
         self._progress = 0
@@ -22,9 +22,11 @@ class _TQDM(tqdm.tqdm):
         super().__init__(*argv, **kwargs)
 
     def set_progress_function(progress_function: Callable[[str, int, int], None]):
+        logging.info(f"Setting progress function to {progress_function}")
         _TQDM.progress_function = progress_function
 
     def update(self, progress):
+        logging.info(f"Updating TQDM with progress={progress}")
         self._progress += progress
         if self.progress_function is not None:
             self.progress_function(self._unit, self._total, self._progress)
@@ -62,23 +64,31 @@ def transcribe(
     vad_filter: Union[bool, None],
     word_timestamps: Union[bool, None]
 ):
+    logging.info(f"Transcribing {audio_file_path} with language={language}, initial_prompt={initial_prompt}, encode={encode}, output_format={output_format}, vad_filter={vad_filter}, word_timestamps={word_timestamps}")
 
     with open(audio_file_path, "rb") as audio_file:
         _TQDM.set_progress_function(update_progress(self))
 
         try:
+            logging.info(f"Loading audio from {audio_file_path}")
             self.update_state(state=STATES["encoding"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
             audio_data = load_audio(audio_file, encode)
 
+            logging.info(f"Transcribing audio")
             self.update_state(state=STATES["transcribing"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
             result = whisper_transcribe(audio_data, "transcribe", language, initial_prompt, vad_filter, word_timestamps, output_format)
         finally:
             _TQDM.set_progress_function(None)
+
+    logging.info(f"Transcription complete")
+
     os.remove(audio_file_path)
 
     filename = f"{original_filename.encode('latin-1', 'ignore').decode()}.{output_format}"
     output_directory = get_output_path(self.request.id)
     output_path = f"{output_directory}/{filename}"
+
+    logging.info(f"Writing result to {output_path}")
 
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
@@ -88,6 +98,8 @@ def transcribe(
 
     url = f"{get_output_url_path(transcribe.request.id)}/{filename}"
 
+    logging.info(f"Result written to {output_path}, URL: {url}")
+
     return {
         "url": url
     }
@@ -96,8 +108,13 @@ def get_output_path(job_id: str):
     return os.environ.get("OUTPUT_DIRECTORY", os.getcwd() + "/app/output") + "/" + job_id
 
 def get_output_url_path(job_id: str):
-    return os.environ.get("OUTPUT_URL", "output") + "/" + job_id
+    return os.environ.get("OUTPUT_URL_PREFIX", "/output") + "/" + job_id
 
 def update_progress(context):
-    return lambda units, total, current: context.update_state(
-        state=STATES["transcribing"], meta={"progress": {"units": units, "total": total, "current": current}})
+    def do_update(units, total, current):
+        logging.info(f"Updating progress with units={units}, total={total}, current={current}")
+        context.update_state(
+            state=STATES["transcribing"],
+            meta={"progress": {"units": units, "total": total, "current": current}}
+        )
+    return do_update

@@ -202,7 +202,7 @@ function ReaSpeechWorker:start_active_job()
 
   local remote_url = nil
   if active_job.job.use_job_queue then
-    remote_url = ReaSpeechWorker.get_api_url('transcribe')
+    remote_url = ReaSpeechWorker.get_api_url('/transcribe')
   end
 
   local output_file = self:post_request(active_job.data, active_job.job.path, remote_url)
@@ -214,7 +214,8 @@ function ReaSpeechWorker:start_active_job()
   end
 end
 
-function ReaSpeechWorker.get_api_url(remote_path_no_leading_slash)
+function ReaSpeechWorker.get_api_url(remote_path)
+  local remote_path_no_leading_slash = remote_path:gsub("^/+", "")
   return ("http://%s/%s"):format(Script.host, url.quote(remote_path_no_leading_slash))
 end
 
@@ -291,6 +292,8 @@ function ReaSpeechWorker:fetch_json(url_path, http_method)
     .. http_method_argument
     .. ' -s'
   )
+
+  app:debug('Fetching JSON: ' .. command)
 
   local exec_result = reaper.ExecProcess(command, ReaSpeechWorker.CURL_TIMEOUT_MS)
 
