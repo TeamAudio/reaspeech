@@ -36,6 +36,6 @@ RUN make publish
 WORKDIR /app
 RUN rm -rf reascripts
 
-ENTRYPOINT ["/bin/bash", "scripts/run.sh"]
+ENTRYPOINT ["/usr/bin/python", "app/run.py"]
 
 EXPOSE 9000
