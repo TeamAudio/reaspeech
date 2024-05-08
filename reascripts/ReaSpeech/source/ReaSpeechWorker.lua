@@ -5,7 +5,7 @@
 ]]--
 
 ReaSpeechWorker = {
-  CURL_TIMEOUT_MS = 5000
+  CURL_TIMEOUT_SECONDS = 5
 }
 
 ReaSpeechWorker.__index = ReaSpeechWorker
@@ -28,54 +28,12 @@ function ReaSpeechWorker:init()
 end
 
 function ReaSpeechWorker:react()
-  for _, handler in pairs(self:react_handlers()) do
-    app:trap(handler)
-  end
-end
-
-function ReaSpeechWorker:react_handlers()
-  return {
-    self:react_handle_interval_functions(),
-  }
-end
-
--- Handle next request
-function ReaSpeechWorker:react_handle_request()
-  return IntervalFunction.new(0.3, function()
-    -- Handle next request
-    local request = table.remove(self.requests, 1)
-    if request then
-      self:handle_request(request)
-    end
-  end)
-end
-
--- Make progress on jobs
-function ReaSpeechWorker:react_handle_jobs()
-  return IntervalFunction.new(0.5, function()
-    if self.active_job then
-      self:check_active_job()
-      return
-    end
-
-    local pending_job = table.remove(self.pending_jobs, 1)
-    if pending_job then
-      self.active_job = pending_job
-      self:start_active_job()
-    elseif self.job_count ~= 0 then
-      app:log('Processing finished')
-      self.job_count = 0
-    end
-  end)
-end
-
-function ReaSpeechWorker:react_handle_interval_functions()
-  return function()
-    local time = reaper.time_precise()
-    local fs = self:interval_functions()
-    for i = 1, #fs do
+  local time = reaper.time_precise()
+  local fs = self:interval_functions()
+  for i = 1, #fs do
+    app:trap(function ()
       fs[i]:react(time)
-    end
+    end)
   end
 end
 
@@ -85,11 +43,36 @@ function ReaSpeechWorker:interval_functions()
   end
 
   self._interval_functions = {
-    self:react_handle_request(),
-    self:react_handle_jobs(),
+    IntervalFunction.new(0.3, function () self:react_handle_request() end),
+    IntervalFunction.new(0.5, function () self:react_handle_jobs() end),
   }
 
   return self._interval_functions
+end
+
+-- Handle next request
+function ReaSpeechWorker:react_handle_request()
+  local request = table.remove(self.requests, 1)
+  if request then
+    self:handle_request(request)
+  end
+end
+
+-- Make progress on jobs
+function ReaSpeechWorker:react_handle_jobs()
+  if self.active_job then
+    self:check_active_job()
+    return
+  end
+
+  local pending_job = table.remove(self.pending_jobs, 1)
+  if pending_job then
+    self.active_job = pending_job
+    self:start_active_job()
+  elseif self.job_count ~= 0 then
+    app:log('Processing finished')
+    self.job_count = 0
+  end
 end
 
 function ReaSpeechWorker:progress()
@@ -160,6 +143,7 @@ function ReaSpeechWorker:handle_request(request)
   end
 end
 
+-- Returns true if the job has completed and should no longer be active
 function ReaSpeechWorker:handle_response(active_job, response)
   app:debug('Active job: ' .. dump(active_job))
   app:debug('Response: ' .. dump(response))
@@ -181,8 +165,10 @@ function ReaSpeechWorker:handle_response(active_job, response)
     local transcript_url_path = response.job_result.url
     response._job = active_job.job
     local transcript = self:fetch_json(transcript_url_path)
-    transcript._job = active_job.job
-    table.insert(self.responses, transcript)
+    if transcript then
+      transcript._job = active_job.job
+      table.insert(self.responses, transcript)
+    end
     return true
   end
 
@@ -191,6 +177,8 @@ function ReaSpeechWorker:handle_response(active_job, response)
   if response.job_result and response.job_result.progress then
     active_job.job.progress = response.job_result.progress
   end
+
+  return false
 end
 
 function ReaSpeechWorker:start_active_job()
@@ -290,18 +278,24 @@ function ReaSpeechWorker:fetch_json(url_path, http_method)
     .. ' "' .. url .. '"'
     .. ' -H "accept: application/json"'
     .. http_method_argument
+    .. ' -m ' .. ReaSpeechWorker.CURL_TIMEOUT_SECONDS
     .. ' -s'
   )
 
   app:debug('Fetching JSON: ' .. command)
 
-  local exec_result = reaper.ExecProcess(command, ReaSpeechWorker.CURL_TIMEOUT_MS)
+  local exec_result = reaper.ExecProcess(command, 0)
 
   if exec_result == nil then
+    app:debug("Curl ExecProcess failed")
     return nil
   end
 
-  local _, output = exec_result:match("(%d+)\n(.*)")
+  local status, output = exec_result:match("(%d+)\n(.*)")
+  if tonumber(status) ~= 0 then
+    app:debug("Curl failed with status " .. status)
+    return nil
+  end
 
   local response_json = nil
   if app:trap(function()
