@@ -3,15 +3,52 @@
 import os
 import subprocess
 import sys
+import argparse
 
-os.environ['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-os.environ['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
-os.environ['OUTPUT_DIRECTORY'] = '/app/app/output'
-os.environ['OUTPUT_URL_PREFIX'] = '/output'
+argmap = {
+    '--redis-bin': {
+        'default': 'redis-server',
+        'help': 'Path to Redis server binary (default: %(default)s)' },
+    '--celery-broker-url': {
+        'default': 'redis://localhost:6379/0',
+        'help': 'Celery broker URL (default: %(default)s)' },
+    '--celery-result-backend-url': {
+        'default': 'redis://localhost:6379/0',
+        'help': 'Celery result backend URL (default: %(default)s)' },
+    '--output-directory': {
+        'default': '/app/app/output',
+        'help': 'Output directory (default: %(default)s)' },
+    '--output-url-prefix': {
+        'default': '/output',
+        'help': 'Output URL prefix (default: %(default)s)' },
+    '--ffmpeg-bin': {
+        'default': 'ffmpeg',
+        'help': 'Path to ffmpeg binary (default: %(default)s)' },
+    '--asr-engine': {
+        'default': os.getenv('ASR_ENGINE', 'faster_whisper'),
+        'help': 'ASR engine to use (default: %(default)s)' },
+    '--asr-model': {
+        'default': os.getenv('ASR_MODEL', 'small'),
+        'help': 'ASR model to use (default: %(default)s)' },
+}
+
+parser = argparse.ArgumentParser()
+for arg, kwargs in argmap.items():
+    parser.add_argument(arg, **kwargs)
+
+args = parser.parse_args()
+
+os.environ['CELERY_BROKER_URL'] = args.celery_broker_url
+os.environ['CELERY_RESULT_BACKEND'] = args.celery_result_backend_url
+os.environ['OUTPUT_DIRECTORY'] = args.output_directory
+os.environ['OUTPUT_URL_PREFIX'] = args.output_url_prefix
+os.environ['FFMPEG_BIN'] = args.ffmpeg_bin
+os.environ['ASR_ENGINE'] = args.asr_engine
+os.environ['ASR_MODEL'] = args.asr_model
 
 # Start Redis
 print('Starting database...', file=sys.stderr)
-subprocess.Popen(['redis-server'])
+subprocess.Popen([args.redis_bin])
 
 # Start Celery
 print('Starting workers...', file=sys.stderr)
