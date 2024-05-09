@@ -25,10 +25,10 @@ argmap = {
         'default': 'ffmpeg',
         'help': 'Path to ffmpeg binary' },
     '--asr-engine': {
-        'default': 'faster_whisper',
+        'default': os.getenv('ASR_ENGINE', 'faster_whisper'),
         'help': 'ASR engine to use' },
     '--asr-model': {
-        'default': 'small',
+        'default': os.getenv('ASR_MODEL', 'small'),
         'help': 'ASR model to use' },
 }
 
