@@ -8,28 +8,28 @@ import argparse
 argmap = {
     '--redis-bin': {
         'default': 'redis-server',
-        'help': 'Path to Redis server binary' },
+        'help': 'Path to Redis server binary (default: %(default)s)' },
     '--celery-broker-url': {
         'default': 'redis://localhost:6379/0',
-        'help': 'Celery broker URL' },
+        'help': 'Celery broker URL (default: %(default)s)' },
     '--celery-result-backend-url': {
         'default': 'redis://localhost:6379/0',
-        'help': 'Celery result backend URL' },
+        'help': 'Celery result backend URL (default: %(default)s)' },
     '--output-directory': {
         'default': '/app/app/output',
-        'help': 'Output directory' },
+        'help': 'Output directory (default: %(default)s)' },
     '--output-url-prefix': {
         'default': '/output',
-        'help': 'Output URL prefix' },
+        'help': 'Output URL prefix (default: %(default)s)' },
     '--ffmpeg-bin': {
         'default': 'ffmpeg',
-        'help': 'Path to ffmpeg binary' },
+        'help': 'Path to ffmpeg binary (default: %(default)s)' },
     '--asr-engine': {
         'default': os.getenv('ASR_ENGINE', 'faster_whisper'),
-        'help': 'ASR engine to use' },
+        'help': 'ASR engine to use (default: %(default)s)' },
     '--asr-model': {
         'default': os.getenv('ASR_MODEL', 'small'),
-        'help': 'ASR model to use' },
+        'help': 'ASR model to use (default: %(default)s)' },
 }
 
 parser = argparse.ArgumentParser()
@@ -37,10 +37,6 @@ for arg, kwargs in argmap.items():
     parser.add_argument(arg, **kwargs)
 
 args = parser.parse_args()
-
-if args.help:
-    parser.print_help()
-    sys.exit(0)
 
 os.environ['CELERY_BROKER_URL'] = args.celery_broker_url
 os.environ['CELERY_RESULT_BACKEND'] = args.celery_result_backend_url
