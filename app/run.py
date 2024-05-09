@@ -38,6 +38,10 @@ for arg, kwargs in argmap.items():
 
 args = parser.parse_args()
 
+if args.help:
+    parser.print_help()
+    sys.exit(0)
+
 os.environ['CELERY_BROKER_URL'] = args.celery_broker_url
 os.environ['CELERY_RESULT_BACKEND'] = args.celery_result_backend_url
 os.environ['OUTPUT_DIRECTORY'] = args.output_directory
