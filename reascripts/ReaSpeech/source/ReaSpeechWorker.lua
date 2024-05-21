@@ -4,9 +4,7 @@
 
 ]]--
 
-ReaSpeechWorker = {
-  CURL_TIMEOUT_SECONDS = 5
-}
+ReaSpeechWorker = {}
 
 ReaSpeechWorker.__index = ReaSpeechWorker
 ReaSpeechWorker.new = function (o)
@@ -20,7 +18,6 @@ function ReaSpeechWorker:init()
   assert(self.requests, 'missing requests')
   assert(self.responses, 'missing responses')
   assert(self.logs, 'missing logs')
-  assert(self.asr_url, 'missing asr_url')
 
   self.active_job = nil
   self.pending_jobs = {}
@@ -113,7 +110,7 @@ end
 
 function ReaSpeechWorker:cancel_job(job_id)
   local url_path = "jobs/" .. job_id
-  self:fetch_json(url_path, 'DELETE')
+  ReaSpeechAPI:fetch_json(url_path, 'DELETE')
 end
 
 function ReaSpeechWorker:handle_request(request)
@@ -170,7 +167,7 @@ function ReaSpeechWorker:handle_response(active_job, response)
   if response.job_status == 'SUCCESS' then
     local transcript_url_path = response.job_result.url
     response._job = active_job.job
-    local transcript = self:fetch_json(transcript_url_path)
+    local transcript = ReaSpeechAPI:fetch_json(transcript_url_path)
     if transcript then
       transcript._job = active_job.job
       table.insert(self.responses, transcript)
@@ -194,23 +191,20 @@ function ReaSpeechWorker:start_active_job()
 
   local active_job = self.active_job
 
-  local remote_url = nil
+  local url_path
   if active_job.job.use_job_queue then
-    remote_url = ReaSpeechWorker.get_api_url('/transcribe')
+    url_path = '/transcribe'
+  else
+    url_path = '/asr'
   end
 
-  local output_file = self:post_request(active_job.data, active_job.job.path, remote_url)
+  local output_file = ReaSpeechAPI:post_request(url_path, active_job.data, active_job.job.path)
 
   if output_file then
     active_job.output_file = output_file
   else
     self.active_job = nil
   end
-end
-
-function ReaSpeechWorker.get_api_url(remote_path)
-  local remote_path_no_leading_slash = remote_path:gsub("^/+", "")
-  return ("http://%s/%s"):format(Script.host, url.quote(remote_path_no_leading_slash))
 end
 
 function ReaSpeechWorker:check_active_job()
@@ -268,96 +262,7 @@ function ReaSpeechWorker:check_active_job_output_file()
   end
 end
 
-function ReaSpeechWorker:fetch_json(url_path, http_method)
-  http_method = http_method or 'GET'
-
-  local curl = ReaSpeechWorker.get_curl_cmd()
-  local url = ReaSpeechWorker.get_api_url(url_path)
-
-  local http_method_argument = ""
-  if http_method ~= 'GET' then
-    http_method_argument = " -X " .. http_method
-  end
-
-  local command = (
-    curl
-    .. ' "' .. url .. '"'
-    .. ' -H "accept: application/json"'
-    .. http_method_argument
-    .. ' -m ' .. ReaSpeechWorker.CURL_TIMEOUT_SECONDS
-    .. ' -s'
-  )
-
-  app:debug('Fetching JSON: ' .. command)
-
-  local exec_result = reaper.ExecProcess(command, 0)
-
-  if exec_result == nil then
-    app:debug("Curl ExecProcess failed")
-    return nil
-  end
-
-  local status, output = exec_result:match("(%d+)\n(.*)")
-  if tonumber(status) ~= 0 then
-    app:debug("Curl failed with status " .. status)
-    return nil
-  end
-
-  local response_json = nil
-  if app:trap(function()
-    response_json = json.decode(output)
-  end) then
-    return response_json
-  else
-    app:log("JSON parse error")
-    app:log(output)
-    return nil
-  end
-end
-
-function ReaSpeechWorker.get_curl_cmd()
-  local curl = "curl"
-  if not reaper.GetOS():find("Win") then
-    curl = "/usr/bin/curl"
-  end
-  return curl
-end
-
 function ReaSpeechWorker:get_job_status(job_id)
   local url_path = "jobs/" .. job_id
-  return self:fetch_json(url_path)
-end
-
-function ReaSpeechWorker:post_request(data, path, remote_url)
-  remote_url = remote_url or self.asr_url
-  local curl = ReaSpeechWorker.get_curl_cmd()
-  local query = {}
-  for k, v in pairs(data) do
-    table.insert(query, k .. '=' .. url.quote(v))
-  end
-  local output_file = Tempfile:name()
-  local command = (
-    curl
-    .. ' "' .. remote_url .. '?' .. table.concat(query, '&') .. '"'
-    .. ' -H "accept: application/json"'
-    .. ' -H "Content-Type: multipart/form-data"'
-    .. ' -F ' .. self:_maybe_quote('audio_file=@"' .. path .. '"')
-    .. ' -o "' .. output_file .. '"'
-  )
-  app:log(path)
-  app:debug('Command: ' .. command)
-  if reaper.ExecProcess(command, -2) then
-    return output_file
-  else
-    app:log("Unable to run curl")
-    return nil
-  end
-end
-
-function ReaSpeechWorker:_maybe_quote(arg)
-  if reaper.GetOS():find("Win") then
-    return arg
-  else
-    return "'" .. arg .. "'"
-  end
+  return ReaSpeechAPI:fetch_json(url_path)
 end
