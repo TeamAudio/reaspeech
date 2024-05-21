@@ -351,15 +351,17 @@ function ReaSpeechUI:render_transcript_section()
 end
 
 function ReaSpeechUI.png_from_bytes(image_key)
-    if not IMAGES[image_key] or not IMAGES[image_key].bytes then
-      return
-    end
+  if not IMAGES[image_key] or not IMAGES[image_key].bytes then
+    return
+  end
 
-    local image = IMAGES[image_key]
+  local image = IMAGES[image_key]
 
-    image.imgui_image = image.imgui_image or ImGui.CreateImageFromMem(image.bytes)
+  if not ImGui.ValidatePtr(image.imgui_image, 'ImGui_Image*') then
+    image.imgui_image = ImGui.CreateImageFromMem(image.bytes)
+  end
 
-    ImGui.Image(ctx, image.imgui_image, image.width, image.height)
+  ImGui.Image(ctx, image.imgui_image, image.width, image.height)
 end
 
 function ReaSpeechUI:render_inputs()
