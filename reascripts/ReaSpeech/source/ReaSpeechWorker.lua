@@ -81,16 +81,22 @@ function ReaSpeechWorker:progress()
     return nil
   end
 
-  if self.active_job and self.active_job.job.progress then
-    local progress = self.active_job.job.progress
-    return progress.current / progress.total
-  end
-
   local pending_job_count = #self.pending_jobs
+
+  local active_job_progress = 0
+
+  -- the active job adds 1 to the total count, and if we can know the progress
+  -- then we can use that fraction
   if self.active_job then
+    if self.active_job.job and self.active_job.job.progress then
+      local progress = self.active_job.job.progress
+      active_job_progress = (progress.current / progress.total)
+    end
+
     pending_job_count = pending_job_count + 1
   end
-  local completed_job_count = job_count - pending_job_count
+
+  local completed_job_count = job_count + active_job_progress - pending_job_count
   return completed_job_count / job_count
 end
 
