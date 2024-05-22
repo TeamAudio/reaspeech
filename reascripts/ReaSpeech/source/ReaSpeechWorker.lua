@@ -155,14 +155,23 @@ function ReaSpeechWorker:handle_request(request)
   end
 end
 
+-- May return true if the job has completed and should no longer be active
 function ReaSpeechWorker:handle_job_status(active_job, response)
+  app:debug('Active job: ' .. dump(active_job))
+  app:debug('Status: ' .. dump(response))
+
   active_job.job.job_id = response.job_id
 
-  if response.job_status and response.job_status == 'SUCCESS' then
+  if not response.job_status then
+    return false
+  end
+
+  if response.job_status == 'SUCCESS' then
     local transcript_url_path = response.job_result.url
     response._job = active_job.job
     active_job.transcript_output_file = ReaSpeechAPI:fetch_large(transcript_url_path)
-    return
+    -- Job completion depends on non-blocking download of transcript
+    return false
   end
 
   -- We should handle some failure cases here
@@ -170,6 +179,8 @@ function ReaSpeechWorker:handle_job_status(active_job, response)
   if response.job_result and response.job_result.progress then
     active_job.job.progress = response.job_result.progress
   end
+
+  return false
 end
 
 function ReaSpeechWorker:handle_response(active_job, response)
@@ -251,7 +262,9 @@ function ReaSpeechWorker:check_active_job_request_output_file()
       end) then
         Tempfile:remove(output_file)
         if self.is_async_job(active_job.job) then
-          self:handle_job_status(active_job, response)
+          if self:handle_job_status(active_job, response) then
+            self.active_job = nil
+          end
         else
           self:handle_response(active_job, response)
           self.active_job = nil

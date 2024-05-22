@@ -6,11 +6,11 @@
 
 ReaSpeechAPI = {
   CURL_TIMEOUT_SECONDS = 5,
-
-  -- Example: http://localhost:9000
   base_url = nil,
 }
 
+-- Initialize the module with the given base URL
+-- Example: "http://localhost:9000"
 function ReaSpeechAPI:init(base_url)
   self.base_url = base_url
 end
@@ -46,7 +46,7 @@ function ReaSpeechAPI:fetch_json(url_path, http_method)
     .. ' "' .. api_url .. '"'
     .. ' -H "accept: application/json"'
     .. http_method_argument
-    .. ' -m ' .. ReaSpeechAPI.CURL_TIMEOUT_SECONDS
+    .. ' -m ' .. self.CURL_TIMEOUT_SECONDS
     .. ' -s'
   )
 
