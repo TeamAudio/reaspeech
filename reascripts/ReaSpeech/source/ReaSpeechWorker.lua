@@ -14,6 +14,10 @@ ReaSpeechWorker.new = function (o)
   return o
 end
 
+ReaSpeechWorker.is_async_job = function (job)
+  return job.use_job_queue
+end
+
 function ReaSpeechWorker:init()
   assert(self.requests, 'missing requests')
   assert(self.responses, 'missing responses')
@@ -113,6 +117,11 @@ function ReaSpeechWorker:cancel_job(job_id)
   ReaSpeechAPI:fetch_json(url_path, 'DELETE')
 end
 
+function ReaSpeechWorker:get_job_status(job_id)
+  local url_path = "jobs/" .. job_id
+  return ReaSpeechAPI:fetch_json(url_path)
+end
+
 function ReaSpeechWorker:handle_request(request)
   app:log('Processing speech...')
   self.job_count = #request.jobs
@@ -146,33 +155,14 @@ function ReaSpeechWorker:handle_request(request)
   end
 end
 
--- Returns true if the job has completed and should no longer be active
-function ReaSpeechWorker:handle_response(active_job, response)
-  app:debug('Active job: ' .. dump(active_job))
-  app:debug('Response: ' .. dump(response))
-
-  if not ReaSpeechWorker.is_async_job(active_job.job) then
-    response._job = active_job.job
-    table.insert(self.responses, response)
-    return true
-  end
-
+function ReaSpeechWorker:handle_job_status(active_job, response)
   active_job.job.job_id = response.job_id
 
-  if not response.job_status then
-    -- don't think this is reachable but not 100% on that
-    return false
-  end
-
-  if response.job_status == 'SUCCESS' then
+  if response.job_status and response.job_status == 'SUCCESS' then
     local transcript_url_path = response.job_result.url
     response._job = active_job.job
-    local transcript = ReaSpeechAPI:fetch_json(transcript_url_path)
-    if transcript then
-      transcript._job = active_job.job
-      table.insert(self.responses, transcript)
-    end
-    return true
+    active_job.transcript_output_file = ReaSpeechAPI:fetch_large(transcript_url_path)
+    return
   end
 
   -- We should handle some failure cases here
@@ -180,8 +170,13 @@ function ReaSpeechWorker:handle_response(active_job, response)
   if response.job_result and response.job_result.progress then
     active_job.job.progress = response.job_result.progress
   end
+end
 
-  return false
+function ReaSpeechWorker:handle_response(active_job, response)
+  app:debug('Active job: ' .. dump(active_job))
+  app:debug('Response: ' .. dump(response))
+  response._job = active_job.job
+  table.insert(self.responses, response)
 end
 
 function ReaSpeechWorker:start_active_job()
@@ -192,7 +187,7 @@ function ReaSpeechWorker:start_active_job()
   local active_job = self.active_job
 
   local url_path
-  if active_job.job.use_job_queue then
+  if self.is_async_job(active_job.job) then
     url_path = '/transcribe'
   else
     url_path = '/asr'
@@ -201,45 +196,48 @@ function ReaSpeechWorker:start_active_job()
   local output_file = ReaSpeechAPI:post_request(url_path, active_job.data, active_job.job.path)
 
   if output_file then
-    active_job.output_file = output_file
+    active_job.request_output_file = output_file
   else
     self.active_job = nil
   end
 end
 
 function ReaSpeechWorker:check_active_job()
-  if not (self.active_job and self.active_job.output_file) then
-    return
+  if not self.active_job then return end
+  local active_job = self.active_job
+
+  if self.active_job.request_output_file then
+    self:check_active_job_request_output_file()
   end
 
-  local job = self.active_job.job
-
-  if ReaSpeechWorker.is_async_job(job) and job.job_id then
+  if self.active_job.transcript_output_file then
+    self:check_active_job_transcript_output_file()
+  elseif self.is_async_job(active_job.job) then
     self:check_active_job_async()
-  else
-    self:check_active_job_output_file()
   end
-end
-
-function ReaSpeechWorker.is_async_job(job)
-  return job.use_job_queue
 end
 
 function ReaSpeechWorker:check_active_job_async()
   local active_job = self.active_job
+  if not active_job.job.job_id then return end
 
   local response = self:get_job_status(active_job.job.job_id)
-
   if response then
-    if self:handle_response(active_job, response) then
+    if self:handle_job_status(active_job, response) then
       self.active_job = nil
     end
   end
 end
 
-function ReaSpeechWorker:check_active_job_output_file()
+function ReaSpeechWorker:check_active_job_request_output_file()
   local active_job = self.active_job
-  local output_file = active_job.output_file
+  local output_file = active_job.request_output_file
+
+  if not self.is_async_job(active_job.job) then
+    active_job.request_output_file = nil
+    active_job.transcript_output_file = output_file
+    return
+  end
 
   local f = io.open(output_file, 'r')
   if f then
@@ -252,7 +250,10 @@ function ReaSpeechWorker:check_active_job_output_file()
         response = json.decode(response_text)
       end) then
         Tempfile:remove(output_file)
-        if self:handle_response(active_job, response) then
+        if self.is_async_job(active_job.job) then
+          self:handle_job_status(active_job, response)
+        else
+          self:handle_response(active_job, response)
           self.active_job = nil
         end
       else
@@ -262,7 +263,26 @@ function ReaSpeechWorker:check_active_job_output_file()
   end
 end
 
-function ReaSpeechWorker:get_job_status(job_id)
-  local url_path = "jobs/" .. job_id
-  return ReaSpeechAPI:fetch_json(url_path)
+function ReaSpeechWorker:check_active_job_transcript_output_file()
+  local active_job = self.active_job
+  local output_file = active_job.transcript_output_file
+
+  local f = io.open(output_file, 'r')
+  if f then
+    local response_text = f:read('*a')
+    f:close()
+
+    if #response_text > 0 then
+      local response = nil
+      if app:trap(function ()
+        response = json.decode(response_text)
+      end) then
+        Tempfile:remove(output_file)
+        self.active_job = nil
+        self:handle_response(active_job, response)
+      else
+        app:debug("JSON parse error, trying again later")
+      end
+    end
+  end
 end

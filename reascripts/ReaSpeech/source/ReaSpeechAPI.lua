@@ -5,7 +5,7 @@
 ]]--
 
 ReaSpeechAPI = {
-  CURL_TIMEOUT_SECONDS = 30,
+  CURL_TIMEOUT_SECONDS = 5,
 
   -- Example: http://localhost:9000
   base_url = nil,
@@ -98,7 +98,6 @@ function ReaSpeechAPI:fetch_large(url_path, http_method)
     .. ' "' .. api_url .. '"'
     .. ' -H "accept: application/json"'
     .. http_method_argument
-    .. ' -m ' .. ReaSpeechAPI.CURL_TIMEOUT_SECONDS
     .. ' -o "' .. output_file .. '"'
   )
 
@@ -112,7 +111,7 @@ function ReaSpeechAPI:fetch_large(url_path, http_method)
   end
 end
 
--- Uploads a file to start a request for processing. This method is
+-- Uploads a file to start a request for processing.
 -- This method is non-blocking, and does not give any indication that it has
 -- completed. The path to the output file is returned.
 function ReaSpeechAPI:post_request(url_path, data, file_path)
