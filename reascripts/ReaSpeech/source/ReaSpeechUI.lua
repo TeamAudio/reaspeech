@@ -135,11 +135,12 @@ function ReaSpeechUI:init()
   self.colorize_words = false
   self.autoplay = true
 
+  ReaSpeechAPI:init('http://' .. Script.host)
+
   self.worker = ReaSpeechWorker.new({
     requests = self.requests,
     responses = self.responses,
     logs = self.logs,
-    asr_url = 'http://' .. Script.host .. '/asr',
   })
 
   self.product_activation = ReaSpeechProductActivation.new()

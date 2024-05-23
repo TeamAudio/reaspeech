@@ -4,6 +4,7 @@ from threading import Lock
 from typing import Union, BinaryIO
 
 import torch
+import tqdm
 import whisper
 from faster_whisper import WhisperModel
 
@@ -41,12 +42,14 @@ def transcribe(
         segments = []
         text = ""
         segment_generator, info = model.transcribe(audio, beam_size=5, **options_dict)
-        for segment in segment_generator:
-            segment_dict = segment._asdict()
-            if segment.words:
-                segment_dict["words"] = [word._asdict() for word in segment.words]
-            segments.append(segment_dict)
-            text = text + segment.text
+        with tqdm.tqdm(total=round(info.duration), unit='sec') as tqdm_pbar:
+            for segment in segment_generator:
+                segment_dict = segment._asdict()
+                if segment.words:
+                    segment_dict["words"] = [word._asdict() for word in segment.words]
+                segments.append(segment_dict)
+                text = text + segment.text
+                tqdm_pbar.update(segment.end - segment.start)
         result = {
             "language": options_dict.get("language", info.language),
             "segments": segments,
