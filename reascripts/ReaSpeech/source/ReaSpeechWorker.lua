@@ -131,7 +131,7 @@ function ReaSpeechWorker:handle_request(request)
     output = 'json',
     vad_filter = 'true',
     word_timestamps = 'true',
-    model_name = request.model_name or 'small',
+    model_name = request.model_name,
   }
 
   if request.language and request.language ~= '' then
