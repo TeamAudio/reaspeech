@@ -13,12 +13,18 @@ from .utils import ResultWriter, WriteTXT, WriteSRT, WriteVTT, WriteTSV, WriteJS
 model_name = os.getenv("ASR_MODEL", "small")
 model_path = os.getenv("ASR_MODEL_PATH", os.path.join(os.path.expanduser("~"), ".cache", "whisper"))
 
-if torch.cuda.is_available():
-    model = WhisperModel(model_size_or_path=model_name, device="cuda", compute_type="float32", download_root=model_path)
-else:
-    model = WhisperModel(model_size_or_path=model_name, device="cpu", compute_type="int8", download_root=model_path)
 model_lock = Lock()
 
+model = None
+def load_model(model_name: str):
+    global model
+    if torch.cuda.is_available():
+        model = WhisperModel(model_size_or_path=model_name, device="cuda", compute_type="float32", download_root=model_path)
+    else:
+        model = WhisperModel(model_size_or_path=model_name, device="cpu", compute_type="int8", download_root=model_path)
+    return model
+
+load_model(model_name)
 
 def transcribe(
         audio,

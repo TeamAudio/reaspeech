@@ -37,9 +37,9 @@ tqdm.tqdm = _TQDM
 
 ASR_ENGINE = os.getenv("ASR_ENGINE", "faster_whisper")
 if ASR_ENGINE == "faster_whisper":
-    from .faster_whisper.core import transcribe as whisper_transcribe
+    from .faster_whisper.core import load_model, transcribe as whisper_transcribe
 else:
-    from .openai_whisper.core import transcribe as whisper_transcribe
+    from .openai_whisper.core import load_model, transcribe as whisper_transcribe
 
 LANGUAGE_CODES = sorted(list(tokenizer.LANGUAGES.keys()))
 
