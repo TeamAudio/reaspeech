@@ -41,14 +41,14 @@ function ReaSpeechAPI:fetch_json(url_path, http_method)
     http_method_argument = " -X " .. http_method
   end
 
-  local command = (
-    curl
-    .. ' "' .. api_url .. '"'
-    .. ' -H "accept: application/json"'
-    .. http_method_argument
-    .. ' -m ' .. self.CURL_TIMEOUT_SECONDS
-    .. ' -s'
-  )
+  local command = table.concat({
+    curl,
+    ' "', api_url, '"',
+    ' -H "accept: application/json"',
+    http_method_argument,
+    ' -m ', self.CURL_TIMEOUT_SECONDS,
+    ' -s',
+  })
 
   app:debug('Fetch JSON: ' .. command)
 
@@ -93,13 +93,13 @@ function ReaSpeechAPI:fetch_large(url_path, http_method)
 
   local output_file = Tempfile:name()
 
-  local command = (
-    curl
-    .. ' "' .. api_url .. '"'
-    .. ' -H "accept: application/json"'
-    .. http_method_argument
-    .. ' -o "' .. output_file .. '"'
-  )
+  local command = table.concat({
+    curl,
+    ' "', api_url, '"',
+    ' -H "accept: application/json"',
+    http_method_argument,
+    ' -o "', output_file, '"',
+  })
 
   app:debug('Fetch large: ' .. command)
 
@@ -125,14 +125,14 @@ function ReaSpeechAPI:post_request(url_path, data, file_path)
 
   local output_file = Tempfile:name()
 
-  local command = (
-    curl
-    .. ' "' .. api_url .. '?' .. table.concat(query, '&') .. '"'
-    .. ' -H "accept: application/json"'
-    .. ' -H "Content-Type: multipart/form-data"'
-    .. ' -F ' .. self:_maybe_quote('audio_file=@"' .. file_path .. '"')
-    .. ' -o "' .. output_file .. '"'
-  )
+  local command = table.concat({
+    curl,
+    ' "', api_url, '?', table.concat(query, '&'), '"',
+    ' -H "accept: application/json"',
+    ' -H "Content-Type: multipart/form-data"',
+    ' -F ', self:_maybe_quote('audio_file=@"' .. file_path .. '"'),
+    ' -o "', output_file, '"',
+  })
 
   app:log(file_path)
   app:debug('Post request: ' .. command)
