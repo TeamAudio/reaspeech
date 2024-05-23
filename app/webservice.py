@@ -128,12 +128,13 @@ async def transcribe(
         description="Enable the voice activity detection (VAD) to filter out parts of the audio without speech",
         include_in_schema=(True if ASR_ENGINE == "faster_whisper" else False)
     )] = False,
-    word_timestamps: bool = Query(default=False, description="Word level timestamps")
+    word_timestamps: bool = Query(default=False, description="Word level timestamps"),
+    model_name: str = Query(default=os.getenv("ASR_MODEL", "small"), description="Model name to use for transcription")
 ):
     source_file = NamedTemporaryFile(delete=False)
     source_file.write(audio_file.file.read())
     source_file.close()
-    job = bg_transcribe.apply_async((language, initial_prompt, source_file.name, audio_file.filename, encode, output, vad_filter, word_timestamps))
+    job = bg_transcribe.apply_async((language, initial_prompt, source_file.name, audio_file.filename, encode, output, vad_filter, word_timestamps, model_name))
     return JSONResponse({"job_id": job.id})
 
 @app.get("/jobs/{job_id}", tags=["Endpoints"])

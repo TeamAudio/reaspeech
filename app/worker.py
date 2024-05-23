@@ -48,6 +48,7 @@ celery.conf.broker_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:
 celery.conf.result_backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379")
 
 STATES = {
+    'loading_model': 'LOADING_MODEL',
     'encoding': 'ENCODING',
     'transcribing': 'TRANSCRIBING',
 }
@@ -62,7 +63,8 @@ def transcribe(
     encode: Union[bool, None],
     output_format: Union[str, None],
     vad_filter: Union[bool, None],
-    word_timestamps: Union[bool, None]
+    word_timestamps: Union[bool, None],
+    model_name: str = "small"
 ):
     logging.info(f"Transcribing {audio_file_path} with language={language}, initial_prompt={initial_prompt}, encode={encode}, output_format={output_format}, vad_filter={vad_filter}, word_timestamps={word_timestamps}")
 
@@ -70,6 +72,10 @@ def transcribe(
         _TQDM.set_progress_function(update_progress(self))
 
         try:
+            logging.info(f"Loading model {model_name}")
+            self.update_state(state=STATES["loading_model"], meta={"progress": {"units": "models", "total": 1, "current": 0}})
+            load_model(model_name)
+
             logging.info(f"Loading audio from {audio_file_path}")
             self.update_state(state=STATES["encoding"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
             audio_data = load_audio(audio_file, encode)
