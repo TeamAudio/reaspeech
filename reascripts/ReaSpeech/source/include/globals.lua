@@ -11,9 +11,6 @@ for name, func in pairs(reaper) do
   if name then ImGui[name] = func end
 end
 
--- luacheck: ignore
-FLT_MIN, FLT_MAX = ImGui.NumericLimits_Float()
-
 -- For debugging
 function dump(o)
   if type(o) == 'table' then
