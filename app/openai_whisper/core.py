@@ -13,8 +13,14 @@ model_path = os.getenv("ASR_MODEL_PATH", os.path.join(os.path.expanduser("~"), "
 model_lock = Lock()
 
 model = None
-def load_model(model_name: str):
-    global model
+def load_model(next_model_name: str):
+    global model_name, model
+
+    if model != None and next_model_name == model_name:
+        return model
+
+    model_name = next_model_name
+
     if torch.cuda.is_available():
         model = whisper.load_model(model_name, download_root=model_path).cuda()
     else:

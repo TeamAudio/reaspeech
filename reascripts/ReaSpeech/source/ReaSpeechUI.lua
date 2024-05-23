@@ -876,6 +876,7 @@ function ReaSpeechUI:process_jobs(job_generator)
     language = self.language,
     translate = self.translate,
     initial_prompt = self.initial_prompt,
+    model_name = 'small',
     jobs = jobs,
   }
   self:debug('Request: ' .. dump(request))
