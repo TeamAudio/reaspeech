@@ -48,8 +48,8 @@ end
 function CSVWriter:write_line(line, sequence_number, start, end_, file)
   local fields = {
     sequence_number,
-    CSVWriter._quoted(CSVWriter.format_time(start)),
-    CSVWriter._quoted(CSVWriter.format_time(end_)),
+    CSVWriter.format_time(start),
+    CSVWriter.format_time(end_),
     CSVWriter._quoted(line),
     CSVWriter._quoted(file),
   }
