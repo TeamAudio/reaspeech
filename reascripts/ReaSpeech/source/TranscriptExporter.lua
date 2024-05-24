@@ -11,9 +11,10 @@ TranscriptExporter = {
   BUTTON_WIDTH = 120,
   INPUT_WIDTH = 120,
   FILE_WIDTH = 500,
-  FORMATS = {'JSON', 'SRT'},
+  FORMATS = {'JSON', 'SRT', 'CSV'},
   EXT_JSON = 'JSON files (*.json)\0*.json\0All files (*.*)\0*.*\0\0',
   EXT_SRT = 'SRT files (*.srt)\0*.srt\0All files (*.*)\0*.*\0\0',
+  EXT_CSV = 'CSV files (*.csv)\0*.csv\0All files (*.*)\0*.*\0\0',
 }
 
 TranscriptExporter.__index = TranscriptExporter
@@ -155,6 +156,8 @@ function TranscriptExporter:handle_export()
     return self:export_json()
   elseif self.format == 'SRT' then
     return self:export_srt()
+  elseif self.format == 'CSV' then
+    return self:export_csv()
   else
     error('unknown format: ' .. self.format)
   end
@@ -186,6 +189,24 @@ function TranscriptExporter:export_srt()
     return false
   end
   local writer = SRTWriter.new { file = file }
+  writer:write(self.transcript)
+  file:close()
+  return true
+end
+
+function TranscriptExporter:export_csv()
+  if self.file == '' then
+    self:show_error('Please specify a file name.')
+    return false
+  end
+
+  local file = io.open(self.file, 'w')
+  if not file then
+    self.show_error('Could not open file: ' .. self.file)
+    return false
+  end
+
+  local writer = CSVWriter.new { file = file }
   writer:write(self.transcript)
   file:close()
   return true
