@@ -217,7 +217,7 @@ end
 function TranscriptEditor:render_word_input()
   local rv, value = ImGui.InputText(ctx, 'word', self.editing.word.word)
   if rv then
-    value = value:gsub('%s+', '')
+    value = value:gsub('^%s*(.-)%s*$', '%1')
     if #value > 0 then
       self.editing.word.word = value
     end
