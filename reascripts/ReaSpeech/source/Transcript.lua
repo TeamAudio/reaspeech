@@ -394,16 +394,27 @@ function TranscriptSegment:update_text()
   self.data['text'] = table.concat(text_chunks, ' ')
 end
 
-function TranscriptSegment:get_file()
+function TranscriptSegment:get_file(include_extensions)
+  include_extensions = include_extensions or false
+
   local file = ''
   app:trap(function ()
     local source = reaper.GetMediaItemTake_Source(self.take)
     if source then
       local source_path = reaper.GetMediaSourceFileName(source)
-      file = source_path:gsub(".*[\\/](.*)", "%1"):gsub("(.*)[.].*", "%1")
+
+      file = source_path:gsub(".*[\\/](.*)", "%1")
+
+      if not include_extensions then
+        file = file:gsub("(.*)[.].*", "%1")
+      end
     end
   end)
   return file
+end
+
+function TranscriptSegment:get_file_with_extension()
+  return self:get_file(true)
 end
 
 function TranscriptSegment:navigate(word_index, autoplay)
