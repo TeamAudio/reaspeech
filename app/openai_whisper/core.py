@@ -21,10 +21,12 @@ def load_model(next_model_name: str):
 
     model_name = next_model_name
 
-    if torch.cuda.is_available():
-        model = whisper.load_model(model_name, download_root=model_path).cuda()
-    else:
-        model = whisper.load_model(model_name, download_root=model_path)
+    with model_lock:
+        if torch.cuda.is_available():
+            model = whisper.load_model(model_name, download_root=model_path).cuda()
+        else:
+            model = whisper.load_model(model_name, download_root=model_path)
+
     return model
 
 load_model(model_name)
