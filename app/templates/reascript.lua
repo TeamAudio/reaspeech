@@ -5,7 +5,6 @@ Script = {
   host = "{{ host }}",
   lua = _VERSION:match('[%d.]+'),
   timeout = 30000,
-  model_name = "{{ model_name }}",
 }
 
 function Script:load()

@@ -149,7 +149,7 @@ function ReaSpeechUI:init()
   self.language = self.DEFAULT_LANGUAGE
   self.translate = false
   self.initial_prompt = ''
-  self.model_name = "small"
+  self.model_name = nil
 
   self.transcript = Transcript.new()
   self.transcript_editor = TranscriptEditor.new { transcript = self.transcript }
@@ -452,7 +452,7 @@ function ReaSpeechUI:render_advanced_controls()
 
     ImGui.PushItemWidth(ctx, 100)
     self:trap(function ()
-      rv, value = ImGui.InputText(ctx, 'model_name', self.model_name)
+      rv, value = ImGui.InputTextWithHint(ctx, 'model_name', self.model_name or "<default>")
       if rv then
         self.model_name = value
       end
