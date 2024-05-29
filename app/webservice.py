@@ -23,6 +23,8 @@ if ASR_ENGINE == "faster_whisper":
 else:
     from .openai_whisper.core import language_detection, transcribe as whisper_transcribe
 
+DEFAULT_MODEL_NAME = os.getenv("ASR_MODEL", "small")
+
 LANGUAGE_CODES = sorted(list(tokenizer.LANGUAGES.keys()))
 
 projectMetadata = importlib.metadata.metadata('reaspeech')
@@ -83,7 +85,7 @@ async def reascript(request: Request, name: str, host: str):
     return templates.TemplateResponse("reascript.lua", {
             "request": request,
             "name": name,
-            "host": host,
+            "host": host
         },
         media_type='application/x-lua',
         headers={
@@ -128,12 +130,16 @@ async def transcribe(
         description="Enable the voice activity detection (VAD) to filter out parts of the audio without speech",
         include_in_schema=(True if ASR_ENGINE == "faster_whisper" else False)
     )] = False,
-    word_timestamps: bool = Query(default=False, description="Word level timestamps")
+    word_timestamps: bool = Query(default=False, description="Word level timestamps"),
+    model_name: str = Query(default=DEFAULT_MODEL_NAME, description="Model name to use for transcription")
 ):
+    if not model_name:
+        model_name = DEFAULT_MODEL_NAME
+
     source_file = NamedTemporaryFile(delete=False)
     source_file.write(audio_file.file.read())
     source_file.close()
-    job = bg_transcribe.apply_async((language, initial_prompt, source_file.name, audio_file.filename, encode, output, vad_filter, word_timestamps))
+    job = bg_transcribe.apply_async((language, initial_prompt, source_file.name, audio_file.filename, encode, output, vad_filter, word_timestamps, model_name))
     return JSONResponse({"job_id": job.id})
 
 @app.get("/jobs/{job_id}", tags=["Endpoints"])

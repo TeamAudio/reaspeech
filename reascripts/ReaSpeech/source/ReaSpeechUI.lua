@@ -149,6 +149,7 @@ function ReaSpeechUI:init()
   self.language = self.DEFAULT_LANGUAGE
   self.translate = false
   self.initial_prompt = ''
+  self.model_name = nil
 
   self.transcript = Transcript.new()
   self.transcript_editor = TranscriptEditor.new { transcript = self.transcript }
@@ -414,6 +415,8 @@ function ReaSpeechUI:render_language_controls()
 end
 
 function ReaSpeechUI:render_advanced_controls()
+  local rv, value
+
   if ImGui.TreeNode(ctx, 'Advanced Options') then
     ImGui.Dummy(ctx, 0, 25)
     ImGui.SameLine(ctx)
@@ -444,6 +447,17 @@ function ReaSpeechUI:render_advanced_controls()
     if rv then
       self.use_job_queue = value
     end
+
+    ImGui.SameLine(ctx)
+
+    ImGui.PushItemWidth(ctx, 100)
+    self:trap(function ()
+      rv, value = ImGui.InputTextWithHint(ctx, 'model_name', self.model_name or "<default>")
+      if rv then
+        self.model_name = value
+      end
+    end)
+    ImGui.PopItemWidth(ctx)
 
     ImGui.TreePop(ctx)
     ImGui.Spacing(ctx)
@@ -876,6 +890,7 @@ function ReaSpeechUI:process_jobs(job_generator)
     language = self.language,
     translate = self.translate,
     initial_prompt = self.initial_prompt,
+    model_name = self.model_name,
     jobs = jobs,
   }
   self:debug('Request: ' .. dump(request))

@@ -37,20 +37,22 @@ tqdm.tqdm = _TQDM
 
 ASR_ENGINE = os.getenv("ASR_ENGINE", "faster_whisper")
 if ASR_ENGINE == "faster_whisper":
-    from .faster_whisper.core import transcribe as whisper_transcribe
+    from .faster_whisper.core import load_model, transcribe as whisper_transcribe
 else:
-    from .openai_whisper.core import transcribe as whisper_transcribe
+    from .openai_whisper.core import load_model, transcribe as whisper_transcribe
 
 LANGUAGE_CODES = sorted(list(tokenizer.LANGUAGES.keys()))
 
-celery = Celery(__name__)
-celery.conf.broker_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379")
-celery.conf.result_backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379")
+DEFAULT_MODEL_NAME = os.getenv("ASR_MODEL", "small")
 
 STATES = {
+    'loading_model': 'LOADING_MODEL',
     'encoding': 'ENCODING',
     'transcribing': 'TRANSCRIBING',
 }
+celery = Celery(__name__)
+celery.conf.broker_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379")
+celery.conf.result_backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379")
 
 @celery.task(name="transcribe", bind=True)
 def transcribe(
@@ -62,7 +64,8 @@ def transcribe(
     encode: Union[bool, None],
     output_format: Union[str, None],
     vad_filter: Union[bool, None],
-    word_timestamps: Union[bool, None]
+    word_timestamps: Union[bool, None],
+    model_name: str = DEFAULT_MODEL_NAME
 ):
     logging.info(f"Transcribing {audio_file_path} with language={language}, initial_prompt={initial_prompt}, encode={encode}, output_format={output_format}, vad_filter={vad_filter}, word_timestamps={word_timestamps}")
 
@@ -70,6 +73,10 @@ def transcribe(
         _TQDM.set_progress_function(update_progress(self))
 
         try:
+            logging.info(f"Loading model {model_name}")
+            self.update_state(state=STATES["loading_model"], meta={"progress": {"units": "models", "total": 1, "current": 0}})
+            load_model(model_name)
+
             logging.info(f"Loading audio from {audio_file_path}")
             self.update_state(state=STATES["encoding"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
             audio_data = load_audio(audio_file, encode)
