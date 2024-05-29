@@ -14,20 +14,20 @@ model_lock = Lock()
 
 model = None
 def load_model(next_model_name: str):
-    global model_name, model
-
-    if model != None and next_model_name == model_name:
-        return model
-
-    model_name = next_model_name
-
     with model_lock:
+        global model_name, model
+
+        if model != None and next_model_name == model_name:
+            return model
+
+        model_name = next_model_name
+
         if torch.cuda.is_available():
             model = whisper.load_model(model_name, download_root=model_path).cuda()
         else:
             model = whisper.load_model(model_name, download_root=model_path)
 
-    return model
+        return model
 
 load_model(model_name)
 
