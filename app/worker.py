@@ -43,15 +43,16 @@ else:
 
 LANGUAGE_CODES = sorted(list(tokenizer.LANGUAGES.keys()))
 
-celery = Celery(__name__)
-celery.conf.broker_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379")
-celery.conf.result_backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379")
+DEFAULT_MODEL_NAME = os.getenv("ASR_MODEL", "small")
 
 STATES = {
     'loading_model': 'LOADING_MODEL',
     'encoding': 'ENCODING',
     'transcribing': 'TRANSCRIBING',
 }
+celery = Celery(__name__)
+celery.conf.broker_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379")
+celery.conf.result_backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379")
 
 @celery.task(name="transcribe", bind=True)
 def transcribe(
@@ -64,7 +65,7 @@ def transcribe(
     output_format: Union[str, None],
     vad_filter: Union[bool, None],
     word_timestamps: Union[bool, None],
-    model_name: str = "small"
+    model_name: str = DEFAULT_MODEL_NAME
 ):
     logging.info(f"Transcribing {audio_file_path} with language={language}, initial_prompt={initial_prompt}, encode={encode}, output_format={output_format}, vad_filter={vad_filter}, word_timestamps={word_timestamps}")
 

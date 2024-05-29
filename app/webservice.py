@@ -23,7 +23,7 @@ if ASR_ENGINE == "faster_whisper":
 else:
     from .openai_whisper.core import language_detection, transcribe as whisper_transcribe
 
-default_model_name = os.getenv("ASR_MODEL", "small")
+DEFAULT_MODEL_NAME = os.getenv("ASR_MODEL", "small")
 
 LANGUAGE_CODES = sorted(list(tokenizer.LANGUAGES.keys()))
 
@@ -81,7 +81,7 @@ async def reaspeech(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/reascript", response_class=PlainTextResponse, include_in_schema=False)
-async def reascript(request: Request, name: str, host: str, model_name: str = default_model_name):
+async def reascript(request: Request, name: str, host: str, model_name: str = DEFAULT_MODEL_NAME):
     return templates.TemplateResponse("reascript.lua", {
             "request": request,
             "name": name,
@@ -132,10 +132,10 @@ async def transcribe(
         include_in_schema=(True if ASR_ENGINE == "faster_whisper" else False)
     )] = False,
     word_timestamps: bool = Query(default=False, description="Word level timestamps"),
-    model_name: str = Query(default=default_model_name, description="Model name to use for transcription")
+    model_name: str = Query(default=DEFAULT_MODEL_NAME, description="Model name to use for transcription")
 ):
     if not model_name:
-        model_name = default_model_name
+        model_name = DEFAULT_MODEL_NAME
 
     source_file = NamedTemporaryFile(delete=False)
     source_file.write(audio_file.file.read())

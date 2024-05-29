@@ -42,7 +42,6 @@ Script = {
   host = "localhost:9000",
   lua = _VERSION:match('[%d.]+'),
   timeout = 30000,
-  model_name = 'small',
 }
 
 Fonts.LOCAL_FILE = script_path .. "../../app/static/reascripts/ReaSpeech/icons.ttf"
