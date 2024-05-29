@@ -17,7 +17,7 @@ def load_model(next_model_name: str):
     with model_lock:
         global model_name, model
 
-        if model != None and next_model_name == model_name:
+        if model and next_model_name == model_name:
             return model
 
         model_name = next_model_name

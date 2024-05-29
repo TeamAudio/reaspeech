@@ -134,7 +134,7 @@ async def transcribe(
     word_timestamps: bool = Query(default=False, description="Word level timestamps"),
     model_name: str = Query(default=default_model_name, description="Model name to use for transcription")
 ):
-    if model_name == "":
+    if not model_name:
         model_name = default_model_name
 
     source_file = NamedTemporaryFile(delete=False)
