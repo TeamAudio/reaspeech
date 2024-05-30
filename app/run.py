@@ -16,7 +16,7 @@ argmap = {
         'default': 'redis://localhost:6379/0',
         'help': 'Celery result backend URL (default: %(default)s)' },
     '--output-directory': {
-        'default': '/app/app/output',
+        'default': 'app/output',
         'help': 'Output directory (default: %(default)s)' },
     '--output-url-prefix': {
         'default': '/output',
