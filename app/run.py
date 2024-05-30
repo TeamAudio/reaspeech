@@ -48,10 +48,10 @@ os.environ['ASR_MODEL'] = args.asr_model
 
 # Start Redis
 print('Starting database...', file=sys.stderr)
-subprocess.Popen([args.redis_bin])
+subprocess.Popen([args.redis_bin], stdout=subprocess.DEVNULL)
 
 # Start Celery
-print('Starting workers...', file=sys.stderr)
+print('Starting worker...', file=sys.stderr)
 subprocess.Popen(['celery', '-A', 'app.worker.celery', 'worker', '--pool=solo', '--loglevel=info'])
 
 # Start Gunicorn
