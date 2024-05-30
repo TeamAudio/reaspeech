@@ -1,4 +1,5 @@
 import importlib.metadata
+import logging
 import os
 from os import path
 from tempfile import NamedTemporaryFile
@@ -16,6 +17,9 @@ from whisper import tokenizer
 
 from .util.audio import load_audio
 from .worker import transcribe as bg_transcribe
+
+logging.basicConfig(format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s', level=logging.INFO, force=True)
+logger = logging.getLogger(__name__)
 
 ASR_ENGINE = os.getenv("ASR_ENGINE", "faster_whisper")
 if ASR_ENGINE == "faster_whisper":
@@ -108,6 +112,8 @@ async def asr(
             )] = False,
         word_timestamps: bool = Query(default=False, description="Word level timestamps")
 ):
+    logger.info(f"Transcribing {audio_file.filename} with task={task}, language={language}, initial_prompt={initial_prompt}, encode={encode}, output={output}, vad_filter={vad_filter}, word_timestamps={word_timestamps}")
+
     result = whisper_transcribe(load_audio(audio_file.file, encode), task, language, initial_prompt, vad_filter, word_timestamps, output)
     filename = audio_file.filename.encode('latin-1', 'ignore')
     return StreamingResponse(
@@ -133,6 +139,8 @@ async def transcribe(
     word_timestamps: bool = Query(default=False, description="Word level timestamps"),
     model_name: str = Query(default=DEFAULT_MODEL_NAME, description="Model name to use for transcription")
 ):
+    logger.info(f"Transcribing (async) {audio_file.filename} with task={task}, language={language}, initial_prompt={initial_prompt}, encode={encode}, output={output}, vad_filter={vad_filter}, word_timestamps={word_timestamps}, model_name={model_name}")
+
     if not model_name:
         model_name = DEFAULT_MODEL_NAME
 
