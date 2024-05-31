@@ -124,8 +124,8 @@ async def asr(
             'Content-Disposition': f'attachment; filename="{filename}.{output}"'
         })
 
-@app.post("/transcribe", tags=["Endpoints"])
-async def transcribe(
+@app.post("/asr_async", tags=["Endpoints"])
+async def asr_async(
     task: Union[str, None] = Query(default="transcribe", enum=["transcribe", "translate"]),
     language: Union[str, None] = Query(default=None, enum=LANGUAGE_CODES),
     initial_prompt: Union[str, None] = Query(default=None),
@@ -147,7 +147,7 @@ async def transcribe(
     source_file = NamedTemporaryFile(delete=False)
     source_file.write(audio_file.file.read())
     source_file.close()
-    job = bg_transcribe.apply_async((language, initial_prompt, source_file.name, audio_file.filename, encode, output, vad_filter, word_timestamps, model_name))
+    job = bg_transcribe.apply_async((task, language, initial_prompt, source_file.name, audio_file.filename, encode, output, vad_filter, word_timestamps, model_name))
     return JSONResponse({"job_id": job.id})
 
 @app.get("/jobs/{job_id}", tags=["Endpoints"])

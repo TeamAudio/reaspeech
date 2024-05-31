@@ -200,7 +200,7 @@ function ReaSpeechWorker:start_active_job()
 
   local url_path
   if self.is_async_job(active_job.job) then
-    url_path = '/transcribe'
+    url_path = '/asr_async'
   else
     url_path = '/asr'
   end
