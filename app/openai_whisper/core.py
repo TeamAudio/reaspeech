@@ -7,6 +7,13 @@ import torch
 import whisper
 from whisper.utils import ResultWriter, WriteTXT, WriteSRT, WriteVTT, WriteTSV, WriteJSON
 
+ASR_ENGINE_OPTIONS = frozenset([
+    "task",
+    "language",
+    "initial_prompt",
+    "word_timestamps",
+])
+
 model_name = os.getenv("ASR_MODEL", "small")
 model_path = os.getenv("ASR_MODEL_PATH", os.path.join(os.path.expanduser("~"), ".cache", "whisper"))
 
@@ -31,22 +38,9 @@ def load_model(next_model_name: str):
 
 load_model(model_name)
 
-def transcribe(
-        audio,
-        task: Union[str, None],
-        language: Union[str, None],
-        initial_prompt: Union[str, None],
-        vad_filter: Union[bool, None],
-        word_timestamps: Union[bool, None],
-        output
-):
-    options_dict = {"task": task}
-    if language:
-        options_dict["language"] = language
-    if initial_prompt:
-        options_dict["initial_prompt"] = initial_prompt
-    if word_timestamps:
-        options_dict["word_timestamps"] = word_timestamps
+def transcribe(audio, asr_options, output):
+    options_dict = {k: v for k, v in asr_options.items() if k in ASR_ENGINE_OPTIONS}
+
     with model_lock:
         result = model.transcribe(audio, **options_dict)
 
