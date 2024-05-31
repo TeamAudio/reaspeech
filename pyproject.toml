@@ -41,6 +41,7 @@ torch = [
 jinja2 = "^3.1.2"
 celery = "^5.2.7"
 redis = "^4.5.4"
+ctranslate2 = "4.2.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
