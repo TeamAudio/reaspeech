@@ -129,7 +129,7 @@ function ReaSpeechUI:init()
   self.log_enable = false
   self.log_debug = false
 
-  self.use_job_queue = false
+  self.use_async = true
 
   self.words = false
   self.colorize_words = false
@@ -443,9 +443,9 @@ function ReaSpeechUI:render_advanced_controls()
       end
     end
 
-    rv, value = ImGui.Checkbox(ctx, "use job queue", self.use_job_queue)
+    rv, value = ImGui.Checkbox(ctx, "use async", self.use_async)
     if rv then
-      self.use_job_queue = value
+      self.use_async = value
     end
 
     ImGui.SameLine(ctx)
@@ -886,7 +886,7 @@ function ReaSpeechUI:process_jobs(job_generator)
     return
   end
   local request = {
-    use_job_queue = self.use_job_queue,
+    use_async = self.use_async,
     language = self.language,
     translate = self.translate,
     initial_prompt = self.initial_prompt,

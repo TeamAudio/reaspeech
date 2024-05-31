@@ -15,7 +15,7 @@ ReaSpeechWorker.new = function (o)
 end
 
 ReaSpeechWorker.is_async_job = function (job)
-  return job.use_job_queue
+  return job.use_async
 end
 
 function ReaSpeechWorker:init()
@@ -134,6 +134,10 @@ function ReaSpeechWorker:handle_request(request)
     model_name = request.model_name,
   }
 
+  if request.use_async then
+    data.use_async = 'true'
+  end
+
   if request.language and request.language ~= '' then
     data.language = request.language
   end
@@ -147,8 +151,8 @@ function ReaSpeechWorker:handle_request(request)
     if not seen_path[job.path] then
       seen_path[job.path] = true
 
-      if request.use_job_queue then
-        job.use_job_queue = true
+      if request.use_async then
+        job.use_async = true
       end
 
       table.insert(self.pending_jobs, {job = job, data = data})
@@ -197,15 +201,7 @@ function ReaSpeechWorker:start_active_job()
   end
 
   local active_job = self.active_job
-
-  local url_path
-  if self.is_async_job(active_job.job) then
-    url_path = '/asr_async'
-  else
-    url_path = '/asr'
-  end
-
-  local output_file = ReaSpeechAPI:post_request(url_path, active_job.data, active_job.job.path)
+  local output_file = ReaSpeechAPI:post_request('/asr', active_job.data, active_job.job.path)
 
   if output_file then
     active_job.request_output_file = output_file

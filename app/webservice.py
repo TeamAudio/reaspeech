@@ -122,51 +122,35 @@ async def asr(
         include_in_schema=(True if ASR_ENGINE == "faster_whisper" else False)
     )] = False,
     word_timestamps: bool = Query(default=False, description="Word level timestamps"),
-    model_name: Union[str, None] = Query(default=None, description="Model name to use for transcription")
+    model_name: Union[str, None] = Query(default=None, description="Model name to use for transcription"),
+    use_async: bool = Query(default=False, description="Use asynchronous processing")
 ):
-    model_name = model_name or DEFAULT_MODEL_NAME
     asr_options = {k: v for k, v in locals().items() if k in ASR_OPTIONS}
-    logger.info(f"Transcribing {audio_file.filename} with {asr_options}")
+    async_str = " (async)" if use_async else ""
+    logger.info(f"Transcribing{async_str} {audio_file.filename} with {asr_options}")
 
-    logger.info(f"Loading model {model_name}")
-    load_model(model_name)
+    if use_async:
+        source_file = NamedTemporaryFile(delete=False)
+        source_file.write(audio_file.file.read())
+        source_file.close()
 
-    result = whisper_transcribe(load_audio(audio_file.file, encode), asr_options, output)
-    filename = audio_file.filename.encode('latin-1', 'ignore')
-    return StreamingResponse(
-        result,
-        media_type="text/plain",
-        headers={
-            'Asr-Engine': ASR_ENGINE,
-            'Content-Disposition': f'attachment; filename="{filename}.{output}"'
-        })
+        job = bg_transcribe.apply_async((source_file.name, audio_file.filename, asr_options))
+        return JSONResponse({"job_id": job.id})
 
+    else:
+        model_name = model_name or DEFAULT_MODEL_NAME
+        logger.info(f"Loading model {model_name}")
+        load_model(model_name)
 
-@app.post("/asr_async", tags=["Endpoints"])
-async def asr_async(
-    task: Union[str, None] = Query(default="transcribe", enum=["transcribe", "translate"]),
-    language: Union[str, None] = Query(default=None, enum=LANGUAGE_CODES),
-    initial_prompt: Union[str, None] = Query(default=None),
-    audio_file: UploadFile = File(...),
-    encode: bool = Query(default=True, description="Encode audio first through ffmpeg"),
-    output: Union[str, None] = Query(default="txt", enum=["txt", "vtt", "srt", "tsv", "json"]),
-    vad_filter: Annotated[bool | None, Query(
-        description="Enable the voice activity detection (VAD) to filter out parts of the audio without speech",
-        include_in_schema=(True if ASR_ENGINE == "faster_whisper" else False)
-    )] = False,
-    word_timestamps: bool = Query(default=False, description="Word level timestamps"),
-    model_name: Union[str, None] = Query(default=None, description="Model name to use for transcription")
-):
-    model_name = model_name or DEFAULT_MODEL_NAME
-    asr_options = {k: v for k, v in locals().items() if k in ASR_OPTIONS}
-    logger.info(f"Transcribing (async) {audio_file.filename} with {asr_options}")
-
-    source_file = NamedTemporaryFile(delete=False)
-    source_file.write(audio_file.file.read())
-    source_file.close()
-
-    job = bg_transcribe.apply_async((source_file.name, audio_file.filename, asr_options))
-    return JSONResponse({"job_id": job.id})
+        result = whisper_transcribe(load_audio(audio_file.file, encode), asr_options, output)
+        filename = audio_file.filename.encode('latin-1', 'ignore')
+        return StreamingResponse(
+            result,
+            media_type="text/plain",
+            headers={
+                'Asr-Engine': ASR_ENGINE,
+                'Content-Disposition': f'attachment; filename="{filename}.{output}"'
+            })
 
 
 @app.get("/jobs/{job_id}", tags=["Endpoints"])
