@@ -125,7 +125,7 @@ async def asr(
     model_name: Union[str, None] = Query(default=None, description="Model name to use for transcription")
 ):
     model_name = model_name or DEFAULT_MODEL_NAME
-    asr_options = {k: v for k, v in vars().items() if k in ASR_OPTIONS}
+    asr_options = {k: v for k, v in locals().items() if k in ASR_OPTIONS}
     logger.info(f"Transcribing {audio_file.filename} with {asr_options}")
 
     logger.info(f"Loading model {model_name}")
@@ -158,7 +158,7 @@ async def asr_async(
     model_name: Union[str, None] = Query(default=None, description="Model name to use for transcription")
 ):
     model_name = model_name or DEFAULT_MODEL_NAME
-    asr_options = {k: v for k, v in vars().items() if k in ASR_OPTIONS}
+    asr_options = {k: v for k, v in locals().items() if k in ASR_OPTIONS}
     logger.info(f"Transcribing (async) {audio_file.filename} with {asr_options}")
 
     source_file = NamedTemporaryFile(delete=False)
