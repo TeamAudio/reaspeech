@@ -27,18 +27,21 @@ end
 function TestPolo:testOverriddenNewMethod()
   local TestPoloClass = Polo {
     new = function(field1, field2)
-      local o = {
+      return {
         field1 = field1,
         field2 = field2,
       }
-      return o
     end
   }
 
   local testPolo = TestPoloClass.new("this is a field", "this is another field")
 
   lu.assertEquals(testPolo.field1, "this is a field")
+  lu.assertIsNil(TestPoloClass.field1)
+  lu.assertNotEquals(TestPoloClass.field1, "this is a field")
   lu.assertEquals(testPolo.field2, "this is another field")
+  lu.assertIsNil(TestPoloClass.field2)
+  lu.assertNotEquals(TestPoloClass.field2, "this is another field")
 end
 
 function TestPolo:testOptionalInitMethod()
@@ -48,6 +51,20 @@ function TestPolo:testOptionalInitMethod()
       self.field2 = "this is another field"
     end
   }
+
+  local testPolo = TestPoloClass.new()
+
+  lu.assertEquals(testPolo.field1, "this is a field")
+  lu.assertEquals(testPolo.field2, "this is another field")
+end
+
+function TestPolo:testInitMethodDefinedLater()
+  local TestPoloClass = Polo {}
+
+  function TestPoloClass:init()
+    self.field1 = "this is a field"
+    self.field2 = "this is another field"
+  end
 
   local testPolo = TestPoloClass.new()
 
