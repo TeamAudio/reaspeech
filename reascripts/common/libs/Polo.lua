@@ -10,13 +10,11 @@ function Polo(definition)
   local new_override = definition.new
 
   definition.new = function(...)
-    local o
+    local o = ... or {}
 
     if new_override then
       local args = table.pack(...)
       o = new_override(table.unpack(args))
-    else
-      o = ... or {}
     end
 
     setmetatable(o, definition)
