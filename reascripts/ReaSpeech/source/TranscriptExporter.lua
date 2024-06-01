@@ -226,7 +226,7 @@ function TranscriptExporterFormats:render_format_options(options)
     local format = self:selected_format()
 
     if format then
-      app:trap(format.option_renderer(options))
+      format.option_renderer(options)
     end
   end)
 end
