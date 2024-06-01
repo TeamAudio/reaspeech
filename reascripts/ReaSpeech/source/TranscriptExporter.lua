@@ -233,6 +233,7 @@ end
 
 TranscriptExportFormat = {
   FILE_SELECTOR_SPEC_FORMAT_STRING = '%s files (*.%s)\0*.%s\0All files (*.*)\0*.*\0\0',
+  OPTIONS_NOOP = function(_options) end,
 }
 TranscriptExportFormat.__index = TranscriptExportFormat
 
@@ -255,16 +256,9 @@ end
 function TranscriptExportFormat.exporter_json()
   return TranscriptExportFormat.new(
     'JSON', 'json',
-    TranscriptExportFormat.options_json,
+    TranscriptExportFormat.OPTIONS_NOOP,
     TranscriptExportFormat.writer_json
   )
-end
-
-function TranscriptExportFormat.options_json(options)
-  local return_value, new_value = ImGui.Checkbox(ctx, 'One Object Per Segment', options.json_one_object_per_segment)
-  if return_value then
-    options.json_one_object_per_segment = new_value
-  end
 end
 
 function TranscriptExportFormat.writer_json(transcript, output_file)
@@ -274,12 +268,9 @@ end
 function TranscriptExportFormat.exporter_srt()
   return TranscriptExportFormat.new(
     'SRT', 'srt',
-    TranscriptExportFormat.options_srt,
+    TranscriptExportFormat.OPTIONS_NOOP,
     TranscriptExportFormat.writer_srt
   )
-end
-
-function TranscriptExportFormat.options_srt()
 end
 
 function TranscriptExportFormat.writer_srt(transcript, output_file)
@@ -290,12 +281,9 @@ end
 function TranscriptExportFormat.exporter_csv()
   return TranscriptExportFormat.new(
     'CSV', 'csv',
-    TranscriptExportFormat.options_csv,
+    TranscriptExportFormat.OPTIONS_NOOP,
     TranscriptExportFormat.writer_csv
   )
-end
-
-function TranscriptExportFormat.options_csv()
 end
 
 function TranscriptExportFormat.writer_csv(transcript, output_file)
