@@ -3,6 +3,7 @@ package.path = '../common/libs/?.lua;../common/vendor/?.lua;' .. package.path
 local lu = require('luaunit')
 
 require('OptionsConfig')
+require('Polo')
 require('mock_reaper')
 
 require('source/AlertPopup')
