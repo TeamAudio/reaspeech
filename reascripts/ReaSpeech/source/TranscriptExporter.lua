@@ -41,7 +41,7 @@ function TranscriptExporter:show_success()
     self.success.onclose = nil
     self:close()
   end
-  self.success:show('Exported ' .. self.export_formats:selected_format().key .. ' to: ' .. self.file)
+  self.success:show('Exported ' .. self.export_formats:selected_key() .. ' to: ' .. self.file)
 end
 
 function TranscriptExporter:show_error(msg)
@@ -102,7 +102,7 @@ function TranscriptExporter:render_file_selector()
         title = 'Save transcript',
         file = self.file,
         save = true,
-        ext = self.export_formats:selected_format():file_selector_spec(),
+        ext = self.export_formats:file_selector_spec(),
       }
       if rv == 1 then
         self.file = file
@@ -154,7 +154,7 @@ function TranscriptExporter:handle_export()
     self:show_error('Could not open file: ' .. self.file)
     return false
   end
-  self.export_formats:selected_format().writer(self.transcript, file)
+  self.export_formats:write(self.transcript, file)
   file:close()
   return true
 end
@@ -204,6 +204,18 @@ function TranscriptExporterFormats:render_combo(width)
     end
     ImGui.EndCombo(ctx)
   end
+end
+
+function TranscriptExporterFormats:selected_key()
+  return self:selected_format().key
+end
+
+function TranscriptExporterFormats:file_selector_spec()
+  return self:selected_format():file_selector_spec()
+end
+
+function TranscriptExporterFormats:write(transcript, output_file)
+  return self:selected_format().writer(transcript, output_file)
 end
 
 function TranscriptExporterFormats:selected_format()
