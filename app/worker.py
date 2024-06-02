@@ -63,33 +63,29 @@ celery.conf.worker_redirect_stdouts_level = "DEBUG"
 @celery.task(name="transcribe", bind=True)
 def transcribe(
     self,
-    language: Union[str, None],
-    initial_prompt: Union[str, None],
     audio_file_path: str,
     original_filename: str,
-    encode: Union[bool, None],
-    output_format: Union[str, None],
-    vad_filter: Union[bool, None],
-    word_timestamps: Union[bool, None],
-    model_name: str = DEFAULT_MODEL_NAME
+    asr_options: dict,
 ):
-    logger.info(f"Transcribing {audio_file_path} with language={language}, initial_prompt={initial_prompt}, encode={encode}, output_format={output_format}, vad_filter={vad_filter}, word_timestamps={word_timestamps}")
+    logger.info(f"Transcribing {audio_file_path} with {asr_options}")
+    output_format = asr_options["output"]
 
     with open(audio_file_path, "rb") as audio_file:
         _TQDM.set_progress_function(update_progress(self))
 
         try:
+            model_name = asr_options.get("model_name") or DEFAULT_MODEL_NAME
             logger.info(f"Loading model {model_name}")
             self.update_state(state=STATES["loading_model"], meta={"progress": {"units": "models", "total": 1, "current": 0}})
             load_model(model_name)
 
             logger.info(f"Loading audio from {audio_file_path}")
             self.update_state(state=STATES["encoding"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
-            audio_data = load_audio(audio_file, encode)
+            audio_data = load_audio(audio_file, asr_options.get("encode", False))
 
             logger.info(f"Transcribing audio")
             self.update_state(state=STATES["transcribing"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
-            result = whisper_transcribe(audio_data, "transcribe", language, initial_prompt, vad_filter, word_timestamps, output_format)
+            result = whisper_transcribe(audio_data, asr_options, output_format)
         finally:
             _TQDM.set_progress_function(None)
 
