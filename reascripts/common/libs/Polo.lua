@@ -11,6 +11,7 @@ function Polo(definition)
 
   definition.new = function(...)
     local o = new_override and new_override(...) or ... or {}
+    assert(type(o) == 'table')
 
     setmetatable(o, definition)
     if o.init then o:init() end
