@@ -4,23 +4,15 @@
 
 ]]--
 
-TranscriptExporter = {
+TranscriptExporter = Polo {
   TITLE = 'Export',
   WIDTH = 650,
   HEIGHT = 200,
   BUTTON_WIDTH = 120,
   INPUT_WIDTH = 120,
   FILE_WIDTH = 500,
+
 }
-
-TranscriptExporter.__index = TranscriptExporter
-
-TranscriptExporter.new = function (o)
-  o = o or {}
-  setmetatable(o, TranscriptExporter)
-  o:init()
-  return o
-end
 
 function TranscriptExporter:init()
   assert(self.transcript, 'missing transcript')
@@ -167,33 +159,26 @@ function TranscriptExporter:close()
   self.is_open = false
 end
 
-TranscriptExporterFormats = {}
-TranscriptExporterFormats.__index = TranscriptExporterFormats
+TranscriptExporterFormats = Polo {
+  new = function(formatters)
+    local format_map = {}
 
-TranscriptExporterFormats.new = function (formatters)
-  local o = {
-    format_list = {},
-    format_map = {},
-  }
-  setmetatable(o, TranscriptExporterFormats)
+    for i, formatter in ipairs(formatters) do
+      format_map[formatter.key] = i
+    end
 
-  for _, formatter in ipairs(formatters) do
-    o:add_format(formatter)
-  end
-
-  return o
-end
-
-function TranscriptExporterFormats:add_format(format)
-  table.insert(self.format_list, format)
-  self.format_map[format.key] = #self.format_list
-end
+    return {
+      formatters = formatters,
+      format_map = format_map,
+    }
+  end,
+}
 
 function TranscriptExporterFormats:render_combo(width)
   ImGui.Text(ctx, 'Format')
   ImGui.SetNextItemWidth(ctx, width)
   if ImGui.BeginCombo(ctx, "##format", self.selected_format_key) then
-    for _, format in pairs(self.format_list) do
+    for _, format in pairs(self.formatters) do
       local is_selected = self.selected_format_key == format.key
       if ImGui.Selectable(ctx, format.key, is_selected) then
         self.selected_format_key = format.key
@@ -220,17 +205,17 @@ end
 
 function TranscriptExporterFormats:selected_format()
   if not self.selected_format_key then
-    if not self.format_list or #self.format_list < 1 then
+    if not self.formatters or #self.formatters < 1 then
       app:debug('no formats to set for default')
       return
     end
 
-    self.selected_format_key = self.format_list[1].key
+    self.selected_format_key = self.formatters[1].key
   end
 
   local index = self.format_map[self.selected_format_key]
 
-  return self.format_list[index]
+  return self.formatters[index]
 end
 
 function TranscriptExporterFormats:render_format_options(options)
@@ -243,22 +228,19 @@ function TranscriptExporterFormats:render_format_options(options)
   end)
 end
 
-TranscriptExportFormat = {
+TranscriptExportFormat = Polo {
   FILE_SELECTOR_SPEC_FORMAT_STRING = '%s files (*.%s)\0*.%s\0All files (*.*)\0*.*\0\0',
   OPTIONS_NOOP = function(_options) end,
-}
-TranscriptExportFormat.__index = TranscriptExportFormat
 
-TranscriptExportFormat.new = function (key, extension, option_renderer, writer_f)
-  local o = {
-    key = key,
-    extension = extension,
-    option_renderer = option_renderer,
-    writer = writer_f,
-  }
-  setmetatable(o, TranscriptExportFormat)
-  return o
-end
+  new = function (key, extension, option_renderer, writer_f)
+    return {
+      key = key,
+      extension = extension,
+      option_renderer = option_renderer,
+      writer = writer_f,
+    }
+  end,
+}
 
 function TranscriptExportFormat:file_selector_spec()
   return TranscriptExportFormat.FILE_SELECTOR_SPEC_FORMAT_STRING:format(

@@ -5,6 +5,7 @@ globals = {
   "url",
   "ImGuiTheme",
   "IMAGES",
+  "Polo",
   "ReaUtil",
 }
 
