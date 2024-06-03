@@ -5,6 +5,7 @@ app = {}
 local lu = require('luaunit')
 
 require('mock_reaper')
+require('Polo')
 require('source/SRTWriter')
 require('source/Transcript')
 
@@ -19,6 +20,22 @@ function TestSRTWriter:setUp()
   function app:trap(f) return xpcall(f, function(e) print(tostring(e)) end) end
 
   reaper.__test_setUp()
+end
+
+function TestSRTWriter.make_transcript()
+  local t = Transcript.new()
+  t:add_segment(TranscriptSegment.new {
+    data = {start = 0, ['end'] = 1, text = 'hello'},
+    item = {},
+    take = {}
+  })
+  t:add_segment(TranscriptSegment.new {
+    data = {start = 1, ['end'] = 2, text = 'world'},
+    item = {},
+    take = {}
+  })
+  t:update()
+  return t
 end
 
 function TestSRTWriter:testFormatTime()
@@ -40,20 +57,8 @@ function TestSRTWriter:testInitNoFile()
   lu.assertErrorMsgContains('missing file', SRTWriter.new)
 end
 
-
 function TestSRTWriter:testWrite()
-  local t = Transcript.new()
-  t:add_segment(TranscriptSegment.new {
-    data = {['start'] = 0, ['end'] = 1, ['text'] = 'hello'},
-    item = {},
-    take = {}
-  })
-  t:add_segment(TranscriptSegment.new {
-    data = {['start'] = 1, ['end'] = 2, ['text'] = 'world'},
-    item = {},
-    take = {}
-  })
-  t:update()
+  local t = TestSRTWriter.make_transcript()
   local output = {}
   local f = {
     write = function (self, s)
@@ -64,6 +69,28 @@ function TestSRTWriter:testWrite()
   writer:write(t)
   local output_str = table.concat(output)
   lu.assertEquals(output_str, '1\n00:00:00,000 --> 00:00:01,000\nhello\n\n2\n00:00:01,000 --> 00:00:02,000\nworld\n\n')
+end
+
+function TestSRTWriter:testXYCoordinates()
+  local t = TestSRTWriter.make_transcript()
+  local output = {}
+  local f = {
+    write = function (self, s)
+      table.insert(output, s)
+    end
+  }
+  local writer = SRTWriter.new {
+    file = f,
+    options = {
+      coords_x1 = '1',
+      coords_y1 = '2',
+      coords_x2 = '3',
+      coords_y2 = '4'
+    }
+  }
+  writer:write(t)
+  local output_str = table.concat(output)
+  lu.assertEquals(output_str, '1\n00:00:00,000 --> 00:00:01,000 X1:1 X2:3 Y1:2 Y2:4\nhello\n\n2\n00:00:01,000 --> 00:00:02,000 X1:1 X2:3 Y1:2 Y2:4\nworld\n\n')
 end
 
 function TestSRTWriter:testWriteSegment()
