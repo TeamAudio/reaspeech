@@ -282,16 +282,13 @@ end
 function TranscriptExportFormat.options_csv(options)
   local delimiters = CSVWriter.DELIMITERS
 
-  local selected_delimiter
+  local selected_delimiter = delimiters[1]
+
   for _, d in ipairs(delimiters) do
     if d[1] == options.delimiter then
       selected_delimiter = d
       break
     end
-  end
-
-  if not selected_delimiter then
-    selected_delimiter = delimiters[1]
   end
 
   if ImGui.BeginCombo(ctx, 'Delimiter', selected_delimiter[2]) then
