@@ -284,18 +284,18 @@ function TranscriptExportFormat.options_csv(options)
 
   local selected_delimiter = delimiters[1]
 
-  for _, d in ipairs(delimiters) do
-    if d[1] == options.delimiter then
-      selected_delimiter = d
+  for _, delimiter in ipairs(delimiters) do
+    if delimiter.char == options.delimiter then
+      selected_delimiter = delimiter
       break
     end
   end
 
-  if ImGui.BeginCombo(ctx, 'Delimiter', selected_delimiter[2]) then
+  if ImGui.BeginCombo(ctx, 'Delimiter', selected_delimiter.name) then
     for _, delimiter in ipairs(delimiters) do
-      local is_selected = options.delimiter == delimiter[1]
-      if ImGui.Selectable(ctx, delimiter[2], is_selected) then
-        options.delimiter = delimiter[1]
+      local is_selected = options.delimiter == delimiter.char
+      if ImGui.Selectable(ctx, delimiter.name, is_selected) then
+        options.delimiter = delimiter.char
       end
       if is_selected then
         ImGui.SetItemDefaultFocus(ctx)

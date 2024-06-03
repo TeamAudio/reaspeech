@@ -7,9 +7,9 @@
 CSVWriter = Polo {
   TIME_FORMAT = '%02d:%02d:%02d,%03d',
   DELIMITERS = {
-    { ',', 'Comma' },
-    { ';', 'Semicolon' },
-    { '\t', 'Tab' },
+    { char = ',',  name = 'Comma' },
+    { char = ';',  name = 'Semicolon' },
+    { char = '\t', name = 'Tab' },
   },
   DEFAULT_DELIMITER = ',',
   init = function(self)
