@@ -178,15 +178,17 @@ function TranscriptExporterFormats:render_combo(width)
   ImGui.Text(ctx, 'Format')
   ImGui.SetNextItemWidth(ctx, width)
   if ImGui.BeginCombo(ctx, "##format", self.selected_format_key) then
-    for _, format in pairs(self.formatters) do
-      local is_selected = self.selected_format_key == format.key
-      if ImGui.Selectable(ctx, format.key, is_selected) then
-        self.selected_format_key = format.key
+    app:trap(function()
+      for _, format in pairs(self.formatters) do
+        local is_selected = self.selected_format_key == format.key
+        if ImGui.Selectable(ctx, format.key, is_selected) then
+          self.selected_format_key = format.key
+        end
+        if is_selected then
+          ImGui.SetItemDefaultFocus(ctx)
+        end
       end
-      if is_selected then
-        ImGui.SetItemDefaultFocus(ctx)
-      end
-    end
+    end)
     ImGui.EndCombo(ctx)
   end
 end
