@@ -12,14 +12,15 @@ CSVWriter = Polo {
     { char = '\t', name = 'Tab' },
   },
   DEFAULT_DELIMITER = ',',
-  init = function(self)
-    assert(self.file, 'missing file')
-
-    self.options = self.options or {}
-    self.delimiter = self.options.delimiter or CSVWriter.DEFAULT_DELIMITER
-    self.include_header_row = self.options.include_header_row or false
-  end,
 }
+
+function CSVWriter:init()
+  assert(self.file, 'missing file')
+
+  self.options = self.options or {}
+  self.delimiter = self.options.delimiter or CSVWriter.DEFAULT_DELIMITER
+  self.include_header_row = self.options.include_header_row or false
+end
 
 CSVWriter.format_time = function (time)
     local milliseconds = math.floor(time * 1000) % 1000
