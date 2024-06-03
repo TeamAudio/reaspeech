@@ -229,7 +229,6 @@ function TranscriptExporterFormats:render_format_options(options)
 end
 
 TranscriptExportFormat = Polo {
-  FILE_SELECTOR_SPEC_FORMAT_STRING = '%s files (*.%s)\0*.%s\0All files (*.*)\0*.*\0\0',
   OPTIONS_NOOP = function(_options) end,
 
   new = function (key, extension, option_renderer, writer_f)
@@ -243,8 +242,8 @@ TranscriptExportFormat = Polo {
 }
 
 function TranscriptExportFormat:file_selector_spec()
-  return TranscriptExportFormat.FILE_SELECTOR_SPEC_FORMAT_STRING:format(
-    self.key, self.extension, self.extension)
+  local selector_spec = '%s files (*.%s)\0*.%s\0All files (*.*)\0*.*\0\0'
+  return selector_spec:format(self.key, self.extension, self.extension)
 end
 
 function TranscriptExportFormat.exporter_json()
