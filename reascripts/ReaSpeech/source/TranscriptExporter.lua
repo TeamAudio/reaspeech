@@ -146,7 +146,7 @@ function TranscriptExporter:handle_export()
     self:show_error('Could not open file: ' .. self.file)
     return false
   end
-  self.export_formats:write(self.transcript, file)
+  self.export_formats:write(self.transcript, file, self.export_options)
   file:close()
   return true
 end
@@ -199,8 +199,8 @@ function TranscriptExporterFormats:file_selector_spec()
   return self:selected_format():file_selector_spec()
 end
 
-function TranscriptExporterFormats:write(transcript, output_file)
-  return self:selected_format().writer(transcript, output_file)
+function TranscriptExporterFormats:write(transcript, output_file, options)
+  return self:selected_format().writer(transcript, output_file, options)
 end
 
 function TranscriptExporterFormats:selected_format()
@@ -274,12 +274,48 @@ end
 function TranscriptExportFormat.exporter_csv()
   return TranscriptExportFormat.new(
     'CSV', 'csv',
-    TranscriptExportFormat.OPTIONS_NOOP,
+    TranscriptExportFormat.options_csv,
     TranscriptExportFormat.writer_csv
   )
 end
 
-function TranscriptExportFormat.writer_csv(transcript, output_file)
-  local writer = CSVWriter.new { file = output_file }
+function TranscriptExportFormat.options_csv(options)
+  local delimiters = CSVWriter.DELIMITERS
+
+  local selected_delimiter
+  for _, d in ipairs(delimiters) do
+    if d[1] == options.delimiter then
+      selected_delimiter = d
+      break
+    end
+  end
+
+  if not selected_delimiter then
+    selected_delimiter = delimiters[1]
+  end
+
+  if ImGui.BeginCombo(ctx, 'Delimiter', selected_delimiter[2]) then
+    for _, delimiter in ipairs(delimiters) do
+      local is_selected = options.delimiter == delimiter[1]
+      if ImGui.Selectable(ctx, delimiter[2], is_selected) then
+        options.delimiter = delimiter[1]
+      end
+      if is_selected then
+        ImGui.SetItemDefaultFocus(ctx)
+      end
+    end
+    ImGui.EndCombo(ctx)
+  end
+
+  ImGui.Spacing(ctx)
+
+  local rv, value = ImGui.Checkbox(ctx, 'Include Header Row', options.include_header_row)
+  if rv then
+    options.include_header_row = value
+  end
+end
+
+function TranscriptExportFormat.writer_csv(transcript, output_file, options)
+  local writer = CSVWriter.new { file = output_file, options = options }
   writer:write(transcript)
 end
