@@ -4,32 +4,25 @@
 
 ]]--
 
-TranscriptExporter = {
+TranscriptExporter = Polo {
   TITLE = 'Export',
   WIDTH = 650,
   HEIGHT = 200,
   BUTTON_WIDTH = 120,
   INPUT_WIDTH = 120,
   FILE_WIDTH = 500,
-  FORMATS = {'JSON', 'SRT', 'CSV'},
-  EXT_JSON = 'JSON files (*.json)\0*.json\0All files (*.*)\0*.*\0\0',
-  EXT_SRT = 'SRT files (*.srt)\0*.srt\0All files (*.*)\0*.*\0\0',
-  EXT_CSV = 'CSV files (*.csv)\0*.csv\0All files (*.*)\0*.*\0\0',
+
 }
-
-TranscriptExporter.__index = TranscriptExporter
-
-TranscriptExporter.new = function (o)
-  o = o or {}
-  setmetatable(o, TranscriptExporter)
-  o:init()
-  return o
-end
 
 function TranscriptExporter:init()
   assert(self.transcript, 'missing transcript')
   self.is_open = false
-  self.format = self.FORMATS[1]
+  self.export_formats = TranscriptExporterFormats.new {
+    TranscriptExportFormat.exporter_json(),
+    TranscriptExportFormat.exporter_srt(),
+    TranscriptExportFormat.exporter_csv(),
+  }
+  self.export_options = {}
   self.file = ''
   self.success = AlertPopup.new { title = 'Export Successful' }
   self.failure = AlertPopup.new { title = 'Export Failed' }
@@ -40,7 +33,7 @@ function TranscriptExporter:show_success()
     self.success.onclose = nil
     self:close()
   end
-  self.success:show('Exported ' .. self.format .. ' to: ' .. self.file)
+  self.success:show('Exported ' .. self.export_formats:selected_key() .. ' to: ' .. self.file)
 end
 
 function TranscriptExporter:show_error(msg)
@@ -78,25 +71,22 @@ function TranscriptExporter:render()
 end
 
 function TranscriptExporter:render_content()
-  ImGui.Text(ctx, 'Format')
-  ImGui.SetNextItemWidth(ctx, self.INPUT_WIDTH)
-  if ImGui.BeginCombo(ctx, "##format", self.format) then
-    for _, format in pairs(self.FORMATS) do
-      local is_selected = self.format == format
-      if ImGui.Selectable(ctx, format, is_selected) then
-        self.format = format
-      end
-      if is_selected then
-        ImGui.SetItemDefaultFocus(ctx)
-      end
-    end
-    ImGui.EndCombo(ctx)
-  end
+  self.export_formats:render_combo(self.INPUT_WIDTH)
 
   ImGui.Spacing(ctx)
 
-  -- Display a text input for the output filename, with a Browse button if
-  -- the js_ReaScriptAPI extension is available.
+  self.export_formats:render_format_options(self.export_options)
+
+  self:render_file_selector()
+
+  self:render_separator()
+
+  self:render_buttons()
+end
+
+-- Display a text input for the output filename, with a Browse button if
+-- the js_ReaScriptAPI extension is available.
+function TranscriptExporter:render_file_selector()
   ImGui.Text(ctx, 'File')
   if app:has_js_ReaScriptAPI() then
     if ImGui.Button(ctx, 'Choose File', self.BUTTON_WIDTH, 0) then
@@ -104,7 +94,7 @@ function TranscriptExporter:render_content()
         title = 'Save transcript',
         file = self.file,
         save = true,
-        ext = self['EXT_' .. self.format],
+        ext = self.export_formats:file_selector_spec(),
       }
       if rv == 1 then
         self.file = file
@@ -123,21 +113,16 @@ function TranscriptExporter:render_content()
     ImGui.Text(ctx, "For a better experience, install js_ReaScriptAPI")
     ImGui.Spacing(ctx)
   end
+end
 
-  self:render_separator()
-
-  local valid = (self.file ~= '')
-  if not valid then
-    ImGui.BeginDisabled(ctx)
-  end
-  if ImGui.Button(ctx, 'Export', self.BUTTON_WIDTH, 0) then
-    if self:handle_export() then
-      self:show_success()
+function TranscriptExporter:render_buttons()
+  ReaUtil.disabler(ctx)(self.file == '', function()
+    if ImGui.Button(ctx, 'Export', self.BUTTON_WIDTH, 0) then
+      if self:handle_export() then
+        self:show_success()
+      end
     end
-  end
-  if not valid then
-    ImGui.EndDisabled(ctx)
-  end
+  end)
 
   ImGui.SameLine(ctx)
   if ImGui.Button(ctx, 'Cancel', self.BUTTON_WIDTH, 0) then
@@ -152,18 +137,6 @@ function TranscriptExporter:render_separator()
 end
 
 function TranscriptExporter:handle_export()
-  if self.format == 'JSON' then
-    return self:export_json()
-  elseif self.format == 'SRT' then
-    return self:export_srt()
-  elseif self.format == 'CSV' then
-    return self:export_csv()
-  else
-    error('unknown format: ' .. self.format)
-  end
-end
-
-function TranscriptExporter:export_json()
   if self.file == '' then
     self:show_error('Please specify a file name.')
     return false
@@ -173,41 +146,7 @@ function TranscriptExporter:export_json()
     self:show_error('Could not open file: ' .. self.file)
     return false
   end
-  file:write(self.transcript:to_json())
-  file:close()
-  return true
-end
-
-function TranscriptExporter:export_srt()
-  if self.file == '' then
-    self:show_error('Please specify a file name.')
-    return false
-  end
-  local file = io.open(self.file, 'w')
-  if not file then
-    self:show_error('Could not open file: ' .. self.file)
-    return false
-  end
-  local writer = SRTWriter.new { file = file }
-  writer:write(self.transcript)
-  file:close()
-  return true
-end
-
-function TranscriptExporter:export_csv()
-  if self.file == '' then
-    self:show_error('Please specify a file name.')
-    return false
-  end
-
-  local file = io.open(self.file, 'w')
-  if not file then
-    self.show_error('Could not open file: ' .. self.file)
-    return false
-  end
-
-  local writer = CSVWriter.new { file = file }
-  writer:write(self.transcript)
+  self.export_formats:write(self.transcript, file)
   file:close()
   return true
 end
@@ -218,4 +157,129 @@ end
 
 function TranscriptExporter:close()
   self.is_open = false
+end
+
+TranscriptExporterFormats = Polo {
+  new = function(formatters)
+    local format_map = {}
+
+    for i, formatter in ipairs(formatters) do
+      format_map[formatter.key] = i
+    end
+
+    return {
+      formatters = formatters,
+      format_map = format_map,
+    }
+  end,
+}
+
+function TranscriptExporterFormats:render_combo(width)
+  ImGui.Text(ctx, 'Format')
+  ImGui.SetNextItemWidth(ctx, width)
+  if ImGui.BeginCombo(ctx, "##format", self.selected_format_key) then
+    for _, format in pairs(self.formatters) do
+      local is_selected = self.selected_format_key == format.key
+      if ImGui.Selectable(ctx, format.key, is_selected) then
+        self.selected_format_key = format.key
+      end
+      if is_selected then
+        ImGui.SetItemDefaultFocus(ctx)
+      end
+    end
+    ImGui.EndCombo(ctx)
+  end
+end
+
+function TranscriptExporterFormats:selected_key()
+  return self:selected_format().key
+end
+
+function TranscriptExporterFormats:file_selector_spec()
+  return self:selected_format():file_selector_spec()
+end
+
+function TranscriptExporterFormats:write(transcript, output_file)
+  return self:selected_format().writer(transcript, output_file)
+end
+
+function TranscriptExporterFormats:selected_format()
+  if not self.selected_format_key then
+    if not self.formatters or #self.formatters < 1 then
+      app:debug('no formats to set for default')
+      return
+    end
+
+    self.selected_format_key = self.formatters[1].key
+  end
+
+  local index = self.format_map[self.selected_format_key]
+
+  return self.formatters[index]
+end
+
+function TranscriptExporterFormats:render_format_options(options)
+  app:trap(function()
+    local format = self:selected_format()
+
+    if format then
+      format.option_renderer(options)
+    end
+  end)
+end
+
+TranscriptExportFormat = Polo {
+  OPTIONS_NOOP = function(_options) end,
+
+  new = function (key, extension, option_renderer, writer_f)
+    return {
+      key = key,
+      extension = extension,
+      option_renderer = option_renderer,
+      writer = writer_f,
+    }
+  end,
+}
+
+function TranscriptExportFormat:file_selector_spec()
+  local selector_spec = '%s files (*.%s)\0*.%s\0All files (*.*)\0*.*\0\0'
+  return selector_spec:format(self.key, self.extension, self.extension)
+end
+
+function TranscriptExportFormat.exporter_json()
+  return TranscriptExportFormat.new(
+    'JSON', 'json',
+    TranscriptExportFormat.OPTIONS_NOOP,
+    TranscriptExportFormat.writer_json
+  )
+end
+
+function TranscriptExportFormat.writer_json(transcript, output_file)
+  output_file:write(transcript:to_json())
+end
+
+function TranscriptExportFormat.exporter_srt()
+  return TranscriptExportFormat.new(
+    'SRT', 'srt',
+    TranscriptExportFormat.OPTIONS_NOOP,
+    TranscriptExportFormat.writer_srt
+  )
+end
+
+function TranscriptExportFormat.writer_srt(transcript, output_file)
+  local writer = SRTWriter.new { file = output_file }
+  writer:write(transcript)
+end
+
+function TranscriptExportFormat.exporter_csv()
+  return TranscriptExportFormat.new(
+    'CSV', 'csv',
+    TranscriptExportFormat.OPTIONS_NOOP,
+    TranscriptExportFormat.writer_csv
+  )
+end
+
+function TranscriptExportFormat.writer_csv(transcript, output_file)
+  local writer = CSVWriter.new { file = output_file }
+  writer:write(transcript)
 end
