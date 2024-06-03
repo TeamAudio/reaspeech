@@ -4,31 +4,22 @@
 
 ]]--
 
-Transcript = {
+Transcript = Polo {
   COLUMN_ORDER = {"id", "seek", "start", "end", "text", "score", "file"},
   DEFAULT_HIDE = {
     seek = true, temperature = true, tokens = true, avg_logprob = true,
     compression_ratio = true, no_speech_prob = true
   },
+
+  init = function(self)
+    self:clear()
+  end
 }
-
-Transcript.__index = Transcript
-
-Transcript.new = function (o)
-  o = o or {}
-  setmetatable(o, Transcript)
-  o:init()
-  return o
-end
 
 Transcript.calculate_offset = function (item, take)
   return (
     reaper.GetMediaItemInfo_Value(item, 'D_POSITION')
     - reaper.GetMediaItemTakeInfo_Value(take, 'D_STARTOFFS'))
-end
-
-function Transcript:init()
-  self:clear()
 end
 
 function Transcript:clear()
@@ -113,14 +104,7 @@ end
 function Transcript:to_table()
   local segments = {}
   for _, segment in pairs(self.data) do
-    local data = TranscriptSegment._copy(segment.data)
-    if segment.words then
-      data['words'] = {}
-      for _, word in pairs(segment.words) do
-        table.insert(data['words'], word:to_table())
-      end
-    end
-    table.insert(segments, data)
+    table.insert(segments, segment:to_table())
   end
   return {segments = segments}
 end
@@ -244,7 +228,7 @@ function Transcript:_set_note_text(item, text, stretch)
   reaper.SetItemStateChunk(item, chunk, false)
 end
 
-TranscriptSegment = {
+TranscriptSegment = Polo {
   _proxy_fields = {
     start = 'start',
     end_ = 'end',
@@ -261,11 +245,12 @@ TranscriptSegment.__index = function(o, key)
   end
 end
 
-TranscriptSegment.new = function (o)
-  o = o or {}
-  setmetatable(o, TranscriptSegment)
-  o:init()
-  return o
+function TranscriptSegment:init()
+  assert(self.data, 'missing data')
+  assert(self.item, 'missing item')
+  assert(self.take, 'missing take')
+  self.data = self._copy(self.data)
+  self.data['file'] = self:get_file()
 end
 
 TranscriptSegment.from_whisper = function(segment, item, take)
@@ -349,14 +334,6 @@ TranscriptSegment._copy = function(data)
     result[k] = v
   end
   return result
-end
-
-function TranscriptSegment:init()
-  assert(self.data, 'missing data')
-  assert(self.item, 'missing item')
-  assert(self.take, 'missing take')
-  self.data = self._copy(self.data)
-  self.data['file'] = self:get_file()
 end
 
 function TranscriptSegment:score()
@@ -447,15 +424,22 @@ function TranscriptSegment:_transport_play()
   reaper.Main_OnCommand(1007, 0)
 end
 
-TranscriptWord = {}
-TranscriptWord.__index = TranscriptWord
-
-TranscriptWord.new = function (o)
-  o = o or {}
-  setmetatable(o, TranscriptWord)
-  o:init()
-  return o
+function TranscriptSegment:to_json()
+  return json.encode(self:to_table())
 end
+
+function TranscriptSegment:to_table()
+  local result = self._copy(self.data)
+  if self.words then
+    result['words'] = {}
+    for _, word in pairs(self.words) do
+      table.insert(result['words'], word:to_table())
+    end
+  end
+  return result
+end
+
+TranscriptWord = Polo {}
 
 function TranscriptWord:init()
   assert(self.word, 'missing word')
