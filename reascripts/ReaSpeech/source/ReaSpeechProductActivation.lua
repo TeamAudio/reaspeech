@@ -4,7 +4,7 @@
 
 ]]--
 
-ReaSpeechProductActivation = {
+ReaSpeechProductActivation = Polo {
   ACTIVATION_URL = "https://techaud.io/ProductActivationDeveloper.php",
 
   PRODUCT_ID = 79004057,
@@ -19,14 +19,6 @@ ReaSpeechProductActivation = {
   state = nil,
   activation_message =""
 }
-
-ReaSpeechProductActivation.__index = ReaSpeechProductActivation
-ReaSpeechProductActivation.new = function (o)
-  o = o or {}
-  setmetatable(o, ReaSpeechProductActivation)
-  o:init()
-  return o
-end
 
 function ReaSpeechProductActivation:init()
   self:init_config()
