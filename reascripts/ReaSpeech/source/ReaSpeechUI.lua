@@ -4,7 +4,7 @@
 
 ]]--
 
-ReaSpeechUI = {
+ReaSpeechUI = Polo {
   VERSION = "unknown (development)",
   -- Set to show ImGui Metrics/Debugger window
   METRICS = false,
@@ -68,6 +68,45 @@ ReaSpeechUI = {
   }
 }
 
+function ReaSpeechUI:init()
+  self.onerror = function (e)
+    self:log(e)
+  end
+
+  self.requests = {}
+  self.responses = {}
+  self.logs = {}
+
+  self.log_enable = false
+  self.log_debug = false
+
+  self.use_job_queue = false
+
+  self.words = false
+  self.colorize_words = false
+  self.autoplay = true
+
+  ReaSpeechAPI:init('http://' .. Script.host)
+
+  self.worker = ReaSpeechWorker.new({
+    requests = self.requests,
+    responses = self.responses,
+    logs = self.logs,
+  })
+
+  self.product_activation = ReaSpeechProductActivation.new()
+  self.license_input = ''
+
+  self.language = self.DEFAULT_LANGUAGE
+  self.translate = false
+  self.initial_prompt = ''
+  self.model_name = nil
+
+  self.transcript = Transcript.new()
+  self.transcript_editor = TranscriptEditor.new { transcript = self.transcript }
+  self.transcript_exporter = TranscriptExporter.new { transcript = self.transcript }
+end
+
 ReaSpeechUI._init_languages = function ()
   for code, _ in pairs(ReaSpeechUI.LANGUAGES) do
     table.insert(ReaSpeechUI.LANGUAGE_CODES, code)
@@ -107,53 +146,6 @@ end
 
 ReaSpeechUI.log_time = function ()
   return os.date('%Y-%m-%d %H:%M:%S')
-end
-
-ReaSpeechUI.__index = ReaSpeechUI
-ReaSpeechUI.new = function (o)
-  o = o or {}
-  setmetatable(o, ReaSpeechUI)
-  o:init()
-  return o
-end
-
-function ReaSpeechUI:init()
-  self.onerror = function (e)
-    self:log(e)
-  end
-
-  self.requests = {}
-  self.responses = {}
-  self.logs = {}
-
-  self.log_enable = false
-  self.log_debug = false
-
-  self.use_job_queue = false
-
-  self.words = false
-  self.colorize_words = false
-  self.autoplay = true
-
-  ReaSpeechAPI:init('http://' .. Script.host)
-
-  self.worker = ReaSpeechWorker.new({
-    requests = self.requests,
-    responses = self.responses,
-    logs = self.logs,
-  })
-
-  self.product_activation = ReaSpeechProductActivation.new()
-  self.license_input = ''
-
-  self.language = self.DEFAULT_LANGUAGE
-  self.translate = false
-  self.initial_prompt = ''
-  self.model_name = nil
-
-  self.transcript = Transcript.new()
-  self.transcript_editor = TranscriptEditor.new { transcript = self.transcript }
-  self.transcript_exporter = TranscriptExporter.new { transcript = self.transcript }
 end
 
 function ReaSpeechUI:log(msg)
@@ -286,18 +278,15 @@ function ReaSpeechUI:handle_interval_functions(time)
   end
 end
 
-IntervalFunction = {}
-IntervalFunction.__index = IntervalFunction
-function IntervalFunction.new(interval, f)
-  local o = {
-    interval = interval,
-    f = f,
-    last = 0
-  }
-
-  setmetatable(o, IntervalFunction)
-  return o
-end
+IntervalFunction = Polo {
+  new = function(interval, f)
+    return {
+      interval = interval,
+      f = f,
+      last = 0
+    }
+  end
+}
 
 function IntervalFunction:react(time)
   if self.interval >= 0 then
