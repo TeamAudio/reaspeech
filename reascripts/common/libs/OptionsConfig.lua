@@ -21,18 +21,16 @@
 --   }
 --
 
-OptionsConfig = Polo {
-  new = function (o)
-    o = o or {}
+OptionsConfig = {}
+OptionsConfig.__index = OptionsConfig
 
-    assert(o.section, 'section is required')
-
-    return {
-      section = o.section,
-      options = o.options or {},
-    }
-  end,
-}
+function OptionsConfig:new(o)
+  o = o or {}
+  setmetatable(o, self)
+  assert(o.section, 'section is required')
+  o.options = o.options or {}
+  return o
+end
 
 function OptionsConfig:get(name)
   local option = self.options[name]

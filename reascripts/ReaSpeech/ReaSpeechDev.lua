@@ -10,7 +10,6 @@ local ENABLE_ACTIVATION = true
 local script_path, _ = ({reaper.get_action_context()})[2]:match("(.-)([^/\\]+).lua$")
 
 dofile(script_path .. 'source/include/globals.lua')
-dofile(script_path .. '../common/libs/Polo.lua')
 dofile(script_path .. '../common/vendor/json.lua')
 dofile(script_path .. '../common/vendor/url.lua')
 

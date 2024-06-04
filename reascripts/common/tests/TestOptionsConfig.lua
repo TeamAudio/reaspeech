@@ -9,7 +9,7 @@ require('OptionsConfig')
 --
 
 TestOptionsConfig = {
-  options = OptionsConfig.new {
+  options = OptionsConfig:new {
     section = 'ReaSpeech.Options',
     options = {
       patties_per_burger = {'number', 2},

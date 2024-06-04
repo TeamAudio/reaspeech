@@ -14,26 +14,31 @@ called ImGui functions directly:
 - `pop(ctx)`: calls `ImGui_PopStyleColor` and `ImGui_PopStyleVar` with the correct `count` argument
 ]]--
 
-ImGuiTheme = Polo {
+ImGuiTheme = {
   -- Override the calls to the associated REAPER API methods here
   -- ...if you want to
   f_color_push = nil,
   f_color_pop = nil,
   f_style_push = nil,
   f_style_pop = nil,
-
-  new = function(theme_definition)
-    local theme = {
-      colors = ImGuiTheme.get_attribute_values(theme_definition.colors),
-      styles = ImGuiTheme.get_attribute_values(theme_definition.styles),
-    }
-
-    theme.color_count = #theme.colors
-    theme.style_count = #theme.styles
-
-    return theme
-  end
 }
+
+ImGuiTheme.__index = ImGuiTheme
+ImGuiTheme.new = function(theme_definition)
+  local theme = {
+    colors = ImGuiTheme.get_attribute_values(theme_definition.colors),
+    styles = ImGuiTheme.get_attribute_values(theme_definition.styles),
+  }
+
+  theme.color_count = #theme.colors
+  theme.style_count = #theme.styles
+
+  setmetatable(theme, ImGuiTheme)
+
+  theme:init()
+
+  return theme
+end
 
 function ImGuiTheme:init()
   self.f_color_push = ImGuiTheme.get_function('f_color_push', reaper.ImGui_PushStyleColor)

@@ -26,7 +26,7 @@ function ReaSpeechProductActivation:init()
 end
 
 function ReaSpeechProductActivation:init_config()
-  self.config = OptionsConfig.new {
+  self.config = OptionsConfig:new {
     section = 'ReaSpeech',
     options = {
       product_run_check_count = {'number', 0},
