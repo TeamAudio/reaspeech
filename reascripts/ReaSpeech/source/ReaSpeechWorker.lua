@@ -4,19 +4,7 @@
 
 ]]--
 
-ReaSpeechWorker = {}
-
-ReaSpeechWorker.__index = ReaSpeechWorker
-ReaSpeechWorker.new = function (o)
-  o = o or {}
-  setmetatable(o, ReaSpeechWorker)
-  o:init()
-  return o
-end
-
-ReaSpeechWorker.is_async_job = function (job)
-  return job.use_job_queue
-end
+ReaSpeechWorker = Polo {}
 
 function ReaSpeechWorker:init()
   assert(self.requests, 'missing requests')
@@ -26,6 +14,10 @@ function ReaSpeechWorker:init()
   self.active_job = nil
   self.pending_jobs = {}
   self.job_count = 0
+end
+
+ReaSpeechWorker.is_async_job = function (job)
+  return job.use_job_queue
 end
 
 function ReaSpeechWorker:react()
