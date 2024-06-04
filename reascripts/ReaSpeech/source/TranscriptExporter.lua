@@ -294,15 +294,17 @@ function TranscriptExportFormat.options_csv(options)
   end
 
   if ImGui.BeginCombo(ctx, 'Delimiter', selected_delimiter.name) then
-    for _, delimiter in ipairs(delimiters) do
-      local is_selected = options.delimiter == delimiter.char
-      if ImGui.Selectable(ctx, delimiter.name, is_selected) then
-        options.delimiter = delimiter.char
+    app:trap(function()
+      for _, delimiter in ipairs(delimiters) do
+        local is_selected = options.delimiter == delimiter.char
+        if ImGui.Selectable(ctx, delimiter.name, is_selected) then
+          options.delimiter = delimiter.char
+        end
+        if is_selected then
+          ImGui.SetItemDefaultFocus(ctx)
+        end
       end
-      if is_selected then
-        ImGui.SetItemDefaultFocus(ctx)
-      end
-    end
+    end)
     ImGui.EndCombo(ctx)
   end
 
