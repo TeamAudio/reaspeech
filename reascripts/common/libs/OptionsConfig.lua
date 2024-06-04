@@ -12,7 +12,7 @@
 --            type can be one of: 'string', 'number', 'boolean'
 --
 -- Example:
---   local options = OptionsConfig.new {
+--   local options = OptionsConfig:new {
 --     section = "ReaSpeech.Options",
 --     options = {
 --       patties_per_burger = {'number', 2},
