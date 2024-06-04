@@ -4,7 +4,7 @@
 
 ]]--
 
-TranscriptEditor = {
+TranscriptEditor = Polo {
   TITLE = 'Edit Segment',
   WIDTH = 500,
   HEIGHT = 500,
@@ -12,15 +12,6 @@ TranscriptEditor = {
   BUTTON_WIDTH = 120,
   WORDS_PER_LINE = 5,
 }
-
-TranscriptEditor.__index = TranscriptEditor
-
-TranscriptEditor.new = function (o)
-  o = o or {}
-  setmetatable(o, TranscriptEditor)
-  o:init()
-  return o
-end
 
 function TranscriptEditor:init()
   assert(self.transcript, 'missing transcript')
