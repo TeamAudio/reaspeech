@@ -6,6 +6,7 @@ local lu = require('luaunit')
 
 require('json')
 require('mock_reaper')
+require('Polo')
 require('source/Transcript')
 
 --
@@ -81,6 +82,32 @@ function TestTranscript:setUp()
   reaper.SetItemStateChunk = function (item, str, isundo)
     self.item_state_chunk = str
   end
+end
+
+function TestTranscript:make_transcript()
+  local t = Transcript.new()
+  t:add_segment(self.segment {
+    id = 1,
+    start = 1.0,
+    end_ = 2.0,
+    text = "test 1",
+    words = {
+      self.word { word = "test", start = 1.0, end_ = 1.5, probability = 1.0 },
+      self.word { word = "1", start = 1.5, end_ = 2.0, probability = 0.5 }
+    }
+  })
+  t:add_segment(self.segment {
+    id = 2,
+    start = 2.0,
+    end_ = 3.0,
+    text = "test 2",
+    words = {
+      self.word { word = "test", start = 2.0, end_ = 2.5, probability = 1.0 },
+      self.word { word = "2", start = 2.5, end_ = 3.0, probability = 0.5 }
+    }
+  })
+  t:update()
+  return t
 end
 
 function TestTranscript:testInit()
@@ -350,28 +377,7 @@ function TestTranscript:testCreateNotesTrack()
 end
 
 function TestTranscript:testToJson()
-  local t = Transcript.new()
-  t:add_segment(self.segment {
-    id = 1,
-    start = 1.0,
-    end_ = 2.0,
-    text = "test 1",
-    words = {
-      self.word { word = "test", start = 1.0, end_ = 1.5, probability = 1.0 },
-      self.word { word = "1", start = 1.5, end_ = 2.0, probability = 0.5 }
-    }
-  })
-  t:add_segment(self.segment {
-    id = 2,
-    start = 2.0,
-    end_ = 3.0,
-    text = "test 2",
-    words = {
-      self.word { word = "test", start = 2.0, end_ = 2.5, probability = 1.0 },
-      self.word { word = "2", start = 2.5, end_ = 3.0, probability = 0.5 }
-    }
-  })
-  t:update()
+  local t = TestTranscript:make_transcript()
   local result = t:to_json()
   local parsed = json.decode(result)
   lu.assertEquals(parsed.segments[1].id, 1)
@@ -406,6 +412,36 @@ function TestTranscript:testToJson()
   lu.assertEquals(keys, {"end", "file", "id", "start", "text", "words"})
   keys = {}
   for k, _ in pairs(parsed.segments[1].words[1]) do
+    table.insert(keys, k)
+  end
+  table.sort(keys)
+  lu.assertEquals(keys, {"end", "probability", "start", "word"})
+end
+
+function TestTranscript:testSegmentToJson()
+  local t = TestTranscript:make_transcript()
+  local result = t:get_segments()[1]:to_json()
+  local parsed = json.decode(result)
+  lu.assertEquals(parsed.id, 1)
+  lu.assertEquals(parsed.start, 1.0)
+  lu.assertEquals(parsed['end'], 2.0)
+  lu.assertEquals(parsed.text, "test 1")
+  lu.assertEquals(parsed.words[1].word, "test")
+  lu.assertEquals(parsed.words[1].start, 1.0)
+  lu.assertEquals(parsed.words[1]['end'], 1.5)
+  lu.assertEquals(parsed.words[1].probability, 1.0)
+  lu.assertEquals(parsed.words[2].word, "1")
+  lu.assertEquals(parsed.words[2].start, 1.5)
+  lu.assertEquals(parsed.words[2]['end'], 2.0)
+  lu.assertEquals(parsed.words[2].probability, 0.5)
+  local keys = {}
+  for k, _ in pairs(parsed) do
+    table.insert(keys, k)
+  end
+  table.sort(keys)
+  lu.assertEquals(keys, {"end", "file", "id", "start", "text", "words"})
+  keys = {}
+  for k, _ in pairs(parsed.words[1]) do
     table.insert(keys, k)
   end
   table.sort(keys)

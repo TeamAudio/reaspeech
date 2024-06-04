@@ -146,7 +146,7 @@ function TranscriptExporter:handle_export()
     self:show_error('Could not open file: ' .. self.file)
     return false
   end
-  self.export_formats:write(self.transcript, file)
+  self.export_formats:write(self.transcript, file, self.export_options)
   file:close()
   return true
 end
@@ -199,8 +199,8 @@ function TranscriptExporterFormats:file_selector_spec()
   return self:selected_format():file_selector_spec()
 end
 
-function TranscriptExporterFormats:write(transcript, output_file)
-  return self:selected_format().writer(transcript, output_file)
+function TranscriptExporterFormats:write(transcript, output_file, options)
+  return self:selected_format().writer(transcript, output_file, options)
 end
 
 function TranscriptExporterFormats:selected_format()
@@ -249,13 +249,27 @@ end
 function TranscriptExportFormat.exporter_json()
   return TranscriptExportFormat.new(
     'JSON', 'json',
-    TranscriptExportFormat.OPTIONS_NOOP,
+    TranscriptExportFormat.options_json,
     TranscriptExportFormat.writer_json
   )
 end
 
-function TranscriptExportFormat.writer_json(transcript, output_file)
-  output_file:write(transcript:to_json())
+function TranscriptExportFormat.options_json(options)
+  local rv, value = ImGui.Checkbox(ctx, 'One Object per Transcript Segment', options.object_per_segment)
+  if rv then
+    options.object_per_segment = value
+  end
+end
+
+function TranscriptExportFormat.writer_json(transcript, output_file, options)
+  if options.object_per_segment then
+    for _, segment in pairs(transcript:get_segments()) do
+      output_file:write(segment:to_json())
+      output_file:write('\n')
+    end
+  else
+    output_file:write(transcript:to_json())
+  end
 end
 
 function TranscriptExportFormat.exporter_srt()

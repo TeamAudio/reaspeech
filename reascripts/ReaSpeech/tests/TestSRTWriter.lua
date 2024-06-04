@@ -5,6 +5,7 @@ app = {}
 local lu = require('luaunit')
 
 require('mock_reaper')
+require('Polo')
 require('source/SRTWriter')
 require('source/Transcript')
 
