@@ -14,69 +14,65 @@ called ImGui functions directly:
 - `pop(ctx)`: calls `ImGui_PopStyleColor` and `ImGui_PopStyleVar` with the correct `count` argument
 ]]--
 
-ImGuiTheme = {
+ImGuiTheme = Polo {
   -- Override the calls to the associated REAPER API methods here
   -- ...if you want to
   f_color_push = nil,
   f_color_pop = nil,
   f_style_push = nil,
   f_style_pop = nil,
+
+  new = function(theme_definition)
+    local theme = {
+      colors = ImGuiTheme.get_attribute_values(theme_definition.colors),
+      styles = ImGuiTheme.get_attribute_values(theme_definition.styles),
+    }
+
+    theme.color_count = #theme.colors
+    theme.style_count = #theme.styles
+
+    return theme
+  end
 }
+
+function ImGuiTheme:init()
+  self.f_color_push = ImGuiTheme.get_function('f_color_push', reaper.ImGui_PushStyleColor)
+  self.f_color_pop = ImGuiTheme.get_function('f_color_pop', reaper.ImGui_PopStyleColor)
+  self.f_style_push = ImGuiTheme.get_function('f_style_push', reaper.ImGui_PushStyleVar)
+  self.f_style_pop = ImGuiTheme.get_function('f_style_pop', reaper.ImGui_PopStyleVar)
+end
+
+ImGuiTheme.get_attribute_values = function(raw_attributes)
+  raw_attributes = raw_attributes or {}
+
+  local attrs = {}
+
+  for _, v in ipairs(raw_attributes) do
+    if (type(v[1]) == "function") then
+      v[1] = v[1]()
+    end
+
+    table.insert(attrs, v)
+  end
+
+  return attrs
+end
 
 ImGuiTheme.get_function = function(key, default)
   return ImGuiTheme[key] or default
 end
 
-ImGuiTheme.__index = ImGuiTheme
-function ImGuiTheme.new(theme_definition)
-  local theme = {
-    color_count = 0,
-    colors = {},
-
-    style_count = 0,
-    styles = {}
-  }
-
-  setmetatable(theme, ImGuiTheme)
-
-  if (theme_definition.colors ~= nil) then
-    for _, v in ipairs(theme_definition.colors) do
-      if (type(v[1]) == "function") then
-        v[1] = v[1]()
-      end
-
-      table.insert(theme.colors, v)
-    end
-  end
-  theme.color_count = #theme.colors
-
-  if (theme_definition.styles ~= nil) then
-    for _, v in ipairs(theme_definition.styles) do
-      if (type(v[1]) == "function") then
-        v[1] = v[1]()
-      end
-
-      table.insert(theme.styles, v)
-    end
-  end
-  theme.style_count = #theme.styles
-
-  return theme
-end
-
 function ImGuiTheme:push(ctx)
-  local f_color_push = ImGuiTheme.get_function('f_color_push', reaper.ImGui_PushStyleColor)
   for i = 1, self.color_count do
-    f_color_push(ctx, self.colors[i][1], table.unpack(self.colors[i], 2))
+    self.f_color_push(ctx, self.colors[i][1], table.unpack(self.colors[i], 2))
   end
 
-  local f_style_push = ImGuiTheme.get_function('f_style_push', reaper.ImGui_PushStyleVar)
   for i = 1, self.style_count do
-    f_style_push(ctx, self.styles[i][1], table.unpack(self.styles[i], 2))
+    self.f_style_push(ctx, self.styles[i][1], table.unpack(self.styles[i], 2))
   end
 end
 
 function ImGuiTheme:pop(ctx)
-  ImGuiTheme.get_function("f_color_pop", reaper.ImGui_PopStyleColor)(ctx, self.color_count)
-  ImGuiTheme.get_function("f_style_pop", reaper.ImGui_PopStyleVar)(ctx, self.style_count)
+  self.f_color_pop(ctx, self.color_count)
+  self.f_style_pop(ctx, self.style_count)
 end
