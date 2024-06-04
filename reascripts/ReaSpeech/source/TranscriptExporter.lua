@@ -180,15 +180,17 @@ function TranscriptExporterFormats:render_combo(width)
   ImGui.Text(ctx, 'Format')
   ImGui.SetNextItemWidth(ctx, width)
   if ImGui.BeginCombo(ctx, "##format", self.selected_format_key) then
-    for _, format in pairs(self.formatters) do
-      local is_selected = self.selected_format_key == format.key
-      if ImGui.Selectable(ctx, format.key, is_selected) then
-        self.selected_format_key = format.key
+    app:trap(function()
+      for _, format in pairs(self.formatters) do
+        local is_selected = self.selected_format_key == format.key
+        if ImGui.Selectable(ctx, format.key, is_selected) then
+          self.selected_format_key = format.key
+        end
+        if is_selected then
+          ImGui.SetItemDefaultFocus(ctx)
+        end
       end
-      if is_selected then
-        ImGui.SetItemDefaultFocus(ctx)
-      end
-    end
+    end)
     ImGui.EndCombo(ctx)
   end
 end
@@ -322,12 +324,51 @@ end
 function TranscriptExportFormat.exporter_csv()
   return TranscriptExportFormat.new(
     'CSV', 'csv',
-    TranscriptExportFormat.OPTIONS_NOOP,
+    TranscriptExportFormat.options_csv,
     TranscriptExportFormat.writer_csv
   )
 end
 
-function TranscriptExportFormat.writer_csv(transcript, output_file)
-  local writer = CSVWriter.new { file = output_file }
+function TranscriptExportFormat.options_csv(options)
+  local delimiters = CSVWriter.DELIMITERS
+
+  local selected_delimiter = delimiters[1]
+
+  for _, delimiter in ipairs(delimiters) do
+    if delimiter.char == options.delimiter then
+      selected_delimiter = delimiter
+      break
+    end
+  end
+
+  if ImGui.BeginCombo(ctx, 'Delimiter', selected_delimiter.name) then
+    app:trap(function()
+      for _, delimiter in ipairs(delimiters) do
+        local is_selected = options.delimiter == delimiter.char
+        if ImGui.Selectable(ctx, delimiter.name, is_selected) then
+          options.delimiter = delimiter.char
+        end
+        if is_selected then
+          ImGui.SetItemDefaultFocus(ctx)
+        end
+      end
+    end)
+    ImGui.EndCombo(ctx)
+  end
+
+  ImGui.Spacing(ctx)
+
+  local rv, value = ImGui.Checkbox(ctx, 'Include Header Row', options.include_header_row)
+  if rv then
+    options.include_header_row = value
+  end
+end
+
+function TranscriptExportFormat.writer_csv(transcript, output_file, options)
+  local writer = CSVWriter.new {
+    file = output_file,
+    delimiter = options.delimiter,
+    include_header_row = options.include_header_row
+  }
   writer:write(transcript)
 end
