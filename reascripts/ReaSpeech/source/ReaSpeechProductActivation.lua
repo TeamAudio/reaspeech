@@ -26,7 +26,7 @@ function ReaSpeechProductActivation:init()
 end
 
 function ReaSpeechProductActivation:init_config()
-  self.config = OptionsConfig.new({
+  self.config = OptionsConfig.new {
     section = 'ReaSpeech',
     options = {
       product_run_check_count = {'number', 0},
@@ -34,7 +34,7 @@ function ReaSpeechProductActivation:init_config()
       product_license_value = {'string', ''},
       eula_signed = {'boolean', false},
     }
-  })
+  }
 end
 
 function ReaSpeechProductActivation:activation_state_check()
