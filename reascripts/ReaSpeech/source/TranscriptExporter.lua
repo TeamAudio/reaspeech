@@ -77,6 +77,8 @@ function TranscriptExporter:render_content()
 
   self.export_formats:render_format_options(self.export_options)
 
+  ImGui.Spacing(ctx)
+
   self:render_file_selector()
 
   self:render_separator()
@@ -275,13 +277,45 @@ end
 function TranscriptExportFormat.exporter_srt()
   return TranscriptExportFormat.new(
     'SRT', 'srt',
-    TranscriptExportFormat.OPTIONS_NOOP,
+    TranscriptExportFormat.options_srt,
     TranscriptExportFormat.writer_srt
   )
 end
 
-function TranscriptExportFormat.writer_srt(transcript, output_file)
-  local writer = SRTWriter.new { file = output_file }
+function TranscriptExportFormat.strip_non_numeric(value)
+  return value:gsub("[^0-9]", ""):gsub("^0+", "")
+end
+
+function TranscriptExportFormat.options_srt(options)
+  local rv, value
+
+  rv, value = ImGui.InputText(ctx, 'X1', options.coords_x1, ImGui.InputTextFlags_CharsDecimal())
+  if rv then
+    options.coords_x1 = TranscriptExportFormat.strip_non_numeric(value)
+  end
+
+  ImGui.SameLine(ctx)
+
+  rv, value = ImGui.InputText(ctx, 'Y1', options.coords_y1, ImGui.InputTextFlags_CharsDecimal())
+  if rv then
+    options.coords_y1 = TranscriptExportFormat.strip_non_numeric(value)
+  end
+
+  rv, value = ImGui.InputText(ctx, 'X2', options.coords_x2, ImGui.InputTextFlags_CharsDecimal())
+  if rv then
+    options.coords_x2 = TranscriptExportFormat.strip_non_numeric(value)
+  end
+
+  ImGui.SameLine(ctx)
+
+  rv, value = ImGui.InputText(ctx, 'Y2', options.coords_y2, ImGui.InputTextFlags_CharsDecimal())
+  if rv then
+    options.coords_y2 = TranscriptExportFormat.strip_non_numeric(value)
+  end
+end
+
+function TranscriptExportFormat.writer_srt(transcript, output_file, options)
+  local writer = SRTWriter.new { file = output_file, options = options }
   writer:write(transcript)
 end
 
