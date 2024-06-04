@@ -317,6 +317,10 @@ function TranscriptExportFormat.options_csv(options)
 end
 
 function TranscriptExportFormat.writer_csv(transcript, output_file, options)
-  local writer = CSVWriter.new { file = output_file, options = options }
+  local writer = CSVWriter.new {
+    file = output_file,
+    delimiter = options.delimiter,
+    include_header_row = options.include_header_row
+  }
   writer:write(transcript)
 end

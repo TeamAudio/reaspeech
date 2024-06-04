@@ -11,15 +11,19 @@ CSVWriter = Polo {
     { char = ';',  name = 'Semicolon' },
     { char = '\t', name = 'Tab' },
   },
-  DEFAULT_DELIMITER = ',',
+
+  new = function(options)
+    options = options or {}
+    return {
+      file = options.file,
+      delimiter = options.delimiter or ',',
+      include_header_row = options.include_header_row or false,
+    }
+  end,
 }
 
 function CSVWriter:init()
   assert(self.file, 'missing file')
-
-  self.options = self.options or {}
-  self.delimiter = self.options.delimiter or CSVWriter.DEFAULT_DELIMITER
-  self.include_header_row = self.options.include_header_row or false
 end
 
 CSVWriter.format_time = function (time)

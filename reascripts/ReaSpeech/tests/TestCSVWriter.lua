@@ -86,7 +86,7 @@ function TestCSVWriter:testCustomDelimiter()
       table.insert(output, s)
     end
   }
-  local writer = CSVWriter.new { file = f, options = { delimiter = '\t' } }
+  local writer = CSVWriter.new { file = f, delimiter = '\t' }
   writer:write(t)
   local output_str = table.concat(output)
   lu.assertEquals(output_str, '1\t"00:00:00,000"\t"00:00:01,000"\t"hello"\t"test_audio.wav"\n2\t"00:00:01,000"\t"00:00:02,000"\t"world"\t"test_audio.wav"\n3\t"00:00:02,000"\t"00:00:03,000"\t"something in ""quotes"""\t"test_audio.wav"\n')
@@ -101,7 +101,7 @@ function TestCSVWriter:testIncludeHeaderRow()
       table.insert(output, s)
     end
   }
-  local writer = CSVWriter.new { file = f, options = { include_header_row = true } }
+  local writer = CSVWriter.new { file = f, include_header_row = true }
   writer:write(t)
   local output_str = table.concat(output)
   lu.assertEquals(output_str, '"Sequence Number","Start Time","End Time","Text","File"\n1,"00:00:00,000","00:00:01,000","hello","test_audio.wav"\n2,"00:00:01,000","00:00:02,000","world","test_audio.wav"\n3,"00:00:02,000","00:00:03,000","something in ""quotes""","test_audio.wav"\n')
