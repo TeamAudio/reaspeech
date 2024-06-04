@@ -4,9 +4,6 @@
 
 ]]--
 
-OptionsConfig = {}
-OptionsConfig.__index = OptionsConfig
-
 -- Constructor
 --
 -- Parameters:
@@ -15,21 +12,27 @@ OptionsConfig.__index = OptionsConfig
 --            type can be one of: 'string', 'number', 'boolean'
 --
 -- Example:
---   local options = OptionsConfig:new {
+--   local options = OptionsConfig.new({
 --     section = "ReaSpeech.Options",
 --     options = {
 --       patties_per_burger = {'number', 2},
 --       ...
 --     }
---   }
+--   })
 --
-function OptionsConfig:new(o)
-  o = o or {}
-  setmetatable(o, self)
-  assert(o.section, 'section is required')
-  o.options = o.options or {}
-  return o
-end
+
+OptionsConfig = Polo {
+  new = function (o)
+    o = o or {}
+
+    assert(o.section, 'section is required')
+
+    return {
+      section = o.section,
+      options = o.options or {},
+    }
+  end,
+}
 
 function OptionsConfig:get(name)
   local option = self.options[name]
