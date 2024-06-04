@@ -4,22 +4,13 @@
 
 ]]--
 
-AlertPopup = {
+AlertPopup = Polo {
   WIDTH = 400,
   HEIGHT = 200,
   MIN_CONTENT_WIDTH = 375,
   BUTTON_WIDTH = 120,
   DEFAULT_TITLE = 'Alert',
 }
-
-AlertPopup.__index = AlertPopup
-
-AlertPopup.new = function (o)
-  o = o or {}
-  setmetatable(o, AlertPopup)
-  o:init()
-  return o
-end
 
 function AlertPopup:init()
   self.title = self.title or self.DEFAULT_TITLE
