@@ -419,6 +419,16 @@ function ReaSpeechUI:render_advanced_controls()
     ImGui.PopItemWidth(ctx)
 
     ImGui.SameLine(ctx)
+    ImGui.PushItemWidth(ctx, 100)
+    self:trap(function ()
+      rv, value = ImGui.InputTextWithHint(ctx, 'model name', self.model_name or "<default>")
+      if rv then
+        self.model_name = value
+      end
+    end)
+    ImGui.PopItemWidth(ctx)
+
+    ImGui.SameLine(ctx)
     rv, value = ImGui.Checkbox(ctx, "log", self.log_enable)
     if rv then
       self.log_enable = value
@@ -431,22 +441,6 @@ function ReaSpeechUI:render_advanced_controls()
         self.log_debug = value
       end
     end
-
-    rv, value = ImGui.Checkbox(ctx, "use async", self.use_async)
-    if rv then
-      self.use_async = value
-    end
-
-    ImGui.SameLine(ctx)
-
-    ImGui.PushItemWidth(ctx, 100)
-    self:trap(function ()
-      rv, value = ImGui.InputTextWithHint(ctx, 'model_name', self.model_name or "<default>")
-      if rv then
-        self.model_name = value
-      end
-    end)
-    ImGui.PopItemWidth(ctx)
 
     ImGui.TreePop(ctx)
     ImGui.Spacing(ctx)
