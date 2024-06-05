@@ -4,9 +4,6 @@
 
 ]]--
 
-OptionsConfig = {}
-OptionsConfig.__index = OptionsConfig
-
 -- Constructor
 --
 -- Parameters:
@@ -23,6 +20,10 @@ OptionsConfig.__index = OptionsConfig
 --     }
 --   }
 --
+
+OptionsConfig = {}
+OptionsConfig.__index = OptionsConfig
+
 function OptionsConfig:new(o)
   o = o or {}
   setmetatable(o, self)

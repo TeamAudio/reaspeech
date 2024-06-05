@@ -32,7 +32,7 @@ if not ENABLE_ACTIVATION then
   function ReaSpeechProductActivation:activation_state_check() end
   ReaSpeechProductActivation.state = 'activated'
 
-  local activation = ReaSpeechProductActivation:new()
+  local activation = ReaSpeechProductActivation.new()
   activation.config:set('eula_signed', true)
 end
 
