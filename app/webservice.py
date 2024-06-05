@@ -21,10 +21,6 @@ logging.basicConfig(format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s
 logger = logging.getLogger(__name__)
 
 ASR_ENGINE = os.getenv("ASR_ENGINE", "faster_whisper")
-if ASR_ENGINE == "faster_whisper":
-    from .faster_whisper.core import load_model, language_detection, transcribe as whisper_transcribe
-else:
-    from .openai_whisper.core import load_model, language_detection, transcribe as whisper_transcribe
 
 ASR_OPTIONS = frozenset([
     "task",
@@ -107,7 +103,6 @@ async def reascript(request: Request, name: str, host: str):
         }
     )
 
-
 @app.post("/asr", tags=["Endpoints"])
 async def asr(
     task: Union[str, None] = Query(default="transcribe", enum=["transcribe", "translate"]),
@@ -157,7 +152,6 @@ async def asr(
                 'Content-Disposition': f'attachment; filename="{filename}.{output}"'
             })
 
-
 @app.get("/jobs/{job_id}", tags=["Endpoints"])
 async def job_status(job_id: str):
     job = AsyncResult(job_id)
@@ -179,11 +173,3 @@ async def revoke_job(job_id: str):
         "job_status": job.status
     }
     return JSONResponse(result)
-
-@app.post("/detect-language", tags=["Endpoints"])
-async def detect_language(
-        audio_file: UploadFile = File(...),
-        encode: bool = Query(default=True, description="Encode audio first through ffmpeg")
-):
-    detected_lang_code = language_detection(load_audio(audio_file.file, encode))
-    return {"detected_language": tokenizer.LANGUAGES[detected_lang_code], "language_code": detected_lang_code}
