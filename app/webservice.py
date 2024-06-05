@@ -1,19 +1,18 @@
+from os import path
+from typing import Union, Annotated
 import importlib.metadata
 import logging
 import os
-from os import path
-from tempfile import NamedTemporaryFile
-from typing import Union, Annotated
+import tempfile
 
 from celery.result import AsyncResult
-
 from fastapi import FastAPI, File, Query, Request, UploadFile, applications
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.responses import (HTMLResponse, JSONResponse, PlainTextResponse,
-                               RedirectResponse, StreamingResponse)
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from whisper import tokenizer
+import aiofiles
 
 from .util.audio import load_audio
 from .worker import transcribe as bg_transcribe
@@ -129,11 +128,14 @@ async def asr(
     async_str = " (async)" if use_async else ""
     logger.info(f"Transcribing{async_str} {audio_file.filename} with {asr_options}")
 
-    source_file = NamedTemporaryFile(delete=False)
-    source_file.write(audio_file.file.read())
-    source_file.close()
+    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+        temp_file_path = temp_file.name
 
-    transcriber = bg_transcribe.si(source_file.name, audio_file.filename, asr_options)
+    async with aiofiles.open(temp_file_path, 'wb') as out_file:
+        while content := await audio_file.read(1024 * 1024):  # Read in chunks of 1MB
+            await out_file.write(content)
+
+    transcriber = bg_transcribe.si(temp_file_path, audio_file.filename, asr_options)
 
     if use_async:
         job = transcriber.apply_async()
