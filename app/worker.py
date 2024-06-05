@@ -105,12 +105,11 @@ def transcribe(
     with open(output_path, "w") as f:
         f.write(result.read())
 
-    url = f"{get_output_url_path(transcribe.request.id)}/{filename}"
-
-    logger.info(f"Result written to {output_path}, URL: {url}")
+    url_path = f"{get_output_url_path(transcribe.request.id)}/{filename}"
 
     return {
-        "url": url
+        "output_path": output_path,
+        "url_path": url_path,
     }
 
 def get_output_path(job_id: str):

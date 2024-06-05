@@ -129,23 +129,26 @@ async def asr(
     async_str = " (async)" if use_async else ""
     logger.info(f"Transcribing{async_str} {audio_file.filename} with {asr_options}")
 
-    if use_async:
-        source_file = NamedTemporaryFile(delete=False)
-        source_file.write(audio_file.file.read())
-        source_file.close()
+    source_file = NamedTemporaryFile(delete=False)
+    source_file.write(audio_file.file.read())
+    source_file.close()
 
-        job = bg_transcribe.apply_async((source_file.name, audio_file.filename, asr_options))
+    transcriber = bg_transcribe.si(source_file.name, audio_file.filename, asr_options)
+
+    if use_async:
+        job = transcriber.apply_async()
         return JSONResponse({"job_id": job.id})
 
     else:
-        model_name = model_name or DEFAULT_MODEL_NAME
-        logger.info(f"Loading model {model_name}")
-        load_model(model_name)
+        result = transcriber.apply().get()
 
-        result = whisper_transcribe(load_audio(audio_file.file, encode), asr_options, output)
+        def reader():
+            with open(result['output_path'], "r") as file:
+                yield from file
+
         filename = audio_file.filename.encode('latin-1', 'ignore')
         return StreamingResponse(
-            result,
+            reader(),
             media_type="text/plain",
             headers={
                 'Asr-Engine': ASR_ENGINE,

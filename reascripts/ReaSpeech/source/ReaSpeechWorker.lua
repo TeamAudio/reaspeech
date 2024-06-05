@@ -164,7 +164,7 @@ function ReaSpeechWorker:handle_job_status(active_job, response)
   end
 
   if response.job_status == 'SUCCESS' then
-    local transcript_url_path = response.job_result.url
+    local transcript_url_path = response.job_result.url_path
     response._job = active_job.job
     active_job.transcript_output_file = ReaSpeechAPI:fetch_large(transcript_url_path)
     -- Job completion depends on non-blocking download of transcript
