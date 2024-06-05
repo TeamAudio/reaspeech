@@ -36,7 +36,6 @@ def load_model(next_model_name: str):
 
         return model
 
-load_model(model_name)
 
 def transcribe(audio, asr_options, output):
     options_dict = {k: v for k, v in asr_options.items() if k in ASR_ENGINE_OPTIONS}
