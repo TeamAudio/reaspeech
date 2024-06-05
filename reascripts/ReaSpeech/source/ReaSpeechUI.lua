@@ -80,8 +80,6 @@ function ReaSpeechUI:init()
   self.log_enable = false
   self.log_debug = false
 
-  self.use_async = true
-
   self.words = false
   self.colorize_words = false
   self.autoplay = true
@@ -869,7 +867,6 @@ function ReaSpeechUI:process_jobs(job_generator)
     return
   end
   local request = {
-    use_async = self.use_async,
     language = self.language,
     translate = self.translate,
     initial_prompt = self.initial_prompt,
