@@ -73,6 +73,8 @@ function ReaSpeechUI:init()
     self:log(e)
   end
 
+  self.disabler = ReaUtil.disabler(ctx, self.onerror)
+
   self.requests = {}
   self.responses = {}
   self.logs = {}
@@ -185,10 +187,17 @@ end
 
 function ReaSpeechUI:tooltip(text)
   if not ImGui.IsItemHovered(ctx, ImGui.HoveredFlags_DelayNormal()) or
-    not ImGui.BeginTooltip(ctx) then return end
-  ImGui.PushTextWrapPos(ctx, ImGui.GetFontSize(ctx) * 42)
-  ImGui.Text(ctx, text)
-  ImGui.PopTextWrapPos(ctx)
+     not ImGui.BeginTooltip(ctx)
+  then return end
+
+  self:trap(function()
+    ImGui.PushTextWrapPos(ctx, ImGui.GetFontSize(ctx) * 42)
+    self:trap(function()
+      ImGui.Text(ctx, text)
+    end)
+    ImGui.PopTextWrapPos(ctx)
+  end)
+
   ImGui.EndTooltip(ctx)
 end
 
@@ -356,19 +365,21 @@ end
 function ReaSpeechUI:render_inputs()
   --start input table so logo and inputs sit side-by-side
   if ImGui.BeginTable(ctx, 'InputTable', 2) then
-    --column settings
-    ImGui.TableSetupColumn(ctx, 'Logo',ImGui.TableColumnFlags_WidthFixed())
-    ImGui.TableSetupColumn(ctx, 'Inputs',ImGui.TableColumnFlags_WidthFixed())
-    -- first column
-    ImGui.TableNextColumn(ctx)
-    ImGui.SameLine(ctx, -10)
-    app.png_from_bytes('reaspeech-logo-small')
-    -- second column
-    ImGui.TableNextColumn(ctx)
-    -- start language selection
-    self:render_language_controls()
-    ImGui.Dummy(ctx,0, 10)
-    self:render_advanced_controls()
+    self:trap(function()
+      --column settings
+      ImGui.TableSetupColumn(ctx, 'Logo',ImGui.TableColumnFlags_WidthFixed())
+      ImGui.TableSetupColumn(ctx, 'Inputs',ImGui.TableColumnFlags_WidthFixed())
+      -- first column
+      ImGui.TableNextColumn(ctx)
+      ImGui.SameLine(ctx, -10)
+      app.png_from_bytes('reaspeech-logo-small')
+      -- second column
+      ImGui.TableNextColumn(ctx)
+      -- start language selection
+      self:render_language_controls()
+      ImGui.Dummy(ctx,0, 10)
+      self:render_advanced_controls()
+    end)
     ImGui.EndTable(ctx)
   end
   -- end input table
@@ -378,24 +389,28 @@ end
 
 function ReaSpeechUI:render_language_controls()
   if ImGui.TreeNode(ctx, 'Language Options', ImGui.TreeNodeFlags_DefaultOpen()) then
-    ImGui.Dummy(ctx, 0, 25)
-    ImGui.SameLine(ctx)
-    if ImGui.BeginCombo(ctx, "language", self.LANGUAGES[self.language]) then
-      local combo_items = self.LANGUAGE_CODES
-      for _, combo_item in pairs(combo_items) do
-        local is_selected = (combo_item == self.language)
-        if ImGui.Selectable(ctx, self.LANGUAGES[combo_item], is_selected) then
-          self.language = combo_item
-        end
+    self:trap(function()
+      ImGui.Dummy(ctx, 0, 25)
+      ImGui.SameLine(ctx)
+      if ImGui.BeginCombo(ctx, "language", self.LANGUAGES[self.language]) then
+        self:trap(function()
+          local combo_items = self.LANGUAGE_CODES
+          for _, combo_item in pairs(combo_items) do
+            local is_selected = (combo_item == self.language)
+            if ImGui.Selectable(ctx, self.LANGUAGES[combo_item], is_selected) then
+              self.language = combo_item
+            end
+          end
+        end)
+        ImGui.EndCombo(ctx)
       end
-      ImGui.EndCombo(ctx)
-    end
-    local rv, value
-    ImGui.SameLine(ctx)
-    rv, value = ImGui.Checkbox(ctx, "translate", self.translate)
-    if rv then
-      self.translate = value
-    end
+      local rv, value
+      ImGui.SameLine(ctx)
+      rv, value = ImGui.Checkbox(ctx, "translate", self.translate)
+      if rv then
+        self.translate = value
+      end
+    end)
 
     ImGui.TreePop(ctx)
   end
@@ -405,40 +420,43 @@ function ReaSpeechUI:render_advanced_controls()
   local rv, value
 
   if ImGui.TreeNode(ctx, 'Advanced Options') then
-    ImGui.Dummy(ctx, 0, 25)
-    ImGui.SameLine(ctx)
-    ImGui.PushItemWidth(ctx, self.LARGE_ITEM_WIDTH)
-    self:trap(function ()
-      rv, value = ImGui.InputText(ctx, 'initial prompt', self.initial_prompt)
-      if rv then
-        self.initial_prompt = value
-      end
-    end)
-    ImGui.PopItemWidth(ctx)
+    self:trap(function()
+      ImGui.Dummy(ctx, 0, 25)
 
-    ImGui.SameLine(ctx)
-    ImGui.PushItemWidth(ctx, 100)
-    self:trap(function ()
-      rv, value = ImGui.InputTextWithHint(ctx, 'model name', self.model_name or "<default>")
-      if rv then
-        self.model_name = value
-      end
-    end)
-    ImGui.PopItemWidth(ctx)
-
-    ImGui.SameLine(ctx)
-    rv, value = ImGui.Checkbox(ctx, "log", self.log_enable)
-    if rv then
-      self.log_enable = value
-    end
-
-    if self.log_enable then
       ImGui.SameLine(ctx)
-      rv, value = ImGui.Checkbox(ctx, "debug", self.log_debug)
+      ImGui.PushItemWidth(ctx, self.LARGE_ITEM_WIDTH)
+      self:trap(function ()
+        rv, value = ImGui.InputText(ctx, 'initial prompt', self.initial_prompt)
+        if rv then
+          self.initial_prompt = value
+        end
+      end)
+      ImGui.PopItemWidth(ctx)
+
+      ImGui.SameLine(ctx)
+      ImGui.PushItemWidth(ctx, 100)
+      self:trap(function ()
+        rv, value = ImGui.InputTextWithHint(ctx, 'model name', self.model_name or "<default>")
+        if rv then
+          self.model_name = value
+        end
+      end)
+      ImGui.PopItemWidth(ctx)
+
+      ImGui.SameLine(ctx)
+      rv, value = ImGui.Checkbox(ctx, "log", self.log_enable)
       if rv then
-        self.log_debug = value
+        self.log_enable = value
       end
-    end
+
+      if self.log_enable then
+        ImGui.SameLine(ctx)
+        rv, value = ImGui.Checkbox(ctx, "debug", self.log_debug)
+        if rv then
+          self.log_debug = value
+        end
+      end
+    end)
 
     ImGui.TreePop(ctx)
     ImGui.Spacing(ctx)
@@ -456,12 +474,12 @@ function ReaSpeechUI:render_activation_inputs()
     if rv then
       self.license_input = value
     end
+    if self.product_activation.activation_message ~= "" then
+      --Possibly make this ColorText with and change depending on message
+      ImGui.SameLine(ctx)
+      ImGui.Text(ctx, self.product_activation.activation_message)
+    end
   end)
-  if self.product_activation.activation_message ~= "" then
-    --Possibly make this ColorText with and change depending on message
-    ImGui.SameLine(ctx)
-    ImGui.Text(ctx, self.product_activation.activation_message)
-  end
   ImGui.PopItemWidth(ctx)
   ImGui.Dummy(ctx, self.LARGE_ITEM_WIDTH, 30)
   if ImGui.Button(ctx, "Submit") then
@@ -471,13 +489,15 @@ end
 
 function ReaSpeechUI:render_EULA_inputs()
   ImGui.PushItemWidth(ctx, self.LARGE_ITEM_WIDTH)
-  ImGui.Text(ctx, ('EULA'))
-  ImGui.Dummy(ctx, self.LARGE_ITEM_WIDTH, 25)
-  ImGui.TextWrapped(ctx, ReaSpeechEULAContent)
-  ImGui.Dummy(ctx, self.LARGE_ITEM_WIDTH, 25)
-   if ImGui.Button(ctx, "Agree") then
-    self.product_activation.config:set('eula_signed', true)
-  end
+  self:trap(function ()
+    ImGui.Text(ctx, ('EULA'))
+    ImGui.Dummy(ctx, self.LARGE_ITEM_WIDTH, 25)
+    ImGui.TextWrapped(ctx, ReaSpeechEULAContent)
+    ImGui.Dummy(ctx, self.LARGE_ITEM_WIDTH, 25)
+     if ImGui.Button(ctx, "Agree") then
+      self.product_activation.config:set('eula_signed', true)
+    end
+  end)
   ImGui.PopItemWidth(ctx)
 end
 
@@ -487,58 +507,53 @@ function ReaSpeechUI:handle_product_activation(input_license)
 end
 
 function ReaSpeechUI:render_actions()
+  local disable_if = self.disabler
   local progress = self.worker:progress()
 
-  if progress then
-    ImGui.BeginDisabled(ctx)
-  end
+  disable_if(progress, function()
+    local selected_track_count = reaper.CountSelectedTracks(ReaUtil.ACTIVE_PROJECT)
+    disable_if(selected_track_count == 0, function()
+      local button_text
 
-  local disable_if = ReaUtil.disabler(ctx)
+      if selected_track_count == 0 then
+        button_text = "Process Selected Tracks"
+      elseif selected_track_count == 1 then
+        button_text = "Process 1 Selected Track"
+      else
+        button_text = string.format("Process %d Selected Tracks", selected_track_count)
+      end
 
-  local selected_track_count = reaper.CountSelectedTracks(ReaUtil.ACTIVE_PROJECT)
-  disable_if(selected_track_count == 0, function()
-    local button_text
+      if ImGui.Button(ctx, button_text) then
+        self:process_jobs(ReaSpeechUI.jobs_for_selected_tracks)
+      end
+    end)
 
-    if selected_track_count == 0 then
-      button_text = "Process Selected Tracks"
-    elseif selected_track_count == 1 then
-      button_text = "Process 1 Selected Track"
-    else
-      button_text = string.format("Process %d Selected Tracks", selected_track_count)
-    end
+    ImGui.SameLine(ctx)
 
-    if ImGui.Button(ctx, button_text) then
-      self:process_jobs(ReaSpeechUI.jobs_for_selected_tracks)
+    local selected_item_count = reaper.CountSelectedMediaItems(ReaUtil.ACTIVE_PROJECT)
+    disable_if(selected_item_count == 0, function()
+      local button_text
+
+      if selected_item_count == 0 then
+        button_text = "Process Selected Items"
+      elseif selected_item_count == 1 then
+        button_text = "Process 1 Selected Item"
+      else
+        button_text = string.format("Process %d Selected Items", selected_item_count)
+      end
+
+      if ImGui.Button(ctx, button_text) then
+        self:process_jobs(ReaSpeechUI.jobs_for_selected_items)
+      end
+    end)
+
+    ImGui.SameLine(ctx)
+    if ImGui.Button(ctx, "Process All Items") then
+      self:process_jobs(ReaSpeechUI.jobs_for_all_items)
     end
   end)
 
-  ImGui.SameLine(ctx)
-
-  local selected_item_count = reaper.CountSelectedMediaItems(ReaUtil.ACTIVE_PROJECT)
-  disable_if(selected_item_count == 0, function()
-    local button_text
-
-    if selected_item_count == 0 then
-      button_text = "Process Selected Items"
-    elseif selected_item_count == 1 then
-      button_text = "Process 1 Selected Item"
-    else
-      button_text = string.format("Process %d Selected Items", selected_item_count)
-    end
-
-    if ImGui.Button(ctx, button_text) then
-      self:process_jobs(ReaSpeechUI.jobs_for_selected_items)
-    end
-  end)
-
-  ImGui.SameLine(ctx)
-  if ImGui.Button(ctx, "Process All Items") then
-    self:process_jobs(ReaSpeechUI.jobs_for_all_items)
-  end
-
   if progress then
-    ImGui.EndDisabled(ctx)
-
     ImGui.SameLine(ctx)
     if ImGui.Button(ctx, "Cancel") then
       self.worker:cancel()
@@ -674,7 +689,9 @@ end
 
 function ReaSpeechUI:render_segment_actions(segment, index)
   ImGui.PushFont(ctx, Fonts.icons)
-  ImGui.Text(ctx, Fonts.ICON.pencil)
+  self:trap(function()
+    ImGui.Text(ctx, Fonts.ICON.pencil)
+  end)
   ImGui.PopFont(ctx)
   if ImGui.IsItemHovered(ctx) then
     ImGui.SetMouseCursor(ctx, ImGui.MouseCursor_Hand())
