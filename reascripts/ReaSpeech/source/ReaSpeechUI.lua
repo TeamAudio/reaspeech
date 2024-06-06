@@ -192,9 +192,9 @@ function ReaSpeechUI:tooltip(text)
      not ImGui.BeginTooltip(ctx)
   then return end
 
-  app:trap(function()
+  self:trap(function()
     ImGui.PushTextWrapPos(ctx, ImGui.GetFontSize(ctx) * 42)
-    app:trap(function()
+    self:trap(function()
       ImGui.Text(ctx, text)
     end)
     ImGui.PopTextWrapPos(ctx)
@@ -367,7 +367,7 @@ end
 function ReaSpeechUI:render_inputs()
   --start input table so logo and inputs sit side-by-side
   if ImGui.BeginTable(ctx, 'InputTable', 2) then
-    app:trap(function()
+    self:trap(function()
       --column settings
       ImGui.TableSetupColumn(ctx, 'Logo',ImGui.TableColumnFlags_WidthFixed())
       ImGui.TableSetupColumn(ctx, 'Inputs',ImGui.TableColumnFlags_WidthFixed())
@@ -391,11 +391,11 @@ end
 
 function ReaSpeechUI:render_language_controls()
   if ImGui.TreeNode(ctx, 'Language Options', ImGui.TreeNodeFlags_DefaultOpen()) then
-    app:trap(function()
+    self:trap(function()
       ImGui.Dummy(ctx, 0, 25)
       ImGui.SameLine(ctx)
       if ImGui.BeginCombo(ctx, "language", self.LANGUAGES[self.language]) then
-        app:trap(function()
+        self:trap(function()
           local combo_items = self.LANGUAGE_CODES
           for _, combo_item in pairs(combo_items) do
             local is_selected = (combo_item == self.language)
@@ -422,7 +422,7 @@ function ReaSpeechUI:render_advanced_controls()
   local rv, value
 
   if ImGui.TreeNode(ctx, 'Advanced Options') then
-    app:trap(function()
+    self:trap(function()
       ImGui.Dummy(ctx, 0, 25)
       ImGui.SameLine(ctx)
       ImGui.PushItemWidth(ctx, self.LARGE_ITEM_WIDTH)
@@ -496,7 +496,7 @@ end
 
 function ReaSpeechUI:render_EULA_inputs()
   ImGui.PushItemWidth(ctx, self.LARGE_ITEM_WIDTH)
-  app:trap(function ()
+  self:trap(function ()
     ImGui.Text(ctx, ('EULA'))
     ImGui.Dummy(ctx, self.LARGE_ITEM_WIDTH, 25)
     ImGui.TextWrapped(ctx, ReaSpeechEULAContent)
@@ -696,7 +696,7 @@ end
 
 function ReaSpeechUI:render_segment_actions(segment, index)
   ImGui.PushFont(ctx, Fonts.icons)
-  app:trap(function()
+  self:trap(function()
     ImGui.Text(ctx, Fonts.ICON.pencil)
   end)
   ImGui.PopFont(ctx)
