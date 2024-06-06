@@ -20,23 +20,29 @@ function ReaSpeechMain:main()
 end
 
 function ReaSpeechMain:loop()
+  local visible, open = false, false
+
   return function()
     ImGui.PushFont(ctx, Fonts.main)
-    Theme():push(ctx)
+    app:trap(function()
+      Theme():push(ctx)
+      app:trap(function()
+        if ReaSpeechUI.METRICS then
+          ImGui.ShowMetricsWindow(ctx)
+        end
 
-    if ReaSpeechUI.METRICS then
-      ImGui.ShowMetricsWindow(ctx)
-    end
+        ImGui.SetNextWindowSize(ctx, app.WIDTH, app.HEIGHT, ImGui.Cond_FirstUseEver())
+        visible, open = ImGui.Begin(ctx, ReaSpeechUI.TITLE, true)
 
-    ImGui.SetNextWindowSize(ctx, app.WIDTH, app.HEIGHT, ImGui.Cond_FirstUseEver())
-    local visible, open = ImGui.Begin(ctx, ReaSpeechUI.TITLE, true)
-
-    if visible then
-      app:react()
-      ImGui.End(ctx)
-    end
-
-    Theme():pop(ctx)
+        if visible then
+          app:trap(function()
+            app:react()
+          end)
+          ImGui.End(ctx)
+        end
+      end)
+      Theme():pop(ctx)
+    end)
     ImGui.PopFont(ctx)
 
     if open then
