@@ -99,6 +99,7 @@ function TranscriptEditor:render_word_navigation()
   local word_index = self.editing.word_index
   local num_words = #words
   local spacing = ImGui.GetStyleVar(ctx, ImGui.StyleVar_ItemInnerSpacing())
+  local disable_if = ReaUtil.disabler(ctx, app.onerror)
 
   ImGui.PushButtonRepeat(ctx, true)
   app:trap(function ()
@@ -129,15 +130,12 @@ function TranscriptEditor:render_word_navigation()
   app:tooltip('Add word after current word')
 
   ImGui.SameLine(ctx, 0, spacing)
-  if num_words <= 1 then
-    ImGui.BeginDisabled(ctx)
-  end
-  if ImGui.Button(ctx, 'Delete') then
-    self:handle_word_delete()
-  end
-  if num_words <= 1 then
-    ImGui.EndDisabled(ctx)
-  end
+
+  disable_if(num_words <= 1, function()
+    if ImGui.Button(ctx, 'Delete') then
+      self:handle_word_delete()
+    end
+  end)
   app:tooltip('Delete current word')
 
   ImGui.SameLine(ctx, 0, spacing)
@@ -147,15 +145,11 @@ function TranscriptEditor:render_word_navigation()
   app:tooltip('Split current word into two words')
 
   ImGui.SameLine(ctx, 0, spacing)
-  if word_index >= num_words then
-    ImGui.BeginDisabled(ctx)
-  end
-  if ImGui.Button(ctx, 'Merge') then
-    self:handle_word_merge()
-  end
-  if word_index >= num_words then
-    ImGui.EndDisabled(ctx)
-  end
+  disable_if(word_index >= num_words, function()
+    if ImGui.Button(ctx, 'Merge') then
+      self:handle_word_merge()
+    end
+  end)
   app:tooltip('Merge current word with next word')
 end
 
@@ -169,9 +163,11 @@ function TranscriptEditor:render_words()
     if self.editing.word_index ~= i then
       ImGui.PushStyleColor(ctx, ImGui.Col_Button(), 0xffffff33)
     end
-    if ImGui.Button(ctx, word.word .. '##' .. i) then
-      edit_requested = {word, i}
-    end
+    app:trap(function()
+      if ImGui.Button(ctx, word.word .. '##' .. i) then
+        edit_requested = {word, i}
+      end
+    end)
     if self.editing.word_index ~= i then
       ImGui.PopStyleColor(ctx)
     end
