@@ -469,3 +469,7 @@ function TranscriptWord:to_table()
     probability = self.probability,
   }
 end
+
+function TranscriptWord:select_in_timeline()
+  reaper.GetSet_LoopTimeRange(true, true, self.start, self.end_, false)
+end

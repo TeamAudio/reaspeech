@@ -39,6 +39,10 @@ function TranscriptEditor:edit_word(word, index)
   if self.sync_time_selection then
     self:update_time_selection()
   end
+
+  if self.zoom_to_word then
+    self:do_zoom_to_word()
+  end
 end
 
 function TranscriptEditor:render()
@@ -271,6 +275,22 @@ function TranscriptEditor:render_word_actions()
       self:update_time_selection()
     end
   end
+
+  ImGui.SameLine(ctx)
+  rv, value = ImGui.Checkbox(ctx, 'zoom to word', self.zoom_to_word)
+  if rv then
+    self.zoom_to_word = value
+    if value then
+      self:do_zoom_to_word()
+    end
+  end
+end
+
+function TranscriptEditor:do_zoom_to_word()
+  -- maybe consider saving the current "repeat" value and restoring it at some point?
+  reaper.GetSetRepeat(1)
+  self.editing.word:select_in_timeline()
+  reaper.Main_OnCommandEx(40031, 1) -- View: Zoom time selection
 end
 
 function TranscriptEditor:render_separator()
