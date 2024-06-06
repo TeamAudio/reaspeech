@@ -80,6 +80,12 @@ output_directory = os.environ.get("OUTPUT_DIRECTORY", os.getcwd() + "/app/output
 output_url_prefix = os.environ.get("OUTPUT_URL_PREFIX", "/output")
 app.mount(output_url_prefix, StaticFiles(directory=output_directory), name="output")
 
+
+@app.exception_handler(500)
+async def internal_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(status_code=500, content={"code": 500, "message": "Internal Server Error"})
+
+
 @app.get("/", response_class=RedirectResponse, include_in_schema=False)
 async def index():
     return "/reaspeech"
