@@ -82,8 +82,6 @@ function ReaSpeechUI:init()
   self.log_enable = false
   self.log_debug = false
 
-  self.use_job_queue = false
-
   self.words = false
   self.colorize_words = false
   self.autoplay = true
@@ -424,12 +422,23 @@ function ReaSpeechUI:render_advanced_controls()
   if ImGui.TreeNode(ctx, 'Advanced Options') then
     self:trap(function()
       ImGui.Dummy(ctx, 0, 25)
+
       ImGui.SameLine(ctx)
       ImGui.PushItemWidth(ctx, self.LARGE_ITEM_WIDTH)
       self:trap(function ()
         rv, value = ImGui.InputText(ctx, 'initial prompt', self.initial_prompt)
         if rv then
           self.initial_prompt = value
+        end
+      end)
+      ImGui.PopItemWidth(ctx)
+
+      ImGui.SameLine(ctx)
+      ImGui.PushItemWidth(ctx, 100)
+      self:trap(function ()
+        rv, value = ImGui.InputTextWithHint(ctx, 'model name', self.model_name or "<default>")
+        if rv then
+          self.model_name = value
         end
       end)
       ImGui.PopItemWidth(ctx)
@@ -447,22 +456,6 @@ function ReaSpeechUI:render_advanced_controls()
           self.log_debug = value
         end
       end
-
-      rv, value = ImGui.Checkbox(ctx, "use job queue", self.use_job_queue)
-      if rv then
-        self.use_job_queue = value
-      end
-
-      ImGui.SameLine(ctx)
-
-      ImGui.PushItemWidth(ctx, 100)
-      self:trap(function ()
-        rv, value = ImGui.InputTextWithHint(ctx, 'model_name', self.model_name or "<default>")
-        if rv then
-          self.model_name = value
-        end
-      end)
-      ImGui.PopItemWidth(ctx)
     end)
 
     ImGui.TreePop(ctx)
@@ -891,7 +884,6 @@ function ReaSpeechUI:process_jobs(job_generator)
     return
   end
   local request = {
-    use_job_queue = self.use_job_queue,
     language = self.language,
     translate = self.translate,
     initial_prompt = self.initial_prompt,

@@ -4,6 +4,7 @@ local lu = require('luaunit')
 
 require('OptionsConfig')
 require('Polo')
+require('ReaUtil')
 require('mock_reaper')
 
 require('source/AlertPopup')
