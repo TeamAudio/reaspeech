@@ -165,6 +165,10 @@ async def job_status(job_id: str):
         "job_status": job.status,
         "job_result": job.result
     }
+
+    if job.status == "FAILURE":
+        result["job_result"] = repr(result["job_result"])
+
     return JSONResponse(result)
 
 @app.delete("/jobs/{job_id}", tags=["Endpoints"])
