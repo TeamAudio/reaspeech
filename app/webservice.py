@@ -1,4 +1,3 @@
-from os import path
 from typing import Union, Annotated
 import importlib.metadata
 import logging
@@ -14,8 +13,7 @@ from fastapi.templating import Jinja2Templates
 from whisper import tokenizer
 import aiofiles
 
-from .util.audio import load_audio
-from .worker import transcribe as bg_transcribe
+from .worker import transcribe
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s', level=logging.INFO, force=True)
 logger = logging.getLogger(__name__)
@@ -55,7 +53,7 @@ app = FastAPI(
 )
 
 assets_path = os.getcwd() + "/swagger-ui-assets"
-if path.exists(assets_path + "/swagger-ui.css") and path.exists(assets_path + "/swagger-ui-bundle.js"):
+if os.path.exists(assets_path + "/swagger-ui.css") and os.path.exists(assets_path + "/swagger-ui-bundle.js"):
     app.mount("/assets", StaticFiles(directory=assets_path), name="static")
 
 
@@ -130,7 +128,7 @@ async def asr(
         while content := await audio_file.read(1024 * 1024):  # Read in chunks of 1MB
             await out_file.write(content)
 
-    transcriber = bg_transcribe.si(temp_file_path, audio_file.filename, asr_options)
+    transcriber = transcribe.si(temp_file_path, audio_file.filename, asr_options)
 
     if use_async:
         job = transcriber.apply_async()
@@ -143,13 +141,13 @@ async def asr(
             with open(result['output_path'], "r") as file:
                 yield from file
 
-        filename = audio_file.filename.encode('latin-1', 'ignore')
+        filename = result['output_filename']
         return StreamingResponse(
             reader(),
             media_type="text/plain",
             headers={
                 'Asr-Engine': ASR_ENGINE,
-                'Content-Disposition': f'attachment; filename="{filename}.{output}"'
+                'Content-Disposition': f'attachment; filename="{filename}"'
             })
 
 @app.get("/jobs/{job_id}", tags=["Endpoints"])

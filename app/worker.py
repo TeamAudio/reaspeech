@@ -108,6 +108,7 @@ def transcribe(
     url_path = f"{get_output_url_path(transcribe.request.id)}/{filename}"
 
     return {
+        "output_filename": filename,
         "output_path": output_path,
         "url_path": url_path,
     }
