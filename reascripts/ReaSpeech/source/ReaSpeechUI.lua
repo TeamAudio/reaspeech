@@ -79,7 +79,9 @@ function ReaSpeechUI:init()
   })
 
   self.product_activation = ReaSpeechProductActivation.new()
-  self.license_input = ''
+  self.product_activation_ui = ReaSpeechProductActivationUI.new {
+    product_activation = self.product_activation
+  }
 
   self.language = self.DEFAULT_LANGUAGE
   self.translate = false
@@ -281,15 +283,7 @@ function ReaSpeechUI:render()
   ImGui.PushItemWidth(ctx, self.ITEM_WIDTH)
 
   self:trap(function ()
-    if self.product_activation.state ~= "activated" then
-      self:render_activation_inputs()
-      return
-    end
-
-    if not self.product_activation.config:get('eula_signed') then
-      self:render_EULA_inputs()
-      return
-    end
+    self.product_activation_ui:render()
 
     self:render_main()
   end)
@@ -416,49 +410,6 @@ function ReaSpeechUI:render_advanced_controls()
     ImGui.TreePop(ctx)
     ImGui.Spacing(ctx)
   end
-end
-
-function ReaSpeechUI:render_activation_inputs()
-  ImGui.Text(ctx, ('Welcome to ReaSpeech by Tech Audio'))
-  ImGui.Dummy(ctx, self.LARGE_ITEM_WIDTH, 25)
-  ImGui.Text(ctx, ('Please enter your license key to get started'))
-  ImGui.Dummy(ctx, self.LARGE_ITEM_WIDTH, 5)
-  ImGui.PushItemWidth(ctx, self.LARGE_ITEM_WIDTH)
-  self:trap(function ()
-    local rv, value = ImGui.InputText(ctx, '##', self.license_input)
-    if rv then
-      self.license_input = value
-    end
-    if self.product_activation.activation_message ~= "" then
-      --Possibly make this ColorText with and change depending on message
-      ImGui.SameLine(ctx)
-      ImGui.Text(ctx, self.product_activation.activation_message)
-    end
-  end)
-  ImGui.PopItemWidth(ctx)
-  ImGui.Dummy(ctx, self.LARGE_ITEM_WIDTH, 30)
-  if ImGui.Button(ctx, "Submit") then
-    self:handle_product_activation(self.license_input)
-  end
-end
-
-function ReaSpeechUI:render_EULA_inputs()
-  ImGui.PushItemWidth(ctx, self.LARGE_ITEM_WIDTH)
-  self:trap(function ()
-    ImGui.Text(ctx, ('EULA'))
-    ImGui.Dummy(ctx, self.LARGE_ITEM_WIDTH, 25)
-    ImGui.TextWrapped(ctx, ReaSpeechEULAContent)
-    ImGui.Dummy(ctx, self.LARGE_ITEM_WIDTH, 25)
-     if ImGui.Button(ctx, "Agree") then
-      self.product_activation.config:set('eula_signed', true)
-    end
-  end)
-  ImGui.PopItemWidth(ctx)
-end
-
-function ReaSpeechUI:handle_product_activation(input_license)
-  --reaper.ShowConsoleMsg(tostring(input_license) .. '\n')
-  self.product_activation:handle_product_activation(input_license)
 end
 
 function ReaSpeechUI:render_actions()
