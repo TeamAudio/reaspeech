@@ -107,6 +107,8 @@ function ReaSpeechUI:init()
   self.transcript_exporter = TranscriptExporter.new { transcript = self.transcript }
 
   self.failure = AlertPopup.new { title = 'Transcription Failed' }
+
+  self.react_handlers = self:get_react_handlers()
 end
 
 ReaSpeechUI._init_languages = function ()
@@ -204,12 +206,12 @@ function ReaSpeechUI:tooltip(text)
 end
 
 function ReaSpeechUI:react()
-  for _, handler in pairs(self:react_handlers()) do
+  for _, handler in pairs(self.react_handlers) do
     self:trap(handler)
   end
 end
 
-function ReaSpeechUI:react_handlers()
+function ReaSpeechUI:get_react_handlers()
   return {
     function() self:react_to_worker_response() end,
     function() self:react_to_logging() end,
