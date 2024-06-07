@@ -13,6 +13,7 @@ require('source/ReaSpeechProductActivation')
 require('source/ReaSpeechUI')
 require('source/ReaSpeechWorker')
 require('source/Transcript')
+require('source/TranscriptUI')
 require('source/TranscriptEditor')
 require('source/TranscriptExporter')
 
