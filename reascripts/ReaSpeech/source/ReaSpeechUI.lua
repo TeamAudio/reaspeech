@@ -67,8 +67,8 @@ function ReaSpeechUI:init()
   self.responses = {}
   self.logs = {}
 
-  self.log_enable = true
-  self.log_debug = true
+  self.log_enable = false
+  self.log_debug = false
 
   ReaSpeechAPI:init('http://' .. Script.host)
 
