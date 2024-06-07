@@ -19,6 +19,7 @@ function TranscriptEditor:init()
   self.is_open = false
   self.sync_time_selection = false
   self.zoom_to_word = false
+  self.zoom_level = "none"
 end
 
 function TranscriptEditor:edit_segment(segment, index)
@@ -41,9 +42,7 @@ function TranscriptEditor:edit_word(word, index)
     self:update_time_selection()
   end
 
-  if self.zoom_to_word then
-    self:do_zoom_to_word()
-  end
+  self:zoom(self.zoom_level)
 end
 
 function TranscriptEditor:render()
@@ -277,21 +276,49 @@ function TranscriptEditor:render_word_actions()
     end
   end
 
-  ImGui.SameLine(ctx)
-  rv, value = ImGui.Checkbox(ctx, 'zoom to word', self.zoom_to_word)
-  if rv then
-    self.zoom_to_word = value
-    if value then
-      self:do_zoom_to_word()
-    end
-  end
+  self:render_zoom_combo()
 end
 
-function TranscriptEditor:do_zoom_to_word()
+function TranscriptEditor:render_zoom_combo()
+  ImGui.SameLine(ctx)
+  ImGui.Text(ctx, "Zoom to")
+  ImGui.SameLine(ctx)
+  ImGui.PushItemWidth(ctx, self.BUTTON_WIDTH)
+  app:trap(function()
+    if ImGui.BeginCombo(ctx, "##zoom_level", self.zoom_level) then
+      app:trap(function()
+        if ImGui.Selectable(ctx, "None", self.zoom_level == "none") then
+          self.zoom_level = "none"
+        end
+        if ImGui.Selectable(ctx, "Word", self.zoom_level == "word") then
+          self.zoom_level = "word"
+          self:zoom(self.zoom_level)
+        end
+        if ImGui.Selectable(ctx, "Segment", self.zoom_level == "segment") then
+          self.zoom_level = "segment"
+          self:zoom(self.zoom_level)
+        end
+      end)
+      ImGui.EndCombo(ctx)
+    end
+  end)
+  ImGui.PopItemWidth(ctx)
+end
+
+function TranscriptEditor:zoom(zoom_level)
+  if zoom_level == "word" then
+    self.editing.word:select_in_timeline()
+  elseif zoom_level == "segment" then
+    self.editing.segment:select_in_timeline()
+  else
+    return
+  end
+
   -- maybe consider saving the current "repeat" value and restoring it at some point?
   reaper.GetSetRepeat(1)
-  self.editing.word:select_in_timeline()
-  reaper.Main_OnCommandEx(40031, 1) -- View: Zoom time selection
+
+  -- View: Zoom time selection
+  reaper.Main_OnCommandEx(40031, 1)
 end
 
 function TranscriptEditor:render_separator()

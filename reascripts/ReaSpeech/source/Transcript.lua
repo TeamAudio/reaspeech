@@ -439,6 +439,10 @@ function TranscriptSegment:to_table()
   return result
 end
 
+function TranscriptSegment:select_in_timeline()
+  reaper.GetSet_LoopTimeRange(true, true, self.start, self.end_, false)
+end
+
 TranscriptWord = Polo {}
 
 function TranscriptWord:init()
