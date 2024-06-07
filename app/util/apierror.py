@@ -8,7 +8,7 @@ class APIError(Exception):
         return error_response(self.error)
 
 def error_dict(error):
-    return {"error": repr(error)}
+    return {"error": str(error)}
 
 def error_response(error):
     return JSONResponse(status_code=500, content=error_dict(error))

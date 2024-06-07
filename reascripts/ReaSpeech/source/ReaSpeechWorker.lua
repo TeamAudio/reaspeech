@@ -157,9 +157,10 @@ function ReaSpeechWorker:handle_job_status(active_job, response)
     active_job.transcript_output_file = ReaSpeechAPI:fetch_large(transcript_url_path)
     -- Job completion depends on non-blocking download of transcript
     return false
+  elseif response.job_status == 'FAILURE' then
+    self:handle_error(active_job, response)
+    return true
   end
-
-  -- We should handle some failure cases here
 
   if response.job_result and response.job_result.progress then
     active_job.job.progress = response.job_result.progress
@@ -169,10 +170,12 @@ function ReaSpeechWorker:handle_job_status(active_job, response)
 end
 
 function ReaSpeechWorker:handle_response(active_job, response)
-  app:debug('Active job: ' .. dump(active_job))
-  app:debug('Response: ' .. dump(response))
   response._job = active_job.job
   table.insert(self.responses, response)
+end
+
+function ReaSpeechWorker:handle_error(_active_job, response)
+  table.insert(self.responses, { error = response.job_result.error })
 end
 
 function ReaSpeechWorker:start_active_job()

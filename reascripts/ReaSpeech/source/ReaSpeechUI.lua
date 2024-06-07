@@ -105,6 +105,8 @@ function ReaSpeechUI:init()
   self.transcript = Transcript.new()
   self.transcript_editor = TranscriptEditor.new { transcript = self.transcript }
   self.transcript_exporter = TranscriptExporter.new { transcript = self.transcript }
+
+  self.failure = AlertPopup.new { title = 'Transcription Failed' }
 end
 
 ReaSpeechUI._init_languages = function ()
@@ -226,6 +228,12 @@ function ReaSpeechUI:react_to_worker_response()
 
   self:debug('Response: ' .. dump(response))
 
+  if response.error then
+    self.failure:show(response.error)
+    self.worker:cancel()
+    return
+  end
+
   if not response.segments then
     return
   end
@@ -335,6 +343,7 @@ function ReaSpeechUI:render_main()
   self:render_inputs()
   self:render_actions()
   self:render_transcript_section()
+  self.failure:render()
 end
 
 function ReaSpeechUI:render_transcript_section()
