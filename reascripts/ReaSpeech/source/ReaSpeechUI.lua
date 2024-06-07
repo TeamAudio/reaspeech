@@ -283,9 +283,11 @@ function ReaSpeechUI:render()
   ImGui.PushItemWidth(ctx, self.ITEM_WIDTH)
 
   self:trap(function ()
-    self.product_activation_ui:render()
-
-    self:render_main()
+    if self.product_activation:is_activated() then
+      self:render_main()
+    else
+      self.product_activation_ui:render()
+    end
   end)
 
   ImGui.PopItemWidth(ctx)

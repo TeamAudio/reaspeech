@@ -37,6 +37,10 @@ function ReaSpeechProductActivation:init_config()
   }
 end
 
+function ReaSpeechProductActivation:is_activated()
+  return self.state == 'activated' and self.config:get('eula_signed')
+end
+
 function ReaSpeechProductActivation:activation_state_check()
   local has_l = self.config:exists('product_license')
   local has_lv = self.config:exists('product_license_value')
