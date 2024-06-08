@@ -145,6 +145,11 @@ function ReaSpeechWorker:handle_job_status(active_job, response)
   app:debug('Active job: ' .. dump(active_job))
   app:debug('Status: ' .. dump(response))
 
+  if response.error then
+    table.insert(self.responses, { error = response.error })
+    return true
+  end
+
   active_job.job.job_id = response.job_id
 
   if not response.job_status then
