@@ -121,7 +121,6 @@ function ReaSpeechUI:get_react_handlers()
   return {
     function() self:react_to_worker_response() end,
     function() self:react_to_logging() end,
-    function() self:handle_interval_functions(reaper.time_precise()) end,
     function() self.worker:react() end,
     function() self:render() end
   }
@@ -170,24 +169,6 @@ function ReaSpeechUI:react_to_logging()
   end
 
   self.logs = {}
-end
-
-function ReaSpeechUI:interval_functions()
-  if self._interval_functions then
-    return self._interval_functions
-  end
-
-  self._interval_functions = {
-  }
-
-  return self._interval_functions
-end
-
-function ReaSpeechUI:handle_interval_functions(time)
-  local fs = self:interval_functions()
-  for i = 1, #fs do
-    fs[i]:react(time)
-  end
 end
 
 function ReaSpeechUI:render()
