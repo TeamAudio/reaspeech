@@ -27,12 +27,12 @@ def load_model(next_model_name: str):
         if model and next_model_name == model_name:
             return model
 
-        model_name = next_model_name
-
         if torch.cuda.is_available():
-            model = whisper.load_model(model_name, download_root=model_path).cuda()
+            model = whisper.load_model(next_model_name, download_root=model_path).cuda()
         else:
-            model = whisper.load_model(model_name, download_root=model_path)
+            model = whisper.load_model(next_model_name, download_root=model_path)
+
+        model_name = next_model_name
 
         return model
 

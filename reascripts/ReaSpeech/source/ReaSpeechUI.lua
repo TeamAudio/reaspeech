@@ -90,6 +90,9 @@ function ReaSpeechUI:init()
 
   self.transcript = Transcript.new()
   self.transcript_ui = TranscriptUI.new { transcript = self.transcript }
+
+  self.failure = AlertPopup.new { title = 'Transcription Failed' }
+
   self.react_handlers = self:get_react_handlers()
 end
 
@@ -194,6 +197,12 @@ function ReaSpeechUI:react_to_worker_response()
 
   self:debug('Response: ' .. dump(response))
 
+  if response.error then
+    self.failure:show(response.error)
+    self.worker:cancel()
+    return
+  end
+
   if not response.segments then
     return
   end
@@ -297,6 +306,7 @@ function ReaSpeechUI:render_main()
   self:render_inputs()
   self:render_actions()
   self.transcript_ui:render()
+  self.failure:render()
 end
 
 function ReaSpeechUI.png_from_bytes(image_key)
