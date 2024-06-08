@@ -13,6 +13,7 @@ from fastapi.templating import Jinja2Templates
 from whisper import tokenizer
 import aiofiles
 
+from .util import apierror
 from .worker import transcribe
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s', level=logging.INFO, force=True)
@@ -56,7 +57,6 @@ assets_path = os.getcwd() + "/swagger-ui-assets"
 if os.path.exists(assets_path + "/swagger-ui.css") and os.path.exists(assets_path + "/swagger-ui-bundle.js"):
     app.mount("/assets", StaticFiles(directory=assets_path), name="static")
 
-
     def swagger_monkey_patch(*args, **kwargs):
         return get_swagger_ui_html(
             *args,
@@ -66,9 +66,7 @@ if os.path.exists(assets_path + "/swagger-ui.css") and os.path.exists(assets_pat
             swagger_js_url="/assets/swagger-ui-bundle.js",
         )
 
-
     applications.get_swagger_ui_html = swagger_monkey_patch
-
 
 static_path = os.getcwd() + "/app/static"
 app.mount("/static", StaticFiles(directory=static_path), name="static")
@@ -79,6 +77,14 @@ templates = Jinja2Templates(directory=templates_path)
 output_directory = os.environ.get("OUTPUT_DIRECTORY", os.getcwd() + "/app/output")
 output_url_prefix = os.environ.get("OUTPUT_URL_PREFIX", "/output")
 app.mount(output_url_prefix, StaticFiles(directory=output_directory), name="output")
+
+@app.exception_handler(apierror.APIError)
+async def api_exception_handler(request: Request, exc: apierror.APIError):
+    return exc.to_response()
+
+@app.exception_handler(500)
+async def internal_exception_handler(request: Request, exc: Exception):
+    return apierror.error_response(exc)
 
 @app.get("/", response_class=RedirectResponse, include_in_schema=False)
 async def index():
@@ -159,6 +165,10 @@ async def job_status(job_id: str):
         "job_status": job.status,
         "job_result": job.result
     }
+
+    if job.status == "FAILURE":
+        result["job_result"] = apierror.error_dict(result["job_result"])
+
     return JSONResponse(result)
 
 @app.delete("/jobs/{job_id}", tags=["Endpoints"])
