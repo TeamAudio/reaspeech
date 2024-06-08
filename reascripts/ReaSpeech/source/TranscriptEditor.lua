@@ -220,7 +220,7 @@ function TranscriptEditor:render_time_input(label, value, callback)
 end
 
 function TranscriptEditor:render_score_input()
-  local color = ReaSpeechUI:score_color(self.editing.word:score())
+  local color = TranscriptUI.score_color(self.editing.word:score())
   if color then
     ImGui.PushStyleColor(ctx, ImGui.Col_SliderGrab(), color)
     ImGui.PushStyleColor(ctx, ImGui.Col_SliderGrabActive(), color)
