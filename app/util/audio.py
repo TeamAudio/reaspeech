@@ -38,4 +38,10 @@ def load_audio(file: BinaryIO, encode=True, sr: int = SAMPLE_RATE):
     else:
         out = file.read()
 
-    return np.frombuffer(out, np.int16).flatten().astype(np.float32) / 32768.0
+    try:
+        return np.frombuffer(out, np.int16).flatten().astype(np.float32) / 32768.0
+    except Exception as e:
+        # TODO: Unsupported file formats can raise the following exception:
+        # ValueError: buffer size must be a multiple of element size
+        # This should be made more robust.
+        raise RuntimeError("Failed to load audio") from e
