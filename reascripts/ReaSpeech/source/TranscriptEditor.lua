@@ -18,7 +18,6 @@ function TranscriptEditor:init()
   self.editing = nil
   self.is_open = false
   self.sync_time_selection = false
-  self.zoom_to_word = false
   self.zoom_level = "none"
 end
 
