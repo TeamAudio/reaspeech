@@ -56,7 +56,7 @@ function ReaSpeechActionsUI:render()
   if progress then
     ImGui.SameLine(ctx)
     if ImGui.Button(ctx, "Cancel") then
-      self.worker:cancel()
+      app.worker:cancel()
     end
 
     ImGui.SameLine(ctx)
