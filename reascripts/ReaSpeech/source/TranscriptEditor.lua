@@ -309,6 +309,9 @@ function TranscriptEditor:offset()
 end
 
 function TranscriptEditor:zoom(zoom_level)
+  -- save current selection
+  local start, end_ = reaper.GetSet_LoopTimeRange(false, true, 0, 0, false)
+
   if zoom_level == "word" then
     self.editing.word:select_in_timeline(self:offset())
   elseif zoom_level == "segment" then
@@ -319,6 +322,9 @@ function TranscriptEditor:zoom(zoom_level)
 
   -- View: Zoom time selection
   reaper.Main_OnCommandEx(40031, 1)
+
+  -- restore selection
+  reaper.GetSet_LoopTimeRange(true, true, start, end_, false)
 end
 
 function TranscriptEditor:render_separator()
