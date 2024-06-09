@@ -312,7 +312,7 @@ function TranscriptEditor:zoom(zoom_level)
   if zoom_level == "word" then
     self.editing.word:select_in_timeline(self:offset())
   elseif zoom_level == "segment" then
-    self.editing.segment:select_in_timeline()
+    self.editing.segment:select_in_timeline(self:offset())
   else
     return
   end
