@@ -175,21 +175,18 @@ function ReaSpeechUI:render()
   ImGui.PushItemWidth(ctx, self.ITEM_WIDTH)
 
   self:trap(function ()
-    if self.product_activation:is_activated() then
-      self:render_main()
-    else
+    if not self.product_activation:is_activated() then
       self.product_activation_ui:render()
+      return
     end
+
+    self.controls_ui:render()
+    self.actions_ui:render()
+    self.transcript_ui:render()
+    self.failure:render()
   end)
 
   ImGui.PopItemWidth(ctx)
-end
-
-function ReaSpeechUI:render_main()
-  self.controls_ui:render()
-  self.actions_ui:render()
-  self.transcript_ui:render()
-  self.failure:render()
 end
 
 function ReaSpeechUI:new_jobs(jobs)
