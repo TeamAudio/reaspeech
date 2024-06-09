@@ -304,9 +304,13 @@ function TranscriptEditor:render_zoom_combo()
   ImGui.PopItemWidth(ctx)
 end
 
+function TranscriptEditor:offset()
+  return Transcript.calculate_offset(self.editing.segment.item, self.editing.segment.take)
+end
+
 function TranscriptEditor:zoom(zoom_level)
   if zoom_level == "word" then
-    self.editing.word:select_in_timeline()
+    self.editing.word:select_in_timeline(self:offset())
   elseif zoom_level == "segment" then
     self.editing.segment:select_in_timeline()
   else
@@ -328,9 +332,7 @@ end
 
 function TranscriptEditor:update_time_selection()
   if self.editing then
-    local word = self.editing.word
-    local offset = Transcript.calculate_offset(self.editing.segment.item, self.editing.segment.take)
-    reaper.GetSet_LoopTimeRange(true, false, word.start + offset, word.end_ + offset, false)
+    self.editing.word:select_in_timeline(self:offset())
   end
 end
 
