@@ -39,9 +39,8 @@ function TranscriptEditor:edit_word(word, index)
   self.editing.word_index = index
   if self.sync_time_selection then
     self:update_time_selection()
+    self:zoom(self.zoom_level)
   end
-
-  self:zoom(self.zoom_level)
 end
 
 function TranscriptEditor:render()
@@ -291,11 +290,15 @@ function TranscriptEditor:render_zoom_combo()
         end
         if ImGui.Selectable(ctx, "Word", self.zoom_level == "word") then
           self.zoom_level = "word"
-          self:zoom(self.zoom_level)
+          if self.sync_time_selection then
+            self:zoom(self.zoom_level)
+          end
         end
         if ImGui.Selectable(ctx, "Segment", self.zoom_level == "segment") then
           self.zoom_level = "segment"
-          self:zoom(self.zoom_level)
+          if self.sync_time_selection then
+            self:zoom(self.zoom_level)
+          end
         end
       end)
       ImGui.EndCombo(ctx)
