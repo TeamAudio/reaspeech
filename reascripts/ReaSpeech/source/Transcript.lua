@@ -474,6 +474,9 @@ function TranscriptWord:to_table()
   }
 end
 
-function TranscriptWord:select_in_timeline()
-  reaper.GetSet_LoopTimeRange(true, true, self.start, self.end_, false)
+function TranscriptWord:select_in_timeline(offset)
+  offset = offset or 0
+  local start = self.start + offset
+  local end_ = self.end_ + offset
+  reaper.GetSet_LoopTimeRange(true, true, start, end_, false)
 end
