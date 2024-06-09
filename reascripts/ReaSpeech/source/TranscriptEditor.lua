@@ -317,9 +317,6 @@ function TranscriptEditor:zoom(zoom_level)
     return
   end
 
-  -- maybe consider saving the current "repeat" value and restoring it at some point?
-  reaper.GetSetRepeat(1)
-
   -- View: Zoom time selection
   reaper.Main_OnCommandEx(40031, 1)
 end
