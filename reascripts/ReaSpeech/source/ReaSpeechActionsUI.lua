@@ -10,6 +10,16 @@ function ReaSpeechActionsUI:init()
   self.disabler = ReaUtil.disabler(ctx)
 end
 
+function ReaSpeechActionsUI.pluralizer(count, suffix)
+  if count == 0 then
+    return '', suffix
+  elseif count == 1 then
+    return '1', ''
+  else
+    return '', suffix
+  end
+end
+
 function ReaSpeechActionsUI:render()
   local disable_if = self.disabler
   local progress = app.worker:progress()
@@ -17,15 +27,8 @@ function ReaSpeechActionsUI:render()
   disable_if(progress, function()
     local selected_track_count = reaper.CountSelectedTracks(ReaUtil.ACTIVE_PROJECT)
     disable_if(selected_track_count == 0, function()
-      local button_text
-
-      if selected_track_count == 0 then
-        button_text = "Process Selected Tracks"
-      elseif selected_track_count == 1 then
-        button_text = "Process 1 Selected Track"
-      else
-        button_text = string.format("Process %d Selected Tracks", selected_track_count)
-      end
+      local button_text = ("Process %s Selected Track%s")
+        :format(self.pluralizer(selected_track_count, 's'))
 
       if ImGui.Button(ctx, button_text) then
         self:process_jobs(self.jobs_for_selected_tracks)
@@ -36,15 +39,8 @@ function ReaSpeechActionsUI:render()
 
     local selected_item_count = reaper.CountSelectedMediaItems(ReaUtil.ACTIVE_PROJECT)
     disable_if(selected_item_count == 0, function()
-      local button_text
-
-      if selected_item_count == 0 then
-        button_text = "Process Selected Items"
-      elseif selected_item_count == 1 then
-        button_text = "Process 1 Selected Item"
-      else
-        button_text = string.format("Process %d Selected Items", selected_item_count)
-      end
+      local button_text = ("Process %s Selected Item%s")
+        :format(self.pluralizer(selected_item_count, 's'))
 
       if ImGui.Button(ctx, button_text) then
         self:process_jobs(self.jobs_for_selected_items)
