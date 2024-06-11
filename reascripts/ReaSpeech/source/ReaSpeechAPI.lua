@@ -98,6 +98,7 @@ function ReaSpeechAPI:fetch_large(url_path, http_method)
     ' "', api_url, '"',
     ' -H "accept: application/json"',
     http_method_argument,
+    ' -i ',
     ' -o "', output_file, '"',
   })
 
@@ -151,4 +152,17 @@ function ReaSpeechAPI:_maybe_quote(arg)
   else
     return "'" .. arg .. "'"
   end
+end
+
+function ReaSpeechAPI.response_status_and_body(response)
+  local matcher = "HTTP/%d%.%d%s(%d+)%s.-\r\n\r\n(.*)"
+  local response_status, response_body = response:match(matcher)
+  if response_status == "100" then
+    local next_response_status, next_response_body = response_body:match(matcher)
+    if next_response_status then
+      response_status = next_response_status
+      response_body = next_response_body
+    end
+  end
+  return tonumber(response_status), response_body
 end

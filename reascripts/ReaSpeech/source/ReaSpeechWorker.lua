@@ -163,7 +163,7 @@ function ReaSpeechWorker:handle_job_status(active_job, response)
     -- Job completion depends on non-blocking download of transcript
     return false
   elseif response.job_status == 'FAILURE' then
-    self:handle_error(active_job, response)
+    self:handle_error(active_job, response.job_result.error)
     return true
   end
 
@@ -179,8 +179,8 @@ function ReaSpeechWorker:handle_response(active_job, response)
   table.insert(self.responses, response)
 end
 
-function ReaSpeechWorker:handle_error(_active_job, response)
-  table.insert(self.responses, { error = response.job_result.error })
+function ReaSpeechWorker:handle_error(_active_job, error_message)
+  table.insert(self.responses, { error = error_message })
 end
 
 function ReaSpeechWorker:start_active_job()
@@ -259,9 +259,21 @@ function ReaSpeechWorker:check_active_job_transcript_output_file()
     f:close()
 
     if #response_text > 0 then
+      local response_status, response_body = ReaSpeechAPI.response_status_and_body(response_text)
+
+      if response_status >= 400 then
+        Tempfile:remove(output_file)
+        local error_message = "Transcript fetch failed with status " .. response_status
+        app:log(error_message)
+        app:debug(response_body)
+        self:handle_error(self.active_job, error_message)
+        self.active_job = nil
+        return
+      end
+
       local response = nil
       if app:trap(function ()
-        response = json.decode(response_text)
+        response = json.decode(response_body)
       end) then
         Tempfile:remove(output_file)
         self.active_job = nil
