@@ -53,7 +53,7 @@ function ReaSpeechAPI:fetch_json(url_path, http_method, error_handler)
 
   app:debug('Fetch JSON: ' .. command)
 
-  local exec_result = reaper.ExecProcess(command, 0)
+  local exec_result = (ExecProcess.new { command }):wait()
 
   if exec_result == nil then
     local msg = "Unable to run curl"
@@ -116,12 +116,13 @@ function ReaSpeechAPI:fetch_large(url_path, http_method)
     http_method_argument,
     ' -i ',
     ' -o "', output_file, '"',
-    ' ; ', self.touch_cmd(sentinel_file)
   })
 
   app:debug('Fetch large: ' .. command)
 
-  if reaper.ExecProcess(command, -2) then
+  local executor = ExecProcess.new { command, self.touch_cmd(sentinel_file) }
+
+  if executor:background() then
     return output_file, sentinel_file
   else
     app:log("Unable to run curl")
@@ -160,13 +161,14 @@ function ReaSpeechAPI:post_request(url_path, data, file_path)
     ' -F ', self:_maybe_quote('audio_file=@"' .. file_path .. '"'),
     ' -i ',
     ' -o "', output_file, '"',
-    ' ; ', self.touch_cmd(sentinel_file)
   })
 
   app:log(file_path)
   app:debug('Post request: ' .. command)
 
-  if reaper.ExecProcess(command, -2) then
+  local executor = ExecProcess.new { command, self.touch_cmd(sentinel_file) }
+
+  if executor:background() then
     return output_file, sentinel_file
   else
     app:log("Unable to run curl")
