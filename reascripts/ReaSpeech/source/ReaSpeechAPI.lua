@@ -107,6 +107,7 @@ function ReaSpeechAPI:fetch_large(url_path, http_method)
   end
 
   local output_file = Tempfile:name()
+  local sentinel_file = Tempfile:name()
 
   local command = table.concat({
     curl,
@@ -115,15 +116,24 @@ function ReaSpeechAPI:fetch_large(url_path, http_method)
     http_method_argument,
     ' -i ',
     ' -o "', output_file, '"',
+    ' ; ', self.touch_cmd(sentinel_file)
   })
 
   app:debug('Fetch large: ' .. command)
 
   if reaper.ExecProcess(command, -2) then
-    return output_file
+    return output_file, sentinel_file
   else
     app:log("Unable to run curl")
     return nil
+  end
+end
+
+ReaSpeechAPI.touch_cmd = function(filename)
+  if reaper.GetOS():find("Win") then
+    return 'echo. > "' .. filename .. '"'
+  else
+    return 'touch "' .. filename .. '"'
   end
 end
 
@@ -140,6 +150,7 @@ function ReaSpeechAPI:post_request(url_path, data, file_path)
   end
 
   local output_file = Tempfile:name()
+  local sentinel_file = Tempfile:name()
 
   local command = table.concat({
     curl,
@@ -149,13 +160,14 @@ function ReaSpeechAPI:post_request(url_path, data, file_path)
     ' -F ', self:_maybe_quote('audio_file=@"' .. file_path .. '"'),
     ' -i ',
     ' -o "', output_file, '"',
+    ' ; ', self.touch_cmd(sentinel_file)
   })
 
   app:log(file_path)
   app:debug('Post request: ' .. command)
 
   if reaper.ExecProcess(command, -2) then
-    return output_file
+    return output_file, sentinel_file
   else
     app:log("Unable to run curl")
     return nil

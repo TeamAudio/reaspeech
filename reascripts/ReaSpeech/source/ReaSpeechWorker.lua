@@ -164,7 +164,7 @@ function ReaSpeechWorker:handle_job_status(active_job, response)
   if response.job_status == 'SUCCESS' then
     local transcript_url_path = response.job_result.url_path
     response._job = active_job.job
-    active_job.transcript_output_file = ReaSpeechAPI:fetch_large(transcript_url_path)
+    active_job.transcript_output_file, active_job.transcript_output_sentinel_file = ReaSpeechAPI:fetch_large(transcript_url_path)
     -- Job completion depends on non-blocking download of transcript
     return false
   elseif response.job_status == 'FAILURE' then
@@ -194,10 +194,11 @@ function ReaSpeechWorker:start_active_job()
   end
 
   local active_job = self.active_job
-  local output_file = ReaSpeechAPI:post_request('/asr', active_job.data, active_job.job.path)
+  local output_file, sentinel_file = ReaSpeechAPI:post_request('/asr', active_job.data, active_job.job.path)
 
   if output_file then
     active_job.request_output_file = output_file
+    active_job.request_output_sentinel_file = sentinel_file
   else
     self.active_job = nil
   end
@@ -236,6 +237,14 @@ end
 function ReaSpeechWorker:check_active_job_request_output_file()
   local active_job = self.active_job
   local output_file = active_job.request_output_file
+  local sentinel_file = active_job.request_output_sentinel_file
+  local sentinel = io.open(active_job.request_output_sentinel_file, 'r')
+
+  if not sentinel then
+    return
+  else
+    sentinel:close()
+  end
 
   local f = io.open(output_file, 'r')
   if f then
@@ -246,6 +255,7 @@ function ReaSpeechWorker:check_active_job_request_output_file()
       local response_status, response_body = ReaSpeechAPI.http_status_and_body(response_text)
 
       if response_status >= 400 then
+        Tempfile:remove(sentinel_file)
         Tempfile:remove(output_file)
         local error_message = "Job status check failed with status " .. response_status
         app:log(error_message)
@@ -259,6 +269,7 @@ function ReaSpeechWorker:check_active_job_request_output_file()
       if app:trap(function ()
         response = json.decode(response_body)
       end) then
+        Tempfile:remove(sentinel_file)
         Tempfile:remove(output_file)
         if self:handle_job_status(active_job, response) then
           self.active_job = nil
@@ -273,6 +284,14 @@ end
 function ReaSpeechWorker:check_active_job_transcript_output_file()
   local active_job = self.active_job
   local output_file = active_job.transcript_output_file
+  local sentinel_file = active_job.transcript_output_sentinel_file
+  local sentinel = io.open(sentinel_file, 'r')
+
+  if not sentinel then
+    return
+  else
+    sentinel:close()
+  end
 
   local f = io.open(output_file, 'r')
   if f then
@@ -283,6 +302,7 @@ function ReaSpeechWorker:check_active_job_transcript_output_file()
       local response_status, response_body = ReaSpeechAPI.http_status_and_body(response_text)
 
       if response_status >= 400 then
+        Tempfile:remove(sentinel_file)
         Tempfile:remove(output_file)
         local error_message = "Transcript fetch failed with status " .. response_status
         app:log(error_message)
@@ -296,6 +316,7 @@ function ReaSpeechWorker:check_active_job_transcript_output_file()
       if app:trap(function ()
         response = json.decode(response_body)
       end) then
+        Tempfile:remove(sentinel_file)
         Tempfile:remove(output_file)
         self.active_job = nil
         self:handle_response(active_job, response)
