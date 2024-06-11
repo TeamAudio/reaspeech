@@ -290,12 +290,10 @@ end
 
 function ReaSpeechWorker:check_active_job_request_output_file()
   local active_job = self.active_job
-  local output_file = active_job.request_output_file
-  local sentinel_file = active_job.request_output_sentinel_file
 
   self:handle_response_json(
-    output_file,
-    sentinel_file,
+    active_job.request_output_file,
+    active_job.request_output_sentinel_file,
     function(response)
       if self:handle_job_status(active_job, response) then
         self.active_job = nil
@@ -310,12 +308,10 @@ end
 
 function ReaSpeechWorker:check_active_job_transcript_output_file()
   local active_job = self.active_job
-  local output_file = active_job.transcript_output_file
-  local sentinel_file = active_job.transcript_output_sentinel_file
 
   self:handle_response_json(
-    output_file,
-    sentinel_file,
+    active_job.transcript_output_file,
+    active_job.transcript_output_sentinel_file,
     function(response)
       self:handle_response(active_job, response)
       self.active_job = nil
