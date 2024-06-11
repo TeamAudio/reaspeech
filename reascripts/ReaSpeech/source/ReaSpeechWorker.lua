@@ -247,37 +247,37 @@ function ReaSpeechWorker:check_active_job_request_output_file()
   end
 
   local f = io.open(output_file, 'r')
-  if f then
-    local response_text = f:read('*a')
-    f:close()
+  if not f then return end
 
-    if #response_text > 0 then
-      local response_status, response_body = ReaSpeechAPI.http_status_and_body(response_text)
+  local response_text = f:read('*a')
+  f:close()
 
-      if response_status >= 400 then
-        Tempfile:remove(sentinel_file)
-        Tempfile:remove(output_file)
-        local error_message = "Job status check failed with status " .. response_status
-        app:log(error_message)
-        app:debug(response_body)
-        self:handle_error(self.active_job, error_message)
-        self.active_job = nil
-        return false
-      end
+  if #response_text < 1 then return end
 
-      local response = nil
-      if app:trap(function ()
-        response = json.decode(response_body)
-      end) then
-        Tempfile:remove(sentinel_file)
-        Tempfile:remove(output_file)
-        if self:handle_job_status(active_job, response) then
-          self.active_job = nil
-        end
-      else
-        app:debug("JSON parse error, trying again later")
-      end
+  local response_status, response_body = ReaSpeechAPI.http_status_and_body(response_text)
+
+  if response_status >= 400 then
+    Tempfile:remove(sentinel_file)
+    Tempfile:remove(output_file)
+    local error_message = "Job status check failed with status " .. response_status
+    app:log(error_message)
+    app:debug(response_body)
+    self:handle_error(self.active_job, error_message)
+    self.active_job = nil
+    return false
+  end
+
+  local response = nil
+  if app:trap(function ()
+    response = json.decode(response_body)
+  end) then
+    Tempfile:remove(sentinel_file)
+    Tempfile:remove(output_file)
+    if self:handle_job_status(active_job, response) then
+      self.active_job = nil
     end
+  else
+    app:debug("JSON parse error, trying again later")
   end
 end
 
@@ -294,35 +294,35 @@ function ReaSpeechWorker:check_active_job_transcript_output_file()
   end
 
   local f = io.open(output_file, 'r')
-  if f then
-    local response_text = f:read('*a')
-    f:close()
+  if not f then return end
 
-    if #response_text > 0 then
-      local response_status, response_body = ReaSpeechAPI.http_status_and_body(response_text)
+  local response_text = f:read('*a')
+  f:close()
 
-      if response_status >= 400 then
-        Tempfile:remove(sentinel_file)
-        Tempfile:remove(output_file)
-        local error_message = "Transcript fetch failed with status " .. response_status
-        app:log(error_message)
-        app:debug(response_body)
-        self:handle_error(self.active_job, error_message)
-        self.active_job = nil
-        return
-      end
+  if #response_text < 1 then return end
 
-      local response = nil
-      if app:trap(function ()
-        response = json.decode(response_body)
-      end) then
-        Tempfile:remove(sentinel_file)
-        Tempfile:remove(output_file)
-        self.active_job = nil
-        self:handle_response(active_job, response)
-      else
-        app:debug("JSON parse error, trying again later")
-      end
-    end
+  local response_status, response_body = ReaSpeechAPI.http_status_and_body(response_text)
+
+  if response_status >= 400 then
+    Tempfile:remove(sentinel_file)
+    Tempfile:remove(output_file)
+    local error_message = "Transcript fetch failed with status " .. response_status
+    app:log(error_message)
+    app:debug(response_body)
+    self:handle_error(self.active_job, error_message)
+    self.active_job = nil
+    return
+  end
+
+  local response = nil
+  if app:trap(function ()
+    response = json.decode(response_body)
+  end) then
+    Tempfile:remove(sentinel_file)
+    Tempfile:remove(output_file)
+    self.active_job = nil
+    self:handle_response(active_job, response)
+  else
+    app:debug("JSON parse error, trying again later")
   end
 end
