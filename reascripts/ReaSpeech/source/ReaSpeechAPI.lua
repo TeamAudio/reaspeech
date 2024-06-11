@@ -71,7 +71,7 @@ function ReaSpeechAPI:fetch_json(url_path, http_method, error_handler)
     return nil
   end
 
-  local response_status, response_body = self.response_status_and_body(output)
+  local response_status, response_body = self.http_status_and_body(output)
 
   if response_status >= 400 then
     local msg = "Request failed with status " .. response_status
@@ -170,15 +170,15 @@ function ReaSpeechAPI:_maybe_quote(arg)
   end
 end
 
-function ReaSpeechAPI.response_status_and_body(response)
+function ReaSpeechAPI.http_status_and_body(response)
   local matcher = "HTTP/%d%.%d%s(%d+)%s.-\r\n\r\n(.*)"
-  local response_status, response_body = response:match(matcher)
-  if response_status == "100" then
-    local next_response_status, next_response_body = response_body:match(matcher)
-    if next_response_status then
-      response_status = next_response_status
-      response_body = next_response_body
+  local status, body = response:match(matcher)
+  if status == "100" then
+    local next_status, next_body = body:match(matcher)
+    if next_status then
+      status = next_status
+      body = next_body
     end
   end
-  return tonumber(response_status), response_body
+  return tonumber(status), body
 end

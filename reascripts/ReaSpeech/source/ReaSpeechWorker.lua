@@ -243,7 +243,7 @@ function ReaSpeechWorker:check_active_job_request_output_file()
     f:close()
 
     if #response_text > 0 then
-      local response_status, response_body = ReaSpeechAPI.response_status_and_body(response_text)
+      local response_status, response_body = ReaSpeechAPI.http_status_and_body(response_text)
 
       if response_status >= 400 then
         Tempfile:remove(output_file)
@@ -280,7 +280,7 @@ function ReaSpeechWorker:check_active_job_transcript_output_file()
     f:close()
 
     if #response_text > 0 then
-      local response_status, response_body = ReaSpeechAPI.response_status_and_body(response_text)
+      local response_status, response_body = ReaSpeechAPI.http_status_and_body(response_text)
 
       if response_status >= 400 then
         Tempfile:remove(output_file)
