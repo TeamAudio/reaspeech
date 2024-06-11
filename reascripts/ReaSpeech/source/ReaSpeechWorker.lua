@@ -245,48 +245,67 @@ ReaSpeechWorker.check_sentinel = function(filename)
   return true
 end
 
-function ReaSpeechWorker:check_active_job_request_output_file()
-  local active_job = self.active_job
-  local output_file = active_job.request_output_file
-  local sentinel_file = active_job.request_output_sentinel_file
-
+function ReaSpeechWorker:handle_response_json(output_file, sentinel_file, success_f, fail_f)
   if not self.check_sentinel(sentinel_file) then
     return
   end
 
   local f = io.open(output_file, 'r')
-  if not f then return end
+  if not f then
+    fail_f("Couldn't open output_filename: " .. tostring(output_file))
+    return
+  end
 
   local response_text = f:read('*a')
   f:close()
 
-  if #response_text < 1 then return end
+  if #response_text < 1 then
+    fail_f("Empty response from server.")
+    return
+  end
 
-  local response_status, response_body = ReaSpeechAPI.http_status_and_body(response_text)
+  local http_status, body = ReaSpeechAPI.http_status_and_body(response_text)
 
-  if response_status >= 400 then
+  if http_status >= 400 then
     Tempfile:remove(sentinel_file)
     Tempfile:remove(output_file)
-    local error_message = "Job status check failed with status " .. response_status
-    app:log(error_message)
-    app:debug(response_body)
-    self:handle_error(self.active_job, error_message)
-    self.active_job = nil
-    return false
+    local msg = "Server responded with status " .. http_status
+    fail_f(msg)
+    app:log(msg)
+    app:debug(body)
+    return
   end
 
   local response = nil
   if app:trap(function ()
-    response = json.decode(response_body)
+    response = json.decode(body)
   end) then
     Tempfile:remove(sentinel_file)
     Tempfile:remove(output_file)
-    if self:handle_job_status(active_job, response) then
-      self.active_job = nil
-    end
+    success_f(response)
   else
     app:debug("JSON parse error, trying again later")
   end
+end
+
+function ReaSpeechWorker:check_active_job_request_output_file()
+  local active_job = self.active_job
+  local output_file = active_job.request_output_file
+  local sentinel_file = active_job.request_output_sentinel_file
+
+  self:handle_response_json(
+    output_file,
+    sentinel_file,
+    function(response)
+      if self:handle_job_status(active_job, response) then
+        self.active_job = nil
+      end
+    end,
+    function(error_message)
+      self:handle_error(active_job, error_message)
+      self.active_job = nil
+    end
+  )
 end
 
 function ReaSpeechWorker:check_active_job_transcript_output_file()
@@ -294,40 +313,16 @@ function ReaSpeechWorker:check_active_job_transcript_output_file()
   local output_file = active_job.transcript_output_file
   local sentinel_file = active_job.transcript_output_sentinel_file
 
-  if not self.check_sentinel(sentinel_file) then
-    return
-  end
-
-  local f = io.open(output_file, 'r')
-  if not f then return end
-
-  local response_text = f:read('*a')
-  f:close()
-
-  if #response_text < 1 then return end
-
-  local response_status, response_body = ReaSpeechAPI.http_status_and_body(response_text)
-
-  if response_status >= 400 then
-    Tempfile:remove(sentinel_file)
-    Tempfile:remove(output_file)
-    local error_message = "Transcript fetch failed with status " .. response_status
-    app:log(error_message)
-    app:debug(response_body)
-    self:handle_error(self.active_job, error_message)
-    self.active_job = nil
-    return
-  end
-
-  local response = nil
-  if app:trap(function ()
-    response = json.decode(response_body)
-  end) then
-    Tempfile:remove(sentinel_file)
-    Tempfile:remove(output_file)
-    self.active_job = nil
-    self:handle_response(active_job, response)
-  else
-    app:debug("JSON parse error, trying again later")
-  end
+  self:handle_response_json(
+    output_file,
+    sentinel_file,
+    function(response)
+      self:handle_response(active_job, response)
+      self.active_job = nil
+    end,
+    function(error_message)
+      self:handle_error(active_job, error_message)
+      self.active_job = nil
+    end
+  )
 end
