@@ -30,7 +30,7 @@ end
 
 -- Fetch simple JSON responses. Will block until result or curl timeout.
 -- For large amounts of data, use fetch_large instead.
-function ReaSpeechAPI:fetch_json(url_path, http_method)
+function ReaSpeechAPI:fetch_json(url_path, http_method, error_handler)
   http_method = http_method or 'GET'
 
   local curl = self:get_curl_cmd()
@@ -48,6 +48,7 @@ function ReaSpeechAPI:fetch_json(url_path, http_method)
     http_method_argument,
     ' -m ', self.CURL_TIMEOUT_SECONDS,
     ' -s',
+    ' -i',
   })
 
   app:debug('Fetch JSON: ' .. command)
@@ -55,19 +56,33 @@ function ReaSpeechAPI:fetch_json(url_path, http_method)
   local exec_result = reaper.ExecProcess(command, 0)
 
   if exec_result == nil then
-    app:log("Unable to run curl")
+    local msg = "Unable to run curl"
+    app:log(msg)
+    error_handler(msg)
     return nil
   end
 
   local status, output = exec_result:match("(%d+)\n(.*)")
+
   if tonumber(status) ~= 0 then
-    app:debug("Curl failed with status " .. status)
+    local msg = "Curl failed with status " .. status
+    app:debug(msg)
+    error_handler(msg)
+    return nil
+  end
+
+  local response_status, response_body = self.response_status_and_body(output)
+
+  if response_status >= 400 then
+    local msg = "Request failed with status " .. response_status
+    app:log(msg)
+    error_handler(msg)
     return nil
   end
 
   local response_json = nil
   if app:trap(function()
-    response_json = json.decode(output)
+    response_json = json.decode(response_body)
   end) then
     return response_json
   else

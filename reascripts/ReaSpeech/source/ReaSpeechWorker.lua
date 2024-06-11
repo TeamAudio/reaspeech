@@ -102,12 +102,17 @@ end
 
 function ReaSpeechWorker:cancel_job(job_id)
   local url_path = "jobs/" .. job_id
-  ReaSpeechAPI:fetch_json(url_path, 'DELETE')
+  ReaSpeechAPI:fetch_json(url_path, 'DELETE', function(error_message)
+    self:handle_error(self.active_job, error_message)
+  end)
 end
 
 function ReaSpeechWorker:get_job_status(job_id)
   local url_path = "jobs/" .. job_id
-  return ReaSpeechAPI:fetch_json(url_path)
+  return ReaSpeechAPI:fetch_json(url_path, 'GET', function(error_message)
+    self:handle_error(self.active_job, error_message)
+    self.active_job = nil
+  end)
 end
 
 function ReaSpeechWorker:handle_request(request)
