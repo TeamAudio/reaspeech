@@ -274,35 +274,42 @@ function TranscriptEditor:render_word_actions()
     end
   end
 
+  ImGui.SameLine(ctx)
+  ImGui.Text(ctx, 'and')
+  ImGui.SameLine(ctx)
   self:render_zoom_combo()
 end
 
 function TranscriptEditor:render_zoom_combo()
+  local disable_if = ReaUtil.disabler(ctx, app.onerror)
+
   ImGui.SameLine(ctx)
-  ImGui.Text(ctx, "Zoom to")
+  ImGui.Text(ctx, "zoom to")
   ImGui.SameLine(ctx)
   ImGui.PushItemWidth(ctx, self.BUTTON_WIDTH)
   app:trap(function()
-    if ImGui.BeginCombo(ctx, "##zoom_level", self.zoom_level) then
-      app:trap(function()
-        if ImGui.Selectable(ctx, "None", self.zoom_level == "none") then
-          self.zoom_level = "none"
-        end
-        if ImGui.Selectable(ctx, "Word", self.zoom_level == "word") then
-          self.zoom_level = "word"
-          if self.sync_time_selection then
-            self:zoom(self.zoom_level)
+    disable_if(not self.sync_time_selection, function()
+      if ImGui.BeginCombo(ctx, "##zoom_level", self.zoom_level) then
+        app:trap(function()
+          if ImGui.Selectable(ctx, "None", self.zoom_level == "none") then
+            self.zoom_level = "none"
           end
-        end
-        if ImGui.Selectable(ctx, "Segment", self.zoom_level == "segment") then
-          self.zoom_level = "segment"
-          if self.sync_time_selection then
-            self:zoom(self.zoom_level)
+          if ImGui.Selectable(ctx, "Word", self.zoom_level == "word") then
+            self.zoom_level = "word"
+            if self.sync_time_selection then
+              self:zoom(self.zoom_level)
+            end
           end
-        end
-      end)
-      ImGui.EndCombo(ctx)
-    end
+          if ImGui.Selectable(ctx, "Segment", self.zoom_level == "segment") then
+            self.zoom_level = "segment"
+            if self.sync_time_selection then
+              self:zoom(self.zoom_level)
+            end
+          end
+        end)
+        ImGui.EndCombo(ctx)
+      end
+    end)
   end)
   ImGui.PopItemWidth(ctx)
 end
