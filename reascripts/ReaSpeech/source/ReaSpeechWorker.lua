@@ -201,11 +201,13 @@ end
 function ReaSpeechWorker:check_active_job()
   if not self.active_job then return end
 
-  if self.active_job.request_output_file then
+  local active_job = self.active_job
+
+  if active_job.request_output_file then
     self:check_active_job_request_output_file()
   end
 
-  if self.active_job.transcript_output_file then
+  if active_job.transcript_output_file then
     self:check_active_job_transcript_output_file()
   else
     self:check_active_job_status()
@@ -213,6 +215,8 @@ function ReaSpeechWorker:check_active_job()
 end
 
 function ReaSpeechWorker:check_active_job_status()
+  if not self.active_job then return end
+
   local active_job = self.active_job
   if not active_job.job.job_id then return end
 
@@ -234,9 +238,21 @@ function ReaSpeechWorker:check_active_job_request_output_file()
     f:close()
 
     if #response_text > 0 then
+      local response_status, response_body = ReaSpeechAPI.response_status_and_body(response_text)
+
+      if response_status >= 400 then
+        Tempfile:remove(output_file)
+        local error_message = "Job status check failed with status " .. response_status
+        app:log(error_message)
+        app:debug(response_body)
+        self:handle_error(self.active_job, error_message)
+        self.active_job = nil
+        return false
+      end
+
       local response = nil
       if app:trap(function ()
-        response = json.decode(response_text)
+        response = json.decode(response_body)
       end) then
         Tempfile:remove(output_file)
         if self:handle_job_status(active_job, response) then

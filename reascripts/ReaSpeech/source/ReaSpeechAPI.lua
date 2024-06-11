@@ -132,6 +132,7 @@ function ReaSpeechAPI:post_request(url_path, data, file_path)
     ' -H "accept: application/json"',
     ' -H "Content-Type: multipart/form-data"',
     ' -F ', self:_maybe_quote('audio_file=@"' .. file_path .. '"'),
+    ' -i ',
     ' -o "', output_file, '"',
   })
 
