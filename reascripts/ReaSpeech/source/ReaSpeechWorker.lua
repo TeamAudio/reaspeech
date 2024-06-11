@@ -234,16 +234,24 @@ function ReaSpeechWorker:check_active_job_status()
   end
 end
 
+ReaSpeechWorker.check_sentinel = function(filename)
+  local sentinel = io.open(filename, 'r')
+
+  if not sentinel then
+    return false
+  end
+
+  sentinel:close()
+  return true
+end
+
 function ReaSpeechWorker:check_active_job_request_output_file()
   local active_job = self.active_job
   local output_file = active_job.request_output_file
   local sentinel_file = active_job.request_output_sentinel_file
-  local sentinel = io.open(active_job.request_output_sentinel_file, 'r')
 
-  if not sentinel then
+  if not self.check_sentinel(sentinel_file) then
     return
-  else
-    sentinel:close()
   end
 
   local f = io.open(output_file, 'r')
@@ -285,12 +293,9 @@ function ReaSpeechWorker:check_active_job_transcript_output_file()
   local active_job = self.active_job
   local output_file = active_job.transcript_output_file
   local sentinel_file = active_job.transcript_output_sentinel_file
-  local sentinel = io.open(sentinel_file, 'r')
 
-  if not sentinel then
+  if not self.check_sentinel(sentinel_file) then
     return
-  else
-    sentinel:close()
   end
 
   local f = io.open(output_file, 'r')
