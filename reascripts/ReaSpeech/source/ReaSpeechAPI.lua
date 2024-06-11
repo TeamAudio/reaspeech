@@ -194,5 +194,10 @@ function ReaSpeechAPI.http_status_and_body(response)
       body = next_body
     end
   end
+
+  if not status then
+    return 500, 'Unable to parse response'
+  end
+
   return tonumber(status), body
 end
