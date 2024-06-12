@@ -22,7 +22,7 @@ end
 
 function ReaSpeechActionsUI:render()
   local disable_if = self.disabler
-  local progress = app.worker:progress()
+  local progress = self.worker:progress()
 
   disable_if(progress, function()
     local selected_track_count = reaper.CountSelectedTracks(ReaUtil.ACTIVE_PROJECT)
@@ -56,7 +56,7 @@ function ReaSpeechActionsUI:render()
   if progress then
     ImGui.SameLine(ctx)
     if ImGui.Button(ctx, "Cancel") then
-      app.worker:cancel()
+      self.worker:cancel()
     end
 
     ImGui.SameLine(ctx)

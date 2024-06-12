@@ -40,7 +40,9 @@ function ReaSpeechUI:init()
 
   self.controls_ui = ReaSpeechControlsUI.new()
 
-  self.actions_ui = ReaSpeechActionsUI.new()
+  self.actions_ui = ReaSpeechActionsUI.new({
+    worker = self.worker
+  })
 
   self.transcript = Transcript.new()
   self.transcript_ui = TranscriptUI.new { transcript = self.transcript }
