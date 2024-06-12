@@ -11,6 +11,12 @@ TranscriptEditor = Polo {
   MIN_CONTENT_WIDTH = 375,
   BUTTON_WIDTH = 120,
   WORDS_PER_LINE = 5,
+
+  ZOOM_LEVEL = {
+    NONE =    { value = "none",    description = "None" },
+    WORD =    { value = "word",    description = "Word" },
+    SEGMENT = { value = "segment", description = "Segment" },
+  },
 }
 
 function TranscriptEditor:init()
@@ -18,7 +24,7 @@ function TranscriptEditor:init()
   self.editing = nil
   self.is_open = false
   self.sync_time_selection = false
-  self.zoom_level = "none"
+  self.zoom_level = self.ZOOM_LEVEL.NONE.value
 end
 
 function TranscriptEditor:edit_segment(segment, index)
@@ -291,15 +297,15 @@ function TranscriptEditor:render_zoom_combo()
     disable_if(not self.sync_time_selection, function()
       if ImGui.BeginCombo(ctx, "##zoom_level", self.zoom_level) then
         app:trap(function()
-          if ImGui.Selectable(ctx, "None", self.zoom_level == "none") then
-            self.zoom_level = "none"
+          if ImGui.Selectable(ctx, self.ZOOM_LEVEL.NONE.description, self.zoom_level == self.ZOOM_LEVEL.NONE.value) then
+            self.zoom_level = self.ZOOM_LEVEL.NONE.value
           end
-          if ImGui.Selectable(ctx, "Word", self.zoom_level == "word") then
-            self.zoom_level = "word"
+          if ImGui.Selectable(ctx, self.ZOOM_LEVEL.WORD.description, self.zoom_level == self.ZOOM_LEVEL.WORD.value) then
+            self.zoom_level = self.ZOOM_LEVEL.WORD.value
             self:handle_zoom_change()
           end
-          if ImGui.Selectable(ctx, "Segment", self.zoom_level == "segment") then
-            self.zoom_level = "segment"
+          if ImGui.Selectable(ctx, self.ZOOM_LEVEL.SEGMENT.description, self.zoom_level == self.ZOOM_LEVEL.SEGMENT.value) then
+            self.zoom_level = self.ZOOM_LEVEL.SEGMENT.value
             self:handle_zoom_change()
           end
         end)
@@ -318,9 +324,9 @@ function TranscriptEditor:zoom(zoom_level)
   -- save current selection
   local start, end_ = reaper.GetSet_LoopTimeRange(false, true, 0, 0, false)
 
-  if zoom_level == "word" then
+  if zoom_level == self.ZOOM_LEVEL.WORD.value then
     self.editing.word:select_in_timeline(self:offset())
-  elseif zoom_level == "segment" then
+  elseif zoom_level == self.ZOOM_LEVEL.SEGMENT.value then
     self.editing.segment:select_in_timeline(self:offset())
   else
     return
