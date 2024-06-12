@@ -439,6 +439,14 @@ function TranscriptSegment:to_table()
   return result
 end
 
+function TranscriptSegment:select_in_timeline(offset)
+  offset = offset or 0
+  local start = self.start + offset
+  local end_ = self.end_ + offset
+
+  reaper.GetSet_LoopTimeRange(true, true, start, end_, false)
+end
+
 TranscriptWord = Polo {}
 
 function TranscriptWord:init()
@@ -468,4 +476,11 @@ function TranscriptWord:to_table()
     ['end'] = self.end_,
     probability = self.probability,
   }
+end
+
+function TranscriptWord:select_in_timeline(offset)
+  offset = offset or 0
+  local start = self.start + offset
+  local end_ = self.end_ + offset
+  reaper.GetSet_LoopTimeRange(true, true, start, end_, false)
 end

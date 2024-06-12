@@ -11,6 +11,12 @@ TranscriptEditor = Polo {
   MIN_CONTENT_WIDTH = 375,
   BUTTON_WIDTH = 120,
   WORDS_PER_LINE = 5,
+
+  ZOOM_LEVEL = {
+    NONE =    { value = "none",    description = "None" },
+    WORD =    { value = "word",    description = "Word" },
+    SEGMENT = { value = "segment", description = "Segment" },
+  },
 }
 
 function TranscriptEditor:init()
@@ -18,6 +24,7 @@ function TranscriptEditor:init()
   self.editing = nil
   self.is_open = false
   self.sync_time_selection = false
+  self.zoom_level = self.ZOOM_LEVEL.NONE.value
 end
 
 function TranscriptEditor:edit_segment(segment, index)
@@ -38,6 +45,7 @@ function TranscriptEditor:edit_word(word, index)
   self.editing.word_index = index
   if self.sync_time_selection then
     self:update_time_selection()
+    self:zoom(self.zoom_level)
   end
 end
 
@@ -271,6 +279,59 @@ function TranscriptEditor:render_word_actions()
       self:update_time_selection()
     end
   end
+
+  ImGui.SameLine(ctx)
+  ImGui.Text(ctx, 'and')
+  ImGui.SameLine(ctx)
+  self:render_zoom_combo()
+end
+
+function TranscriptEditor:render_zoom_combo()
+  local disable_if = ReaUtil.disabler(ctx, app.onerror)
+
+  ImGui.SameLine(ctx)
+  ImGui.Text(ctx, "zoom to")
+  ImGui.SameLine(ctx)
+  ImGui.PushItemWidth(ctx, self.BUTTON_WIDTH)
+  app:trap(function()
+    disable_if(not self.sync_time_selection, function()
+      if ImGui.BeginCombo(ctx, "##zoom_level", self.zoom_level) then
+        app:trap(function()
+          for _, zoom in pairs(self.ZOOM_LEVEL) do
+            if ImGui.Selectable(ctx, zoom.description, self.zoom_level == zoom.value) then
+              self.zoom_level = zoom.value
+              self:handle_zoom_change()
+            end
+          end
+        end)
+        ImGui.EndCombo(ctx)
+      end
+    end)
+  end)
+  ImGui.PopItemWidth(ctx)
+end
+
+function TranscriptEditor:offset()
+  return Transcript.calculate_offset(self.editing.segment.item, self.editing.segment.take)
+end
+
+function TranscriptEditor:zoom(zoom_level)
+  -- save current selection
+  local start, end_ = reaper.GetSet_LoopTimeRange(false, true, 0, 0, false)
+
+  if zoom_level == self.ZOOM_LEVEL.WORD.value then
+    self.editing.word:select_in_timeline(self:offset())
+  elseif zoom_level == self.ZOOM_LEVEL.SEGMENT.value then
+    self.editing.segment:select_in_timeline(self:offset())
+  else
+    return
+  end
+
+  -- View: Zoom time selection
+  reaper.Main_OnCommandEx(40031, 1)
+
+  -- restore selection
+  reaper.GetSet_LoopTimeRange(true, true, start, end_, false)
 end
 
 function TranscriptEditor:render_separator()
@@ -281,9 +342,7 @@ end
 
 function TranscriptEditor:update_time_selection()
   if self.editing then
-    local word = self.editing.word
-    local offset = Transcript.calculate_offset(self.editing.segment.item, self.editing.segment.take)
-    reaper.GetSet_LoopTimeRange(true, false, word.start + offset, word.end_ + offset, false)
+    self.editing.word:select_in_timeline(self:offset())
   end
 end
 
@@ -332,6 +391,12 @@ function TranscriptEditor:handle_word_merge()
   if word_index < num_words then
     TranscriptSegment.merge_words(words, word_index, word_index + 1)
     self:edit_word(words[word_index], word_index)
+  end
+end
+
+function TranscriptEditor:handle_zoom_change()
+  if self.sync_time_selection then
+    self:zoom(self.zoom_level)
   end
 end
 
