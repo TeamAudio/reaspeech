@@ -256,17 +256,15 @@ function ReaSpeechWorker:handle_response_json(output_file, sentinel_file, succes
     return
   end
 
-  local response_text = f:read('*a')
+  local http_status, body = ReaSpeechAPI.http_status_and_body(f)
   f:close()
 
-  if #response_text < 1 then
+  if #body < 1 then
     fail_f("Empty response from server.")
     return
   end
 
-  local http_status, body = ReaSpeechAPI.http_status_and_body(response_text)
-
-  if http_status >= 400 then
+  if http_status ~= 200 then
     Tempfile:remove(sentinel_file)
     Tempfile:remove(output_file)
     local msg = "Server responded with status " .. http_status
