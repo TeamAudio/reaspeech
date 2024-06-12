@@ -102,12 +102,17 @@ end
 
 function ReaSpeechWorker:cancel_job(job_id)
   local url_path = "jobs/" .. job_id
-  ReaSpeechAPI:fetch_json(url_path, 'DELETE')
+  ReaSpeechAPI:fetch_json(url_path, 'DELETE', function(error_message)
+    self:handle_error(self.active_job, error_message)
+  end)
 end
 
 function ReaSpeechWorker:get_job_status(job_id)
   local url_path = "jobs/" .. job_id
-  return ReaSpeechAPI:fetch_json(url_path)
+  return ReaSpeechAPI:fetch_json(url_path, 'GET', function(error_message)
+    self:handle_error(self.active_job, error_message)
+    self.active_job = nil
+  end)
 end
 
 function ReaSpeechWorker:handle_request(request)
@@ -159,11 +164,11 @@ function ReaSpeechWorker:handle_job_status(active_job, response)
   if response.job_status == 'SUCCESS' then
     local transcript_url_path = response.job_result.url_path
     response._job = active_job.job
-    active_job.transcript_output_file = ReaSpeechAPI:fetch_large(transcript_url_path)
+    active_job.transcript_output_file, active_job.transcript_output_sentinel_file = ReaSpeechAPI:fetch_large(transcript_url_path)
     -- Job completion depends on non-blocking download of transcript
     return false
   elseif response.job_status == 'FAILURE' then
-    self:handle_error(active_job, response)
+    self:handle_error(active_job, response.job_result.error)
     return true
   end
 
@@ -179,8 +184,8 @@ function ReaSpeechWorker:handle_response(active_job, response)
   table.insert(self.responses, response)
 end
 
-function ReaSpeechWorker:handle_error(_active_job, response)
-  table.insert(self.responses, { error = response.job_result.error })
+function ReaSpeechWorker:handle_error(_active_job, error_message)
+  table.insert(self.responses, { error = error_message })
 end
 
 function ReaSpeechWorker:start_active_job()
@@ -189,10 +194,11 @@ function ReaSpeechWorker:start_active_job()
   end
 
   local active_job = self.active_job
-  local output_file = ReaSpeechAPI:post_request('/asr', active_job.data, active_job.job.path)
+  local output_file, sentinel_file = ReaSpeechAPI:post_request('/asr', active_job.data, active_job.job.path)
 
   if output_file then
     active_job.request_output_file = output_file
+    active_job.request_output_sentinel_file = sentinel_file
   else
     self.active_job = nil
   end
@@ -201,11 +207,13 @@ end
 function ReaSpeechWorker:check_active_job()
   if not self.active_job then return end
 
-  if self.active_job.request_output_file then
+  local active_job = self.active_job
+
+  if active_job.request_output_file then
     self:check_active_job_request_output_file()
   end
 
-  if self.active_job.transcript_output_file then
+  if active_job.transcript_output_file then
     self:check_active_job_transcript_output_file()
   else
     self:check_active_job_status()
@@ -213,6 +221,8 @@ function ReaSpeechWorker:check_active_job()
 end
 
 function ReaSpeechWorker:check_active_job_status()
+  if not self.active_job then return end
+
   local active_job = self.active_job
   if not active_job.job.job_id then return end
 
@@ -224,51 +234,89 @@ function ReaSpeechWorker:check_active_job_status()
   end
 end
 
-function ReaSpeechWorker:check_active_job_request_output_file()
-  local active_job = self.active_job
-  local output_file = active_job.request_output_file
+ReaSpeechWorker.check_sentinel = function(filename)
+  local sentinel = io.open(filename, 'r')
+
+  if not sentinel then
+    return false
+  end
+
+  sentinel:close()
+  return true
+end
+
+function ReaSpeechWorker:handle_response_json(output_file, sentinel_file, success_f, fail_f)
+  if not self.check_sentinel(sentinel_file) then
+    return
+  end
 
   local f = io.open(output_file, 'r')
-  if f then
-    local response_text = f:read('*a')
-    f:close()
-
-    if #response_text > 0 then
-      local response = nil
-      if app:trap(function ()
-        response = json.decode(response_text)
-      end) then
-        Tempfile:remove(output_file)
-        if self:handle_job_status(active_job, response) then
-          self.active_job = nil
-        end
-      else
-        app:debug("JSON parse error, trying again later")
-      end
-    end
+  if not f then
+    fail_f("Couldn't open output_filename: " .. tostring(output_file))
+    return
   end
+
+  local http_status, body = ReaSpeechAPI.http_status_and_body(f)
+  f:close()
+
+  if #body < 1 then
+    fail_f("Empty response from server.")
+    return
+  end
+
+  if http_status ~= 200 then
+    Tempfile:remove(sentinel_file)
+    Tempfile:remove(output_file)
+    local msg = "Server responded with status " .. http_status
+    fail_f(msg)
+    app:log(msg)
+    app:debug(body)
+    return
+  end
+
+  local response = nil
+  if app:trap(function ()
+    response = json.decode(body)
+  end) then
+    Tempfile:remove(sentinel_file)
+    Tempfile:remove(output_file)
+    success_f(response)
+  else
+    app:debug("JSON parse error, trying again later")
+  end
+end
+
+function ReaSpeechWorker:check_active_job_request_output_file()
+  local active_job = self.active_job
+
+  self:handle_response_json(
+    active_job.request_output_file,
+    active_job.request_output_sentinel_file,
+    function(response)
+      if self:handle_job_status(active_job, response) then
+        self.active_job = nil
+      end
+    end,
+    function(error_message)
+      self:handle_error(active_job, error_message)
+      self.active_job = nil
+    end
+  )
 end
 
 function ReaSpeechWorker:check_active_job_transcript_output_file()
   local active_job = self.active_job
-  local output_file = active_job.transcript_output_file
 
-  local f = io.open(output_file, 'r')
-  if f then
-    local response_text = f:read('*a')
-    f:close()
-
-    if #response_text > 0 then
-      local response = nil
-      if app:trap(function ()
-        response = json.decode(response_text)
-      end) then
-        Tempfile:remove(output_file)
-        self.active_job = nil
-        self:handle_response(active_job, response)
-      else
-        app:debug("JSON parse error, trying again later")
-      end
+  self:handle_response_json(
+    active_job.transcript_output_file,
+    active_job.transcript_output_sentinel_file,
+    function(response)
+      self:handle_response(active_job, response)
+      self.active_job = nil
+    end,
+    function(error_message)
+      self:handle_error(active_job, error_message)
+      self.active_job = nil
     end
-  end
+  )
 end

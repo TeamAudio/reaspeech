@@ -30,7 +30,7 @@ end
 
 -- Fetch simple JSON responses. Will block until result or curl timeout.
 -- For large amounts of data, use fetch_large instead.
-function ReaSpeechAPI:fetch_json(url_path, http_method)
+function ReaSpeechAPI:fetch_json(url_path, http_method, error_handler)
   http_method = http_method or 'GET'
 
   local curl = self:get_curl_cmd()
@@ -48,26 +48,41 @@ function ReaSpeechAPI:fetch_json(url_path, http_method)
     http_method_argument,
     ' -m ', self.CURL_TIMEOUT_SECONDS,
     ' -s',
+    ' -i',
   })
 
   app:debug('Fetch JSON: ' .. command)
 
-  local exec_result = reaper.ExecProcess(command, 0)
+  local exec_result = (ExecProcess.new { command }):wait()
 
   if exec_result == nil then
-    app:log("Unable to run curl")
+    local msg = "Unable to run curl"
+    app:log(msg)
+    error_handler(msg)
     return nil
   end
 
   local status, output = exec_result:match("(%d+)\n(.*)")
+
   if tonumber(status) ~= 0 then
-    app:debug("Curl failed with status " .. status)
+    local msg = "Curl failed with status " .. status
+    app:debug(msg)
+    error_handler(msg)
+    return nil
+  end
+
+  local response_status, response_body = self.http_status_and_body(output)
+
+  if response_status >= 400 then
+    local msg = "Request failed with status " .. response_status
+    app:log(msg)
+    error_handler(msg)
     return nil
   end
 
   local response_json = nil
   if app:trap(function()
-    response_json = json.decode(output)
+    response_json = json.decode(response_body)
   end) then
     return response_json
   else
@@ -92,22 +107,34 @@ function ReaSpeechAPI:fetch_large(url_path, http_method)
   end
 
   local output_file = Tempfile:name()
+  local sentinel_file = Tempfile:name()
 
   local command = table.concat({
     curl,
     ' "', api_url, '"',
     ' -H "accept: application/json"',
     http_method_argument,
+    ' -i ',
     ' -o "', output_file, '"',
   })
 
   app:debug('Fetch large: ' .. command)
 
-  if reaper.ExecProcess(command, -2) then
-    return output_file
+  local executor = ExecProcess.new { command, self.touch_cmd(sentinel_file) }
+
+  if executor:background() then
+    return output_file, sentinel_file
   else
     app:log("Unable to run curl")
     return nil
+  end
+end
+
+ReaSpeechAPI.touch_cmd = function(filename)
+  if reaper.GetOS():find("Win") then
+    return 'echo. > "' .. filename .. '"'
+  else
+    return 'touch "' .. filename .. '"'
   end
 end
 
@@ -124,6 +151,7 @@ function ReaSpeechAPI:post_request(url_path, data, file_path)
   end
 
   local output_file = Tempfile:name()
+  local sentinel_file = Tempfile:name()
 
   local command = table.concat({
     curl,
@@ -131,14 +159,17 @@ function ReaSpeechAPI:post_request(url_path, data, file_path)
     ' -H "accept: application/json"',
     ' -H "Content-Type: multipart/form-data"',
     ' -F ', self:_maybe_quote('audio_file=@"' .. file_path .. '"'),
+    ' -i ',
     ' -o "', output_file, '"',
   })
 
   app:log(file_path)
   app:debug('Post request: ' .. command)
 
-  if reaper.ExecProcess(command, -2) then
-    return output_file
+  local executor = ExecProcess.new { command, self.touch_cmd(sentinel_file) }
+
+  if executor:background() then
+    return output_file, sentinel_file
   else
     app:log("Unable to run curl")
     return nil
@@ -150,5 +181,69 @@ function ReaSpeechAPI:_maybe_quote(arg)
     return arg
   else
     return "'" .. arg .. "'"
+  end
+end
+
+function ReaSpeechAPI.http_status_and_body(response)
+  local headers, content = ReaSpeechAPI._split_curl_response(response)
+  local last_status_line = headers[#headers] and headers[#headers][1] or ''
+
+  local status = last_status_line:match("^HTTP/%d%.%d%s+(%d+)")
+  if not status then
+    return -1, 'Unable to parse response'
+  end
+
+  local body = {}
+  for _, chunk in pairs(content) do
+    table.insert(body, table.concat(chunk, "\n"))
+  end
+
+  return tonumber(status), table.concat(body, "\n")
+end
+
+function ReaSpeechAPI._split_curl_response(input)
+  local line_iterator = ReaSpeechAPI._line_iterator(input)
+  local chunk_iterator = ReaSpeechAPI._chunk_iterator(line_iterator)
+  local header_chunks = {}
+  local content_chunks = {}
+  local in_header = true
+  for chunk in chunk_iterator do
+    if in_header and chunk[1] and chunk[1]:match("^HTTP/%d%.%d") then
+      table.insert(header_chunks, chunk)
+    else
+      in_header = false
+      table.insert(content_chunks, chunk)
+    end
+  end
+  return header_chunks, content_chunks
+end
+
+function ReaSpeechAPI._line_iterator(input)
+  if type(input) == 'string' then
+    local i = 1
+    local lines = {}
+    for line in input:gmatch("([^\n]*)\n?") do
+      table.insert(lines, line)
+    end
+    return function ()
+      local line = lines[i]
+      i = i + 1
+      return line
+    end
+  else
+    return input:lines()
+  end
+end
+
+function ReaSpeechAPI._chunk_iterator(line_iterator)
+  return function ()
+    local chunk = nil
+    while true do
+      local line = line_iterator()
+      if line == nil or line:match("^%s*$") then break end
+      chunk = chunk or {}
+      table.insert(chunk, line)
+    end
+    return chunk
   end
 end
