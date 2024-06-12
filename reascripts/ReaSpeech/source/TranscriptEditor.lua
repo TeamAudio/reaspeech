@@ -296,15 +296,11 @@ function TranscriptEditor:render_zoom_combo()
           end
           if ImGui.Selectable(ctx, "Word", self.zoom_level == "word") then
             self.zoom_level = "word"
-            if self.sync_time_selection then
-              self:zoom(self.zoom_level)
-            end
+            self:handle_zoom_change()
           end
           if ImGui.Selectable(ctx, "Segment", self.zoom_level == "segment") then
             self.zoom_level = "segment"
-            if self.sync_time_selection then
-              self:zoom(self.zoom_level)
-            end
+            self:handle_zoom_change()
           end
         end)
         ImGui.EndCombo(ctx)
@@ -394,6 +390,12 @@ function TranscriptEditor:handle_word_merge()
   if word_index < num_words then
     TranscriptSegment.merge_words(words, word_index, word_index + 1)
     self:edit_word(words[word_index], word_index)
+  end
+end
+
+function TranscriptEditor:handle_zoom_change()
+  if self.sync_time_selection then
+    self:zoom(self.zoom_level)
   end
 end
 
