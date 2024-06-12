@@ -297,16 +297,11 @@ function TranscriptEditor:render_zoom_combo()
     disable_if(not self.sync_time_selection, function()
       if ImGui.BeginCombo(ctx, "##zoom_level", self.zoom_level) then
         app:trap(function()
-          if ImGui.Selectable(ctx, self.ZOOM_LEVEL.NONE.description, self.zoom_level == self.ZOOM_LEVEL.NONE.value) then
-            self.zoom_level = self.ZOOM_LEVEL.NONE.value
-          end
-          if ImGui.Selectable(ctx, self.ZOOM_LEVEL.WORD.description, self.zoom_level == self.ZOOM_LEVEL.WORD.value) then
-            self.zoom_level = self.ZOOM_LEVEL.WORD.value
-            self:handle_zoom_change()
-          end
-          if ImGui.Selectable(ctx, self.ZOOM_LEVEL.SEGMENT.description, self.zoom_level == self.ZOOM_LEVEL.SEGMENT.value) then
-            self.zoom_level = self.ZOOM_LEVEL.SEGMENT.value
-            self:handle_zoom_change()
+          for _, zoom in pairs(self.ZOOM_LEVEL) do
+            if ImGui.Selectable(ctx, zoom.description, self.zoom_level == zoom.value) then
+              self.zoom_level = zoom.value
+              self:handle_zoom_change()
+            end
           end
         end)
         ImGui.EndCombo(ctx)
