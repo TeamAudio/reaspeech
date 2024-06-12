@@ -185,19 +185,65 @@ function ReaSpeechAPI:_maybe_quote(arg)
 end
 
 function ReaSpeechAPI.http_status_and_body(response)
-  local matcher = "HTTP/%d%.%d%s(%d+)%s.-\r\n\r\n(.*)"
-  local status, body = response:match(matcher)
-  if status == "100" then
-    local next_status, next_body = body:match(matcher)
-    if next_status then
-      status = next_status
-      body = next_body
+  local headers, content = ReaSpeechAPI._split_curl_response(response)
+  local last_status_line = headers[#headers] and headers[#headers][1] or ''
+
+  local status = last_status_line:match("^HTTP/%d%.%d%s+(%d+)")
+  if not status then
+    return -1, 'Unable to parse response'
+  end
+
+  local body = {}
+  for _, chunk in pairs(content) do
+    table.insert(body, table.concat(chunk, "\n"))
+  end
+
+  return tonumber(status), table.concat(body, "\n")
+end
+
+function ReaSpeechAPI._split_curl_response(input)
+  local line_iterator = ReaSpeechAPI._line_iterator(input)
+  local chunk_iterator = ReaSpeechAPI._chunk_iterator(line_iterator)
+  local header_chunks = {}
+  local content_chunks = {}
+  local in_header = true
+  for chunk in chunk_iterator do
+    if in_header and chunk[1] and chunk[1]:match("^HTTP/%d%.%d") then
+      table.insert(header_chunks, chunk)
+    else
+      in_header = false
+      table.insert(content_chunks, chunk)
     end
   end
+  return header_chunks, content_chunks
+end
 
-  if not status then
-    return 500, 'Unable to parse response'
+function ReaSpeechAPI._line_iterator(input)
+  if type(input) == 'string' then
+    local i = 1
+    local lines = {}
+    for line in input:gmatch("([^\n]*)\n?") do
+      table.insert(lines, line)
+    end
+    return function ()
+      local line = lines[i]
+      i = i + 1
+      return line
+    end
+  else
+    return input:lines()
   end
+end
 
-  return tonumber(status), body
+function ReaSpeechAPI._chunk_iterator(line_iterator)
+  return function ()
+    local chunk = nil
+    while true do
+      local line = line_iterator()
+      if line == nil or line:match("^%s*$") then break end
+      chunk = chunk or {}
+      table.insert(chunk, line)
+    end
+    return chunk
+  end
 end
