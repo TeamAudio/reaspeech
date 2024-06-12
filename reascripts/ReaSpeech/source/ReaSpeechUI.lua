@@ -21,8 +21,6 @@ function ReaSpeechUI:init()
     self:log(e)
   end
 
-  self.disabler = ReaUtil.disabler(ctx, self.onerror)
-
   self.requests = {}
   self.responses = {}
   self.logs = {}
@@ -41,6 +39,10 @@ function ReaSpeechUI:init()
   }
 
   self.controls_ui = ReaSpeechControlsUI.new()
+
+  self.actions_ui = ReaSpeechActionsUI.new({
+    worker = self.worker
+  })
 
   self.transcript = Transcript.new()
   self.transcript_ui = TranscriptUI.new { transcript = self.transcript }
@@ -175,21 +177,28 @@ function ReaSpeechUI:render()
   ImGui.PushItemWidth(ctx, self.ITEM_WIDTH)
 
   self:trap(function ()
-    if self.product_activation:is_activated() then
-      self:render_main()
-    else
+    if not self.product_activation:is_activated() then
       self.product_activation_ui:render()
+      return
     end
+
+    self.controls_ui:render()
+    self.actions_ui:render()
+    self.transcript_ui:render()
+    self.failure:render()
   end)
 
   ImGui.PopItemWidth(ctx)
 end
 
-function ReaSpeechUI:render_main()
-  self.controls_ui:render()
-  self:render_actions()
-  self.transcript_ui:render()
-  self.failure:render()
+function ReaSpeechUI:new_jobs(jobs)
+  local request = self.controls_ui:get_request_data()
+  request.jobs = jobs
+  self:debug('Request: ' .. dump(request))
+
+  self.transcript:clear()
+
+  table.insert(self.requests, request)
 end
 
 function ReaSpeechUI.png_from_bytes(image_key)
@@ -204,132 +213,6 @@ function ReaSpeechUI.png_from_bytes(image_key)
   end
 
   ImGui.Image(ctx, image.imgui_image, image.width, image.height)
-end
-
-function ReaSpeechUI:render_actions()
-  local disable_if = self.disabler
-  local progress = self.worker:progress()
-
-  disable_if(progress, function()
-    local selected_track_count = reaper.CountSelectedTracks(ReaUtil.ACTIVE_PROJECT)
-    disable_if(selected_track_count == 0, function()
-      local button_text
-
-      if selected_track_count == 0 then
-        button_text = "Process Selected Tracks"
-      elseif selected_track_count == 1 then
-        button_text = "Process 1 Selected Track"
-      else
-        button_text = string.format("Process %d Selected Tracks", selected_track_count)
-      end
-
-      if ImGui.Button(ctx, button_text) then
-        self:process_jobs(ReaSpeechUI.jobs_for_selected_tracks)
-      end
-    end)
-
-    ImGui.SameLine(ctx)
-
-    local selected_item_count = reaper.CountSelectedMediaItems(ReaUtil.ACTIVE_PROJECT)
-    disable_if(selected_item_count == 0, function()
-      local button_text
-
-      if selected_item_count == 0 then
-        button_text = "Process Selected Items"
-      elseif selected_item_count == 1 then
-        button_text = "Process 1 Selected Item"
-      else
-        button_text = string.format("Process %d Selected Items", selected_item_count)
-      end
-
-      if ImGui.Button(ctx, button_text) then
-        self:process_jobs(ReaSpeechUI.jobs_for_selected_items)
-      end
-    end)
-
-    ImGui.SameLine(ctx)
-    if ImGui.Button(ctx, "Process All Items") then
-      self:process_jobs(ReaSpeechUI.jobs_for_all_items)
-    end
-  end)
-
-  if progress then
-    ImGui.SameLine(ctx)
-    if ImGui.Button(ctx, "Cancel") then
-      self.worker:cancel()
-    end
-
-    ImGui.SameLine(ctx)
-    ImGui.ProgressBar(ctx, progress)
-  end
-  ImGui.Dummy(ctx,0, 5)
-end
-
-function ReaSpeechUI.make_job(media_item, take)
-  local path = ReaSpeechUI.get_source_path(take)
-
-  if path then
-    return {item = media_item, take = take, path = path}
-  else
-    return nil
-  end
-end
-
-function ReaSpeechUI.jobs_for_selected_tracks()
-  local jobs = {}
-  for track in ReaIter.each_selected_track() do
-    for item in ReaIter.each_track_item(track) do
-      for take in ReaIter.each_take(item) do
-        local job = ReaSpeechUI.make_job(item, take)
-        if job then
-          table.insert(jobs, job)
-        end
-      end
-    end
-  end
-  return jobs
-end
-
-function ReaSpeechUI.jobs_for_selected_items()
-  local jobs = {}
-  for item in ReaIter.each_selected_media_item() do
-    for take in ReaIter.each_take(item) do
-      local job = ReaSpeechUI.make_job(item, take)
-      if job then
-        table.insert(jobs, job)
-      end
-    end
-  end
-  return jobs
-end
-
-function ReaSpeechUI.jobs_for_all_items()
-  local jobs = {}
-  for item in ReaIter.each_media_item() do
-    for take in ReaIter.each_take(item) do
-      local job = ReaSpeechUI.make_job(item, take)
-      if job then
-        table.insert(jobs, job)
-      end
-    end
-  end
-  return jobs
-end
-
-function ReaSpeechUI:process_jobs(job_generator)
-  local jobs = job_generator()
-
-  if #jobs == 0 then
-    reaper.MB("No media found to process.", "No media", 0)
-    return
-  end
-
-  local request = self.controls_ui:get_request_data()
-  request.jobs = jobs
-  self:debug('Request: ' .. dump(request))
-
-  self.transcript:clear()
-  table.insert(self.requests, request)
 end
 
 function ReaSpeechUI.get_source_path(take)
