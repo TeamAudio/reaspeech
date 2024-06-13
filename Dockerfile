@@ -1,8 +1,9 @@
 FROM swaggerapi/swagger-ui:v4.18.2 AS swagger-ui
 FROM python:3.10-slim
 
-ARG UID=1001
-ARG GID=1001
+ARG SERVICE_USER=service
+ARG SERVICE_UID=1001
+ARG SERVICE_GID=1001
 
 ENV POETRY_VENV=/app/.venv
 
@@ -39,10 +40,10 @@ RUN make publish
 WORKDIR /app
 RUN rm -rf reascripts
 
-RUN groupadd -g $GID service || true
-RUN useradd -u $UID -g $GID -d /app -s /usr/sbin/nologin service || true
-RUN chown -R service:service .
-USER service
+RUN groupadd -g $SERVICE_GID $SERVICE_USER || true
+RUN useradd -u $SERVICE_UID -g $SERVICE_GID -d /app -s /usr/sbin/nologin $SERVICE_USER || true
+RUN chown -R $SERVICE_UID:$SERVICE_GID .
+USER $SERVICE_USER
 
 ENTRYPOINT ["python3", "app/run.py"]
 
