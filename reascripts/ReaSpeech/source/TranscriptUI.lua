@@ -168,7 +168,7 @@ function TranscriptUI:render_table()
         ImGui.TableSetupColumn(ctx, column, column_flags, init_width)
       end
 
-      ImGui.TableSetupScrollFreeze(ctx, num_columns, 1)
+      ImGui.TableSetupScrollFreeze(ctx, 0, 1)
       ImGui.TableHeadersRow(ctx)
 
       self:sort_table()
