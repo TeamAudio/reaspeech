@@ -89,6 +89,12 @@ function ReaSpeechWorker:progress()
   return completed_job_count / job_count
 end
 
+function ReaSpeechWorker:status()
+  if self.active_job and self.active_job.job then
+    return self.active_job.job.job_status
+  end
+end
+
 function ReaSpeechWorker:cancel()
   if self.active_job then
     if self.active_job.job and self.active_job.job.job_id then
@@ -156,6 +162,7 @@ function ReaSpeechWorker:handle_job_status(active_job, response)
   end
 
   active_job.job.job_id = response.job_id
+  active_job.job.job_status = response.job_status
 
   if not response.job_status then
     return false
