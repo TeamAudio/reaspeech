@@ -46,17 +46,19 @@ os.environ['FFMPEG_BIN'] = args.ffmpeg_bin
 os.environ['ASR_ENGINE'] = args.asr_engine
 os.environ['ASR_MODEL'] = args.asr_model
 
+processes = {}
+
 # Start Redis
 print('Starting database...', file=sys.stderr)
-subprocess.Popen([args.redis_bin], stdout=subprocess.DEVNULL)
+processes['redis'] = subprocess.Popen([args.redis_bin], stdout=subprocess.DEVNULL)
 
 # Start Celery
 print('Starting worker...', file=sys.stderr)
-subprocess.Popen(['celery', '-A', 'app.worker.celery', 'worker', '--pool=solo', '--loglevel=info'])
+processes['celery'] = subprocess.Popen(['celery', '-A', 'app.worker.celery', 'worker', '--pool=solo', '--loglevel=info'])
 
 # Start Gunicorn
 print('Starting application...', file=sys.stderr)
-subprocess.Popen(['gunicorn', '--bind', '0.0.0.0:9000', '--workers', '1', '--timeout', '0', 'app.webservice:app', '-k', 'uvicorn.workers.UvicornWorker'])
+processes['gunicorn'] = subprocess.Popen(['gunicorn', '--bind', '0.0.0.0:9000', '--workers', '1', '--timeout', '0', 'app.webservice:app', '-k', 'uvicorn.workers.UvicornWorker'])
 
 # Wait for any process to exit
 status = os.WEXITSTATUS(os.wait()[1])
@@ -64,7 +66,17 @@ print('Process exited with status', status, file=sys.stderr)
 
 # Terminate any child processes
 print('Terminating child processes...', file=sys.stderr)
-os.system('pkill -P %d' % os.getpid())
+for name, p in processes.items():
+    try:
+        print('Terminating', name, file=sys.stderr)
+
+        # kinda bass-ackwards, but poll() returns None if process is still running
+        if not p.poll():
+            p.terminate()
+        else:
+            print(name, "already exited", file=sys.stderr)
+    except Exception as e:
+        print(e, file=sys.stderr)
 
 # Exit with status of process that exited
 print('Exiting with status', status, file=sys.stderr)
