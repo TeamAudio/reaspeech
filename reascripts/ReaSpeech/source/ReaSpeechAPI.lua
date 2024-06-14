@@ -32,6 +32,8 @@ end
 -- For large amounts of data, use fetch_large instead.
 function ReaSpeechAPI:fetch_json(url_path, http_method, error_handler, timeout_handler)
   http_method = http_method or 'GET'
+  error_handler = error_handler or function(_msg) end
+  timeout_handler = timeout_handler or function() end
 
   local curl = self:get_curl_cmd()
   local api_url = self:get_api_url(url_path)
@@ -67,7 +69,7 @@ function ReaSpeechAPI:fetch_json(url_path, http_method, error_handler, timeout_h
 
   if status == 28 then
     app:debug("Curl timeout reached")
-    if timeout_handler then timeout_handler() end
+    timeout_handler()
     return nil
   elseif status ~= 0 then
     local msg = "Curl failed with status " .. status
