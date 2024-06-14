@@ -30,8 +30,10 @@ end
 
 -- Fetch simple JSON responses. Will block until result or curl timeout.
 -- For large amounts of data, use fetch_large instead.
-function ReaSpeechAPI:fetch_json(url_path, http_method, error_handler)
+function ReaSpeechAPI:fetch_json(url_path, http_method, error_handler, timeout_handler)
   http_method = http_method or 'GET'
+  error_handler = error_handler or function(_msg) end
+  timeout_handler = timeout_handler or function() end
 
   local curl = self:get_curl_cmd()
   local api_url = self:get_api_url(url_path)
@@ -63,8 +65,13 @@ function ReaSpeechAPI:fetch_json(url_path, http_method, error_handler)
   end
 
   local status, output = exec_result:match("(%d+)\n(.*)")
+  status = tonumber(status)
 
-  if tonumber(status) ~= 0 then
+  if status == 28 then
+    app:debug("Curl timeout reached")
+    timeout_handler()
+    return nil
+  elseif status ~= 0 then
     local msg = "Curl failed with status " .. status
     app:debug(msg)
     error_handler(msg)
