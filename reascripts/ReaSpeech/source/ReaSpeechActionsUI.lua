@@ -60,7 +60,12 @@ function ReaSpeechActionsUI:render()
     end
 
     ImGui.SameLine(ctx)
-    ImGui.ProgressBar(ctx, progress)
+    local overlay = string.format("%.0f%%", progress * 100)
+    local status = self.worker:status()
+    if status then
+      overlay = overlay .. ' - ' .. status
+    end
+    ImGui.ProgressBar(ctx, progress, nil, nil, overlay)
   end
   ImGui.Dummy(ctx,0, 5)
 end
