@@ -1,6 +1,10 @@
 FROM swaggerapi/swagger-ui:v4.18.2 AS swagger-ui
 FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
 
+ARG SERVICE_USER=service
+ARG SERVICE_UID=1001
+ARG SERVICE_GID=1001
+
 ENV PYTHON_VERSION=3.10
 ENV POETRY_VENV=/app/.venv
 
@@ -47,6 +51,11 @@ WORKDIR /app/reascripts/ReaSpeech
 RUN make publish
 WORKDIR /app
 RUN rm -rf reascripts
+
+RUN groupadd -g $SERVICE_GID $SERVICE_USER || true
+RUN useradd -u $SERVICE_UID -g $SERVICE_GID -d /app -s /usr/sbin/nologin $SERVICE_USER || true
+RUN chown -R $SERVICE_UID:$SERVICE_GID .
+USER $SERVICE_USER
 
 ENTRYPOINT ["python3", "app/run.py"]
 
