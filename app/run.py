@@ -30,6 +30,9 @@ argmap = {
     '--asr-model': {
         'default': os.getenv('ASR_MODEL', 'small'),
         'help': 'ASR model to use (default: %(default)s)' },
+    '--build-reascripts': {
+        'action': 'store_true',
+        'help': 'Build ReaScripts before starting' },
 }
 
 parser = argparse.ArgumentParser()
@@ -45,6 +48,9 @@ os.environ['OUTPUT_URL_PREFIX'] = args.output_url_prefix
 os.environ['FFMPEG_BIN'] = args.ffmpeg_bin
 os.environ['ASR_ENGINE'] = args.asr_engine
 os.environ['ASR_MODEL'] = args.asr_model
+
+if args.build_reascripts:
+    os.system('cd reascripts/ReaSpeech && make')
 
 processes = {}
 

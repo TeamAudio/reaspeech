@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.gpu
+    entrypoint: ["python3", "app/run.py", "--build-reascripts"]
     deploy:
       resources:
         reservations:
