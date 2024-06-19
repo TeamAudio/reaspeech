@@ -51,6 +51,7 @@ os.environ['ASR_MODEL'] = args.asr_model
 
 if args.build_reascripts:
     if os.system('cd reascripts/ReaSpeech && make') != 0:
+        print('ReaScript build failed', file=sys.stderr)
         sys.exit(1)
 
 processes = {}
