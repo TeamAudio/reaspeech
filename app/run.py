@@ -50,7 +50,8 @@ os.environ['ASR_ENGINE'] = args.asr_engine
 os.environ['ASR_MODEL'] = args.asr_model
 
 if args.build_reascripts:
-    os.system('cd reascripts/ReaSpeech && make')
+    if os.system('cd reascripts/ReaSpeech && make') != 0:
+        sys.exit(1)
 
 processes = {}
 
