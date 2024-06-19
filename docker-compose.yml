@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    entrypoint: ["python3", "app/run.py", "--build-reascripts"]
     environment:
       - ASR_MODEL=small
       - ASR_ENGINE=faster_whisper
