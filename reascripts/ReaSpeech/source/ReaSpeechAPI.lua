@@ -197,7 +197,7 @@ function ReaSpeechAPI.http_status_and_body(response)
 
   local status = last_status_line:match("^HTTP/%d%.%d%s+(%d+)")
   if not status then
-    return -1, 'Unable to parse response'
+    return -1, 'Status not found in headers'
   end
 
   local body = {}

@@ -69,8 +69,17 @@ print('Starting application...', file=sys.stderr)
 processes['gunicorn'] = subprocess.Popen(['gunicorn', '--bind', '0.0.0.0:9000', '--workers', '1', '--timeout', '0', 'app.webservice:app', '-k', 'uvicorn.workers.UvicornWorker'])
 
 # Wait for any process to exit
-status = os.WEXITSTATUS(os.wait()[1])
-print('Process exited with status', status, file=sys.stderr)
+pid, waitstatus = os.wait()
+exitcode = os.waitstatus_to_exitcode(waitstatus)
+process_name = '<unknown>'
+for name, p in processes.items():
+    if p.pid == pid:
+        process_name = name
+        break
+if exitcode < 0:
+    print('Process', process_name, 'received signal', -exitcode, file=sys.stderr)
+else:
+    print('Process', process_name, 'exited with status', exitcode, file=sys.stderr)
 
 # Terminate any child processes
 print('Terminating child processes...', file=sys.stderr)
@@ -87,5 +96,6 @@ for name, p in processes.items():
         print(e, file=sys.stderr)
 
 # Exit with status of process that exited
+status = 1 if exitcode < 0 else exitcode
 print('Exiting with status', status, file=sys.stderr)
 sys.exit(status)
