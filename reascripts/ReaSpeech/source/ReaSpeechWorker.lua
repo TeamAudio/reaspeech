@@ -259,21 +259,23 @@ function ReaSpeechWorker:handle_response_json(output_file, sentinel_file, succes
 
   local f = io.open(output_file, 'r')
   if not f then
-    fail_f("Couldn't open output_filename: " .. tostring(output_file))
+    fail_f("Couldn't open output file: " .. tostring(output_file))
+    Tempfile:remove(sentinel_file)
     return
   end
 
   local http_status, body = ReaSpeechAPI.http_status_and_body(f)
   f:close()
 
-  if #body < 1 then
-    fail_f("Empty response from server.")
+  if http_status == -1 then
+    app:debug(body .. ", trying again later")
     return
   end
 
+  Tempfile:remove(output_file)
+  Tempfile:remove(sentinel_file)
+
   if http_status ~= 200 then
-    Tempfile:remove(sentinel_file)
-    Tempfile:remove(output_file)
     local msg = "Server responded with status " .. http_status
     fail_f(msg)
     app:log(msg)
@@ -281,15 +283,18 @@ function ReaSpeechWorker:handle_response_json(output_file, sentinel_file, succes
     return
   end
 
+  if #body < 1 then
+    fail_f("Empty response from server")
+    return
+  end
+
   local response = nil
   if app:trap(function ()
     response = json.decode(body)
   end) then
-    Tempfile:remove(sentinel_file)
-    Tempfile:remove(output_file)
     success_f(response)
   else
-    app:debug("JSON parse error, trying again later")
+    fail_f("Error parsing response JSON")
   end
 end
 

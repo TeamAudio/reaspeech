@@ -16,6 +16,7 @@ services:
       - ASR_ENGINE=faster_whisper
     ports:
       - "9000:9000"
+    restart: on-failure
     volumes:
       - ./app:/app/app
       - ./reascripts:/app/reascripts

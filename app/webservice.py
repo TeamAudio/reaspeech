@@ -36,6 +36,8 @@ DEFAULT_MODEL_NAME = os.getenv("ASR_MODEL", "small")
 
 LANGUAGE_CODES = sorted(list(tokenizer.LANGUAGES.keys()))
 
+TASK_EXPIRATION_SECONDS = 30
+
 projectMetadata = importlib.metadata.metadata('reaspeech')
 app = FastAPI(
     # docs_url=None,
@@ -137,7 +139,7 @@ async def asr(
     transcriber = transcribe.si(temp_file_path, audio_file.filename, asr_options)
 
     if use_async:
-        job = transcriber.apply_async()
+        job = transcriber.apply_async(expires=TASK_EXPIRATION_SECONDS)
         return JSONResponse({"job_id": job.id})
 
     else:
