@@ -67,7 +67,6 @@ function ReaSpeechActionsUI:render()
     end
     ImGui.ProgressBar(ctx, progress, nil, nil, overlay)
   end
-  ImGui.Dummy(ctx,0, 5)
 end
 
 function ReaSpeechActionsUI.make_job(media_item, take)

@@ -24,6 +24,7 @@ ASR_ENGINE = os.getenv("ASR_ENGINE", "faster_whisper")
 ASR_OPTIONS = frozenset([
     "task",
     "language",
+    "hotwords",
     "initial_prompt",
     "encode",
     "output",
@@ -113,6 +114,7 @@ async def reascript(request: Request, name: str, host: str):
 async def asr(
     task: Union[str, None] = Query(default="transcribe", enum=["transcribe", "translate"]),
     language: Union[str, None] = Query(default=None, enum=LANGUAGE_CODES),
+    hotwords: Union[str, None] = Query(default=None),
     initial_prompt: Union[str, None] = Query(default=None),
     audio_file: UploadFile = File(...),
     encode: bool = Query(default=True, description="Encode audio first through ffmpeg"),
