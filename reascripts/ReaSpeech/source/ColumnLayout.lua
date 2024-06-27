@@ -56,8 +56,7 @@ function ColumnLayout:_get_avail_width()
 end
 
 function ColumnLayout:_horiz_margin(margin)
-  ImGui.Dummy(ctx, margin, 0)
-  ImGui.SameLine(ctx)
+  ImGui.SetCursorPosX(ctx, ImGui.GetCursorPosX(ctx) + margin)
 end
 
 function ColumnLayout:_vert_margin(margin, width)

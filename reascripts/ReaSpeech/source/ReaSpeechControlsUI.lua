@@ -53,9 +53,9 @@ ReaSpeechControlsUI = Polo {
     {'Large', 'distil-large-v3'},
   },
 
-  MARGIN_LEFT = 110,
-  MARGIN_RIGHT = 10,
-
+  COLUMN_PADDING = 15,
+  MARGIN_LEFT = 115,
+  MARGIN_RIGHT = 0,
   NARROW_COLUMN_WIDTH = 150,
 }
 
@@ -116,7 +116,7 @@ function ReaSpeechControlsUI:render_heading()
   ImGui.SetCursorPos(ctx, init_x - 20, init_y)
   app.png_from_bytes('reaspeech-logo-small')
 
-  ImGui.SetCursorPos(ctx, self.MARGIN_LEFT + 15, init_y)
+  ImGui.SetCursorPos(ctx, self.MARGIN_LEFT + 12, init_y)
   self:render_tabs()
 
   ImGui.SetCursorPos(ctx, ImGui.GetWindowWidth(ctx) - 55, init_y)
@@ -146,8 +146,6 @@ function ReaSpeechControlsUI:render_tabs()
 end
 
 function ReaSpeechControlsUI:render_simple()
-  ImGui.Dummy(ctx, self.MARGIN_LEFT, 0)
-  ImGui.SameLine(ctx)
   self:render_model_sizes()
 end
 
@@ -159,7 +157,7 @@ function ReaSpeechControlsUI:render_advanced()
 
   for row = 1, #renderers do
     local layout = ColumnLayout.new {
-      column_padding = 20,
+      column_padding = self.COLUMN_PADDING,
       margin_bottom = 5,
       margin_left = self.MARGIN_LEFT,
       margin_right = self.MARGIN_RIGHT,
@@ -174,8 +172,14 @@ function ReaSpeechControlsUI:render_advanced()
   end
 end
 
+function ReaSpeechControlsUI:render_input_label(text)
+  ImGui.Text(ctx, text)
+  ImGui.Dummy(ctx, 0, 0)
+end
+
 function ReaSpeechControlsUI:render_language(column)
-  ImGui.Text(ctx, 'Language')
+  self:render_input_label('Language')
+
   if ImGui.BeginCombo(ctx, "##language", self.LANGUAGES[self.language]) then
     app:trap(function()
       local combo_items = self.LANGUAGE_CODES
@@ -188,6 +192,7 @@ function ReaSpeechControlsUI:render_language(column)
     end)
     ImGui.EndCombo(ctx)
   end
+
   local translate_label = "Translate to English"
   if column.width < self.NARROW_COLUMN_WIDTH then
     translate_label = "Translate"
@@ -199,7 +204,8 @@ function ReaSpeechControlsUI:render_language(column)
 end
 
 function ReaSpeechControlsUI:render_model_name()
-  ImGui.Text(ctx, 'Model Name')
+  self:render_input_label('Model Name')
+
   local rv, value = ImGui.InputTextWithHint(ctx, '##model_name', self.model_name or "<default>")
   if rv then
     self.model_name = value
@@ -207,8 +213,6 @@ function ReaSpeechControlsUI:render_model_name()
 end
 
 function ReaSpeechControlsUI:render_model_sizes()
-  ImGui.Text(ctx, 'Model Size')
-
   function with_button_color(selected, f)
     if selected then
       ImGui.PushStyleColor(ctx, ImGui.Col_Button(), Theme.colors.dark_gray_translucent)
@@ -220,12 +224,14 @@ function ReaSpeechControlsUI:render_model_sizes()
   end
 
   local layout = ColumnLayout.new {
-    column_padding = 10,
+    column_padding = self.COLUMN_PADDING,
     margin_bottom = 5,
     margin_left = self.MARGIN_LEFT,
     margin_right = self.MARGIN_RIGHT,
     num_columns = #self.SIMPLE_MODEL_SIZES,
     render_column = function (column)
+      self:render_input_label(column.num == 1 and 'Model Size' or '')
+
       local label, model_name = table.unpack(self.SIMPLE_MODEL_SIZES[column.num])
       with_button_color(self.model_name == model_name, function ()
         if ImGui.Button(ctx, label, column.width) then
@@ -238,7 +244,8 @@ function ReaSpeechControlsUI:render_model_sizes()
 end
 
 function ReaSpeechControlsUI:render_hotwords()
-  ImGui.Text(ctx, 'Hot Words')
+  self:render_input_label('Hot Words')
+
   local rv, value = ImGui.InputText(ctx, '##hotwords', self.hotwords)
   if rv then
     self.hotwords = value
@@ -246,7 +253,8 @@ function ReaSpeechControlsUI:render_hotwords()
 end
 
 function ReaSpeechControlsUI:render_options(column)
-  ImGui.Text(ctx, 'Options')
+  self:render_input_label('Options')
+
   local vad_label = "Voice Activity Detection"
   if column.width < self.NARROW_COLUMN_WIDTH then
     vad_label = "VAD"
@@ -258,7 +266,8 @@ function ReaSpeechControlsUI:render_options(column)
 end
 
 function ReaSpeechControlsUI:render_logging()
-  ImGui.Text(ctx, 'Logging')
+  self:render_input_label('Logging')
+
   local rv, value = ImGui.Checkbox(ctx, "Enable", self.log_enable)
   if rv then
     self.log_enable = value
@@ -274,7 +283,8 @@ function ReaSpeechControlsUI:render_logging()
 end
 
 function ReaSpeechControlsUI:render_initial_prompt()
-  ImGui.Text(ctx, 'Initial Prompt')
+  self:render_input_label('Initial Prompt')
+
   rv, value = ImGui.InputText(ctx, '##initial_prompt', self.initial_prompt)
   if rv then
     self.initial_prompt = value
