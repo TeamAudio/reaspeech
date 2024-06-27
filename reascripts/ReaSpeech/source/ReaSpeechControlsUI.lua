@@ -44,6 +44,8 @@ ReaSpeechControlsUI = Polo {
   LANGUAGE_CODES = {},
   DEFAULT_LANGUAGE = '',
   DEFAULT_MODEL_NAME = 'small',
+
+  MARGIN_LEFT = 110,
 }
 
 function ReaSpeechControlsUI:init()
@@ -100,8 +102,10 @@ end
 function ReaSpeechControlsUI:render_heading()
   local init_x, init_y = ImGui.GetCursorPos(ctx)
 
+  ImGui.SetCursorPos(ctx, init_x - 20, init_y)
   app.png_from_bytes('reaspeech-logo-small')
-  ImGui.SameLine(ctx)
+
+  ImGui.SetCursorPos(ctx, self.MARGIN_LEFT + 15, init_y)
   self:render_tabs()
 
   ImGui.SetCursorPos(ctx, ImGui.GetWindowWidth(ctx) - 55, init_y)
@@ -131,7 +135,7 @@ function ReaSpeechControlsUI:render_tabs()
 end
 
 function ReaSpeechControlsUI:render_simple()
-  ImGui.Dummy(ctx, 145, 70)
+  ImGui.Dummy(ctx, self.MARGIN_LEFT, 70)
   ImGui.SameLine(ctx)
   ImGui.BeginGroup(ctx)
   app:trap(function ()
@@ -148,25 +152,22 @@ function ReaSpeechControlsUI:render_advanced()
 
   for row = 1, #renderers do
     local layout = ColumnLayout.new {
-      column_padding = 25,
+      column_padding = 20,
       margin_bottom = 5,
-      margin_left = 145,
+      margin_left = self.MARGIN_LEFT,
+      margin_right = 10,
       num_columns = #renderers[row],
       render_column = function (column)
-        if not (row == 1 and column.num == 3) then
-          ImGui.PushItemWidth(ctx, column.width)
-          app:trap(function () renderers[row][column.num](self) end)
-          ImGui.PopItemWidth(ctx)
-        else
-          renderers[row][column.num](self)
-        end
+        ImGui.PushItemWidth(ctx, column.width)
+        app:trap(function () renderers[row][column.num](self, column) end)
+        ImGui.PopItemWidth(ctx)
       end
     }
     layout:render()
   end
 end
 
-function ReaSpeechControlsUI:render_language()
+function ReaSpeechControlsUI:render_language(column)
   ImGui.Text(ctx, 'Language')
   if ImGui.BeginCombo(ctx, "##language", self.LANGUAGES[self.language]) then
     app:trap(function()
@@ -180,7 +181,11 @@ function ReaSpeechControlsUI:render_language()
     end)
     ImGui.EndCombo(ctx)
   end
-  local rv, value = ImGui.Checkbox(ctx, "Translate to English", self.translate)
+  local translate_label = "Translate to English"
+  if column.width < 150 then
+    translate_label = "Translate"
+  end
+  local rv, value = ImGui.Checkbox(ctx, translate_label, self.translate)
   if rv then
     self.translate = value
   end
@@ -239,9 +244,13 @@ function ReaSpeechControlsUI:render_hotwords()
   end
 end
 
-function ReaSpeechControlsUI:render_options()
+function ReaSpeechControlsUI:render_options(column)
   ImGui.Text(ctx, 'Options')
-  local rv, value = ImGui.Checkbox(ctx, "Voice Activity Detection", self.vad_filter)
+  local vad_label = "Voice Activity Detection"
+  if column.width < 150 then
+    vad_label = "VAD"
+  end
+  local rv, value = ImGui.Checkbox(ctx, vad_label, self.vad_filter)
   if rv then
     self.vad_filter = value
   end
