@@ -152,6 +152,51 @@ function TestColumnLayout:testRenderWithWidth()
   })
 end
 
+function TestColumnLayout:testRenderNested()
+  local inner_renders = {}
+  local outer_renders = {}
+
+  local outer_layout = ColumnLayout.new {
+    column_padding = 0,
+    num_columns = 2,
+    width = 60,
+
+    render_column = function (outer_column)
+      table.insert(outer_renders, outer_column)
+
+      local inner_layout = ColumnLayout.new {
+        column_padding = 0,
+        num_columns = 3,
+        width = outer_column.width,
+
+        render_column = function (inner_column)
+          table.insert(inner_renders, inner_column)
+        end
+      }
+      self:stub(inner_layout)
+
+      inner_layout:render()
+    end
+  }
+  self:stub(outer_layout)
+
+  outer_layout:render()
+
+  lu.assertEquals(inner_renders, {
+    {num=1, width=10},
+    {num=2, width=10},
+    {num=3, width=10},
+    {num=1, width=10},
+    {num=2, width=10},
+    {num=3, width=10},
+  })
+
+  lu.assertEquals(outer_renders, {
+    {num=1, width=30},
+    {num=2, width=30},
+  })
+end
+
 
 
 os.exit(lu.LuaUnit.run())
