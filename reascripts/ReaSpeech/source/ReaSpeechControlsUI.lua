@@ -41,11 +41,22 @@ ReaSpeechControlsUI = Polo {
     haw = 'Hawaiian', ln = 'Lingala', ha = 'Hausa',
     ba = 'Bashkir', jw = 'Javanese', su = 'Sundanese'
   },
+
   LANGUAGE_CODES = {},
+
   DEFAULT_LANGUAGE = '',
   DEFAULT_MODEL_NAME = 'small',
 
+  SIMPLE_MODEL_SIZES = {
+    {'Small', 'small'},
+    {'Medium', 'medium'},
+    {'Large', 'distil-large-v3'},
+  },
+
   MARGIN_LEFT = 110,
+  MARGIN_RIGHT = 10,
+
+  NARROW_COLUMN_WIDTH = 150,
 }
 
 function ReaSpeechControlsUI:init()
@@ -135,13 +146,9 @@ function ReaSpeechControlsUI:render_tabs()
 end
 
 function ReaSpeechControlsUI:render_simple()
-  ImGui.Dummy(ctx, self.MARGIN_LEFT, 70)
+  ImGui.Dummy(ctx, self.MARGIN_LEFT, 0)
   ImGui.SameLine(ctx)
-  ImGui.BeginGroup(ctx)
-  app:trap(function ()
-    self:render_model_size()
-  end)
-  ImGui.EndGroup(ctx)
+  self:render_model_sizes()
 end
 
 function ReaSpeechControlsUI:render_advanced()
@@ -155,7 +162,7 @@ function ReaSpeechControlsUI:render_advanced()
       column_padding = 20,
       margin_bottom = 5,
       margin_left = self.MARGIN_LEFT,
-      margin_right = 10,
+      margin_right = self.MARGIN_RIGHT,
       num_columns = #renderers[row],
       render_column = function (column)
         ImGui.PushItemWidth(ctx, column.width)
@@ -182,7 +189,7 @@ function ReaSpeechControlsUI:render_language(column)
     ImGui.EndCombo(ctx)
   end
   local translate_label = "Translate to English"
-  if column.width < 150 then
+  if column.width < self.NARROW_COLUMN_WIDTH then
     translate_label = "Translate"
   end
   local rv, value = ImGui.Checkbox(ctx, translate_label, self.translate)
@@ -199,8 +206,9 @@ function ReaSpeechControlsUI:render_model_name()
   end
 end
 
-function ReaSpeechControlsUI:render_model_size()
-  local button_width, button_height = 200, 40
+function ReaSpeechControlsUI:render_model_sizes()
+  ImGui.Text(ctx, 'Model Size')
+
   function with_button_color(selected, f)
     if selected then
       ImGui.PushStyleColor(ctx, ImGui.Col_Button(), Theme.colors.dark_gray_translucent)
@@ -211,29 +219,22 @@ function ReaSpeechControlsUI:render_model_size()
     end
   end
 
-  ImGui.Text(ctx, 'Model Size')
-
-  with_button_color(self.model_name == 'small', function ()
-    if ImGui.Button(ctx, 'Small', button_width, button_height) then
-      self.model_name = 'small'
+  local layout = ColumnLayout.new {
+    column_padding = 10,
+    margin_bottom = 5,
+    margin_left = self.MARGIN_LEFT,
+    margin_right = self.MARGIN_RIGHT,
+    num_columns = #self.SIMPLE_MODEL_SIZES,
+    render_column = function (column)
+      local label, model_name = table.unpack(self.SIMPLE_MODEL_SIZES[column.num])
+      with_button_color(self.model_name == model_name, function ()
+        if ImGui.Button(ctx, label, column.width) then
+          self.model_name = model_name
+        end
+      end)
     end
-  end)
-
-  ImGui.SameLine(ctx)
-
-  with_button_color(self.model_name == 'medium', function ()
-    if ImGui.Button(ctx, 'Medium', button_width, button_height) then
-      self.model_name = 'medium'
-    end
-  end)
-
-  ImGui.SameLine(ctx)
-
-  with_button_color(self.model_name == 'distil-large-v3', function ()
-    if ImGui.Button(ctx, 'Large', button_width, button_height) then
-      self.model_name = 'distil-large-v3'
-    end
-  end)
+  }
+  layout:render()
 end
 
 function ReaSpeechControlsUI:render_hotwords()
@@ -247,7 +248,7 @@ end
 function ReaSpeechControlsUI:render_options(column)
   ImGui.Text(ctx, 'Options')
   local vad_label = "Voice Activity Detection"
-  if column.width < 150 then
+  if column.width < self.NARROW_COLUMN_WIDTH then
     vad_label = "VAD"
   end
   local rv, value = ImGui.Checkbox(ctx, vad_label, self.vad_filter)
