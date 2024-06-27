@@ -24,28 +24,48 @@ function ColumnLayout:render()
   local total_padding = (self.num_columns - 1) * self.column_padding
   local total_width = self.width
   if total_width == 0 then
-    local avail_width, _ = ImGui.GetContentRegionAvail(ctx)
-    total_width = avail_width
+    total_width = self:_get_avail_width()
   end
   local content_width = total_width - self.margin_left - self.margin_right
   local column_width = (content_width - total_padding) / self.num_columns
 
-  ImGui.Dummy(ctx, self.margin_left, 0)
-  ImGui.SameLine(ctx)
+  self:_horiz_margin(self.margin_left)
 
   for i = 1, self.num_columns do
     local column = {num = i, width = column_width}
 
-    ImGui.BeginGroup(ctx)
-    app:trap(function ()
-      ImGui.Dummy(ctx, column.width, self.margin_top)
+    self:_with_group(function ()
+      self:_vert_margin(self.margin_top, column_width)
       self.render_column(column)
-      ImGui.Dummy(ctx, column.width, self.margin_bottom)
+      self:_vert_margin(self.margin_bottom, column_width)
     end)
-    ImGui.EndGroup(ctx)
 
     if i < self.num_columns then
-      ImGui.SameLine(ctx, 0, self.column_padding)
+      self:_column_gap(self.column_padding)
     end
   end
+end
+
+function ColumnLayout:_column_gap(padding)
+  ImGui.SameLine(ctx, 0, padding)
+end
+
+function ColumnLayout:_get_avail_width()
+  local avail_width, _ = ImGui.GetContentRegionAvail(ctx)
+  return avail_width
+end
+
+function ColumnLayout:_horiz_margin(margin)
+  ImGui.Dummy(ctx, margin, 0)
+  ImGui.SameLine(ctx)
+end
+
+function ColumnLayout:_vert_margin(margin, width)
+  ImGui.Dummy(ctx, width, margin)
+end
+
+function ColumnLayout:_with_group(f)
+  ImGui.BeginGroup(ctx)
+  app:trap(f)
+  ImGui.EndGroup(ctx)
 end
