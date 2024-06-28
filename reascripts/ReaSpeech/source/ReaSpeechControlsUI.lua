@@ -85,7 +85,7 @@ function ReaSpeechControlsUI:init()
   self.translate = ReaSpeechCheckbox.new(false, 'Translate to English', 'Translate', self.NARROW_COLUMN_WIDTH)
 
   self.hotwords = ReaSpeechTextInput.new('', 'Hot Words')
-  self.initial_prompt = ''
+  self.initial_prompt = ReaSpeechTextInput.new('', 'Initial Prompt')
   self.model_name = self.DEFAULT_MODEL_NAME
   self.vad_filter = ReaSpeechCheckbox.new(true, 'Voice Activity Detection', 'VAD', self.NARROW_COLUMN_WIDTH)
 
@@ -97,7 +97,7 @@ function ReaSpeechControlsUI:get_request_data()
     language = self.language,
     translate = self.translate:value(),
     hotwords = self.hotwords:value(),
-    initial_prompt = self.initial_prompt,
+    initial_prompt = self.initial_prompt:value(),
     model_name = self.model_name,
     vad_filter = self.vad_filter:value(),
   }
@@ -284,10 +284,5 @@ function ReaSpeechControlsUI:render_logging()
 end
 
 function ReaSpeechControlsUI:render_initial_prompt()
-  self:render_input_label('Initial Prompt')
-
-  rv, value = ImGui.InputText(ctx, '##initial_prompt', self.initial_prompt)
-  if rv then
-    self.initial_prompt = value
-  end
+  self.initial_prompt:render()
 end
