@@ -82,11 +82,12 @@ function ReaSpeechControlsUI:init()
   self.log_debug = false
 
   self.language = self.DEFAULT_LANGUAGE
-  self.translate = false
+  self.translate = ReaSpeechCheckbox.new(false, 'Translate to English', 'Translate', self.NARROW_COLUMN_WIDTH)
+
   self.hotwords = ''
   self.initial_prompt = ''
   self.model_name = self.DEFAULT_MODEL_NAME
-  self.vad_filter = true
+  self.vad_filter = ReaSpeechCheckbox.new(true, 'Voice Activity Detection', 'VAD', self.NARROW_COLUMN_WIDTH)
 
   self:init_layouts()
 end
@@ -94,11 +95,11 @@ end
 function ReaSpeechControlsUI:get_request_data()
   return {
     language = self.language,
-    translate = self.translate,
+    translate = self.translate:value(),
     hotwords = self.hotwords,
     initial_prompt = self.initial_prompt,
     model_name = self.model_name,
-    vad_filter = self.vad_filter,
+    vad_filter = self.vad_filter:value(),
   }
 end
 
@@ -239,14 +240,7 @@ function ReaSpeechControlsUI:render_language(column)
     ImGui.EndCombo(ctx)
   end
 
-  local translate_label = "Translate to English"
-  if column.width < self.NARROW_COLUMN_WIDTH then
-    translate_label = "Translate"
-  end
-  local rv, value = ImGui.Checkbox(ctx, translate_label, self.translate)
-  if rv then
-    self.translate = value
-  end
+  self.translate:render(column)
 end
 
 function ReaSpeechControlsUI:render_model_name()
@@ -274,14 +268,7 @@ end
 function ReaSpeechControlsUI:render_options(column)
   self:render_input_label('Options')
 
-  local vad_label = "Voice Activity Detection"
-  if column.width < self.NARROW_COLUMN_WIDTH then
-    vad_label = "VAD"
-  end
-  local rv, value = ImGui.Checkbox(ctx, vad_label, self.vad_filter)
-  if rv then
-    self.vad_filter = value
-  end
+  self.vad_filter:render(column)
 end
 
 function ReaSpeechControlsUI:render_logging()
