@@ -37,7 +37,8 @@ end
 
 ReaSpeechCheckbox.renderer = function (self, column)
   local label = self.label_long
-  if column.width < self.width_threshold then
+
+  if column and column.width < self.width_threshold then
     label = self.label_short
   end
 

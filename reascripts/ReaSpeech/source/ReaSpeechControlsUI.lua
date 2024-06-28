@@ -78,8 +78,8 @@ ReaSpeechControlsUI._init_languages()
 function ReaSpeechControlsUI:init()
   self.tab = 'simple'
 
-  self.log_enable = false
-  self.log_debug = false
+  self.log_enable = ReaSpeechCheckbox.new(false, 'Enable')
+  self.log_debug = ReaSpeechCheckbox.new(false, 'Debug')
 
   self.language = self.DEFAULT_LANGUAGE
   self.translate = ReaSpeechCheckbox.new(false, 'Translate to English', 'Translate', self.NARROW_COLUMN_WIDTH)
@@ -269,17 +269,11 @@ end
 function ReaSpeechControlsUI:render_logging()
   self:render_input_label('Logging')
 
-  local rv, value = ImGui.Checkbox(ctx, "Enable", self.log_enable)
-  if rv then
-    self.log_enable = value
-  end
+  self.log_enable:render()
 
-  if self.log_enable then
+  if self.log_enable:value() then
     ImGui.SameLine(ctx)
-    rv, value = ImGui.Checkbox(ctx, "Debug", self.log_debug)
-    if rv then
-      self.log_debug = value
-    end
+    self.log_debug:render()
   end
 end
 
