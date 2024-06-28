@@ -176,10 +176,10 @@ end
 function ReaSpeechControlsUI:render_heading()
   local init_x, init_y = ImGui.GetCursorPos(ctx)
 
-  ImGui.SetCursorPos(ctx, init_x - 20, init_y)
+  ImGui.SetCursorPosX(ctx, init_x - 20)
   app.png_from_bytes('reaspeech-logo-small')
 
-  ImGui.SetCursorPos(ctx, self.MARGIN_LEFT + 12, init_y)
+  ImGui.SetCursorPos(ctx, init_x + self.MARGIN_LEFT + 12, init_y)
   self:render_tabs()
 
   ImGui.SetCursorPos(ctx, ImGui.GetWindowWidth(ctx) - 55, init_y)
