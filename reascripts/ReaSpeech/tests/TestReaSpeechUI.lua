@@ -8,6 +8,7 @@ require('ReaUtil')
 require('mock_reaper')
 
 require('source/AlertPopup')
+require('source/ColumnLayout')
 require('source/ReaSpeechActionsUI')
 require('source/ReaSpeechAPI')
 require('source/ReaSpeechProductActivation')
