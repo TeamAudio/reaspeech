@@ -108,7 +108,7 @@ Alternatively, you can start the processes manually:
 
 ```
 redis-server &
-poetry run python3.10 celery -A app.worker.celery worker --pool=solo --loglevel-info &
+poetry run python3.10 celery -A app.worker.celery worker --pool=solo --loglevel=info &
 poetry run python3.10 gunicorn --bind 0.0.0.0:9000 --workers 1 --timeout 0 app.webservice:app -k uvicorn.workers.UvicornWorker &
 ```
 
