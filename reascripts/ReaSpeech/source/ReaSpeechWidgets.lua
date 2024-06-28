@@ -47,3 +47,27 @@ ReaSpeechCheckbox.renderer = function (self, column)
     self._value = value
   end
 end
+
+ReaSpeechTextInput = {}
+ReaSpeechTextInput.new = function (default_value, label)
+  local o = ReaSpeechWidget.new({
+    default = default_value,
+    renderer = ReaSpeechTextInput.renderer
+  })
+
+  o.label = label
+  o._value = o.default
+  return o
+end
+
+ReaSpeechTextInput.renderer = function (self)
+  ImGui.Text(ctx, self.label)
+  ImGui.Dummy(ctx, 0, 0)
+
+  local imgui_label = ("##%s"):format(self.label)
+  local rv, value = ImGui.InputText(self.ctx, imgui_label, self:value())
+
+  if rv then
+    self._value = value
+  end
+end
