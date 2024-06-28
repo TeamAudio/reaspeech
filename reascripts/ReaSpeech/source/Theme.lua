@@ -33,7 +33,10 @@ function Theme.init()
       { ImGui.Col_CheckMark(), Theme.colors.pink_opaque },
       { ImGui.Col_HeaderHovered(), Theme.colors.dark_gray_semi_opaque },
       { ImGui.Col_HeaderActive(), Theme.colors.dark_gray_semi_transparent },
-      { ImGui.Col_Header(), Theme.colors.dark_gray_semi_opaque }
+      { ImGui.Col_Header(), Theme.colors.dark_gray_semi_opaque },
+      { ImGui.Col_Tab(), Theme.colors.dark_gray_opaque },
+      { ImGui.Col_TabActive(), Theme.colors.medium_gray_opaque },
+      { ImGui.Col_TabHovered(), Theme.colors.dark_gray_translucent },
     },
 
     styles = {

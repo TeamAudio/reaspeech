@@ -129,13 +129,17 @@ function ReaSpeechWorker:handle_request(request)
     task = request.translate and 'translate' or 'transcribe',
     output = 'json',
     use_async = 'true',
-    vad_filter = 'true',
+    vad_filter = request.vad_filter and 'true' or 'false',
     word_timestamps = 'true',
     model_name = request.model_name,
   }
 
   if request.language and request.language ~= '' then
     data.language = request.language
+  end
+
+  if request.hotwords and request.hotwords ~= '' then
+    data.hotwords = request.hotwords
   end
 
   if request.initial_prompt and request.initial_prompt ~= '' then
