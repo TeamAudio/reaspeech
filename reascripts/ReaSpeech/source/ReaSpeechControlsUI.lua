@@ -87,7 +87,7 @@ function ReaSpeechControlsUI:init()
 
   self.hotwords = ReaSpeechTextInput.new(self.DEFAULT_BLANK_STRING, 'Hot Words')
   self.initial_prompt = ReaSpeechTextInput.new(self.DEFAULT_BLANK_STRING, 'Initial Prompt')
-  self.model_name = self.DEFAULT_MODEL_NAME
+  self.model_name = ReaSpeechTextInput.new(self.DEFAULT_MODEL_NAME, 'Model Name', self.DEFAULT_MODEL_NAME)
   self.vad_filter = ReaSpeechCheckbox.new(true, 'Voice Activity Detection', 'VAD', self.NARROW_COLUMN_WIDTH)
 
   self:init_layouts()
@@ -99,7 +99,7 @@ function ReaSpeechControlsUI:get_request_data()
     translate = self.translate:value(),
     hotwords = self.hotwords:value(),
     initial_prompt = self.initial_prompt:value(),
-    model_name = self.model_name,
+    model_name = self.model_name:value(),
     vad_filter = self.vad_filter:value(),
   }
 end
@@ -130,9 +130,9 @@ function ReaSpeechControlsUI:init_simple_layouts()
     render_column = function (column)
       self:render_input_label(column.num == 1 and 'Model Size' or '')
       local label, model_name = table.unpack(self.SIMPLE_MODEL_SIZES[column.num])
-      with_button_color(self.model_name == model_name, function ()
+      with_button_color(self.model_name:value() == model_name, function ()
         if ImGui.Button(ctx, label, column.width) then
-          self.model_name = model_name
+          self.model_name._value = model_name
         end
       end)
     end
@@ -245,12 +245,7 @@ function ReaSpeechControlsUI:render_language(column)
 end
 
 function ReaSpeechControlsUI:render_model_name()
-  self:render_input_label('Model Name')
-
-  local rv, value = ImGui.InputTextWithHint(ctx, '##model_name', self.model_name or "<default>")
-  if rv then
-    self.model_name = value
-  end
+  self.model_name:render()
 end
 
 function ReaSpeechControlsUI:render_model_sizes()
