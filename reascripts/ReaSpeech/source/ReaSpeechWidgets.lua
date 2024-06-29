@@ -113,3 +113,37 @@ ReaSpeechCombo.renderer = function (self)
     ImGui.EndCombo(ctx)
   end
 end
+
+ReaSpeechTabBar = {}
+
+ReaSpeechTabBar.new = function (default_value, labels)
+  local o = ReaSpeechWidget.new({
+    default = default_value,
+    renderer = ReaSpeechTabBar.renderer
+  })
+
+  o.labels = labels
+  o._value = o.default
+  return o
+end
+
+ReaSpeechTabBar.renderer = function (self)
+  if ImGui.BeginTabBar(ctx, 'TabBar') then
+    for _, tab in pairs(self.labels) do
+      if ImGui.BeginTabItem(ctx, tab.label) then
+        app:trap(function()
+          self._value = tab.key
+        end)
+        ImGui.EndTabItem(ctx)
+      end
+    end
+    ImGui.EndTabBar(ctx)
+  end
+end
+
+ReaSpeechTabBar.tab = function(key, label)
+  return {
+    key = key,
+    label = label
+  }
+end

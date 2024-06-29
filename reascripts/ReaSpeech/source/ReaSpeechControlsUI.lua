@@ -5,6 +5,13 @@ ReaSpeechControlsUI.lua - UI elements for configuring ASR services
 ]]--
 
 ReaSpeechControlsUI = Polo {
+  DEFAULT_TAB = 'simple',
+
+  TABS = {
+    ReaSpeechTabBar.tab('simple', 'Simple'),
+    ReaSpeechTabBar.tab('advanced', 'Advanced'),
+  },
+
   -- Copied from whisper.tokenizer.LANGUAGES
   LANGUAGES = {
     en = 'English', zh = 'Chinese', de = 'German',
@@ -76,8 +83,7 @@ ReaSpeechControlsUI._init_languages = function ()
 end
 
 function ReaSpeechControlsUI:init()
-  self.tab = 'simple'
-
+  self.tabs = ReaSpeechTabBar.new(self.DEFAULT_TAB, self.TABS)
   self.log_enable = ReaSpeechCheckbox.new(false, 'Enable')
   self.log_debug = ReaSpeechCheckbox.new(false, 'Debug')
 
@@ -165,7 +171,7 @@ end
 
 function ReaSpeechControlsUI:render()
   self:render_heading()
-  if self.tab == 'advanced' then
+  if self.tabs:value() == 'advanced' then
     self:render_advanced()
   else
     self:render_simple()
@@ -190,23 +196,7 @@ function ReaSpeechControlsUI:render_heading()
 end
 
 function ReaSpeechControlsUI:render_tabs()
-  if ImGui.BeginTabBar(ctx, '##tabs', ImGui.TabBarFlags_None()) then
-    app:trap(function ()
-      if ImGui.BeginTabItem(ctx, 'Simple') then
-        app:trap(function ()
-          self.tab = 'simple'
-        end)
-        ImGui.EndTabItem(ctx)
-      end
-      if ImGui.BeginTabItem(ctx, 'Advanced') then
-        app:trap(function ()
-          self.tab = 'advanced'
-        end)
-        ImGui.EndTabItem(ctx)
-      end
-    end)
-    ImGui.EndTabBar(ctx)
-  end
+  self.tabs:render()
 end
 
 function ReaSpeechControlsUI:render_simple()
