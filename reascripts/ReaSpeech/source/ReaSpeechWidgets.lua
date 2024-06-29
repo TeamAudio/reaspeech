@@ -11,6 +11,7 @@ function ReaSpeechWidget:init()
   assert(self.default ~= nil, "default value not provided")
   assert(self.renderer, "renderer not provided")
   self.ctx = self.ctx or ctx
+  self.on_set = nil
 end
 
 function ReaSpeechWidget:render(...)
@@ -19,6 +20,11 @@ end
 
 function ReaSpeechWidget:value()
   return self._value
+end
+
+function ReaSpeechWidget:set(value)
+  self._value = value
+  if self.on_set then self:on_set() end
 end
 
 -- Widget Implementations
@@ -47,7 +53,7 @@ ReaSpeechCheckbox.renderer = function (self, column)
   local rv, value = ImGui.Checkbox(self.ctx, label, self:value())
 
   if rv then
-    self._value = value
+    self:set(value)
   end
 end
 
@@ -78,7 +84,7 @@ ReaSpeechTextInput.renderer = function (self)
   end
 
   if rv then
-    self._value = value
+    self:set(value)
   end
 end
 
@@ -108,7 +114,7 @@ ReaSpeechCombo.renderer = function (self)
       for _, item in pairs(self.items) do
         local is_selected = (item == self:value())
         if ImGui.Selectable(self.ctx, self.item_labels[item], is_selected) then
-          self._value = item
+          self:set(item)
         end
       end
     end)
@@ -134,7 +140,7 @@ ReaSpeechTabBar.renderer = function (self)
     for _, tab in pairs(self.labels) do
       if ImGui.BeginTabItem(self.ctx, tab.label) then
         app:trap(function()
-          self._value = tab.key
+          self:set(tab.key)
         end)
         ImGui.EndTabItem(self.ctx)
       end
@@ -189,7 +195,7 @@ ReaSpeechButtonBar.new = function (default_value, label, buttons, styles)
       local button_label, model_name = table.unpack(o.buttons[column.num])
       with_button_color(o:value() == model_name, function ()
         if ImGui.Button(o.ctx, button_label, column.width) then
-          o._value = model_name
+          o:set(model_name)
         end
       end)
     end

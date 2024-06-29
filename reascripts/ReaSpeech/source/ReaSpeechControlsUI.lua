@@ -47,6 +47,9 @@ function ReaSpeechControlsUI:init()
     margin_left = self.MARGIN_LEFT,
     margin_right = self.MARGIN_RIGHT,
   })
+  self.model_name_buttons.on_set = function()
+    self.model_name:set(self.model_name_buttons:value())
+  end
 
   self:init_layouts()
 end
@@ -57,8 +60,7 @@ function ReaSpeechControlsUI:get_request_data()
     translate = self.translate:value(),
     hotwords = self.hotwords:value(),
     initial_prompt = self.initial_prompt:value(),
-    model_name = self.tabs:value() == 'simple' and self.model_name_buttons:value()
-      or self.model_name:value(),
+    model_name = self.model_name:value(),
     vad_filter = self.vad_filter:value(),
   }
 end
