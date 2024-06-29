@@ -147,3 +147,54 @@ ReaSpeechTabBar.tab = function(key, label)
     label = label
   }
 end
+
+ReaSpeechButtonBar = {}
+
+ReaSpeechButtonBar.new = function (default_value, label, buttons, styles)
+  local o = ReaSpeechWidget.new({
+    default = default_value,
+    renderer = ReaSpeechButtonBar.renderer
+  })
+
+  o.label = label
+  o.buttons = buttons
+  o._value = o.default
+
+  styles = styles or {}
+
+  local with_button_color = function (selected, f)
+    if selected then
+      ImGui.PushStyleColor(o.ctx, ImGui.Col_Button(), Theme.colors.dark_gray_translucent)
+      app:trap(f)
+      ImGui.PopStyleColor(o.ctx)
+    else
+      f()
+    end
+  end
+
+  o.layout = ColumnLayout.new {
+    column_padding = styles.column_padding or 0,
+    margin_bottom = styles.margin_bottom or 0,
+    margin_left = styles.margin_left or 0,
+    margin_right = styles.margin_right or 0,
+    num_columns = #o.buttons,
+
+    render_column = function (column)
+      local bar_label = column.num == 1 and o.label or ""
+      ImGui.Text(o.ctx, bar_label)
+      ImGui.Dummy(o.ctx, 0, 0)
+
+      local button_label, model_name = table.unpack(o.buttons[column.num])
+      with_button_color(o:value() == model_name, function ()
+        if ImGui.Button(o.ctx, button_label, column.width) then
+          o._value = model_name
+        end
+      end)
+    end
+  }
+  return o
+end
+
+ReaSpeechButtonBar.renderer = function (self)
+  self.layout:render()
+end

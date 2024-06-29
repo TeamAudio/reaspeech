@@ -95,6 +95,13 @@ function ReaSpeechControlsUI:init()
   self.model_name = ReaSpeechTextInput.new(self.DEFAULT_MODEL_NAME, 'Model Name', self.DEFAULT_MODEL_NAME)
   self.vad_filter = ReaSpeechCheckbox.new(true, 'Voice Activity Detection', 'VAD', self.NARROW_COLUMN_WIDTH)
 
+  self.model_name_buttons = ReaSpeechButtonBar.new(self.DEFAULT_MODEL_NAME, 'Model Name', self.SIMPLE_MODEL_SIZES, {
+    column_padding = self.COLUMN_PADDING,
+    margin_bottom = self.MARGIN_BOTTOM,
+    margin_left = self.MARGIN_LEFT,
+    margin_right = self.MARGIN_RIGHT,
+  })
+
   self:init_layouts()
 end
 
@@ -104,44 +111,14 @@ function ReaSpeechControlsUI:get_request_data()
     translate = self.translate:value(),
     hotwords = self.hotwords:value(),
     initial_prompt = self.initial_prompt:value(),
-    model_name = self.model_name:value(),
+    model_name = self.tabs:value() == 'simple' and self.model_name_buttons:value()
+      or self.model_name:value(),
     vad_filter = self.vad_filter:value(),
   }
 end
 
 function ReaSpeechControlsUI:init_layouts()
-  self:init_simple_layouts()
   self:init_advanced_layouts()
-end
-
-function ReaSpeechControlsUI:init_simple_layouts()
-  local with_button_color = function (selected, f)
-    if selected then
-      ImGui.PushStyleColor(ctx, ImGui.Col_Button(), Theme.colors.dark_gray_translucent)
-      app:trap(f)
-      ImGui.PopStyleColor(ctx)
-    else
-      f()
-    end
-  end
-
-  self.model_sizes_layout = ColumnLayout.new {
-    column_padding = self.COLUMN_PADDING,
-    margin_bottom = self.MARGIN_BOTTOM,
-    margin_left = self.MARGIN_LEFT,
-    margin_right = self.MARGIN_RIGHT,
-    num_columns = #self.SIMPLE_MODEL_SIZES,
-
-    render_column = function (column)
-      self:render_input_label(column.num == 1 and 'Model Size' or '')
-      local label, model_name = table.unpack(self.SIMPLE_MODEL_SIZES[column.num])
-      with_button_color(self.model_name:value() == model_name, function ()
-        if ImGui.Button(ctx, label, column.width) then
-          self.model_name._value = model_name
-        end
-      end)
-    end
-  }
 end
 
 function ReaSpeechControlsUI:init_advanced_layouts()
@@ -196,7 +173,7 @@ function ReaSpeechControlsUI:render_heading()
 end
 
 function ReaSpeechControlsUI:render_simple()
-  self:render_model_sizes()
+  self.model_name_buttons:render()
 end
 
 function ReaSpeechControlsUI:render_advanced()
