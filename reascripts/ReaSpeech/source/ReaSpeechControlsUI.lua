@@ -42,8 +42,6 @@ ReaSpeechControlsUI = Polo {
     ba = 'Bashkir', jw = 'Javanese', su = 'Sundanese'
   },
 
-  LANGUAGE_CODES = {},
-
   DEFAULT_LANGUAGE = '',
   DEFAULT_MODEL_NAME = 'small',
   DEFAULT_BLANK_STRING = '',
@@ -62,19 +60,20 @@ ReaSpeechControlsUI = Polo {
 }
 
 ReaSpeechControlsUI._init_languages = function ()
+  local code_list = {}
   for code, _ in pairs(ReaSpeechControlsUI.LANGUAGES) do
-    table.insert(ReaSpeechControlsUI.LANGUAGE_CODES, code)
+    table.insert(code_list, code)
   end
 
-  table.sort(ReaSpeechControlsUI.LANGUAGE_CODES, function (a, b)
+  table.sort(code_list, function (a, b)
     return ReaSpeechControlsUI.LANGUAGES[a] < ReaSpeechControlsUI.LANGUAGES[b]
   end)
 
-  table.insert(ReaSpeechControlsUI.LANGUAGE_CODES, 1, '')
+  table.insert(code_list, 1, '')
   ReaSpeechControlsUI.LANGUAGES[''] = 'Detect'
-end
 
-ReaSpeechControlsUI._init_languages()
+  return code_list, ReaSpeechControlsUI.LANGUAGES
+end
 
 function ReaSpeechControlsUI:init()
   self.tab = 'simple'
@@ -82,7 +81,7 @@ function ReaSpeechControlsUI:init()
   self.log_enable = ReaSpeechCheckbox.new(false, 'Enable')
   self.log_debug = ReaSpeechCheckbox.new(false, 'Debug')
 
-  self.language = self.DEFAULT_LANGUAGE
+  self.language = ReaSpeechCombo.new(self.DEFAULT_LANGUAGE, 'Language', self._init_languages())
   self.translate = ReaSpeechCheckbox.new(false, 'Translate to English', 'Translate', self.NARROW_COLUMN_WIDTH)
 
   self.hotwords = ReaSpeechTextInput.new(self.DEFAULT_BLANK_STRING, 'Hot Words')
@@ -95,7 +94,7 @@ end
 
 function ReaSpeechControlsUI:get_request_data()
   return {
-    language = self.language,
+    language = self.language:value(),
     translate = self.translate:value(),
     hotwords = self.hotwords:value(),
     initial_prompt = self.initial_prompt:value(),
@@ -226,20 +225,7 @@ function ReaSpeechControlsUI:render_input_label(text)
 end
 
 function ReaSpeechControlsUI:render_language(column)
-  self:render_input_label('Language')
-
-  if ImGui.BeginCombo(ctx, "##language", self.LANGUAGES[self.language]) then
-    app:trap(function()
-      local combo_items = self.LANGUAGE_CODES
-      for _, combo_item in pairs(combo_items) do
-        local is_selected = (combo_item == self.language)
-        if ImGui.Selectable(ctx, self.LANGUAGES[combo_item], is_selected) then
-          self.language = combo_item
-        end
-      end
-    end)
-    ImGui.EndCombo(ctx)
-  end
+  self.language:render()
 
   self.translate:render(column)
 end
