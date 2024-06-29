@@ -7,11 +7,6 @@ ReaSpeechControlsUI.lua - UI elements for configuring ASR services
 ReaSpeechControlsUI = Polo {
   DEFAULT_TAB = 'simple',
 
-  TABS = {
-    ReaSpeechTabBar.tab('simple', 'Simple'),
-    ReaSpeechTabBar.tab('advanced', 'Advanced'),
-  },
-
   DEFAULT_LANGUAGE = '',
   DEFAULT_MODEL_NAME = 'small',
   DEFAULT_BLANK_STRING = '',
@@ -30,7 +25,11 @@ ReaSpeechControlsUI = Polo {
 }
 
 function ReaSpeechControlsUI:init()
-  self.tabs = ReaSpeechTabBar.new(self.DEFAULT_TAB, self.TABS)
+  self.tabs = ReaSpeechTabBar.new(self.DEFAULT_TAB, {
+    ReaSpeechTabBar.tab('simple', 'Simple'),
+    ReaSpeechTabBar.tab('advanced', 'Advanced'),
+  })
+
   self.log_enable = ReaSpeechCheckbox.new(false, 'Enable')
   self.log_debug = ReaSpeechCheckbox.new(false, 'Debug')
 

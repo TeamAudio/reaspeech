@@ -9,18 +9,19 @@ require('mock_reaper')
 
 require('source/AlertPopup')
 require('source/ColumnLayout')
-require('source/ReaSpeechWidgets')
 require('source/ReaSpeechActionsUI')
 require('source/ReaSpeechAPI')
 require('source/ReaSpeechProductActivation')
 require('source/ReaSpeechProductActivationUI')
 require('source/ReaSpeechUI')
 require('source/ReaSpeechControlsUI')
+require('source/ReaSpeechWidgets')
 require('source/ReaSpeechWorker')
 require('source/Transcript')
 require('source/TranscriptUI')
 require('source/TranscriptEditor')
 require('source/TranscriptExporter')
+require('source/WhisperLanguages')
 
 --
 
