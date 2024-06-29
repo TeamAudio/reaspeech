@@ -103,7 +103,7 @@ ReaSpeechCombo.renderer = function (self)
 
   if ImGui.BeginCombo(ctx, imgui_label, self.item_labels[self:value()]) then
     app:trap(function()
-      for i, item in pairs(self.items) do
+      for _, item in pairs(self.items) do
         local is_selected = (item == self:value())
         if ImGui.Selectable(ctx, self.item_labels[item], is_selected) then
           self._value = item
