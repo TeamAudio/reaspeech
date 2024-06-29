@@ -65,8 +65,8 @@ ReaSpeechTextInput.new = function (default_value, label, hint)
 end
 
 ReaSpeechTextInput.renderer = function (self)
-  ImGui.Text(ctx, self.label)
-  ImGui.Dummy(ctx, 0, 0)
+  ImGui.Text(self.ctx, self.label)
+  ImGui.Dummy(self.ctx, 0, 0)
 
   local imgui_label = ("##%s"):format(self.label)
 
@@ -98,21 +98,21 @@ ReaSpeechCombo.new = function (default_value, label, items, item_labels)
 end
 
 ReaSpeechCombo.renderer = function (self)
-  ImGui.Text(ctx, self.label)
-  ImGui.Dummy(ctx, 0, 0)
+  ImGui.Text(self.ctx, self.label)
+  ImGui.Dummy(self.ctx, 0, 0)
 
   local imgui_label = ("##%s"):format(self.label)
 
-  if ImGui.BeginCombo(ctx, imgui_label, self.item_labels[self:value()]) then
+  if ImGui.BeginCombo(self.ctx, imgui_label, self.item_labels[self:value()]) then
     app:trap(function()
       for _, item in pairs(self.items) do
         local is_selected = (item == self:value())
-        if ImGui.Selectable(ctx, self.item_labels[item], is_selected) then
+        if ImGui.Selectable(self.ctx, self.item_labels[item], is_selected) then
           self._value = item
         end
       end
     end)
-    ImGui.EndCombo(ctx)
+    ImGui.EndCombo(self.ctx)
   end
 end
 
@@ -130,16 +130,16 @@ ReaSpeechTabBar.new = function (default_value, labels)
 end
 
 ReaSpeechTabBar.renderer = function (self)
-  if ImGui.BeginTabBar(ctx, 'TabBar') then
+  if ImGui.BeginTabBar(self.ctx, 'TabBar') then
     for _, tab in pairs(self.labels) do
-      if ImGui.BeginTabItem(ctx, tab.label) then
+      if ImGui.BeginTabItem(self.ctx, tab.label) then
         app:trap(function()
           self._value = tab.key
         end)
-        ImGui.EndTabItem(ctx)
+        ImGui.EndTabItem(self.ctx)
       end
     end
-    ImGui.EndTabBar(ctx)
+    ImGui.EndTabBar(self.ctx)
   end
 end
 
