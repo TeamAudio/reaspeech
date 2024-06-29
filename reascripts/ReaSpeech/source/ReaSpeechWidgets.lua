@@ -1,6 +1,6 @@
 --[[
 
-ReaSpeechWidgets.lua - collection of common widgets that ReaSpeech uses
+  ReaSpeechWidgets.lua - collection of common widgets that ReaSpeech uses
 
 ]]--
 
@@ -20,6 +20,8 @@ end
 function ReaSpeechWidget:value()
   return self._value
 end
+
+-- Widget Implementations
 
 ReaSpeechCheckbox = {}
 ReaSpeechCheckbox.new = function (default_value, label_long, label_short, width_threshold)
