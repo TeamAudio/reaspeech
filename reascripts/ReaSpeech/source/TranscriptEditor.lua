@@ -25,6 +25,21 @@ function TranscriptEditor:init()
   self.is_open = false
   self.sync_time_selection = false
   self.zoom_level = self.ZOOM_LEVEL.NONE.value
+  self.key_bindings = self:make_key_bindings()
+end
+
+function TranscriptEditor:make_key_bindings()
+  -- the tests fail when trying to access ImGui fields
+  if not ImGui then return KeyMap.new({}) end
+
+  return KeyMap.new({
+    [ImGui.Key_LeftArrow()] = function ()
+      self:edit_word(self.editing.word_index - 1)
+    end,
+    [ImGui.Key_RightArrow()] = function ()
+      self:edit_word(self.editing.word_index + 1)
+    end,
+  })
 end
 
 function TranscriptEditor:edit_segment(segment, index)
@@ -37,10 +52,15 @@ function TranscriptEditor:edit_segment(segment, index)
   for i, word in pairs(segment.words) do
     self.editing.words[i] = word:copy()
   end
-  self:edit_word(self.editing.words[1], 1)
+  self:edit_word(1)
 end
 
-function TranscriptEditor:edit_word(word, index)
+function TranscriptEditor:edit_word(index)
+  if index < 1 or index > #self.editing.words then
+    return
+  end
+
+  local word = self.editing.words[index]
   self.editing.word = word
   self.editing.word_index = index
   if self.sync_time_selection then
@@ -64,7 +84,10 @@ function TranscriptEditor:render()
   ImGui.SetNextWindowSize(ctx, self.WIDTH, self.HEIGHT, ImGui.Cond_FirstUseEver())
 
   if ImGui.BeginPopupModal(ctx, self.TITLE, true, ImGui.WindowFlags_AlwaysAutoResize()) then
-    app:trap(function () self:render_content() end)
+    app:trap(function ()
+      self.key_bindings:react()
+      self:render_content()
+    end)
     ImGui.EndPopup(ctx)
   else
     self:_close()
@@ -86,7 +109,7 @@ function TranscriptEditor:render_content()
   end
 
   if edit_requested then
-    self:edit_word(table.unpack(edit_requested))
+    self:edit_word(edit_requested)
   end
 
   self:render_separator()
@@ -112,17 +135,11 @@ function TranscriptEditor:render_word_navigation()
   ImGui.PushButtonRepeat(ctx, true)
   app:trap(function ()
     if ImGui.ArrowButton(ctx, '##left', ImGui.Dir_Left()) then
-      local index = self.editing.word_index - 1
-      if index > 0 then
-        self:edit_word(words[index], index)
-      end
+      self:edit_word(self.editing.word_index - 1)
     end
     ImGui.SameLine(ctx, 0, spacing)
     if ImGui.ArrowButton(ctx, '##right', ImGui.Dir_Right()) then
-      local index = self.editing.word_index + 1
-      if index <= num_words then
-        self:edit_word(words[index], index)
-      end
+      self:edit_word(self.editing.word_index + 1)
     end
   end)
   ImGui.PopButtonRepeat(ctx)
@@ -173,7 +190,7 @@ function TranscriptEditor:render_words()
     end
     app:trap(function()
       if ImGui.Button(ctx, word.word .. '##' .. i) then
-        edit_requested = {word, i}
+        edit_requested = i
       end
     end)
     if self.editing.word_index ~= i then
@@ -363,7 +380,7 @@ function TranscriptEditor:handle_word_add()
     end_ = words[word_index].end_,
     probability = 1.0
   })
-  self:edit_word(words[word_index + 1], word_index + 1)
+  self:edit_word(word_index + 1)
 end
 
 function TranscriptEditor:handle_word_delete()
@@ -374,14 +391,14 @@ function TranscriptEditor:handle_word_delete()
   if word_index > num_words then
     word_index = num_words
   end
-  self:edit_word(words[word_index], word_index)
+  self:edit_word(word_index)
 end
 
 function TranscriptEditor:handle_word_split()
   local words = self.editing.words
   local word_index = self.editing.word_index
   TranscriptSegment.split_word(words, word_index)
-  self:edit_word(words[word_index], word_index)
+  self:edit_word(word_index)
 end
 
 function TranscriptEditor:handle_word_merge()
@@ -390,7 +407,7 @@ function TranscriptEditor:handle_word_merge()
   local num_words = #words
   if word_index < num_words then
     TranscriptSegment.merge_words(words, word_index, word_index + 1)
-    self:edit_word(words[word_index], word_index)
+    self:edit_word(word_index)
   end
 end
 
