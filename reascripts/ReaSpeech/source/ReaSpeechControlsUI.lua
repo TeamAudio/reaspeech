@@ -24,10 +24,13 @@ ReaSpeechControlsUI = Polo {
 }
 
 function ReaSpeechControlsUI:init()
-  self.tabs = ReaSpeechTabBar.new(self.DEFAULT_TAB, {
-    ReaSpeechTabBar.tab('simple', 'Simple'),
-    ReaSpeechTabBar.tab('advanced', 'Advanced'),
-  })
+  self.tabs = ReaSpeechTabBar.new {
+    default = self.DEFAULT_TAB,
+    tabs = {
+      ReaSpeechTabBar.tab('simple', 'Simple'),
+      ReaSpeechTabBar.tab('advanced', 'Advanced'),
+    }
+  }
 
   self.log_enable = ReaSpeechCheckbox.simple(false, 'Enable')
   self.log_debug = ReaSpeechCheckbox.simple(false, 'Debug')

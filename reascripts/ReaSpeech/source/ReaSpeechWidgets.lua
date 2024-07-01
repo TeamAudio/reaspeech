@@ -134,20 +134,26 @@ end
 
 ReaSpeechTabBar = {}
 
-ReaSpeechTabBar.new = function (default_value, labels)
+ReaSpeechTabBar.new = function (options)
+  options = options or {
+    default = nil,
+    tabs = {},
+  }
+
   local o = ReaSpeechWidget.new({
-    default = default_value,
-    renderer = ReaSpeechTabBar.renderer
+    default = options.default,
+    renderer = ReaSpeechTabBar.renderer,
+    options = options,
   })
 
-  o.labels = labels
   o._value = o.default
+
   return o
 end
 
 ReaSpeechTabBar.renderer = function (self)
   if ImGui.BeginTabBar(self.ctx, 'TabBar') then
-    for _, tab in pairs(self.labels) do
+    for _, tab in pairs(self.options.tabs) do
       if ImGui.BeginTabItem(self.ctx, tab.label) then
         app:trap(function()
           self:set(tab.key)
