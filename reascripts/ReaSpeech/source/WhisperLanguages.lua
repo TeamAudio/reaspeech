@@ -40,21 +40,21 @@ WhisperLanguages = {
     mg = 'Malagasy', as = 'Assamese', tt = 'Tatar',
     haw = 'Hawaiian', ln = 'Lingala', ha = 'Hausa',
     ba = 'Bashkir', jw = 'Javanese', su = 'Sundanese'
-  }
+  },
+
+  LANGUAGE_CODES = {},
 }
 
-WhisperLanguages.init = function()
-  local code_list = {}
+-- initialize LANGUAGE_CODES
+(function()
   for code, _ in pairs(WhisperLanguages.LANGUAGES) do
-    table.insert(code_list, code)
+    table.insert(WhisperLanguages.LANGUAGE_CODES, code)
   end
 
-  table.sort(code_list, function (a, b)
+  table.sort(WhisperLanguages.LANGUAGE_CODES, function (a, b)
     return WhisperLanguages.LANGUAGES[a] < WhisperLanguages.LANGUAGES[b]
   end)
 
-  table.insert(code_list, 1, '')
+  table.insert(WhisperLanguages.LANGUAGE_CODES, 1, '')
   WhisperLanguages.LANGUAGES[''] = 'Detect'
-
-  return code_list, WhisperLanguages.LANGUAGES
-end
+end)()

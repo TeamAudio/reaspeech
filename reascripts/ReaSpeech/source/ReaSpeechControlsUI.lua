@@ -33,7 +33,7 @@ function ReaSpeechControlsUI:init()
   self.log_enable = ReaSpeechCheckbox.new(false, 'Enable')
   self.log_debug = ReaSpeechCheckbox.new(false, 'Debug')
 
-  self.language = ReaSpeechCombo.new(self.DEFAULT_LANGUAGE, 'Language', WhisperLanguages.init())
+  self.language = ReaSpeechCombo.new(self.DEFAULT_LANGUAGE, 'Language', WhisperLanguages.LANGUAGE_CODES, WhisperLanguages.LANGUAGES)
   self.translate = ReaSpeechCheckbox.new(false, 'Translate to English', 'Translate', self.NARROW_COLUMN_WIDTH)
 
   self.hotwords = ReaSpeechTextInput.new(self.DEFAULT_BLANK_STRING, 'Hot Words')
