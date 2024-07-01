@@ -35,7 +35,12 @@ function ReaSpeechControlsUI:init()
   self.log_enable = ReaSpeechCheckbox.simple(false, 'Enable')
   self.log_debug = ReaSpeechCheckbox.simple(false, 'Debug')
 
-  self.language = ReaSpeechCombo.new(self.DEFAULT_LANGUAGE, 'Language', WhisperLanguages.LANGUAGE_CODES, WhisperLanguages.LANGUAGES)
+  self.language = ReaSpeechCombo.new {
+    default = self.DEFAULT_LANGUAGE,
+    label = 'Language',
+    items = WhisperLanguages.LANGUAGE_CODES,
+    item_labels = WhisperLanguages.LANGUAGES
+  }
 
   self.translate = ReaSpeechCheckbox.new {
     default = false,

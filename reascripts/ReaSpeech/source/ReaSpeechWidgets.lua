@@ -115,30 +115,38 @@ end
 
 ReaSpeechCombo = {}
 
-ReaSpeechCombo.new = function (default_value, label, items, item_labels)
+ReaSpeechCombo.new = function (options)
+  options = options or {
+    default = nil,
+    label = nil,
+    items = {},
+    item_labels = {},
+  }
+
   local o = ReaSpeechWidget.new({
-    default = default_value,
-    renderer = ReaSpeechCombo.renderer
+    default = options.default,
+    renderer = ReaSpeechCombo.renderer,
+    options = options,
   })
 
-  o.label = label
-  o.items = items
-  o.item_labels = item_labels
   o._value = o.default
+
   return o
 end
 
 ReaSpeechCombo.renderer = function (self)
-  ImGui.Text(self.ctx, self.label)
+  local options = self.options
+
+  ImGui.Text(self.ctx, options.label)
   ImGui.Dummy(self.ctx, 0, 0)
 
-  local imgui_label = ("##%s"):format(self.label)
+  local imgui_label = ("##%s"):format(options.label)
 
-  if ImGui.BeginCombo(self.ctx, imgui_label, self.item_labels[self:value()]) then
+  if ImGui.BeginCombo(self.ctx, imgui_label, options.item_labels[self:value()]) then
     app:trap(function()
-      for _, item in pairs(self.items) do
+      for _, item in pairs(options.items) do
         local is_selected = (item == self:value())
-        if ImGui.Selectable(self.ctx, self.item_labels[item], is_selected) then
+        if ImGui.Selectable(self.ctx, options.item_labels[item], is_selected) then
           self:set(item)
         end
       end
