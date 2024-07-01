@@ -30,24 +30,40 @@ end
 -- Widget Implementations
 
 ReaSpeechCheckbox = {}
-ReaSpeechCheckbox.new = function (default_value, label_long, label_short, width_threshold)
+ReaSpeechCheckbox.new = function (options)
+  options = options or {
+    default = nil,
+    label_long = nil,
+    label_short = nil,
+    width_threshold = nil,
+  }
+
   local o = ReaSpeechWidget.new({
-    default = default_value,
-    renderer = ReaSpeechCheckbox.renderer
+    default = options.default,
+    renderer = ReaSpeechCheckbox.renderer,
+    options = options,
   })
 
-  o.label_long = label_long
-  o.label_short = label_short
-  o.width_threshold = width_threshold
   o._value = o.default
+
   return o
 end
 
-ReaSpeechCheckbox.renderer = function (self, column)
-  local label = self.label_long
+ReaSpeechCheckbox.simple = function(default_value, label)
+  return ReaSpeechCheckbox.new {
+    default = default_value,
+    label_long = label,
+    label_short = label,
+    width_threshold = 0
+  }
+end
 
-  if column and column.width < self.width_threshold then
-    label = self.label_short
+ReaSpeechCheckbox.renderer = function (self, column)
+  local options = self.options
+  local label = options.label_long
+
+  if column and column.width < options.width_threshold then
+    label = options.label_short
   end
 
   local rv, value = ImGui.Checkbox(self.ctx, label, self:value())

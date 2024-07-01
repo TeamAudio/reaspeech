@@ -29,16 +29,28 @@ function ReaSpeechControlsUI:init()
     ReaSpeechTabBar.tab('advanced', 'Advanced'),
   })
 
-  self.log_enable = ReaSpeechCheckbox.new(false, 'Enable')
-  self.log_debug = ReaSpeechCheckbox.new(false, 'Debug')
+  self.log_enable = ReaSpeechCheckbox.simple(false, 'Enable')
+  self.log_debug = ReaSpeechCheckbox.simple(false, 'Debug')
 
   self.language = ReaSpeechCombo.new(self.DEFAULT_LANGUAGE, 'Language', WhisperLanguages.LANGUAGE_CODES, WhisperLanguages.LANGUAGES)
-  self.translate = ReaSpeechCheckbox.new(false, 'Translate to English', 'Translate', self.NARROW_COLUMN_WIDTH)
+
+  self.translate = ReaSpeechCheckbox.new {
+    default = false,
+    label_long = 'Translate to English',
+    label_short = 'Translate',
+    width_threshold = self.NARROW_COLUMN_WIDTH
+  }
 
   self.hotwords = ReaSpeechTextInput.new('', 'Hot Words')
   self.initial_prompt = ReaSpeechTextInput.new('', 'Initial Prompt')
   self.model_name = ReaSpeechTextInput.new(self.DEFAULT_MODEL_NAME, 'Model Name')
-  self.vad_filter = ReaSpeechCheckbox.new(true, 'Voice Activity Detection', 'VAD', self.NARROW_COLUMN_WIDTH)
+
+  self.vad_filter = ReaSpeechCheckbox.new {
+    default = true,
+    label_long = 'Voice Activity Detection',
+    label_short = 'VAD',
+    width_threshold = self.NARROW_COLUMN_WIDTH
+  }
 
   self.model_name_buttons = ReaSpeechButtonBar.new {
     default = self.DEFAULT_MODEL_NAME,
