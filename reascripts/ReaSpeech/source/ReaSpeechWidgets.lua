@@ -46,6 +46,7 @@ ReaSpeechCheckbox.new = function (options)
 
   local o = ReaSpeechWidget.new({
     default = options.default,
+    widget_id = options.widget_id,
     renderer = ReaSpeechCheckbox.renderer,
     options = options,
   })
@@ -88,6 +89,7 @@ ReaSpeechTextInput.new = function (options)
 
   local o = ReaSpeechWidget.new({
     default = options.default,
+    widget_id = options.widget_id,
     renderer = ReaSpeechTextInput.renderer,
     options = options,
   })
@@ -131,6 +133,7 @@ ReaSpeechCombo.new = function (options)
 
   local o = ReaSpeechWidget.new({
     default = options.default,
+    widget_id = options.widget_id,
     renderer = ReaSpeechCombo.renderer,
     options = options,
   })
@@ -171,6 +174,7 @@ ReaSpeechTabBar.new = function (options)
 
   local o = ReaSpeechWidget.new({
     default = options.default,
+    widget_id = options.widget_id,
     renderer = ReaSpeechTabBar.renderer,
     options = options,
   })
@@ -213,6 +217,7 @@ ReaSpeechButtonBar.new = function (options)
 
   local o = ReaSpeechWidget.new({
     default = options.default,
+    widget_id = options.widget_id,
     renderer = ReaSpeechButtonBar.renderer,
     options = options,
   })
