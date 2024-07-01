@@ -9,7 +9,6 @@ ReaSpeechControlsUI = Polo {
 
   DEFAULT_LANGUAGE = '',
   DEFAULT_MODEL_NAME = 'small',
-  DEFAULT_BLANK_STRING = '',
 
   SIMPLE_MODEL_SIZES = {
     {'Small', 'small'},
@@ -36,8 +35,8 @@ function ReaSpeechControlsUI:init()
   self.language = ReaSpeechCombo.new(self.DEFAULT_LANGUAGE, 'Language', WhisperLanguages.LANGUAGE_CODES, WhisperLanguages.LANGUAGES)
   self.translate = ReaSpeechCheckbox.new(false, 'Translate to English', 'Translate', self.NARROW_COLUMN_WIDTH)
 
-  self.hotwords = ReaSpeechTextInput.new(self.DEFAULT_BLANK_STRING, 'Hot Words')
-  self.initial_prompt = ReaSpeechTextInput.new(self.DEFAULT_BLANK_STRING, 'Initial Prompt')
+  self.hotwords = ReaSpeechTextInput.new('', 'Hot Words')
+  self.initial_prompt = ReaSpeechTextInput.new('', 'Initial Prompt')
   self.model_name = ReaSpeechTextInput.new(self.DEFAULT_MODEL_NAME, 'Model Name', self.DEFAULT_MODEL_NAME)
   self.vad_filter = ReaSpeechCheckbox.new(true, 'Voice Activity Detection', 'VAD', self.NARROW_COLUMN_WIDTH)
 
