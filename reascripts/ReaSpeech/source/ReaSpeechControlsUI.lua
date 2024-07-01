@@ -37,7 +37,7 @@ function ReaSpeechControlsUI:init()
 
   self.hotwords = ReaSpeechTextInput.new('', 'Hot Words')
   self.initial_prompt = ReaSpeechTextInput.new('', 'Initial Prompt')
-  self.model_name = ReaSpeechTextInput.new(self.DEFAULT_MODEL_NAME, 'Model Name', self.DEFAULT_MODEL_NAME)
+  self.model_name = ReaSpeechTextInput.new(self.DEFAULT_MODEL_NAME, 'Model Name')
   self.vad_filter = ReaSpeechCheckbox.new(true, 'Voice Activity Detection', 'VAD', self.NARROW_COLUMN_WIDTH)
 
   self.model_name_buttons = ReaSpeechButtonBar.new(self.DEFAULT_MODEL_NAME, 'Model Name', self.SIMPLE_MODEL_SIZES, {

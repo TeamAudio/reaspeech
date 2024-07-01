@@ -58,14 +58,13 @@ ReaSpeechCheckbox.renderer = function (self, column)
 end
 
 ReaSpeechTextInput = {}
-ReaSpeechTextInput.new = function (default_value, label, hint)
+ReaSpeechTextInput.new = function (default_value, label)
   local o = ReaSpeechWidget.new({
     default = default_value,
     renderer = ReaSpeechTextInput.renderer
   })
 
   o.label = label
-  o.hint = hint
   o._value = o.default
   return o
 end
@@ -76,12 +75,7 @@ ReaSpeechTextInput.renderer = function (self)
 
   local imgui_label = ("##%s"):format(self.label)
 
-  local rv, value
-  if self.hint then
-    rv, value = ImGui.InputTextWithHint(self.ctx, imgui_label, self:value())
-  else
-    rv, value = ImGui.InputText(self.ctx, imgui_label, self:value())
-  end
+  local rv, value = ImGui.InputText(self.ctx, imgui_label, self:value())
 
   if rv then
     self:set(value)
