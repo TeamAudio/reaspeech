@@ -29,9 +29,6 @@ function TranscriptEditor:init()
 end
 
 function TranscriptEditor:make_key_bindings()
-  -- the tests fail when trying to access ImGui fields
-  if not ImGui then return KeyMap.new({}) end
-
   return KeyMap.new({
     [ImGui.Key_LeftArrow()] = function ()
       self:edit_word(self.editing.word_index - 1)
