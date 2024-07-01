@@ -107,3 +107,8 @@ gfx = gfx or {
   setimgdim = function (_, _, _) end,
   quit = function () end,
 }
+
+ImGui = ImGui or {
+  Key_LeftArrow = function() return 1 end,
+  Key_RightArrow = function() return 2 end,
+}
