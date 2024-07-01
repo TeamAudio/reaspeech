@@ -11,11 +11,17 @@ function ReaSpeechWidget:init()
   assert(self.default ~= nil, "default value not provided")
   assert(self.renderer, "renderer not provided")
   self.ctx = self.ctx or ctx
+  self.widget_id = self.widget_id or reaper.genGuid()
   self.on_set = nil
 end
 
 function ReaSpeechWidget:render(...)
-  self.renderer(self, ...)
+  ImGui.PushID(self.ctx, self.widget_id)
+  local args = ...
+  app:trap(function()
+    self.renderer(self, args)
+  end)
+  ImGui.PopID(self.ctx)
 end
 
 function ReaSpeechWidget:value()
