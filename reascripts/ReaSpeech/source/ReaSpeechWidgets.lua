@@ -74,22 +74,37 @@ ReaSpeechCheckbox.renderer = function (self, column)
 end
 
 ReaSpeechTextInput = {}
-ReaSpeechTextInput.new = function (default_value, label)
+ReaSpeechTextInput.new = function (options)
+  options = options or {
+    default = nil,
+    label = nil,
+  }
+
   local o = ReaSpeechWidget.new({
-    default = default_value,
-    renderer = ReaSpeechTextInput.renderer
+    default = options.default,
+    renderer = ReaSpeechTextInput.renderer,
+    options = options,
   })
 
-  o.label = label
   o._value = o.default
+
   return o
 end
 
+ReaSpeechTextInput.simple = function(default_value, label)
+  return ReaSpeechTextInput.new {
+    default = default_value,
+    label = label
+  }
+end
+
 ReaSpeechTextInput.renderer = function (self)
-  ImGui.Text(self.ctx, self.label)
+  local options = self.options
+
+  ImGui.Text(self.ctx, options.label)
   ImGui.Dummy(self.ctx, 0, 0)
 
-  local imgui_label = ("##%s"):format(self.label)
+  local imgui_label = ("##%s"):format(options.label)
 
   local rv, value = ImGui.InputText(self.ctx, imgui_label, self:value())
 

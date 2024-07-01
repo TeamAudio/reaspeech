@@ -44,9 +44,9 @@ function ReaSpeechControlsUI:init()
     width_threshold = self.NARROW_COLUMN_WIDTH
   }
 
-  self.hotwords = ReaSpeechTextInput.new('', 'Hot Words')
-  self.initial_prompt = ReaSpeechTextInput.new('', 'Initial Prompt')
-  self.model_name = ReaSpeechTextInput.new(self.DEFAULT_MODEL_NAME, 'Model Name')
+  self.hotwords = ReaSpeechTextInput.simple('', 'Hot Words')
+  self.initial_prompt = ReaSpeechTextInput.simple('', 'Initial Prompt')
+  self.model_name = ReaSpeechTextInput.simple(self.DEFAULT_MODEL_NAME, 'Model Name')
 
   self.vad_filter = ReaSpeechCheckbox.new {
     default = true,
