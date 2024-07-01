@@ -152,17 +152,21 @@ end
 
 ReaSpeechButtonBar = {}
 
-ReaSpeechButtonBar.new = function (default_value, label, buttons, styles)
+ReaSpeechButtonBar.new = function (options)
+  options = options or {
+    default = nil,
+    label = nil,
+    buttons = {},
+    styles = {}
+  }
+
   local o = ReaSpeechWidget.new({
-    default = default_value,
-    renderer = ReaSpeechButtonBar.renderer
+    default = options.default,
+    renderer = ReaSpeechButtonBar.renderer,
+    options = options,
   })
 
-  o.label = label
-  o.buttons = buttons
   o._value = o.default
-
-  styles = styles or {}
 
   local with_button_color = function (selected, f)
     if selected then
@@ -175,18 +179,19 @@ ReaSpeechButtonBar.new = function (default_value, label, buttons, styles)
   end
 
   o.layout = ColumnLayout.new {
-    column_padding = styles.column_padding or 0,
-    margin_bottom = styles.margin_bottom or 0,
-    margin_left = styles.margin_left or 0,
-    margin_right = styles.margin_right or 0,
-    num_columns = #o.buttons,
+    column_padding = options.column_padding or 0,
+    margin_bottom = options.margin_bottom or 0,
+    margin_left = options.margin_left or 0,
+    margin_right = options.margin_right or 0,
+    width = options.width or 0,
+    num_columns = #options.buttons,
 
     render_column = function (column)
-      local bar_label = column.num == 1 and o.label or ""
+      local bar_label = column.num == 1 and options.label or ""
       ImGui.Text(o.ctx, bar_label)
       ImGui.Dummy(o.ctx, 0, 0)
 
-      local button_label, model_name = table.unpack(o.buttons[column.num])
+      local button_label, model_name = table.unpack(options.buttons[column.num])
       with_button_color(o:value() == model_name, function ()
         if ImGui.Button(o.ctx, button_label, column.width) then
           o:set(model_name)

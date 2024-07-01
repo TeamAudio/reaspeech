@@ -40,12 +40,15 @@ function ReaSpeechControlsUI:init()
   self.model_name = ReaSpeechTextInput.new(self.DEFAULT_MODEL_NAME, 'Model Name')
   self.vad_filter = ReaSpeechCheckbox.new(true, 'Voice Activity Detection', 'VAD', self.NARROW_COLUMN_WIDTH)
 
-  self.model_name_buttons = ReaSpeechButtonBar.new(self.DEFAULT_MODEL_NAME, 'Model Name', self.SIMPLE_MODEL_SIZES, {
+  self.model_name_buttons = ReaSpeechButtonBar.new {
+    default = self.DEFAULT_MODEL_NAME,
+    label = 'Model Name',
+    buttons = self.SIMPLE_MODEL_SIZES,
     column_padding = self.COLUMN_PADDING,
     margin_bottom = self.MARGIN_BOTTOM,
     margin_left = self.MARGIN_LEFT,
     margin_right = self.MARGIN_RIGHT,
-  })
+  }
   self.model_name_buttons.on_set = function()
     self.model_name:set(self.model_name_buttons:value())
   end
