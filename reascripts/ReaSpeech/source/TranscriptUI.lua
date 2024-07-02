@@ -104,7 +104,7 @@ function TranscriptUI:render_create_notes(column)
 end
 
 function TranscriptUI:render_word_options()
-  rv, value = ImGui.Checkbox(ctx, "Words", self.words)
+  local rv, value = ImGui.Checkbox(ctx, "Words", self.words)
   if rv then
     self.words = value
   end
@@ -137,7 +137,7 @@ function TranscriptUI:render_clear()
 end
 
 function TranscriptUI:render_auto_play()
-  rv, value = ImGui.Checkbox(ctx, "Auto Play", self.autoplay)
+  local rv, value = ImGui.Checkbox(ctx, "Auto Play", self.autoplay)
   if rv then
     self.autoplay = value
   end
