@@ -16,11 +16,13 @@ require('source/ReaSpeechProductActivation')
 require('source/ReaSpeechProductActivationUI')
 require('source/ReaSpeechUI')
 require('source/ReaSpeechControlsUI')
+require('source/ReaSpeechWidgets')
 require('source/ReaSpeechWorker')
 require('source/Transcript')
 require('source/TranscriptUI')
 require('source/TranscriptEditor')
 require('source/TranscriptExporter')
+require('source/WhisperLanguages')
 
 --
 

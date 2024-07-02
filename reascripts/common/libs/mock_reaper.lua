@@ -36,6 +36,10 @@ reaper = reaper or {
     end
   end,
 
+  genGuid = function()
+    return '{00000000-0000-0000-0000-000000000000}'
+  end,
+
   GetOS = function ()
     return 'Win64'
   end,
