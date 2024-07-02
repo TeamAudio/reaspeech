@@ -12,13 +12,14 @@ TranscriptUI = Polo {
   COLUMN_WIDTH = 55,
   LARGE_COLUMN_WIDTH = 300,
 
-  ITEM_WIDTH = 125,
+  ACTIONS_MARGIN = 8,
+  ACTIONS_PADDING = 8,
 
   SCORE_COLORS = {
     bright_green = 0xa3ff00a6,
     dark_green = 0x2cba00a6,
     orange = 0xffa700a6,
-    red = 0xff0000a6
+    red = 0xff2c2cff
   }
 }
 
@@ -49,12 +50,34 @@ function TranscriptUI:init()
 
   self.transcript_editor = TranscriptEditor.new { transcript = self.transcript }
   self.transcript_exporter = TranscriptExporter.new { transcript = self.transcript }
+
+  self:init_layouts()
+end
+
+function TranscriptUI:init_layouts()
+  local renderers = {
+    self.render_create_regions,
+    self.render_create_markers,
+    self.render_create_notes,
+    self.render_word_options,
+    self.render_result_actions,
+    self.render_auto_play,
+    self.render_search
+  }
+
+  self.actions_layout = ColumnLayout.new {
+    column_padding = self.ACTIONS_PADDING,
+    num_columns = #renderers,
+    render_column = function (column)
+      renderers[column.num](self, column)
+    end
+  }
 end
 
 function TranscriptUI:render()
   if self.transcript:has_segments() then
     ImGui.SeparatorText(ctx, "Transcript")
-    self:render_result_actions()
+    self.actions_layout:render()
     self:render_table()
   end
 
@@ -62,56 +85,74 @@ function TranscriptUI:render()
   self.transcript_exporter:render()
 end
 
-function TranscriptUI:render_result_actions()
-  if ImGui.Button(ctx, "Create Regions") then
+function TranscriptUI:render_create_regions(column)
+  if ImGui.Button(ctx, "Create Regions", column.width) then
     self:handle_create_markers(true)
   end
-  ImGui.SameLine(ctx)
-  if ImGui.Button(ctx, "Create Markers") then
+end
+
+function TranscriptUI:render_create_markers(column)
+  if ImGui.Button(ctx, "Create Markers", column.width) then
     self:handle_create_markers(false)
   end
-  ImGui.SameLine(ctx)
-  if ImGui.Button(ctx, "Create Notes Track") then
-    self:handle_create_notes_track()
-  end
+end
 
-  ImGui.SameLine(ctx)
-  rv, value = ImGui.Checkbox(ctx, "words", self.words)
+function TranscriptUI:render_create_notes(column)
+  if ImGui.Button(ctx, "Create Notes", column.width) then
+    self:handle_create_notes()
+  end
+end
+
+function TranscriptUI:render_word_options()
+  local rv, value = ImGui.Checkbox(ctx, "Words", self.words)
   if rv then
     self.words = value
   end
 
   if self.words then
     ImGui.SameLine(ctx)
-    rv, value = ImGui.Checkbox(ctx, "colorize", self.colorize_words)
+    rv, value = ImGui.Checkbox(ctx, "Colorize", self.colorize_words)
     if rv then
       self.colorize_words = value
     end
   end
+end
 
-  local label_width, _ = ImGui.CalcTextSize(ctx, "search")
-  ImGui.SameLine(ctx, ImGui.GetWindowWidth(ctx) - self.ITEM_WIDTH - label_width - 10)
-  local search_changed, search = ImGui.InputText(ctx, 'search', self.transcript.search)
-  if search_changed then
-    self:handle_search(search)
+function TranscriptUI:render_result_actions()
+  self:render_export()
+  ImGui.SameLine(ctx)
+  self:render_clear()
+end
+
+function TranscriptUI:render_export()
+  if ImGui.Button(ctx, "Export") then
+    self:handle_export()
   end
-  ImGui.SameLine(ctx, ImGui.GetWindowWidth(ctx) - self.ITEM_WIDTH - label_width - 110)
-  rv, value = ImGui.Checkbox(ctx, "auto-play", self.autoplay)
+end
+
+function TranscriptUI:render_clear()
+  if ImGui.Button(ctx, "Clear") then
+    self:handle_transcript_clear()
+  end
+end
+
+function TranscriptUI:render_auto_play()
+  local rv, value = ImGui.Checkbox(ctx, "Auto Play", self.autoplay)
   if rv then
     self.autoplay = value
   end
+end
 
-  if self.transcript:has_segments() then
-    ImGui.Spacing(ctx)
-    if ImGui.Button(ctx, "Export") then
-      self:handle_export()
+function TranscriptUI:render_search(column)
+  ImGui.SetCursorPosX(ctx, ImGui.GetWindowWidth(ctx) - column.width - self.ACTIONS_MARGIN)
+  ImGui.PushItemWidth(ctx, column.width)
+  app:trap(function()
+    local search_changed, search = ImGui.InputTextWithHint(ctx, '##search', 'Search', self.transcript.search)
+    if search_changed then
+      self:handle_search(search)
     end
-
-    ImGui.SameLine(ctx)
-     if ImGui.Button(ctx, "Clear") then
-      self:handle_transcript_clear()
-    end
-  end
+  end)
+  ImGui.PopItemWidth(ctx)
 end
 
 function TranscriptUI:handle_create_markers(regions)
@@ -123,11 +164,11 @@ function TranscriptUI:handle_create_markers(regions)
   reaper.PreventUIRefresh(-1)
 end
 
-function TranscriptUI:handle_create_notes_track()
+function TranscriptUI:handle_create_notes()
   reaper.PreventUIRefresh(1)
   reaper.Undo_BeginBlock()
   self.transcript:create_notes_track(self.words)
-  reaper.Undo_EndBlock("Create notes track from speech", -1)
+  reaper.Undo_EndBlock("Create notes from speech", -1)
   reaper.PreventUIRefresh(-1)
 end
 
