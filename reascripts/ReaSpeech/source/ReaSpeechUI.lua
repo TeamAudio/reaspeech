@@ -163,9 +163,9 @@ end
 function ReaSpeechUI:react_to_logging()
   for _, log in pairs(self.logs) do
     local msg, dbg = table.unpack(log)
-    if dbg and self.controls_ui.log_enable and self.controls_ui.log_debug then
+    if dbg and self.controls_ui.log_enable:value() and self.controls_ui.log_debug:value() then
       reaper.ShowConsoleMsg(self:log_time() .. ' [DBG] ' .. tostring(msg) .. '\n')
-    elseif not dbg and self.controls_ui.log_enable then
+    elseif not dbg and self.controls_ui.log_enable:value() then
       reaper.ShowConsoleMsg(self:log_time() .. ' [LOG] ' .. tostring(msg) .. '\n')
     end
   end
