@@ -28,4 +28,4 @@ jobs:
 
     - name: test
       run: |
-        make
+        make SHELL=/bin/bash
