@@ -37,11 +37,11 @@ jobs:
     - name: Build and Publish the Docker debug image
       if: github.ref == 'refs/heads/debug'
       run: |
-        DOCKER_IMAGE_DEBUG=$DOCKER_USER/$REPO_NAME:debug${{ matrix.tag_extension }}
+        DOCKER_IMAGE_DEBUG=$REPO_NAME:debug${{ matrix.tag_extension }}
         docker buildx build . --no-cache --platform=${{ matrix.platforms }} -t "${DOCKER_IMAGE_DEBUG}" -f ${{ matrix.docker_file }} --push
     - name: Build and Publish the Docker image
       if: github.ref != 'refs/heads/debug'
       run: |
-        DOCKER_IMAGE_LATEST=$DOCKER_USER/$REPO_NAME:latest${{ matrix.tag_extension }}
-        DOCKER_IMAGE_VERSION=$DOCKER_USER/$REPO_NAME:$GITHUB_REF_NAME${{ matrix.tag_extension }}
+        DOCKER_IMAGE_LATEST=$REPO_NAME:latest${{ matrix.tag_extension }}
+        DOCKER_IMAGE_VERSION=$REPO_NAME:$GITHUB_REF_NAME${{ matrix.tag_extension }}
         docker buildx build . --no-cache --platform=${{ matrix.platforms }} -t "${DOCKER_IMAGE_LATEST}" -t "${DOCKER_IMAGE_VERSION}" -f ${{ matrix.docker_file }} --push
