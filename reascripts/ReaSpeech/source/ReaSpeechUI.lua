@@ -25,7 +25,7 @@ function ReaSpeechUI:init()
   self.responses = {}
   self.logs = {}
 
-  ReaSpeechAPI:init('http://' .. Script.host)
+  ReaSpeechAPI:init(Script.host, Script.protocol)
 
   self.worker = ReaSpeechWorker.new({
     requests = self.requests,

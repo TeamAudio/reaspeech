@@ -29,7 +29,8 @@ function Fonts:load()
     return
   end
 
-  local icons_url = 'http://' .. Script.host .. '/static/reascripts/ReaSpeech/icons.ttf'
+  local protocol = Script.protocol or 'http:'
+  local icons_url = protocol .. '//' .. Script.host .. '/static/reascripts/ReaSpeech/icons.ttf'
   local icons_file = Tempfile:name()
 
   local curl = "curl"

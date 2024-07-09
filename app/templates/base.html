@@ -26,7 +26,8 @@
       reascriptLinks.forEach((reascriptLink) => {
         const name = reascriptLink.dataset.name;
         const host = location.host;
-        reascriptLink.href = '/reascript?name=' + name + '&host=' + host;
+        const protocol = location.protocol;
+        reascriptLink.href = '/reascript?name=' + name + '&host=' + host + '&protocol=' + protocol;
       });
     </script>
   </body>

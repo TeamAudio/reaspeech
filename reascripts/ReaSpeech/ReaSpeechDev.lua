@@ -40,6 +40,7 @@ end
 Script = {
   name = "ReaSpeechDev",
   host = "localhost:9000",
+  protocol = "http:",
   lua = _VERSION:match('[%d.]+'),
   timeout = 30000,
 }
