@@ -98,11 +98,12 @@ async def reaspeech(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/reascript", response_class=PlainTextResponse, include_in_schema=False)
-async def reascript(request: Request, name: str, host: str):
+async def reascript(request: Request, name: str, host: str, protocol: str):
     return templates.TemplateResponse("reascript.lua", {
             "request": request,
             "name": name,
-            "host": host
+            "host": host,
+            "protocol": protocol
         },
         media_type='application/x-lua',
         headers={

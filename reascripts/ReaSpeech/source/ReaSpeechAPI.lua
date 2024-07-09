@@ -9,10 +9,9 @@ ReaSpeechAPI = {
   base_url = nil,
 }
 
--- Initialize the module with the given base URL
--- Example: "http://localhost:9000"
-function ReaSpeechAPI:init(base_url)
-  self.base_url = base_url
+function ReaSpeechAPI:init(host, protocol)
+  protocol = protocol or 'http:'
+  self.base_url = protocol .. '//' .. host
 end
 
 function ReaSpeechAPI:get_api_url(remote_path)
