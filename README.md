@@ -115,3 +115,12 @@ poetry run python3.10 gunicorn --bind 0.0.0.0:9000 --workers 1 --timeout 0 app.w
 See the source code to app/run.py for details. This is the same script that the Docker container runs when it starts.
 
 # Credits
+
+# Licensing
+
+ReaSpeech is licensed under the terms of the
+[GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html).
+Portions are derived from the
+[whisper-asr-webservice](https://github.com/ahmetoner/whisper-asr-webservice)
+project, which is MIT-licensed. All source files in this repository should be
+considered GPL-licensed unless otherwise specified.
