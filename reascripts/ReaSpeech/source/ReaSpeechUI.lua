@@ -33,11 +33,6 @@ function ReaSpeechUI:init()
     logs = self.logs,
   })
 
-  self.product_activation = ReaSpeechProductActivation.new()
-  self.product_activation_ui = ReaSpeechProductActivationUI.new {
-    product_activation = self.product_activation
-  }
-
   self.controls_ui = ReaSpeechControlsUI.new()
 
   self.actions_ui = ReaSpeechActionsUI.new({
@@ -177,11 +172,6 @@ function ReaSpeechUI:render()
   ImGui.PushItemWidth(ctx, self.ITEM_WIDTH)
 
   self:trap(function ()
-    if not self.product_activation:is_activated() then
-      self.product_activation_ui:render()
-      return
-    end
-
     self.controls_ui:render()
     self.actions_ui:render()
     self.transcript_ui:render()
