@@ -5,7 +5,7 @@ Description: A unit testing framework
 Homepage: https://github.com/bluebird75/luaunit
 Development by Philippe Fremy <phil@freehackers.org>
 Based on initial work of Ryu, Gwang (http://www.gpgstudy.com/gpgiki/LuaUnit)
-License: BSD License, see LICENSE.txt
+License: BSD License, see https://github.com/bluebird75/luaunit/blob/master/LICENSE.txt
 ]]--
 
 require("math")
