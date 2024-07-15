@@ -2,7 +2,6 @@ package.path = '../common/libs/?.lua;../common/vendor/?.lua;' .. package.path
 
 local lu = require('luaunit')
 
-require('OptionsConfig')
 require('Polo')
 require('ReaUtil')
 require('mock_reaper')
@@ -12,8 +11,6 @@ require('source/ColumnLayout')
 require('source/KeyMap')
 require('source/ReaSpeechActionsUI')
 require('source/ReaSpeechAPI')
-require('source/ReaSpeechProductActivation')
-require('source/ReaSpeechProductActivationUI')
 require('source/ReaSpeechUI')
 require('source/ReaSpeechControlsUI')
 require('source/ReaSpeechWidgets')
