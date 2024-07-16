@@ -116,6 +116,22 @@ See the source code to app/run.py for details. This is the same script that the 
 
 # Credits
 
+## ReaSpeech Team
+
+* Dave Benjamin
+* Jason Nanna
+* Kyle Vande Slunt
+* Mike DeFreitas
+* Roel Sanchez
+
+## Third-Party Software
+
+ReaSpeech's initial web service and Docker setup were based on the [Whisper ASR Webservice](https://github.com/ahmetoner/whisper-asr-webservice) project.
+
+Transcription is provided by the [Faster Whisper](https://github.com/SYSTRAN/faster-whisper) library.
+
+ReaSpeech uses [ReaImGui](https://github.com/cfillion/reaimgui) by Christian Fillion for its user interface toolkit.
+
 # Licensing
 
 ReaSpeech is licensed under the terms of the
