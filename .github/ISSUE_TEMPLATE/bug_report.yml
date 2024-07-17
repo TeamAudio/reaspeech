@@ -1,0 +1,75 @@
+name: Bug Report
+description: A bug is just a feature you haven't met yet.
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        There is a direct relationship between the likelihood of our addressing
+        your report and your having provided it kindly and with as much explicit
+        detail as was possible. We're all in this together, friend!
+  - type: markdown
+    attributes:
+      value: |
+        ### Platform
+        This helps us isolate the environment in which the bug is occurring.
+  - type: dropdown
+    id: operating_system
+    attributes:
+      label: Operating System
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: operating_system_other
+    attributes:
+      label: Other Operating System
+      description: If applicable.
+  - type: dropdown
+    id: architecture
+    attributes:
+      label: Architecture
+      options:
+        - amd64
+        - arm64
+    validations:
+      required: true
+  - type: dropdown
+    id: reaspeech_image
+    attributes:
+      label: ReaSpeech Image
+      options:
+        - reaspeech (CPU)
+        - reaspeech-gpu (CUDA)
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        ## Describe your situation
+  - type: textarea
+    id: personal_goals
+    attributes:
+      label: What were you trying to do?
+      description: The more detail you provide, the better.
+    validations:
+      required: true
+  - type: textarea
+    id: failed_expectations
+    attributes:
+      label: What actually happened?
+      description: How did the program respond? Did it hang? Did it crash? Did it achieve sentience and refuse to comply?
+    validations:
+      required: true
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: No step is too small or too obvious - please be specific.
+    validations:
+      required: true
