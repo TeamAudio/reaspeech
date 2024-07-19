@@ -118,11 +118,11 @@ See the source code to app/run.py for details. This is the same script that the 
 
 ## ReaSpeech Team
 
-* Dave Benjamin
-* Jason Nanna
-* Kyle Vande Slunt
-* Mike DeFreitas
-* Roel Sanchez
+* [Dave Benjamin](https://github.com/ramen)
+* [Jason Nanna](https://github.com/smrl)
+* [Kyle Vande Slunt](https://github.com/kvande-standingwave)
+* [Michael DeFreitas](https://github.com/mikeylove)
+* [Roel Sanchez](https://github.com/roelsan)
 
 ## Third-Party Software
 
