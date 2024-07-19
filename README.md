@@ -1,8 +1,10 @@
 # ReaSpeech
 ![Lint & Test](https://github.com/teamaudio/reaspeech/actions/workflows/check-reascripts.yml/badge.svg)
+
 ### Painless speech-to-transcript inside of REAPER
 ReaSpeech is a REAScript frontend that will take your project's media items and run them through a docker-hosted whisper backend, building a searchable, project-marker based index of the resulting transcription. That's right - not only do you reap (zing!) the benefits of a staff of transcribers, but you get to add "familiar with Docker" to your resume.
 
+![Screenshot](docs/assets/img/reaspeech-screenshot.png)
 
 ### CPU or GPU-based transcriptions
 If you have a compatible GPU (requirements list?), ReaSpeech can use it!
