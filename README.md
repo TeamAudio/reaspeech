@@ -9,10 +9,20 @@ ReaSpeech is a REAScript frontend that will take your project's media items and 
 # Quick Usage
 
 * Install [Docker](https://www.docker.com/)
-* Install the [Docker image](https://hub.docker.com/r/techaudiodoc/reaspeech)
+* Run the [Docker image](https://hub.docker.com/r/techaudiodoc/reaspeech)
 * Navigate to [localhost:9000](http://localhost:9000/)
 
-For more detailed instructions, including GPU support (currently Windows/CUDA only), see [Docker Usage](docs/docker.md)
+## Docker Commands
+
+### CPU
+
+    docker run -d -p 9000:9000 techaudiodoc/reaspeech:latest
+
+### GPU (currently Windows/NVIDIA only)
+
+    docker run -d --gpus all -p 9000:9000 techaudiodoc/reaspeech:latest-gpu
+
+For more detailed instructions, see [Docker Usage](docs/docker.md)
 
 # Documentation
 
