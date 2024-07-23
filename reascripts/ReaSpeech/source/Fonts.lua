@@ -39,6 +39,7 @@ function Fonts:load()
   end
   local command = (
     curl
+    .. ' --http1.1'
     .. ' "' .. icons_url .. '"'
     .. ' -o "' .. icons_file .. '"'
   )
