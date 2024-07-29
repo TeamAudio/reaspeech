@@ -7,6 +7,9 @@
 ReaSpeechAPI = {
   CURL_TIMEOUT_SECONDS = 5,
   base_url = nil,
+  endpoints = {
+    asr = '/asr',
+  }
 }
 
 function ReaSpeechAPI:init(host, protocol)

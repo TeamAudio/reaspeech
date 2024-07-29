@@ -8,6 +8,7 @@ require('mock_reaper')
 require('Polo')
 require('source/CSVWriter')
 require('source/Transcript')
+require('source/TranscriptSegment')
 
 --
 
