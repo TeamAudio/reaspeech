@@ -7,9 +7,11 @@
       <li class="nav-item">
         <a class="nav-link active" aria-current="page" href="/reaspeech">ReaSpeech</a>
       </li>
+      {% if docs_url: %}
       <li class="nav-item">
-        <a class="nav-link" href="/docs">Whisper API</a>
+        <a class="nav-link" href="{{ docs_url }}">Whisper API</a>
       </li>
+      {% endif %}
     </ul>
   </div>
 </nav>
