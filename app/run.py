@@ -33,6 +33,9 @@ argmap = {
     '--build-reascripts': {
         'action': 'store_true',
         'help': 'Build ReaScripts before starting' },
+    '--enable-swagger-ui': {
+        'action': 'store_true',
+        'help': 'Enable automatic Swagger UI for API' },
 }
 
 parser = argparse.ArgumentParser()
@@ -53,6 +56,9 @@ if args.build_reascripts:
     if os.system('cd reascripts/ReaSpeech && make') != 0:
         print('ReaScript build failed', file=sys.stderr)
         sys.exit(1)
+
+if args.enable_swagger_ui:
+    os.environ['ENABLE_SWAGGER_UI'] = '/docs'
 
 processes = {}
 
