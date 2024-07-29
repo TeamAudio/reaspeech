@@ -8,6 +8,7 @@ require('json')
 require('mock_reaper')
 require('Polo')
 require('source/Transcript')
+require('source/TranscriptSegment')
 
 --
 
