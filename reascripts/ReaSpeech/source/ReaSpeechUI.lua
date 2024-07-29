@@ -138,21 +138,9 @@ function ReaSpeechUI:react_to_worker_response()
     return
   end
 
-  if not response.segments then
-    return
+  if response.callback then
+    response.callback(response)
   end
-
-  for _, segment in pairs(response.segments) do
-    for _, s in pairs(
-      TranscriptSegment.from_whisper(segment, response._job.item, response._job.take)
-    ) do
-      if s:get('text') then
-        self.transcript:add_segment(s)
-      end
-    end
-  end
-
-  self.transcript:update()
 end
 
 function ReaSpeechUI:react_to_logging()
@@ -181,12 +169,13 @@ function ReaSpeechUI:render()
   ImGui.PopItemWidth(ctx)
 end
 
-function ReaSpeechUI:new_jobs(jobs)
+function ReaSpeechUI:new_jobs(jobs, callback)
   local request = self.controls_ui:get_request_data()
+  callback = callback or function() end
   request.jobs = jobs
-  self:debug('Request: ' .. dump(request))
+  request.callback = callback
 
-  self.transcript:clear()
+  self:debug('Request: ' .. dump(request))
 
   table.insert(self.requests, request)
 end

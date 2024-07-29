@@ -128,5 +128,23 @@ function ReaSpeechActionsUI:process_jobs(job_generator)
     return
   end
 
-  app:new_jobs(jobs)
+  app.transcript:clear()
+
+  app:new_jobs(jobs, function(response)
+    if not response.segments then
+      return
+    end
+
+    for _, segment in pairs(response.segments) do
+      for _, s in pairs(
+        TranscriptSegment.from_whisper(segment, response._job.item, response._job.take)
+      ) do
+        if s:get('text') then
+          app.transcript:add_segment(s)
+        end
+      end
+    end
+
+    app.transcript:update()
+  end)
 end

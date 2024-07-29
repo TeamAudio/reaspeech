@@ -150,7 +150,7 @@ function ReaSpeechWorker:handle_request(request)
   for _, job in pairs(request.jobs) do
     if not seen_path[job.path] then
       seen_path[job.path] = true
-      table.insert(self.pending_jobs, {job = job, data = data})
+      table.insert(self.pending_jobs, {job = job, data = data, callback = request.callback })
     end
   end
 end
@@ -192,6 +192,7 @@ end
 
 function ReaSpeechWorker:handle_response(active_job, response)
   response._job = active_job.job
+  response.callback = active_job.callback
   table.insert(self.responses, response)
 end
 
