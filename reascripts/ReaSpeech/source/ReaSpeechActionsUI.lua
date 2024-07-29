@@ -130,7 +130,7 @@ function ReaSpeechActionsUI:process_jobs(job_generator)
 
   app.transcript:clear()
 
-  app:new_jobs(jobs, function(response)
+  app:new_jobs(jobs, ReaSpeechAPI.endpoints.asr, function(response)
     if not response.segments then
       return
     end

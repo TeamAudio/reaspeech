@@ -150,7 +150,12 @@ function ReaSpeechWorker:handle_request(request)
   for _, job in pairs(request.jobs) do
     if not seen_path[job.path] then
       seen_path[job.path] = true
-      table.insert(self.pending_jobs, {job = job, data = data, callback = request.callback })
+      table.insert(self.pending_jobs, {
+        job = job,
+        endpoint = request.endpoint,
+        data = data,
+        callback = request.callback
+      })
     end
   end
 end
@@ -206,7 +211,8 @@ function ReaSpeechWorker:start_active_job()
   end
 
   local active_job = self.active_job
-  local output_file, sentinel_file = ReaSpeechAPI:post_request('/asr', active_job.data, active_job.job.path)
+  local output_file, sentinel_file = ReaSpeechAPI:post_request(
+    active_job.endpoint, active_job.data, active_job.job.path)
 
   if output_file then
     active_job.request_output_file = output_file

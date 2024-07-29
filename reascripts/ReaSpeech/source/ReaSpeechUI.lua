@@ -169,9 +169,12 @@ function ReaSpeechUI:render()
   ImGui.PopItemWidth(ctx)
 end
 
-function ReaSpeechUI:new_jobs(jobs, callback)
+function ReaSpeechUI:new_jobs(jobs, endpoint, callback)
   local request = self.controls_ui:get_request_data()
   callback = callback or function() end
+
+  assert(endpoint, "Endpoint required for API call")
+  request.endpoint = endpoint
   request.jobs = jobs
   request.callback = callback
 
