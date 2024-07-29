@@ -63,8 +63,10 @@ LANGUAGE_CODES = sorted(list(tokenizer.LANGUAGES.keys()))
 TASK_EXPIRATION_SECONDS = 30
 
 projectMetadata = importlib.metadata.metadata('reaspeech')
+docs_url = os.getenv('ENABLE_SWAGGER_UI', '')
+
 app = FastAPI(
-    # docs_url=None,
+    docs_url=docs_url or None,
     # redoc_url=None,
     title=projectMetadata['Name'].title().replace('-', ' '),
     description=projectMetadata['Summary'],
@@ -118,7 +120,7 @@ async def index():
 
 @app.get("/reaspeech", response_class=HTMLResponse, include_in_schema=False)
 async def reaspeech(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("index.html", {"request": request, "docs_url": docs_url})
 
 @app.get("/reascript", response_class=PlainTextResponse, include_in_schema=False)
 async def reascript(request: Request, name: str, host: str, protocol: str):
