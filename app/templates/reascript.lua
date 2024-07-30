@@ -17,7 +17,7 @@ function Script:load()
     curl = "/usr/bin/curl"
   end
   local command = curl
-    .. " -sSf " .. self.protocol .. "//" .. self.host .. "/static/reascripts/" .. self.name
+    .. " --http1.1 -sSf " .. self.protocol .. "//" .. self.host .. "/static/reascripts/" .. self.name
     .. "/" .. self.name .. "-" .. self.lua .. '.luac -o "' .. tempfile .. '"'
   local result = reaper.ExecProcess(command, self.timeout)
   local offset = result:find("\n")

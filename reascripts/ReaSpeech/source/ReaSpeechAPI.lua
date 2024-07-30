@@ -7,6 +7,9 @@
 ReaSpeechAPI = {
   CURL_TIMEOUT_SECONDS = 5,
   base_url = nil,
+  endpoints = {
+    asr = '/asr',
+  }
 }
 
 function ReaSpeechAPI:init(host, protocol)
@@ -45,6 +48,7 @@ function ReaSpeechAPI:fetch_json(url_path, http_method, error_handler, timeout_h
   local command = table.concat({
     curl,
     ' "', api_url, '"',
+    ' --http1.1',
     ' -H "accept: application/json"',
     http_method_argument,
     ' -m ', self.CURL_TIMEOUT_SECONDS,
@@ -118,6 +122,7 @@ function ReaSpeechAPI:fetch_large(url_path, http_method)
   local command = table.concat({
     curl,
     ' "', api_url, '"',
+    ' --http1.1',
     ' -H "accept: application/json"',
     http_method_argument,
     ' -i ',
@@ -162,6 +167,7 @@ function ReaSpeechAPI:post_request(url_path, data, file_path)
   local command = table.concat({
     curl,
     ' "', api_url, '?', table.concat(query, '&'), '"',
+    ' --http1.1',
     ' -H "accept: application/json"',
     ' -H "Content-Type: multipart/form-data"',
     ' -F ', self:_maybe_quote('audio_file=@"' .. file_path .. '"'),
