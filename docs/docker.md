@@ -3,7 +3,7 @@
 ## Overview
 
 ReaSpeech uses a Docker image to streamline the use of Whisper from REAPER by
-packaging up most of the software dependencies into a service. This means you
+packaging up most of its software dependencies into a service. This means you
 can run ReaSpeech on any platform that supports Docker without having to
 install a bunch of software on your local machine. This image needs to be
 running in order for ReaSpeech to work.
@@ -31,7 +31,7 @@ You can download Docker [here](https://www.docker.com/products/docker-desktop/).
 To run the CPU version of the Docker image, use the following command:
 
 ```sh
-docker run -d -p 9000:9000 techaudiodoc/reaspeech:latest
+docker run -d -p 9000:9000 --name reaspeech techaudiodoc/reaspeech:latest
 ```
 
 This will download the latest version of the `reaspeech` image from Docker Hub
@@ -61,7 +61,7 @@ If you have a compatible NVIDIA GPU, you can run the GPU version of the Docker
 image using the following command:
 
 ```sh
-docker run -d --gpus all -p 9000:9000 techaudiodoc/reaspeech:latest-gpu
+docker run -d --gpus all -p 9000:9000 --name reaspeech-gpu techaudiodoc/reaspeech:latest-gpu
 ```
 
 This will download the latest version of the `reaspeech-gpu` image from Docker
@@ -81,53 +81,43 @@ The ReaSpeech script can be downloaded from this page.
 Before running the script, you will need to follow the instructions to ensure
 that ReaPack and ReaImGui are installed in REAPER.
 
-## Stopping the Docker Container
-
-To stop the Docker container, you'll need to know the container ID. You can get
-a list of running containers and their IDs by running:
-
-```sh
-docker ps
-```
-
-This will show you a list of running containers, along with their IDs, names,
-and other information. Find the ID of the ReaSpeech container you want to stop,
-and then run:
-
-```sh
-docker stop <container_id>
-```
-
-Replace `<container_id>` with the ID of the container you want to stop. This
-will stop the container, but it will still be on your machine. To remove the
-container completely, run:
-
-```sh
-docker rm <container_id>
-```
-
-This will remove the container from your machine.
-
 ## Updating the Docker Image
+
+### CPU
 
 To update the Docker image to the latest version, you can pull the latest
 version from Docker Hub and run it in a new container. First, stop and remove
 the existing container:
 
 ```sh
-docker stop <container_id>
-docker rm <container_id>
+docker stop reaspeech
+docker rm reaspeech
 ```
 
-Then pull the latest version of the image and run it in a new container:
+Then, pull the latest version of the image and run it in a new container:
 
 ```sh
 docker pull techaudiodoc/reaspeech:latest
-docker run -d -p 9000:9000 techaudiodoc/reaspeech:latest
+docker run -d -p 9000:9000 --name techaudiodoc/reaspeech:latest
 ```
 
 This will download the latest version of the `reaspeech` image from Docker Hub
 and run it in a new container.
+
+### GPU
+
+To update the GPU version of the Docker image, you can follow the same steps as
+above, but use the `reaspeech-gpu` image instead:
+
+```sh
+docker stop reaspeech-gpu
+docker rm reaspeech-gpu
+docker pull techaudiodoc/reaspeech:latest-gpu
+docker run -d --gpus all -p 9000:9000 --name reaspeech-gpu techaudiodoc/reaspeech:latest-gpu
+```
+
+This will download the latest version of the `reaspeech-gpu` image from Docker
+Hub and run it in a new container.
 
 ## Troubleshooting
 
@@ -144,122 +134,3 @@ check:
 
 If you're still having trouble, feel free to reach out to the ReaSpeech team
 for help.
-
-## Using Docker Compose
-
-If you would like to develop ReaSpeech or run it in a more controlled
-environment, you can use [Docker Compose](https://docs.docker.com/compose/) to
-manage the Docker containers.
-
-### CPU
-
-To build and run the CPU version of the ReaSpeech Docker image using Docker
-Compose, run the following command:
-
-```sh
-docker-compose up --build
-```
-
-### GPU
-
-If you have a compatible NVIDIA GPU and would like to run the GPU version of
-the ReaSpeech Docker image using Docker Compose, you can use the following
-command:
-
-```sh
-docker-compose -f docker-compose.gpu.yml up --build
-```
-
-This will build the GPU version of the Docker image and run it in a container.
-You can access the ReaSpeech web interface at
-[http://localhost:9000](http://localhost:9000).
-
-To stop the Docker container, press `Ctrl+C` in the terminal where Docker
-Compose is running.
-
-## Environment Variables
-
-You can customize the behavior of the ReaSpeech Docker image by setting
-environment variables when running the container. Here are the available
-environment variables and their default values:
-
-- `ASR_ENGINE`: The ASR engine to use. Options are `faster_whisper` (default)
-  and `openai_whisper`.
-
-To set an environment variable when running the Docker container, use the `-e`
-flag followed by the variable name and value. For example, to use the
-`openai_whisper` engine, you would run:
-
-```sh
-docker run -d -p 9000:9000 -e ASR_ENGINE=openai_whisper techaudiodoc/reaspeech:latest
-```
-
-When using Docker Compose, you can set environment variables in the
-`docker-compose.yml` or `docker-compose.gpu.yml` file. For example:
-
-```yaml
-services:
-  reaspeech:
-    environment:
-      - ASR_ENGINE=openai_whisper
-```
-
-## Filesystem Permissions
-
-When running the ReaSpeech Docker image with Docker Compose, the "app" directory
-is mounted as a volume in the container. This allows you to make changes to the
-ReaSpeech code and see the changes reflected in the container without having to
-rebuild the image. However, the permissions on the mounted volume may not match
-the permissions in the container, which can cause issues when running the
-ReaSpeech service.
-
-To fix this issue, you can use the `SERVICE_UID` and `SERVICE_GID` Dockerfile
-arguments. By default, the service runs as the `service` user with
-UID 1001 and GID 1001. If you need to change these values, you can set the
-`SERVICE_UID` and `SERVICE_GID` environment variables when running the Docker
-container. For example:
-
-```sh
-docker run -d -p 9000:9000 -e SERVICE_USER=app -e SERVICE_UID=1000 -e SERVICE_GID=1000 techaudiodoc/reaspeech:latest
-```
-
-When using Docker Compose, you can set these environment variables in the
-`docker-compose.yml` or `docker-compose.gpu.yml` file. For example:
-
-```yaml
-services:
-  reaspeech:
-    environment:
-      - SERVICE_UID=1000
-      - SERVICE_GID=1000
-```
-
-## Restart Behavior
-
-By default, the ReaSpeech Docker container will restart automatically if it
-crashes or is stopped. This behavior can be customized using the `--restart`
-flag when running the container. The available options are:
-
-- `no`: Do not restart the container if it stops or crashes.
-- `always`: Always restart the container if it stops or crashes.
-- `on-failure`: Restart the container only if it stops with a non-zero exit
-  code.
-- `unless-stopped`: Always restart the container unless it is explicitly
-  stopped.
-
-To set the restart behavior when running the Docker container, use the
-`--restart` flag followed by the desired option. For example, to always restart
-the container, you would run:
-
-```sh
-docker run -d -p 9000:9000 --restart always techaudiodoc/reaspeech:latest
-```
-
-When using Docker Compose, you can set the restart behavior in the
-`docker-compose.yml` or `docker-compose.gpu.yml` file. For example:
-
-```yaml
-services:
-  reaspeech:
-    restart: always
-```
