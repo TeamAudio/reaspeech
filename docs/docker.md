@@ -14,6 +14,19 @@ dependencies, and if you have a graphics card that supports CUDA
 All of the processing is done locally on your computer with no internet
 requirements beyond the initial setup.
 
+## Quick Start
+
+The fastest way to get up and running with ReaSpeech is to use the search
+feature in Docker Desktop:
+
+* Type "techaudiodoc/reaspeech" into the search box
+* Ensure that the "latest" tag is selected, and click "Run"
+* Open "Optional settings" and enter "9000" for the "Host port"
+* Click "Run" to start the container
+
+Note that this will run the CPU version. To use the GPU version, you will have
+to use the command line. See the following instructions for details.
+
 ## GPU Support
 
 If you have a compatible NVIDIA GPU, you can use the `reaspeech-gpu` image to
