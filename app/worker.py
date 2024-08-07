@@ -93,7 +93,7 @@ def transcribe(
 
     os.remove(audio_file_path)
 
-    filename = f"{original_filename.encode('latin-1', 'ignore').decode()}.{output_format}"
+    filename = f"{self.request.id}.{output_format}"
     output_directory = get_output_path(self.request.id)
     output_path = f"{output_directory}/{filename}"
 
