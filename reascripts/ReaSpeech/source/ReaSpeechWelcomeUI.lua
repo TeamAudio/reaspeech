@@ -25,6 +25,11 @@ function ReaSpeechWelcomeUI:init()
   self.is_demo = self.is_demo or true
   self.is_open = false
   self.presenting = false
+
+  self.url_opener_cmd = '/usr/bin/open "%s"'
+  if reaper.GetOS():match('Win') then
+    self.url_opener_cmd = 'start "" "%s"'
+  end
 end
 
 function ReaSpeechWelcomeUI:present()
@@ -132,7 +137,7 @@ end
 
 function ReaSpeechWelcomeUI:url_opener(url)
   return function()
-    os.execute(reaper.GetOS():find("Win") and "start" or "open" .. ' "' .. url .. '"')
+    (ExecProcess.new { self.url_opener_cmd:format(url) }):wait()
   end
 end
 
