@@ -33,6 +33,9 @@ function ReaSpeechUI:init()
     logs = self.logs,
   })
 
+  self.welcome_ui = ReaSpeechWelcomeUI.new()
+  self.welcome_ui:present()
+
   self.controls_ui = ReaSpeechControlsUI.new()
 
   self.actions_ui = ReaSpeechActionsUI.new({
@@ -160,6 +163,7 @@ function ReaSpeechUI:render()
   ImGui.PushItemWidth(ctx, self.ITEM_WIDTH)
 
   self:trap(function ()
+    self.welcome_ui:render()
     self.controls_ui:render()
     self.actions_ui:render()
     self.transcript_ui:render()
@@ -181,6 +185,30 @@ function ReaSpeechUI:new_jobs(jobs, endpoint, callback)
   self:debug('Request: ' .. dump(request))
 
   table.insert(self.requests, request)
+end
+
+function ReaSpeechUI.link(text, onclick, text_color, underline_color)
+  text_color = text_color or 0xffffffff
+  underline_color = underline_color or 0xffffffa0
+
+  ImGui.TextColored(ctx, text_color, text)
+
+  if ImGui.IsItemHovered(ctx) then
+    local rect_min_x, rect_min_y = ImGui.GetItemRectMin(ctx)
+    local rect_max_x, _ = ImGui.GetItemRectMax(ctx)
+    local _, rect_size_y = ImGui.GetItemRectSize(ctx)
+    local line_y = rect_min_y + rect_size_y - 1
+
+    ImGui.DrawList_AddLine(
+      ImGui.GetWindowDrawList(ctx),
+      rect_min_x, line_y, rect_max_x, line_y,
+      underline_color, 1.0)
+    ImGui.SetMouseCursor(ctx, ImGui.MouseCursor_Hand())
+  end
+
+  if ImGui.IsItemClicked(ctx) then
+    onclick()
+  end
 end
 
 function ReaSpeechUI.png_from_bytes(image_key)
