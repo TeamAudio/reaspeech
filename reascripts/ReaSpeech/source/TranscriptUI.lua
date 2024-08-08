@@ -261,30 +261,6 @@ function TranscriptUI:render_table_cell(segment, column)
   end
 end
 
-function TranscriptUI:render_link(text, onclick, text_color, underline_color)
-  text_color = text_color or 0xffffffff
-  underline_color = underline_color or 0xffffffa0
-
-  ImGui.TextColored(ctx, text_color, text)
-
-  if ImGui.IsItemHovered(ctx) then
-    local rect_min_x, rect_min_y = ImGui.GetItemRectMin(ctx)
-    local rect_max_x, _ = ImGui.GetItemRectMax(ctx)
-    local _, rect_size_y = ImGui.GetItemRectSize(ctx)
-    local line_y = rect_min_y + rect_size_y - 1
-
-    ImGui.DrawList_AddLine(
-      ImGui.GetWindowDrawList(ctx),
-      rect_min_x, line_y, rect_max_x, line_y,
-      underline_color, 1.0)
-    ImGui.SetMouseCursor(ctx, ImGui.MouseCursor_Hand())
-  end
-
-  if ImGui.IsItemClicked(ctx) then
-    onclick()
-  end
-end
-
 function TranscriptUI:render_text(segment, column)
   if self.words then
     self:render_text_words(segment, column)
@@ -294,7 +270,7 @@ function TranscriptUI:render_text(segment, column)
 end
 
 function TranscriptUI:render_text_simple(segment, column)
-  self:render_link(segment:get(column, ""), function () segment:navigate(nil,self.autoplay) end)
+  ReaSpeechUI.link(segment:get(column, ""), function () segment:navigate(nil,self.autoplay) end)
 end
 
 function TranscriptUI:render_text_words(segment, _)
@@ -309,7 +285,7 @@ function TranscriptUI:render_text_words(segment, _)
       if self.colorize_words then
         color = self.score_color(word:score())
       end
-      self:render_link(word.word, function () segment:navigate(i, self.autoplay) end, color)
+      ReaSpeechUI.link(word.word, function () segment:navigate(i, self.autoplay) end, color)
     end
   end
 end
