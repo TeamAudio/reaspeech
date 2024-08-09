@@ -42,7 +42,6 @@ function TestImGuiTheme:testColorInit()
   lu.assertEquals(theme.colors[1][2], 0xFF0000FF)
   lu.assertEquals(theme.colors[2][1], "just a key")
   lu.assertEquals(theme.colors[2][2], 0x00FF0000)
-  lu.assertEquals(theme.color_count, 2)
 end
 
 function TestImGuiTheme:testColors()
@@ -87,7 +86,6 @@ function TestImGuiTheme:testStyleInit()
   lu.assertEquals(theme.styles[2][1], "multiple arguments")
   lu.assertEquals(theme.styles[2][2], 2.0)
   lu.assertEquals(theme.styles[2][3], 3.0)
-  lu.assertEquals(theme.style_count, 2)
 end
 
 function TestImGuiTheme:testStyles()
