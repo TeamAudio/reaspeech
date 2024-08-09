@@ -7,7 +7,7 @@ ReaSpeechWelcomeUI.lua - Welcome screen for ReaSpeech
 ReaSpeechWelcomeUI = Polo {
   TITLE = "Welcome!",
 
-  WIDTH = 500,
+  WIDTH = 610,
   HEIGHT = 800,
 
   HEADING_MARGIN = 8,
@@ -67,6 +67,7 @@ function ReaSpeechWelcomeUI:render()
 end
 
 function ReaSpeechWelcomeUI:render_content()
+  self:render_banner()
   self:render_welcome_text()
   if self.is_demo then
     self:render_demo_text()
@@ -75,10 +76,8 @@ function ReaSpeechWelcomeUI:render_content()
   self:render_footer()
 end
 
-function ReaSpeechWelcomeUI:render_text(text)
-  ImGui.Dummy(ctx, self.WIDTH, self.PARA_MARGIN)
-  ImGui.SetCursorPosX(ctx, self.PADDING)
-  ImGui.Text(ctx, text)
+function ReaSpeechWelcomeUI:render_banner()
+  app.png_from_bytes('reaspeech-banner')
 end
 
 function ReaSpeechWelcomeUI:render_welcome_text()
@@ -88,9 +87,8 @@ end
 
 function ReaSpeechWelcomeUI:render_demo_text()
   self:render_heading("Demo Version")
-  self:render_text([[Please note that this version is a demo and may not be available
-at all times. For a more reliable experience, you can run ReaSpeech
-locally using the Docker image.]])
+  self:render_text([[Please note that this version is a demo and may not be available at all times.
+For a more reliable experience, you can run ReaSpeech locally using the Docker image.]])
 end
 
 function ReaSpeechWelcomeUI:render_close_button()
@@ -109,6 +107,12 @@ function ReaSpeechWelcomeUI:render_heading(text)
     ImGui.Text(ctx, text)
   end)
   ImGui.PopFont(ctx)
+end
+
+function ReaSpeechWelcomeUI:render_text(text)
+  ImGui.Dummy(ctx, self.WIDTH, self.PARA_MARGIN)
+  ImGui.SetCursorPosX(ctx, self.PADDING)
+  ImGui.Text(ctx, text)
 end
 
 function ReaSpeechWelcomeUI:render_footer()
