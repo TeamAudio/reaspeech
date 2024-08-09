@@ -10,10 +10,12 @@ ReaSpeechWelcomeUI = Polo {
   WIDTH = 500,
   HEIGHT = 800,
 
+  HEADING_MARGIN = 8,
+  PADDING = 12,
+  PARA_MARGIN = 2,
+
   FOOTER_BG_COLOR = 0x222222ff,
-  FOOTER_HEIGHT = 35,
-  PADDING = 10,
-  PARA_MARGIN = 5,
+  FOOTER_HEIGHT = 40,
   FOOTER_MARGIN = 5,
 
   HOME_URL = "https://techaud.io/reaspeech/",
@@ -80,29 +82,29 @@ function ReaSpeechWelcomeUI:render_text(text)
 end
 
 function ReaSpeechWelcomeUI:render_welcome_text()
-  self:render_header("Welcome to ReaSpeech!")
+  self:render_heading("Welcome to ReaSpeech!")
   self:render_text([[This is a tool for transcribing audio in REAPER.]])
 end
 
 function ReaSpeechWelcomeUI:render_demo_text()
-  self:render_header("Demo Version")
+  self:render_heading("Demo Version")
   self:render_text([[Please note that this version is a demo and may not be available
 at all times. For a more reliable experience, you can run ReaSpeech
 locally using the Docker image.]])
 end
 
 function ReaSpeechWelcomeUI:render_close_button()
-  ImGui.Dummy(ctx, self.WIDTH, self.PADDING)
-  ImGui.SetCursorPosX(ctx, self.PADDING - 5)
+  ImGui.Dummy(ctx, self.WIDTH, self.PADDING - 2)
+  ImGui.SetCursorPosX(ctx, self.PADDING - 2)
   if ImGui.Button(ctx, "Let's Go!") then
     self:_close()
   end
 end
 
-function ReaSpeechWelcomeUI:render_header(text)
+function ReaSpeechWelcomeUI:render_heading(text)
   ImGui.PushFont(ctx, Fonts.bold)
   app:trap(function ()
-    ImGui.Dummy(ctx, self.WIDTH, self.PADDING)
+    ImGui.Dummy(ctx, self.WIDTH, self.HEADING_MARGIN)
     ImGui.SetCursorPosX(ctx, self.PADDING)
     ImGui.Text(ctx, text)
   end)
