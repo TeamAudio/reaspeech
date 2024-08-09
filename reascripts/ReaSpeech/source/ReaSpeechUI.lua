@@ -33,8 +33,10 @@ function ReaSpeechUI:init()
     logs = self.logs,
   })
 
-  self.welcome_ui = ReaSpeechWelcomeUI.new()
-  self.welcome_ui:present()
+  if Script.env == 'demo' then
+    self.welcome_ui = ReaSpeechWelcomeUI.new { is_demo = true }
+    self.welcome_ui:present()
+  end
 
   self.controls_ui = ReaSpeechControlsUI.new()
 
@@ -163,7 +165,9 @@ function ReaSpeechUI:render()
   ImGui.PushItemWidth(ctx, self.ITEM_WIDTH)
 
   self:trap(function ()
-    self.welcome_ui:render()
+    if self.welcome_ui then
+      self.welcome_ui:render()
+    end
     self.controls_ui:render()
     self.actions_ui:render()
     self.transcript_ui:render()

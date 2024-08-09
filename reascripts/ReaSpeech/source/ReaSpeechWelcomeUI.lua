@@ -24,7 +24,7 @@ ReaSpeechWelcomeUI = Polo {
 }
 
 function ReaSpeechWelcomeUI:init()
-  self.is_demo = self.is_demo or true
+  self.is_demo = self.is_demo or false
   self.is_open = false
   self.presenting = false
 

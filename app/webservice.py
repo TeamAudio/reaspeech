@@ -42,6 +42,8 @@ from .worker import transcribe
 logging.basicConfig(format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s', level=logging.INFO, force=True)
 logger = logging.getLogger(__name__)
 
+APP_ENV = os.getenv("APP_ENV", "production")
+
 ASR_ENGINE = os.getenv("ASR_ENGINE", "faster_whisper")
 
 ASR_OPTIONS = frozenset([
@@ -128,7 +130,8 @@ async def reascript(request: Request, name: str, host: str, protocol: str):
             "request": request,
             "name": name,
             "host": host,
-            "protocol": protocol
+            "protocol": protocol,
+            "env": APP_ENV,
         },
         media_type='application/x-lua',
         headers={
