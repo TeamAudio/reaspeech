@@ -29,6 +29,7 @@ Script = {
   name = "ReaSpeechDev",
   host = "localhost:9000",
   protocol = "http:",
+  env = "production",
   lua = _VERSION:match('[%d.]+'),
   timeout = 30000,
 }
