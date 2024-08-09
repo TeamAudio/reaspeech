@@ -126,6 +126,10 @@ async def reaspeech(request: Request):
 
 @app.get("/reascript", response_class=PlainTextResponse, include_in_schema=False)
 async def reascript(request: Request, name: str, host: str, protocol: str):
+    if APP_ENV == 'production':
+        filename = f'{name}.lua'
+    else:
+        filename = f'{name}-{APP_ENV}.lua'
     return templates.TemplateResponse("reascript.lua", {
             "request": request,
             "name": name,
@@ -135,7 +139,7 @@ async def reascript(request: Request, name: str, host: str, protocol: str):
         },
         media_type='application/x-lua',
         headers={
-            'Content-Disposition': f'attachment; filename="{name}.lua"'
+            'Content-Disposition': f'attachment; filename="{filename}"'
         }
     )
 
