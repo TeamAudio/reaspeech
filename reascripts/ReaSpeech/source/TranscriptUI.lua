@@ -270,7 +270,7 @@ function TranscriptUI:render_text(segment, column)
 end
 
 function TranscriptUI:render_text_simple(segment, column)
-  ReaSpeechUI.link(segment:get(column, ""), function () segment:navigate(nil,self.autoplay) end)
+  Widgets.link(segment:get(column, ""), function () segment:navigate(nil,self.autoplay) end)
 end
 
 function TranscriptUI:render_text_words(segment, _)
@@ -285,7 +285,7 @@ function TranscriptUI:render_text_words(segment, _)
       if self.colorize_words then
         color = self.score_color(word:score())
       end
-      ReaSpeechUI.link(word.word, function () segment:navigate(i, self.autoplay) end, color)
+      Widgets.link(word.word, function () segment:navigate(i, self.autoplay) end, color)
     end
   end
 end

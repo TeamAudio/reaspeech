@@ -79,7 +79,7 @@ function ReaSpeechWelcomeUI:render_content()
 end
 
 function ReaSpeechWelcomeUI:render_banner()
-  app.png_from_bytes('reaspeech-banner')
+  Widgets.png('reaspeech-banner')
 end
 
 function ReaSpeechWelcomeUI:render_welcome_text()
@@ -92,7 +92,7 @@ function ReaSpeechWelcomeUI:render_demo_text()
   self:render_text("Please note that this version is a demo and may not be available at all times.")
   self:render_text("For a more reliable experience, you can run ReaSpeech locally using the ")
   ImGui.SameLine(ctx, 0, 0)
-  ReaSpeechUI.link("Docker image", self:url_opener(self.DOCKER_DOC_URL), self.LINK_COLOR, self.LINK_COLOR)
+  Widgets.link("Docker image", self:url_opener(self.DOCKER_DOC_URL), self.LINK_COLOR, self.LINK_COLOR)
 end
 
 function ReaSpeechWelcomeUI:render_close_button()
@@ -138,11 +138,11 @@ function ReaSpeechWelcomeUI:render_footer()
   ImGui.Dummy(ctx, self.WIDTH, self.FOOTER_HEIGHT)
   ImGui.SetCursorPos(ctx, cursor_x + self.PADDING, cursor_y + self.PADDING)
 
-  ReaSpeechUI.link("ReaSpeech Website", self:url_opener(self.HOME_URL))
+  Widgets.link("ReaSpeech Website", self:url_opener(self.HOME_URL))
   ImGui.SameLine(ctx)
-  ReaSpeechUI.link("GitHub", self:url_opener(self.GITHUB_URL))
+  Widgets.link("GitHub", self:url_opener(self.GITHUB_URL))
   ImGui.SameLine(ctx)
-  ReaSpeechUI.link("Docker Hub", self:url_opener(self.DOCKER_HUB_URL))
+  Widgets.link("Docker Hub", self:url_opener(self.DOCKER_HUB_URL))
 end
 
 function ReaSpeechWelcomeUI:url_opener(url)
