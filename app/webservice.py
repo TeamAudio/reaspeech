@@ -25,6 +25,7 @@ from typing import Union, Annotated
 import importlib.metadata
 import logging
 import os
+import re
 import tempfile
 
 from celery.result import AsyncResult
@@ -43,6 +44,7 @@ logging.basicConfig(format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s
 logger = logging.getLogger(__name__)
 
 APP_ENV = os.getenv("APP_ENV", "production")
+APP_ENV = re.sub(r'\W+', '', APP_ENV)
 
 ASR_ENGINE = os.getenv("ASR_ENGINE", "faster_whisper")
 
