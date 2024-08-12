@@ -4,6 +4,7 @@ Script = {
   name = "{{ name }}",
   host = "{{ host }}",
   protocol = "{{ protocol }}",
+  env = "{{ env }}",
   lua = _VERSION:match('[%d.]+'),
   timeout = 30000,
 }

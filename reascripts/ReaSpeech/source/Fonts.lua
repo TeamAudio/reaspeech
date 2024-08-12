@@ -19,6 +19,9 @@ function Fonts:load()
   self.main = ImGui.CreateFont('sans-serif', self.SIZE)
   ImGui.Attach(ctx, self.main)
 
+  self.bold = ImGui.CreateFont('sans-serif', self.SIZE, ImGui.FontFlags_Bold())
+  ImGui.Attach(ctx, self.bold)
+
   if self.LOCAL_FILE then
     self.icons = ImGui.CreateFont(self.LOCAL_FILE, self.SIZE)
     ImGui.Attach(ctx, self.icons)

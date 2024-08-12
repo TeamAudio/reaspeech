@@ -25,6 +25,7 @@ from typing import Union, Annotated
 import importlib.metadata
 import logging
 import os
+import re
 import tempfile
 
 from celery.result import AsyncResult
@@ -41,6 +42,9 @@ from .worker import transcribe
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s', level=logging.INFO, force=True)
 logger = logging.getLogger(__name__)
+
+APP_ENV = os.getenv("APP_ENV", "production")
+APP_ENV = re.sub(r'\W+', '', APP_ENV)
 
 ASR_ENGINE = os.getenv("ASR_ENGINE", "faster_whisper")
 
@@ -106,6 +110,12 @@ output_directory = os.environ.get("OUTPUT_DIRECTORY", os.getcwd() + "/app/output
 output_url_prefix = os.environ.get("OUTPUT_URL_PREFIX", "/output")
 app.mount(output_url_prefix, StaticFiles(directory=output_directory), name="output")
 
+def reascript_filename(name):
+    if APP_ENV == 'production':
+        return f'{name}.lua'
+    else:
+        return f'{name}-{APP_ENV}.lua'
+
 @app.exception_handler(apierror.APIError)
 async def api_exception_handler(request: Request, exc: apierror.APIError):
     return exc.to_response()
@@ -120,19 +130,25 @@ async def index():
 
 @app.get("/reaspeech", response_class=HTMLResponse, include_in_schema=False)
 async def reaspeech(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "docs_url": docs_url})
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "reascript_filename": reascript_filename("ReaSpeech"),
+        "docs_url": docs_url,
+    })
 
 @app.get("/reascript", response_class=PlainTextResponse, include_in_schema=False)
 async def reascript(request: Request, name: str, host: str, protocol: str):
+    filename = reascript_filename(name)
     return templates.TemplateResponse("reascript.lua", {
             "request": request,
             "name": name,
             "host": host,
-            "protocol": protocol
+            "protocol": protocol,
+            "env": APP_ENV,
         },
         media_type='application/x-lua',
         headers={
-            'Content-Disposition': f'attachment; filename="{name}.lua"'
+            'Content-Disposition': f'attachment; filename="{filename}"'
         }
     )
 

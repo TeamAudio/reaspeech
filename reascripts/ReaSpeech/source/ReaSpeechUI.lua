@@ -33,6 +33,11 @@ function ReaSpeechUI:init()
     logs = self.logs,
   })
 
+  if Script.env == 'demo' then
+    self.welcome_ui = ReaSpeechWelcomeUI.new { is_demo = true }
+    self.welcome_ui:present()
+  end
+
   self.controls_ui = ReaSpeechControlsUI.new()
 
   self.actions_ui = ReaSpeechActionsUI.new({
@@ -160,6 +165,9 @@ function ReaSpeechUI:render()
   ImGui.PushItemWidth(ctx, self.ITEM_WIDTH)
 
   self:trap(function ()
+    if self.welcome_ui then
+      self.welcome_ui:render()
+    end
     self.controls_ui:render()
     self.actions_ui:render()
     self.transcript_ui:render()
@@ -181,20 +189,6 @@ function ReaSpeechUI:new_jobs(jobs, endpoint, callback)
   self:debug('Request: ' .. dump(request))
 
   table.insert(self.requests, request)
-end
-
-function ReaSpeechUI.png_from_bytes(image_key)
-  if not IMAGES[image_key] or not IMAGES[image_key].bytes then
-    return
-  end
-
-  local image = IMAGES[image_key]
-
-  if not ImGui.ValidatePtr(image.imgui_image, 'ImGui_Image*') then
-    image.imgui_image = ImGui.CreateImageFromMem(image.bytes)
-  end
-
-  ImGui.Image(ctx, image.imgui_image, image.width, image.height)
 end
 
 function ReaSpeechUI.get_source_path(take)
