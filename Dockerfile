@@ -20,15 +20,16 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     redis \
     && rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -g $SERVICE_GID $SERVICE_USER || true
-RUN useradd -u $SERVICE_UID -g $SERVICE_GID -d /app -s /usr/sbin/nologin $SERVICE_USER || true
+RUN groupadd -g $SERVICE_GID $SERVICE_USER \
+    && useradd -u $SERVICE_UID -g $SERVICE_GID -d /app -s /usr/sbin/nologin $SERVICE_USER \
+    || echo "Error creating service account: $?"
 
 COPY --chown=$SERVICE_UID:$SERVICE_GID . /app
 COPY --chown=$SERVICE_UID:$SERVICE_GID --from=swagger-ui /usr/share/nginx/html/swagger-ui.css /app/swagger-ui-assets/swagger-ui.css
 COPY --chown=$SERVICE_UID:$SERVICE_GID --from=swagger-ui /usr/share/nginx/html/swagger-ui-bundle.js /app/swagger-ui-assets/swagger-ui-bundle.js
 RUN chown $SERVICE_UID:$SERVICE_GID /app
 
-USER $SERVICE_USER
+USER $SERVICE_UID:$SERVICE_GID
 
 WORKDIR /app
 
