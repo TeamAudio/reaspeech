@@ -157,8 +157,8 @@ ReaSpeech service.
 To fix this issue, you can use the `SERVICE_UID` and `SERVICE_GID` Dockerfile
 arguments. By default, the service runs as the `service` user with
 UID 1001 and GID 1001. If you need to change these values, you can set the
-`SERVICE_UID` and `SERVICE_GID` environment variables in the
-`docker-compose.yml` or `docker-compose.gpu.yml` file. For example:
+`SERVICE_UID` and `SERVICE_GID` build arguments in the `docker-compose.yml` or
+`docker-compose.gpu.yml` file. For example:
 
 ```yaml
 services:
