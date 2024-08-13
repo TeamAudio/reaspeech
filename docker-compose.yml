@@ -5,11 +5,9 @@ services:
       dockerfile: Dockerfile
     entrypoint: ["python3", "app/run.py", "--build-reascripts"]
     environment:
-      - ASR_MODEL=small
       - ASR_ENGINE=faster_whisper
     ports:
       - "9000:9000"
-    restart: on-failure
     volumes:
       - ./app:/app/app
       - ./reascripts:/app/reascripts
