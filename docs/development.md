@@ -40,7 +40,7 @@ following command:
 ### CPU
 
 ```sh
-docker-compose up --build
+docker compose up --build
 ```
 
 ### GPU
@@ -50,7 +50,7 @@ the ReaSpeech Docker image using Docker Compose, you can use the following
 command:
 
 ```sh
-docker-compose -f docker-compose.gpu.yml up --build
+docker compose -f docker-compose.gpu.yml up --build
 ```
 
 This will build the Docker image and run it in a container. You can access the
@@ -115,7 +115,7 @@ an action in REAPER.
 The ReaSpeech web service is written in Python using the FastAPI framework. If
 you make changes to the web service code, you will need to restart the web
 service for the changes to take effect. You can do this by stopping the Docker
-container and running `docker-compose up` again. You can also restart the
+container and running `docker compose up` again. You can also restart the
 container by clicking the "Restart" button in the Docker Desktop interface.
 
 ## Environment Variables
@@ -157,22 +157,18 @@ ReaSpeech service.
 To fix this issue, you can use the `SERVICE_UID` and `SERVICE_GID` Dockerfile
 arguments. By default, the service runs as the `service` user with
 UID 1001 and GID 1001. If you need to change these values, you can set the
-`SERVICE_UID` and `SERVICE_GID` environment variables when running the Docker
-container. For example:
-
-```sh
-docker run -d -p 9000:9000 -e SERVICE_USER=app -e SERVICE_UID=1000 -e SERVICE_GID=1000 techaudiodoc/reaspeech:latest
-```
-
-When using Docker Compose, you can set these environment variables in the
+`SERVICE_UID` and `SERVICE_GID` environment variables in the
 `docker-compose.yml` or `docker-compose.gpu.yml` file. For example:
 
 ```yaml
 services:
   reaspeech:
-    environment:
-      - SERVICE_UID=1000
-      - SERVICE_GID=1000
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SERVICE_UID=1000
+        - SERVICE_GID=1000
 ```
 
 ## Restart Behavior
