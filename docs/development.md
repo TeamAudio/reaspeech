@@ -53,6 +53,13 @@ command:
 docker compose -f docker-compose.gpu.yml up --build
 ```
 
+> **_NOTE:_** These instructions assume you are running a version of Docker
+> Compose that supports V2 syntax. If you are using an older version of
+> Docker Compose, you may need to replace "docker compose" with
+> "docker-compose" (hyphenated). See
+> [Migrate to Compose V2](https://docs.docker.com/compose/migrate/)
+> for details.
+
 This will build the Docker image and run it in a container. You can access the
 ReaSpeech web interface at [http://localhost:9000](http://localhost:9000).
 
