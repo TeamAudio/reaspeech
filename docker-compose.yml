@@ -4,8 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        SERVICE_UID: ${SERVICE_UID:-1001}
-        SERVICE_GID: ${SERVICE_GID:-1001}
+        - SERVICE_UID
+        - SERVICE_GID
     entrypoint: ["python3", "app/run.py", "--build-reascripts"]
     environment:
       - ASR_ENGINE=faster_whisper
