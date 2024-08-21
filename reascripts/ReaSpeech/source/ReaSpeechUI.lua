@@ -97,22 +97,6 @@ function ReaSpeechUI:show_file_dialog(options)
   end
 end
 
-function ReaSpeechUI:tooltip(text)
-  if not ImGui.IsItemHovered(ctx, ImGui.HoveredFlags_DelayNormal()) or
-     not ImGui.BeginTooltip(ctx)
-  then return end
-
-  self:trap(function()
-    ImGui.PushTextWrapPos(ctx, ImGui.GetFontSize(ctx) * 42)
-    self:trap(function()
-      ImGui.Text(ctx, text)
-    end)
-    ImGui.PopTextWrapPos(ctx)
-  end)
-
-  ImGui.EndTooltip(ctx)
-end
-
 function ReaSpeechUI:react()
   for _, handler in pairs(self.react_handlers) do
     self:trap(handler)
