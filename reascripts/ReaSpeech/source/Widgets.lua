@@ -6,21 +6,25 @@
 
 Widgets = {}
 
-function Widgets.icon(icon, id, w, h, color)
+function Widgets.icon(icon, id, w, h, tooltip, color)
+  assert(tooltip, 'missing tooltip for icon')
   color = color or 0xffffffff
   local x, y = ImGui.GetCursorScreenPos(ctx)
   local rv = ImGui.InvisibleButton(ctx, id, w, h)
   local dl = ImGui.GetWindowDrawList(ctx)
   icon(dl, x, y, w, h, color)
+  Widgets.tooltip(tooltip)
   return rv
 end
 
-function Widgets.icon_button(icon, id, w, h, color)
+function Widgets.icon_button(icon, id, w, h, tooltip, color)
+  assert(tooltip, 'missing tooltip for icon')
   color = color or 0xffffffff
   local x, y = ImGui.GetCursorScreenPos(ctx)
   local rv = ImGui.Button(ctx, id, w, h)
   local dl = ImGui.GetWindowDrawList(ctx)
   icon(dl, x + w * 0.2, y + h * 0.2, w * 0.6, h * 0.6, color)
+  Widgets.tooltip(tooltip)
   return rv
 end
 

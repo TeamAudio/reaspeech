@@ -259,21 +259,19 @@ function TranscriptEditor:render_score_input()
 end
 
 function TranscriptEditor:render_word_actions()
-  if Widgets.icon_button(Icons.play, '##play', 27, 27) then
+  if Widgets.icon_button(Icons.play, '##play', 27, 27, 'Play word') then
     self:update_time_selection()
     reaper.Main_OnCommand(1016, 0) -- Transport: Stop
     reaper.Main_OnCommand(40630, 0) -- Go to start of time selection
     reaper.Main_OnCommand(40044, 0) -- Transport: Play/stop
   end
-  Widgets.tooltip('Play word')
 
   local spacing = ImGui.GetStyleVar(ctx, ImGui.StyleVar_ItemInnerSpacing())
   ImGui.SameLine(ctx, 0, spacing)
 
-  if Widgets.icon_button(Icons.stop, '##stop', 27, 27) then
+  if Widgets.icon_button(Icons.stop, '##stop', 27, 27, 'Stop') then
     reaper.Main_OnCommand(1016, 0) -- Transport: Stop
   end
-  Widgets.tooltip('Stop')
 
   ImGui.SameLine(ctx)
   local rv, value = ImGui.Checkbox(ctx, 'sync time selection', self.sync_time_selection)
