@@ -7,6 +7,7 @@
 Icons = {}
 
 function Icons.pencil(dl, x, y, w, h, color)
+  -- Tip of pencil
   ImGui.DrawList_AddTriangleFilled(
     dl,
     x,
@@ -16,6 +17,8 @@ function Icons.pencil(dl, x, y, w, h, color)
     x + w * 0.3,
     y + h * 0.9,
     color)
+
+  -- Body of pencil
   ImGui.DrawList_AddQuadFilled(
     dl,
     x + w * 0.15,
@@ -27,6 +30,8 @@ function Icons.pencil(dl, x, y, w, h, color)
     x + w * 0.35,
     y + h * 0.85,
     color)
+
+  -- Eraser
   ImGui.DrawList_AddQuadFilled(
     dl,
     x + w * 0.7,
