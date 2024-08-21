@@ -229,18 +229,12 @@ function TranscriptUI:render_table()
 end
 
 function TranscriptUI:render_segment_actions(segment, index)
-  ImGui.PushFont(ctx, Fonts.icons)
-  app:trap(function()
-    ImGui.Text(ctx, Fonts.ICON.pencil)
-  end)
-  ImGui.PopFont(ctx)
+  if Widgets.icon(Icons.pencil, "##edit" .. index, 14, 14, "Edit") then
+    self.transcript_editor:edit_segment(segment, index)
+  end
   if ImGui.IsItemHovered(ctx) then
     ImGui.SetMouseCursor(ctx, ImGui.MouseCursor_Hand())
   end
-  if ImGui.IsItemClicked(ctx) then
-    self.transcript_editor:edit_segment(segment, index)
-  end
-  app:tooltip("Edit")
 end
 
 function TranscriptUI:render_table_cell(segment, column)

@@ -149,7 +149,7 @@ function TranscriptEditor:render_word_navigation()
   if ImGui.Button(ctx, 'Add') then
     self:handle_word_add()
   end
-  app:tooltip('Add word after current word')
+  Widgets.tooltip('Add word after current word')
 
   ImGui.SameLine(ctx, 0, spacing)
 
@@ -158,13 +158,13 @@ function TranscriptEditor:render_word_navigation()
       self:handle_word_delete()
     end
   end)
-  app:tooltip('Delete current word')
+  Widgets.tooltip('Delete current word')
 
   ImGui.SameLine(ctx, 0, spacing)
   if ImGui.Button(ctx, 'Split') then
     self:handle_word_split()
   end
-  app:tooltip('Split current word into two words')
+  Widgets.tooltip('Split current word into two words')
 
   ImGui.SameLine(ctx, 0, spacing)
   disable_if(word_index >= num_words, function()
@@ -172,7 +172,7 @@ function TranscriptEditor:render_word_navigation()
       self:handle_word_merge()
     end
   end)
-  app:tooltip('Merge current word with next word')
+  Widgets.tooltip('Merge current word with next word')
 end
 
 function TranscriptEditor:render_words()
@@ -258,32 +258,20 @@ function TranscriptEditor:render_score_input()
   end
 end
 
-function TranscriptEditor:render_icon_button(icon, callback)
-  ImGui.PushFont(ctx, Fonts.icons)
-  app:trap(function ()
-    if ImGui.Button(ctx, Fonts.ICON[icon]) then
-      callback()
-    end
-  end)
-  ImGui.PopFont(ctx)
-end
-
 function TranscriptEditor:render_word_actions()
-  self:render_icon_button('play', function ()
+  if Widgets.icon_button(Icons.play, '##play', 27, 27, 'Play word') then
     self:update_time_selection()
     reaper.Main_OnCommand(1016, 0) -- Transport: Stop
     reaper.Main_OnCommand(40630, 0) -- Go to start of time selection
     reaper.Main_OnCommand(40044, 0) -- Transport: Play/stop
-  end)
-  app:tooltip('Play word')
+  end
 
   local spacing = ImGui.GetStyleVar(ctx, ImGui.StyleVar_ItemInnerSpacing())
   ImGui.SameLine(ctx, 0, spacing)
 
-  self:render_icon_button('stop', function ()
+  if Widgets.icon_button(Icons.stop, '##stop', 27, 27, 'Stop') then
     reaper.Main_OnCommand(1016, 0) -- Transport: Stop
-  end)
-  app:tooltip('Stop')
+  end
 
   ImGui.SameLine(ctx)
   local rv, value = ImGui.Checkbox(ctx, 'sync time selection', self.sync_time_selection)

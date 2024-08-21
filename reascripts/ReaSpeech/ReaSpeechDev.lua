@@ -34,8 +34,6 @@ Script = {
   timeout = 30000,
 }
 
-Fonts.LOCAL_FILE = script_path .. "../../app/static/reascripts/ReaSpeech/icons.ttf"
-
 dofile(script_path .. 'source/include/main.lua')
 
 -- Uncomment the following line to load example response data
