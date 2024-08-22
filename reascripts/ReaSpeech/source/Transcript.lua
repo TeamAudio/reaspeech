@@ -94,6 +94,8 @@ function Transcript:sort(column, ascending)
     local a_val, b_val = a:get(column), b:get(column)
     if a_val == nil then a_val = '' end
     if b_val == nil then b_val = '' end
+    if type(a_val) == 'table' then a_val = table.concat(a_val, ', ') end
+    if type(b_val) == 'table' then b_val = table.concat(b_val, ', ') end
     if not ascending then
       a_val, b_val = b_val, a_val
     end

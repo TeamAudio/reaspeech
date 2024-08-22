@@ -314,24 +314,27 @@ end
 
 function TranscriptUI:sort_table()
   local specs_dirty, has_specs = ImGui.TableNeedSort(ctx)
-  if has_specs and specs_dirty then
-    local columns = self.transcript:get_columns()
-    local column = nil
-    local ascending = true
+  if not specs_dirty then return end
 
-    for next_id = 0, math.huge do
-      local ok, _, col_idx, _, sort_direction =
-        ImGui.TableGetColumnSortSpecs(ctx, next_id)
-      if not ok then break end
+  if not has_specs then
+    self.transcript:update()
+    return
+  end
 
-      column = columns[col_idx]
-      ascending = (sort_direction == ImGui.SortDirection_Ascending())
-    end
+  local columns = self.transcript:get_columns()
+  local column = nil
+  local ascending = true
 
-    if column then
-      self.transcript:sort(column, ascending)
-    else
-      self.transcript:update()
-    end
+  for next_id = 0, math.huge do
+    local ok, col_idx, _, sort_direction =
+      ImGui.TableGetColumnSortSpecs(ctx, next_id)
+    if not ok then break end
+
+    column = columns[col_idx]
+    ascending = (sort_direction == ImGui.SortDirection_Ascending())
+  end
+
+  if column then
+    self.transcript:sort(column, ascending)
   end
 end
