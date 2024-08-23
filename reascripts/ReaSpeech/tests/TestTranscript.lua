@@ -198,13 +198,15 @@ function TestTranscript:testSort()
     id = 1,
     start = 1.0,
     end_ = 2.0,
-    text = "test 1"
+    text = "test 1",
+    tokens = {3, 2, 1},
   })
   t:add_segment(self.segment {
     id = 2,
     start = 2.0,
     end_ = 3.0,
-    text = "test 2"
+    text = "test 2",
+    tokens = {1, 2, 3},
   })
   t:update()
   t:sort('id', true)
@@ -212,6 +214,10 @@ function TestTranscript:testSort()
   lu.assertEquals(segments[1]:get('id'), 1)
   lu.assertEquals(segments[2]:get('id'), 2)
   t:sort('id', false)
+  segments = t:get_segments()
+  lu.assertEquals(segments[1]:get('id'), 2)
+  lu.assertEquals(segments[2]:get('id'), 1)
+  t:sort('tokens', true)
   segments = t:get_segments()
   lu.assertEquals(segments[1]:get('id'), 2)
   lu.assertEquals(segments[2]:get('id'), 1)
