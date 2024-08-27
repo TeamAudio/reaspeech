@@ -3,6 +3,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.gpu
+      args:
+        - SERVICE_UID
+        - SERVICE_GID
     entrypoint: ["python3", "app/run.py", "--build-reascripts"]
     deploy:
       resources:

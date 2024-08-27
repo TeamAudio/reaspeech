@@ -154,29 +154,25 @@ services:
 
 ## Filesystem Permissions
 
-When running the ReaSpeech Docker image with Docker Compose, the "app" directory
-is mounted as a volume in the container. This allows you to make changes to the
-ReaSpeech code and see the changes reflected in the container without having to
-rebuild the image. However, the permissions on the mounted volume may not match
-the permissions in the container, which can cause issues when running the
-ReaSpeech service.
+When running the ReaSpeech Docker image with Docker Compose, the "app" and
+"reaspeech" directories are mounted as volumes in the container. This allows
+you to make changes to the ReaSpeech code and see the changes reflected in the
+container without having to rebuild the image. However, the permissions on the
+mounted volume may not match the permissions in the container, which can cause
+issues when running the ReaSpeech service.
 
 To fix this issue, you can use the `SERVICE_UID` and `SERVICE_GID` Dockerfile
-arguments. By default, the service runs as the `service` user with
-UID 1001 and GID 1001. If you need to change these values, you can set the
-`SERVICE_UID` and `SERVICE_GID` build arguments in the `docker-compose.yml` or
-`docker-compose.gpu.yml` file. For example:
+arguments. By default, the service runs as the `service` user with UID 1001
+and GID 1001. If you need to change these values, you can create a `.env` file
+that sets the `SERVICE_UID` and `SERVICE_GID` environment variables. An
+example is provided, which you can copy and modify to taste:
 
-```yaml
-services:
-  reaspeech:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - SERVICE_UID=1000
-        - SERVICE_GID=1000
+```sh
+cp .env.example .env
 ```
+
+This file will be ignored by Docker and Git, so you can use it to customize
+your local environment.
 
 ## Restart Behavior
 

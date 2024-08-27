@@ -41,4 +41,5 @@ pip-wheel-metadata
 
 poetry/core/*
 
+.env
 app/output/*/
