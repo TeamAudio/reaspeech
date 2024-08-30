@@ -9,6 +9,7 @@ services:
     entrypoint: ["python3", "app/run.py", "--build-reascripts"]
     environment:
       - ASR_ENGINE=faster_whisper
+      - ENABLE_SWAGGER_UI=/docs
     ports:
       - "9000:9000"
     volumes:

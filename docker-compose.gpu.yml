@@ -16,6 +16,7 @@ services:
               capabilities: [gpu]
     environment:
       - ASR_ENGINE=faster_whisper
+      - ENABLE_SWAGGER_UI=/docs
     ports:
       - "9000:9000"
     volumes:

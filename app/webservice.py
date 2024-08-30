@@ -39,6 +39,8 @@ import aiofiles
 
 from .util import apierror
 from .worker import transcribe
+from .script_matching.script_matching import script_match
+
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s', level=logging.INFO, force=True)
 logger = logging.getLogger(__name__)
@@ -227,3 +229,17 @@ async def revoke_job(job_id: str):
         "job_status": job.status
     }
     return JSONResponse(result)
+
+@app.post("/script-match", tags=["Endpoints"])
+async def script_match_endpoint(
+    transcript_json_file: UploadFile = File(...),
+    script_excel_file: UploadFile = File(...)
+):
+    try:
+        transcript_content = await transcript_json_file.read()
+        script_content = await script_excel_file.read()
+
+        results = await script_match(transcript_content, script_content)
+        return JSONResponse(content=results)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=400)

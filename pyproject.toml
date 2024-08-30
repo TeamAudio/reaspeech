@@ -43,6 +43,10 @@ celery = "^5.2.7"
 redis = "^4.5.4"
 ctranslate2 = "4.2.1"
 aiofiles = "^23.2.1"
+fuzzywuzzy = "^0.18.0"
+pandas = "1.5.3"
+python-levenshtein = "^0.25.1"
+openpyxl = "^3.1.5"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
