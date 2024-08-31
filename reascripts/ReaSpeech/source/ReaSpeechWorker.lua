@@ -275,7 +275,7 @@ function ReaSpeechWorker:handle_response_json(output_file, sentinel_file, succes
     return
   end
 
-  local http_status, body = ReaSpeechAPI.http_status_and_body(f)
+  local http_status, body = CurlRequest.http_status_and_body(f)
   f:close()
 
   if http_status == -1 then
