@@ -22,10 +22,17 @@ CurlRequest = Polo {
 function CurlRequest.async(options)
   options.use_async = true
   options.output_file = Tempfile:name()
-  options.extra_curl_options = {
-    ' -o ' .. options.output_file,
-  }
   options.sentinel_file = Tempfile:name()
+  options.extra_curl_options = options.extra_curl_options or {}
+
+  local extra_extra_curl_options = {
+    '-o ' .. options.output_file,
+    '--write-out "%output{' .. options.sentinel_file .. '}done"',
+  }
+
+  for _, o in ipairs(extra_extra_curl_options) do
+    table.insert(options.extra_curl_options, o)
+  end
 
   return CurlRequest.new(options)
 end
@@ -161,7 +168,7 @@ function CurlRequest:execute_sync(command)
 end
 
 function CurlRequest:execute_async(command)
-  local executor = ExecProcess.new { command, self.touch_cmd(self.sentinel_file) }
+  local executor = ExecProcess.new { command }
 
   if not executor:background() then
     local err = "Unable to run curl"
@@ -255,20 +262,15 @@ CurlRequest.check_sentinel = function(filename)
     return false
   end
 
+  local contents = sentinel:read("a")
   sentinel:close()
-  return true
-end
 
-CurlRequest.touch_cmd = function(filename)
-  if reaper.GetOS():find("Win") then
-    return 'echo. > "' .. filename .. '"'
-  else
-    return 'touch "' .. filename .. '"'
-  end
+  return contents and contents == "done"
 end
 
 function CurlRequest.http_status_and_body(response)
   local headers, content = CurlRequest._split_curl_response(response)
+  app:debug('Parsing response: ' .. dump(headers) .. ', ' .. dump(content))
   local last_status_line = headers[#headers] and headers[#headers][1] or ''
 
   local status = last_status_line:match("^HTTP/%d%.%d%s+(%d+)")
