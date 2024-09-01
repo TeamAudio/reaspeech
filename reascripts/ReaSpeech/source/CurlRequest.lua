@@ -19,6 +19,17 @@ CurlRequest = Polo {
   DEFAULT_TIMEOUT_HANDLER = function() end,
 }
 
+function CurlRequest.async(options)
+  options.use_async = true
+  options.output_file = Tempfile:name()
+  options.extra_curl_options = {
+    ' -o ' .. options.output_file,
+  }
+  options.sentinel_file = Tempfile:name()
+
+  return CurlRequest.new(options)
+end
+
 function CurlRequest:init()
   assert(self.url, 'missing url')
 
@@ -33,15 +44,107 @@ end
 function CurlRequest:execute()
   local command = table.concat({
     self.get_curl_cmd(),
-    ' "', self.url, '"',
+    '"' .. self.url .. '"',
     self:extra_curl_arguments(),
     self:curl_header_arguments(),
     self:curl_http_method_argument(),
     self:curl_timeout_argument(),
-  })
+  }, ' ')
 
   app:debug('CurlRequest: ' .. command)
 
+  if not self.use_async then
+    return self:execute_sync(command)
+  end
+
+  local executor = ExecProcess.new { command, self.touch_cmd(self.sentinel_file) }
+
+  if not executor:background() then
+    local err = "Unable to run curl"
+    app:log(err)
+    self.error_handler(err)
+  end
+
+  return self
+end
+
+CurlRequest.check_sentinel = function(filename)
+  local sentinel = io.open(filename, 'r')
+
+  if not sentinel then
+    return false
+  end
+
+  sentinel:close()
+  return true
+end
+
+function CurlRequest:ready()
+  if not self.check_sentinel(self.sentinel_file) then
+    return false
+  end
+
+  local f = io.open(self.output_file, 'r')
+  if not f then
+    self.error_msg = "Couldn't open output file: " .. tostring(self.output_file)
+    Tempfile.remove(self.sentinel_file)
+    return false
+  end
+
+  local http_status, body = self.http_status_and_body(f)
+  f:close()
+
+  if http_status == -1 then
+    app:debug(body .. ", trying again later")
+    return false
+  end
+
+  Tempfile:remove(self.output_file)
+  Tempfile:remove(self.sentinel_file)
+
+  if http_status ~= 200 then
+    self.error_msg = "Server responded with status " .. http_status
+    self.error_handler(self.error_msg)
+    app:log(self.error_msg)
+    app:debug(body)
+    return false
+  end
+
+  if #body < 1 then
+    self.error_msg = "Empty response"
+    self.error_handler(self.error_msg)
+    return false
+  end
+
+  if app:trap(function()
+    self.response = json.decode(body)
+  end) then
+    return true
+  else
+    self.error_msg = "JSON parse error"
+    self.error_handler(self.error_msg)
+    app:log(body)
+    return false
+  end
+end
+
+function CurlRequest:error()
+  return self.error_msg
+end
+
+function CurlRequest:result()
+  return self.response
+end
+
+CurlRequest.touch_cmd = function(filename)
+  if reaper.GetOS():find("Win") then
+    return 'echo. > "' .. filename .. '"'
+  else
+    return 'touch "' .. filename .. '"'
+  end
+end
+
+function CurlRequest:execute_sync(command)
   local exec_result = (ExecProcess.new { command }):wait()
 
   if exec_result == nil then

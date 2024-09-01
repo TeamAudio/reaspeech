@@ -180,7 +180,8 @@ function ReaSpeechWorker:handle_job_status(active_job, response)
   if response.job_status == 'SUCCESS' then
     local transcript_url_path = response.job_result.url_path
     response._job = active_job.job
-    active_job.transcript_output_file, active_job.transcript_output_sentinel_file = ReaSpeechAPI:fetch_large(transcript_url_path)
+    active_job.transcript_request = ReaSpeechAPI:fetch_large(transcript_url_path)
+
     -- Job completion depends on non-blocking download of transcript
     return false
   elseif response.job_status == 'FAILURE' then
@@ -231,7 +232,7 @@ function ReaSpeechWorker:check_active_job()
     self:check_active_job_request_output_file()
   end
 
-  if active_job.transcript_output_file then
+  if active_job.transcript_request then
     self:check_active_job_transcript_output_file()
   else
     self:check_active_job_status()
@@ -252,19 +253,8 @@ function ReaSpeechWorker:check_active_job_status()
   end
 end
 
-ReaSpeechWorker.check_sentinel = function(filename)
-  local sentinel = io.open(filename, 'r')
-
-  if not sentinel then
-    return false
-  end
-
-  sentinel:close()
-  return true
-end
-
 function ReaSpeechWorker:handle_response_json(output_file, sentinel_file, success_f, fail_f)
-  if not self.check_sentinel(sentinel_file) then
+  if not CurlRequest.check_sentinel(sentinel_file) then
     return
   end
 
@@ -329,17 +319,13 @@ end
 
 function ReaSpeechWorker:check_active_job_transcript_output_file()
   local active_job = self.active_job
+  local request = active_job.transcript_request
 
-  self:handle_response_json(
-    active_job.transcript_output_file,
-    active_job.transcript_output_sentinel_file,
-    function(response)
-      self:handle_response(active_job, response)
-      self.active_job = nil
-    end,
-    function(error_message)
-      self:handle_error(active_job, error_message)
-      self.active_job = nil
-    end
-  )
+  if request:ready() then
+    self:handle_response(active_job, request:result())
+    self.active_job = nil
+  elseif request:error() then
+    self:handle_error(active_job, request:error())
+    self.active_job = nil
+  end
 end

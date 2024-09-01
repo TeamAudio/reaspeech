@@ -43,47 +43,12 @@ end
 -- This method is non-blocking, and does not give any indication that it has
 -- completed. The path to the output file is returned.
 function ReaSpeechAPI:fetch_large(url_path, http_method)
-  http_method = http_method or 'GET'
+  local request = CurlRequest.async {
+    url = self:get_api_url(url_path),
+    method = http_method or 'GET',
+  }
 
-  local curl = CurlRequest.get_curl_cmd()
-  local api_url = self:get_api_url(url_path)
-
-  local http_method_argument = ""
-  if http_method ~= 'GET' then
-    http_method_argument = " -X " .. http_method
-  end
-
-  local output_file = Tempfile:name()
-  local sentinel_file = Tempfile:name()
-
-  local command = table.concat({
-    curl,
-    ' "', api_url, '"',
-    ' --http1.1',
-    ' -H "accept: application/json"',
-    http_method_argument,
-    ' -i ',
-    ' -o "', output_file, '"',
-  })
-
-  app:debug('Fetch large: ' .. command)
-
-  local executor = ExecProcess.new { command, self.touch_cmd(sentinel_file) }
-
-  if executor:background() then
-    return output_file, sentinel_file
-  else
-    app:log("Unable to run curl")
-    return nil
-  end
-end
-
-ReaSpeechAPI.touch_cmd = function(filename)
-  if reaper.GetOS():find("Win") then
-    return 'echo. > "' .. filename .. '"'
-  else
-    return 'touch "' .. filename .. '"'
-  end
+  return request:execute()
 end
 
 -- Uploads a file to start a request for processing.
@@ -115,7 +80,7 @@ function ReaSpeechAPI:post_request(url_path, data, file_path)
   app:log(file_path)
   app:debug('Post request: ' .. command)
 
-  local executor = ExecProcess.new { command, self.touch_cmd(sentinel_file) }
+  local executor = ExecProcess.new { command, CurlRequest.touch_cmd(sentinel_file) }
 
   if executor:background() then
     return output_file, sentinel_file
