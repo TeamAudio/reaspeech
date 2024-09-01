@@ -69,45 +69,22 @@ function CurlRequest._maybe_quote(str)
 end
 
 function CurlRequest:execute()
-  local command = table.concat({
-    self.get_curl_cmd(),
-    self:get_url(),
-    self:extra_curl_arguments(),
-    self:curl_http_method_argument(),
-    self:curl_header_arguments(),
-    self:file_upload_arguments(),
-    self:curl_timeout_argument(),
-  }, ' ')
+  local command = self:build_curl_command()
 
   app:debug('CurlRequest: ' .. command)
 
-  if not self.use_async then
+  if self.use_async then
+    return self:execute_async(command)
+  else
     return self:execute_sync(command)
   end
-
-  local executor = ExecProcess.new { command, self.touch_cmd(self.sentinel_file) }
-
-  if not executor:background() then
-    local err = "Unable to run curl"
-    app:log(err)
-    self.error_handler(err)
-  end
-
-  return self
-end
-
-CurlRequest.check_sentinel = function(filename)
-  local sentinel = io.open(filename, 'r')
-
-  if not sentinel then
-    return false
-  end
-
-  sentinel:close()
-  return true
 end
 
 function CurlRequest:ready()
+  if self.response then
+    return true
+  end
+
   if not self.check_sentinel(self.sentinel_file) then
     return false
   end
@@ -164,14 +141,6 @@ function CurlRequest:result()
   return self.response
 end
 
-CurlRequest.touch_cmd = function(filename)
-  if reaper.GetOS():find("Win") then
-    return 'echo. > "' .. filename .. '"'
-  else
-    return 'touch "' .. filename .. '"'
-  end
-end
-
 function CurlRequest:execute_sync(command)
   local exec_result = (ExecProcess.new { command }):wait()
 
@@ -214,6 +183,49 @@ function CurlRequest:execute_sync(command)
     app:log("JSON parse error")
     app:log(output)
     return nil
+  end
+end
+
+function CurlRequest:execute_async(command)
+  local executor = ExecProcess.new { command, self.touch_cmd(self.sentinel_file) }
+
+  if not executor:background() then
+    local err = "Unable to run curl"
+    app:log(err)
+    self.error_handler(err)
+  end
+
+  return self
+end
+
+function CurlRequest:build_curl_command()
+  return table.concat({
+    self.get_curl_cmd(),
+    self:get_url(),
+    self:extra_curl_arguments(),
+    self:curl_http_method_argument(),
+    self:curl_header_arguments(),
+    self:file_upload_arguments(),
+    self:curl_timeout_argument(),
+  }, ' ')
+end
+
+CurlRequest.check_sentinel = function(filename)
+  local sentinel = io.open(filename, 'r')
+
+  if not sentinel then
+    return false
+  end
+
+  sentinel:close()
+  return true
+end
+
+CurlRequest.touch_cmd = function(filename)
+  if reaper.GetOS():find("Win") then
+    return 'echo. > "' .. filename .. '"'
+  else
+    return 'touch "' .. filename .. '"'
   end
 end
 

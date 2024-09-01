@@ -212,7 +212,7 @@ function ReaSpeechWorker:start_active_job()
   end
 
   local active_job = self.active_job
-  active_job.request = ReaSpeechAPI:post_request(
+  active_job.initial_request = ReaSpeechAPI:post_request(
     active_job.endpoint, active_job.data, active_job.job.path)
 end
 
@@ -221,12 +221,12 @@ function ReaSpeechWorker:check_active_job()
 
   local active_job = self.active_job
 
-  if active_job.request then
-    self:check_active_job_request_output_file()
+  if active_job.initial_request then
+    self:check_active_job_request_status()
   end
 
   if active_job.transcript_request then
-    self:check_active_job_transcript_output_file()
+    self:check_active_job_transcript_request_status()
   else
     self:check_active_job_status()
   end
@@ -246,9 +246,9 @@ function ReaSpeechWorker:check_active_job_status()
   end
 end
 
-function ReaSpeechWorker:check_active_job_request_output_file()
+function ReaSpeechWorker:check_active_job_request_status()
   local active_job = self.active_job
-  local request = active_job.request
+  local request = active_job.initial_request
 
   if request:ready() then
     if self:handle_job_status(active_job, request:result()) then
@@ -260,7 +260,7 @@ function ReaSpeechWorker:check_active_job_request_output_file()
   end
 end
 
-function ReaSpeechWorker:check_active_job_transcript_output_file()
+function ReaSpeechWorker:check_active_job_transcript_request_status()
   local active_job = self.active_job
   local request = active_job.transcript_request
 
