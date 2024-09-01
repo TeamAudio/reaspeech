@@ -212,15 +212,8 @@ function ReaSpeechWorker:start_active_job()
   end
 
   local active_job = self.active_job
-  local output_file, sentinel_file = ReaSpeechAPI:post_request(
+  active_job.request = ReaSpeechAPI:post_request(
     active_job.endpoint, active_job.data, active_job.job.path)
-
-  if output_file then
-    active_job.request_output_file = output_file
-    active_job.request_output_sentinel_file = sentinel_file
-  else
-    self.active_job = nil
-  end
 end
 
 function ReaSpeechWorker:check_active_job()
@@ -228,7 +221,7 @@ function ReaSpeechWorker:check_active_job()
 
   local active_job = self.active_job
 
-  if active_job.request_output_file then
+  if active_job.request then
     self:check_active_job_request_output_file()
   end
 
@@ -253,68 +246,18 @@ function ReaSpeechWorker:check_active_job_status()
   end
 end
 
-function ReaSpeechWorker:handle_response_json(output_file, sentinel_file, success_f, fail_f)
-  if not CurlRequest.check_sentinel(sentinel_file) then
-    return
-  end
-
-  local f = io.open(output_file, 'r')
-  if not f then
-    fail_f("Couldn't open output file: " .. tostring(output_file))
-    Tempfile:remove(sentinel_file)
-    return
-  end
-
-  local http_status, body = CurlRequest.http_status_and_body(f)
-  f:close()
-
-  if http_status == -1 then
-    app:debug(body .. ", trying again later")
-    return
-  end
-
-  Tempfile:remove(output_file)
-  Tempfile:remove(sentinel_file)
-
-  if http_status ~= 200 then
-    local msg = "Server responded with status " .. http_status
-    fail_f(msg)
-    app:log(msg)
-    app:debug(body)
-    return
-  end
-
-  if #body < 1 then
-    fail_f("Empty response from server")
-    return
-  end
-
-  local response = nil
-  if app:trap(function ()
-    response = json.decode(body)
-  end) then
-    success_f(response)
-  else
-    fail_f("Error parsing response JSON")
-  end
-end
-
 function ReaSpeechWorker:check_active_job_request_output_file()
   local active_job = self.active_job
+  local request = active_job.request
 
-  self:handle_response_json(
-    active_job.request_output_file,
-    active_job.request_output_sentinel_file,
-    function(response)
-      if self:handle_job_status(active_job, response) then
-        self.active_job = nil
-      end
-    end,
-    function(error_message)
-      self:handle_error(active_job, error_message)
+  if request:ready() then
+    if self:handle_job_status(active_job, request:result()) then
       self.active_job = nil
     end
-  )
+  elseif request:error() then
+    self:handle_error(active_job, request:error())
+    self.active_job = nil
+  end
 end
 
 function ReaSpeechWorker:check_active_job_transcript_output_file()

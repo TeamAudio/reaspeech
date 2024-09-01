@@ -33,6 +33,7 @@ end
 function CurlRequest:init()
   assert(self.url, 'missing url')
 
+  self.query_data = self.query_data or {}
   self.http_method = self.http_method or self.DEFAULT_HTTP_METHOD
   self.headers = self.headers or self.DEFAULT_HEADERS
   self.curl_timeout = self.curl_timeout or self.DEFAULT_CURL_TIMEOUT
@@ -41,13 +42,40 @@ function CurlRequest:init()
   self.timeout_handler = self.timeout_handler or self.DEFAULT_TIMEOUT_HANDLER
 end
 
+function CurlRequest:get_url()
+  local query = {}
+  for k, v in pairs(self.query_data) do
+    table.insert(query, k .. '=' .. url.quote(v))
+  end
+
+  return self.url .. '?' .. table.concat(query, '&')
+end
+
+function CurlRequest:file_upload_arguments()
+  local uploads = ""
+  for key, path in pairs(self.file_uploads or {}) do
+    uploads = uploads .. ' -F ' .. self._maybe_quote(key .. '=@"' .. path .. '"')
+  end
+
+  return uploads
+end
+
+function CurlRequest._maybe_quote(str)
+  if reaper.GetOS():find("Win") then
+    return str
+  else
+    return "'" .. str .. "'"
+  end
+end
+
 function CurlRequest:execute()
   local command = table.concat({
     self.get_curl_cmd(),
-    '"' .. self.url .. '"',
+    self:get_url(),
     self:extra_curl_arguments(),
-    self:curl_header_arguments(),
     self:curl_http_method_argument(),
+    self:curl_header_arguments(),
+    self:file_upload_arguments(),
     self:curl_timeout_argument(),
   }, ' ')
 

@@ -55,45 +55,17 @@ end
 -- This method is non-blocking, and does not give any indication that it has
 -- completed. The path to the output file is returned.
 function ReaSpeechAPI:post_request(url_path, data, file_path)
-  local curl = CurlRequest.get_curl_cmd()
-  local api_url = self:get_api_url(url_path)
+  local request = CurlRequest.async {
+    url = self:get_api_url(url_path),
+    method = 'POST',
+    headers = {
+      ['Content-Type'] = 'multipart/form-data',
+    },
+    query_data = data,
+    file_uploads = {
+      audio_file = file_path,
+    },
+  }
 
-  local query = {}
-  for k, v in pairs(data) do
-    table.insert(query, k .. '=' .. url.quote(v))
-  end
-
-  local output_file = Tempfile:name()
-  local sentinel_file = Tempfile:name()
-
-  local command = table.concat({
-    curl,
-    ' "', api_url, '?', table.concat(query, '&'), '"',
-    ' --http1.1',
-    ' -H "accept: application/json"',
-    ' -H "Content-Type: multipart/form-data"',
-    ' -F ', self:_maybe_quote('audio_file=@"' .. file_path .. '"'),
-    ' -i ',
-    ' -o "', output_file, '"',
-  })
-
-  app:log(file_path)
-  app:debug('Post request: ' .. command)
-
-  local executor = ExecProcess.new { command, CurlRequest.touch_cmd(sentinel_file) }
-
-  if executor:background() then
-    return output_file, sentinel_file
-  else
-    app:log("Unable to run curl")
-    return nil
-  end
-end
-
-function ReaSpeechAPI:_maybe_quote(arg)
-  if reaper.GetOS():find("Win") then
-    return arg
-  else
-    return "'" .. arg .. "'"
-  end
+  return request:execute()
 end
