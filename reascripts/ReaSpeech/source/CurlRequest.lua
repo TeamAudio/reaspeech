@@ -198,7 +198,7 @@ function CurlRequest:get_url()
     table.insert(query, k .. '=' .. url.quote(v))
   end
 
-  return self.url .. '?' .. table.concat(query, '&')
+  return '"' .. self.url .. '?' .. table.concat(query, '&') .. '"'
 end
 
 function CurlRequest:extra_curl_arguments()
