@@ -42,32 +42,6 @@ function CurlRequest:init()
   self.timeout_handler = self.timeout_handler or self.DEFAULT_TIMEOUT_HANDLER
 end
 
-function CurlRequest:get_url()
-  local query = {}
-  for k, v in pairs(self.query_data) do
-    table.insert(query, k .. '=' .. url.quote(v))
-  end
-
-  return self.url .. '?' .. table.concat(query, '&')
-end
-
-function CurlRequest:file_upload_arguments()
-  local uploads = ""
-  for key, path in pairs(self.file_uploads or {}) do
-    uploads = uploads .. ' -F ' .. self._maybe_quote(key .. '=@"' .. path .. '"')
-  end
-
-  return uploads
-end
-
-function CurlRequest._maybe_quote(str)
-  if reaper.GetOS():find("Win") then
-    return str
-  else
-    return "'" .. str .. "'"
-  end
-end
-
 function CurlRequest:execute()
   local command = self:build_curl_command()
 
@@ -210,6 +184,70 @@ function CurlRequest:build_curl_command()
   }, ' ')
 end
 
+function CurlRequest.get_curl_cmd()
+  local curl = "curl"
+  if not reaper.GetOS():find("Win") then
+    curl = "/usr/bin/curl"
+  end
+  return curl
+end
+
+function CurlRequest:get_url()
+  local query = {}
+  for k, v in pairs(self.query_data) do
+    table.insert(query, k .. '=' .. url.quote(v))
+  end
+
+  return self.url .. '?' .. table.concat(query, '&')
+end
+
+function CurlRequest:extra_curl_arguments()
+  return table.concat(self.BASE_CURL_OPTIONS, ' ')
+    .. ' ' .. table.concat(self.extra_curl_options, ' ')
+end
+
+function CurlRequest:curl_http_method_argument()
+  if self.http_method == 'GET' then
+    return ''
+  end
+
+  return " -X " .. self.http_method
+end
+
+function CurlRequest:curl_header_arguments()
+  local headers = ""
+  for key, value in pairs(self.headers) do
+    headers = headers .. ' -H "' .. key .. ': ' .. value .. '"'
+  end
+
+  return headers
+end
+
+function CurlRequest:file_upload_arguments()
+  local uploads = ""
+  for key, path in pairs(self.file_uploads or {}) do
+    uploads = uploads .. ' -F ' .. self._maybe_quote(key .. '=@"' .. path .. '"')
+  end
+
+  return uploads
+end
+
+function CurlRequest._maybe_quote(str)
+  if reaper.GetOS():find("Win") then
+    return str
+  else
+    return "'" .. str .. "'"
+  end
+end
+
+function CurlRequest:curl_timeout_argument()
+  if not self.async or self.curl_timeout == 0 then
+    return ''
+  end
+
+  return ' -m ' .. self.curl_timeout
+end
+
 CurlRequest.check_sentinel = function(filename)
   local sentinel = io.open(filename, 'r')
 
@@ -227,44 +265,6 @@ CurlRequest.touch_cmd = function(filename)
   else
     return 'touch "' .. filename .. '"'
   end
-end
-
-function CurlRequest:curl_header_arguments()
-  local headers = ""
-  for key, value in pairs(self.headers) do
-    headers = headers .. ' -H "' .. key .. ': ' .. value .. '"'
-  end
-
-  return headers
-end
-
-function CurlRequest:extra_curl_arguments()
-  return table.concat(self.BASE_CURL_OPTIONS, ' ')
-    .. ' ' .. table.concat(self.extra_curl_options, ' ')
-end
-
-function CurlRequest:curl_http_method_argument()
-  if self.http_method == 'GET' then
-    return ''
-  end
-
-  return " -X " .. self.http_method
-end
-
-function CurlRequest:curl_timeout_argument()
-  if not self.async or self.curl_timeout == 0 then
-    return ''
-  end
-
-  return ' -m ' .. self.curl_timeout
-end
-
-function CurlRequest.get_curl_cmd()
-  local curl = "curl"
-  if not reaper.GetOS():find("Win") then
-    curl = "/usr/bin/curl"
-  end
-  return curl
 end
 
 function CurlRequest.http_status_and_body(response)
