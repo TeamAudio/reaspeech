@@ -77,8 +77,11 @@ function ReaSpeechWorker:progress()
   -- the active job adds 1 to the total count, and if we can know the progress
   -- then we can use that fraction
   if self.active_job then
-    if self.active_job.job and self.active_job.job.progress then
-      local progress = self.active_job.job.progress
+    local active_job = self.active_job
+    if active_job.initial_request and not active_job.initial_request:ready() then
+      active_job_progress = active_job.initial_request:progress() / 100
+    elseif active_job.job and active_job.job.progress then
+      local progress = active_job.job.progress
       active_job_progress = (progress.current / progress.total)
     end
 
@@ -90,8 +93,13 @@ function ReaSpeechWorker:progress()
 end
 
 function ReaSpeechWorker:status()
-  if self.active_job and self.active_job.job then
-    return self.active_job.job.job_status
+  if self.active_job then
+    local active_job = self.active_job
+    if active_job.initial_request and not active_job.initial_request:ready() then
+      return 'Uploading'
+    elseif active_job.job then
+      return active_job.job.job_status
+    end
   end
 end
 

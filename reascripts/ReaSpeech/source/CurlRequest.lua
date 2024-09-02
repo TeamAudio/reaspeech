@@ -23,11 +23,17 @@ function CurlRequest.async(options)
   options.use_async = true
   options.output_file = Tempfile:name()
   options.sentinel_file = Tempfile:name()
+  options.progress_file = Tempfile:name()
   options.extra_curl_options = options.extra_curl_options or {}
 
   local extra_extra_curl_options = {
     '-o ' .. options.output_file,
     '--write-out "%output{' .. options.sentinel_file .. '}done"',
+    '--stderr ' .. options.progress_file,
+    '-#',
+
+    -- useful for testing transfer progress
+    -- '--limit-rate 2M',
   }
 
   for _, o in ipairs(extra_extra_curl_options) do
@@ -87,6 +93,7 @@ function CurlRequest:ready()
 
   Tempfile:remove(self.output_file)
   Tempfile:remove(self.sentinel_file)
+  Tempfile:remove(self.progress_file)
 
   if http_status ~= 200 then
     self.error_msg = "Server responded with status " .. http_status
@@ -120,6 +127,33 @@ end
 
 function CurlRequest:result()
   return self.response
+end
+
+function CurlRequest:progress()
+  local file = io.open(self.progress_file, "r")
+  if not file then
+    local msg = "Unable to open progress file"
+    app:log(msg)
+    self.error_handler(msg)
+    return nil
+  end
+
+  local content = file:read("a")
+  file:close()
+
+  local max_percentage = 0.0
+
+  for match in content:gmatch("[%d%.]+%%") do
+    local pct_str, match_count = match:gsub("%%", "")
+    if match_count > 0 then
+      local percentage = tonumber(pct_str)
+      if percentage > max_percentage then
+        max_percentage = percentage
+      end
+    end
+  end
+
+  return max_percentage
 end
 
 function CurlRequest:execute_sync(command)
