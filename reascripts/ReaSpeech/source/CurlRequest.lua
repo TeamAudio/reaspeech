@@ -72,7 +72,7 @@ function CurlRequest:ready()
     return true
   end
 
-  if not self.check_sentinel(self.sentinel_file) then
+  if not self:check_sentinel() then
     return false
   end
 
@@ -289,8 +289,8 @@ function CurlRequest:curl_timeout_argument()
   return ' -m ' .. self.curl_timeout
 end
 
-CurlRequest.check_sentinel = function(filename)
-  local sentinel = io.open(filename, 'r')
+function CurlRequest:check_sentinel()
+  local sentinel = io.open(self.sentinel_file, 'r')
 
   if not sentinel then
     return false
