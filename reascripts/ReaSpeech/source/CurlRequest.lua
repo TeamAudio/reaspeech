@@ -79,7 +79,7 @@ function CurlRequest:ready()
   local f = io.open(self.output_file, 'r')
   if not f then
     self.error_msg = "Couldn't open output file: " .. tostring(self.output_file)
-    Tempfile.remove(self.sentinel_file)
+    Tempfile:remove(self.sentinel_file)
     return false
   end
 
