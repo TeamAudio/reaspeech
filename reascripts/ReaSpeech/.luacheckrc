@@ -7,6 +7,7 @@ globals = {
   "IMAGES",
   "Polo",
   "ReaUtil",
+  "table",
 }
 
 allow_defined = true

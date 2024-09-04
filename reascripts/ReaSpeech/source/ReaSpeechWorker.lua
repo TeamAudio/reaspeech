@@ -77,8 +77,11 @@ function ReaSpeechWorker:progress()
   -- the active job adds 1 to the total count, and if we can know the progress
   -- then we can use that fraction
   if self.active_job then
-    if self.active_job.job and self.active_job.job.progress then
-      local progress = self.active_job.job.progress
+    local active_job = self.active_job
+    if active_job.initial_request and not active_job.initial_request:ready() then
+      active_job_progress = active_job.initial_request:progress() / 100
+    elseif active_job.job and active_job.job.progress then
+      local progress = active_job.job.progress
       active_job_progress = (progress.current / progress.total)
     end
 
@@ -90,8 +93,13 @@ function ReaSpeechWorker:progress()
 end
 
 function ReaSpeechWorker:status()
-  if self.active_job and self.active_job.job then
-    return self.active_job.job.job_status
+  if self.active_job then
+    local active_job = self.active_job
+    if active_job.initial_request and not active_job.initial_request:ready() then
+      return 'Uploading'
+    elseif active_job.job then
+      return active_job.job.job_status
+    end
   end
 end
 
@@ -180,7 +188,8 @@ function ReaSpeechWorker:handle_job_status(active_job, response)
   if response.job_status == 'SUCCESS' then
     local transcript_url_path = response.job_result.url_path
     response._job = active_job.job
-    active_job.transcript_output_file, active_job.transcript_output_sentinel_file = ReaSpeechAPI:fetch_large(transcript_url_path)
+    active_job.transcript_request = ReaSpeechAPI:fetch_large(transcript_url_path)
+
     -- Job completion depends on non-blocking download of transcript
     return false
   elseif response.job_status == 'FAILURE' then
@@ -211,15 +220,8 @@ function ReaSpeechWorker:start_active_job()
   end
 
   local active_job = self.active_job
-  local output_file, sentinel_file = ReaSpeechAPI:post_request(
+  active_job.initial_request = ReaSpeechAPI:post_request(
     active_job.endpoint, active_job.data, active_job.job.path)
-
-  if output_file then
-    active_job.request_output_file = output_file
-    active_job.request_output_sentinel_file = sentinel_file
-  else
-    self.active_job = nil
-  end
 end
 
 function ReaSpeechWorker:check_active_job()
@@ -227,12 +229,12 @@ function ReaSpeechWorker:check_active_job()
 
   local active_job = self.active_job
 
-  if active_job.request_output_file then
-    self:check_active_job_request_output_file()
+  if active_job.initial_request then
+    self:check_active_job_request_status()
   end
 
-  if active_job.transcript_output_file then
-    self:check_active_job_transcript_output_file()
+  if active_job.transcript_request then
+    self:check_active_job_transcript_request_status()
   else
     self:check_active_job_status()
   end
@@ -252,94 +254,29 @@ function ReaSpeechWorker:check_active_job_status()
   end
 end
 
-ReaSpeechWorker.check_sentinel = function(filename)
-  local sentinel = io.open(filename, 'r')
-
-  if not sentinel then
-    return false
-  end
-
-  sentinel:close()
-  return true
-end
-
-function ReaSpeechWorker:handle_response_json(output_file, sentinel_file, success_f, fail_f)
-  if not self.check_sentinel(sentinel_file) then
-    return
-  end
-
-  local f = io.open(output_file, 'r')
-  if not f then
-    fail_f("Couldn't open output file: " .. tostring(output_file))
-    Tempfile:remove(sentinel_file)
-    return
-  end
-
-  local http_status, body = ReaSpeechAPI.http_status_and_body(f)
-  f:close()
-
-  if http_status == -1 then
-    app:debug(body .. ", trying again later")
-    return
-  end
-
-  Tempfile:remove(output_file)
-  Tempfile:remove(sentinel_file)
-
-  if http_status ~= 200 then
-    local msg = "Server responded with status " .. http_status
-    fail_f(msg)
-    app:log(msg)
-    app:debug(body)
-    return
-  end
-
-  if #body < 1 then
-    fail_f("Empty response from server")
-    return
-  end
-
-  local response = nil
-  if app:trap(function ()
-    response = json.decode(body)
-  end) then
-    success_f(response)
-  else
-    fail_f("Error parsing response JSON")
-  end
-end
-
-function ReaSpeechWorker:check_active_job_request_output_file()
+function ReaSpeechWorker:check_active_job_request_status()
   local active_job = self.active_job
+  local request = active_job.initial_request
 
-  self:handle_response_json(
-    active_job.request_output_file,
-    active_job.request_output_sentinel_file,
-    function(response)
-      if self:handle_job_status(active_job, response) then
-        self.active_job = nil
-      end
-    end,
-    function(error_message)
-      self:handle_error(active_job, error_message)
+  if request:ready() then
+    if self:handle_job_status(active_job, request:result()) then
       self.active_job = nil
     end
-  )
+  elseif request:error() then
+    self:handle_error(active_job, request:error())
+    self.active_job = nil
+  end
 end
 
-function ReaSpeechWorker:check_active_job_transcript_output_file()
+function ReaSpeechWorker:check_active_job_transcript_request_status()
   local active_job = self.active_job
+  local request = active_job.transcript_request
 
-  self:handle_response_json(
-    active_job.transcript_output_file,
-    active_job.transcript_output_sentinel_file,
-    function(response)
-      self:handle_response(active_job, response)
-      self.active_job = nil
-    end,
-    function(error_message)
-      self:handle_error(active_job, error_message)
-      self.active_job = nil
-    end
-  )
+  if request:ready() then
+    self:handle_response(active_job, request:result())
+    self.active_job = nil
+  elseif request:error() then
+    self:handle_error(active_job, request:error())
+    self.active_job = nil
+  end
 end
