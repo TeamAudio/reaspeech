@@ -24,21 +24,17 @@ function CurlRequest.async(options)
   options.output_file = Tempfile:name()
   options.sentinel_file = Tempfile:name()
   options.progress_file = Tempfile:name()
-  options.extra_curl_options = options.extra_curl_options or {}
+  options.extra_curl_options = table.flatten({
+    options.extra_curl_options or {}, {
+      '-o', options.output_file,
+      '--write-out', '"%output{' .. options.sentinel_file .. '}done"',
+      '--stderr', options.progress_file,
+      '-#',
 
-  local extra_extra_curl_options = {
-    '-o ' .. options.output_file,
-    '--write-out "%output{' .. options.sentinel_file .. '}done"',
-    '--stderr ' .. options.progress_file,
-    '-#',
-
-    -- useful for testing transfer progress
-    -- '--limit-rate 2M',
-  }
-
-  for _, o in ipairs(extra_extra_curl_options) do
-    table.insert(options.extra_curl_options, o)
-  end
+      -- useful for testing transfer progress
+      -- '--limit-rate 2M',
+    }
+  })
 
   return CurlRequest.new(options)
 end
@@ -214,7 +210,7 @@ function CurlRequest:execute_async(command)
 end
 
 function CurlRequest:build_curl_command()
-  return table.concat({
+  return table.concat(table.flatten({
     self.get_curl_cmd(),
     self:get_url(),
     self:extra_curl_arguments(),
@@ -222,7 +218,7 @@ function CurlRequest:build_curl_command()
     self:curl_header_arguments(),
     self:file_upload_arguments(),
     self:curl_timeout_argument(),
-  }, ' ')
+  }), ' ')
 end
 
 function CurlRequest.get_curl_cmd()
@@ -230,7 +226,7 @@ function CurlRequest.get_curl_cmd()
   if not reaper.GetOS():find("Win") then
     curl = "/usr/bin/curl"
   end
-  return curl
+  return { curl }
 end
 
 function CurlRequest:get_url()
@@ -239,12 +235,14 @@ function CurlRequest:get_url()
     table.insert(query, k .. '=' .. url.quote(v))
   end
 
-  return '"' .. self.url .. '?' .. table.concat(query, '&') .. '"'
+  return { '"' .. self.url .. '?' .. table.concat(query, '&') .. '"' }
 end
 
 function CurlRequest:extra_curl_arguments()
-  return table.concat(self.BASE_CURL_OPTIONS, ' ')
-    .. ' ' .. table.concat(self.extra_curl_options, ' ')
+  return table.flatten({
+    self.BASE_CURL_OPTIONS,
+    self.extra_curl_options,
+  })
 end
 
 function CurlRequest:curl_http_method_argument()
@@ -252,25 +250,27 @@ function CurlRequest:curl_http_method_argument()
     return ''
   end
 
-  return " -X " .. self.http_method
+  return { "-X", self.http_method }
 end
 
 function CurlRequest:curl_header_arguments()
-  local headers = ""
-  for key, value in pairs(self.headers) do
-    headers = headers .. ' -H "' .. key .. ': ' .. value .. '"'
+  local headers = {}
+
+  for k, v in pairs(self.headers) do
+    table.insert(headers, { '-H', '"' .. k .. ': ' .. v .. '"' })
   end
 
-  return headers
+  return table.flatten(headers)
 end
 
 function CurlRequest:file_upload_arguments()
-  local uploads = ""
+  local uploads = {}
+
   for key, path in pairs(self.file_uploads or {}) do
-    uploads = uploads .. ' -F ' .. self._maybe_quote(key .. '=@"' .. path .. '"')
+    table.insert(uploads, { '-F', self._maybe_quote(key .. '=@"' .. path .. '"') })
   end
 
-  return uploads
+  return table.flatten(uploads)
 end
 
 function CurlRequest._maybe_quote(str)
@@ -286,7 +286,7 @@ function CurlRequest:curl_timeout_argument()
     return ''
   end
 
-  return ' -m ' .. self.curl_timeout
+  return { '-m', self.curl_timeout }
 end
 
 function CurlRequest:check_sentinel()
