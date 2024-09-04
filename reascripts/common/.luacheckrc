@@ -1,4 +1,5 @@
 globals = {
+  "table"
 }
 
 allow_defined = true
