@@ -96,9 +96,9 @@ function ReaSpeechWorker:status()
   if self.active_job then
     local active_job = self.active_job
     if active_job.initial_request and not active_job.initial_request:ready() then
-      return 'Uploading'
+      return 'Sending Media'
     elseif active_job.job then
-      return active_job.job.job_status
+      return self:format_job_status(active_job.job.job_status)
     end
   end
 end
@@ -118,6 +118,13 @@ function ReaSpeechWorker:cancel_job(job_id)
   local url_path = "jobs/" .. job_id
   ReaSpeechAPI:fetch_json(url_path, 'DELETE', function(error_message)
     self:handle_error(self.active_job, error_message)
+  end)
+end
+
+function ReaSpeechWorker:format_job_status(job_status)
+  local s = job_status:lower():gsub("_", " ")
+  return s:gsub("(%w)(%w*)", function(first, rest)
+    return first:upper() .. rest
   end)
 end
 
