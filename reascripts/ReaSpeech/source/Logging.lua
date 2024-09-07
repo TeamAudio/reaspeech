@@ -67,5 +67,7 @@ function Logging.log_time()
 end
 
 function Logging:reset()
-  self.logs = {}
+  if #self.logs > 0 then
+    self.logs = {}
+  end
 end

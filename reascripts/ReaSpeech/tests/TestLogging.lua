@@ -105,6 +105,20 @@ function TestLogging:testReset()
   lu.assertEquals(#Logging.logs, 0)
 end
 
+function TestLogging:testResetReusesEmptyLogsTable()
+  local original_table = Logging.logs
+
+  Logging:reset()
+
+  lu.assertIs(Logging.logs, original_table)
+
+  Logging.logs = {{ "msg", Logging.LOG_LEVEL_LOG }}
+
+  Logging:reset()
+
+  lu.assertNotIs(Logging.logs, original_table)
+end
+
 function TestLogging:testPatchedLogMethod()
   local test_class = Polo {
     init = function(self)
