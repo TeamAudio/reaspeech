@@ -9,6 +9,7 @@ require('mock_reaper')
 require('source/AlertPopup')
 require('source/ColumnLayout')
 require('source/KeyMap')
+require('source/Logging')
 require('source/ReaSpeechActionsUI')
 require('source/ReaSpeechAPI')
 require('source/ReaSpeechControlsUI')
@@ -37,7 +38,6 @@ end
 function TestReaSpeechUI:testInit()
   lu.assertEquals(#self.app.requests, 0)
   lu.assertEquals(#self.app.responses, 0)
-  lu.assertEquals(#self.app.logs, 0)
 end
 
 --

@@ -9,7 +9,8 @@ ReaSpeechWorker = Polo {}
 function ReaSpeechWorker:init()
   assert(self.requests, 'missing requests')
   assert(self.responses, 'missing responses')
-  assert(self.logs, 'missing logs')
+
+  Logging.init(self, 'ReaSpeechWorker')
 
   self.active_job = nil
   self.pending_jobs = {}
@@ -59,7 +60,7 @@ function ReaSpeechWorker:react_handle_jobs()
     self.active_job = pending_job
     self:start_active_job()
   elseif self.job_count ~= 0 then
-    app:log('Processing finished')
+    self:log('Processing finished')
     self.job_count = 0
   end
 end
@@ -137,7 +138,7 @@ function ReaSpeechWorker:get_job_status(job_id)
 end
 
 function ReaSpeechWorker:handle_request(request)
-  app:log('Processing speech...')
+  self:log('Processing speech...')
   self.job_count = #request.jobs
 
   local data = {
@@ -177,8 +178,8 @@ end
 
 -- May return true if the job has completed and should no longer be active
 function ReaSpeechWorker:handle_job_status(active_job, response)
-  app:debug('Active job: ' .. dump(active_job))
-  app:debug('Status: ' .. dump(response))
+  self:debug('Active job: ' .. dump(active_job))
+  self:debug('Status: ' .. dump(response))
 
   if response.error then
     table.insert(self.responses, { error = response.error })

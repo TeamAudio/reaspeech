@@ -44,6 +44,8 @@ ReaSpeechCheckbox.new = function (options)
     width_threshold = nil,
   }
 
+  options.changed_handler = options.changed_handler or function() end
+
   local o = ReaSpeechWidget.new({
     default = options.default,
     widget_id = options.widget_id,
@@ -52,16 +54,18 @@ ReaSpeechCheckbox.new = function (options)
   })
 
   o._value = o.default
+  options.changed_handler(o.default)
 
   return o
 end
 
-ReaSpeechCheckbox.simple = function(default_value, label)
+ReaSpeechCheckbox.simple = function(default_value, label, changed_handler)
   return ReaSpeechCheckbox.new {
     default = default_value,
     label_long = label,
     label_short = label,
-    width_threshold = 0
+    width_threshold = 0,
+    changed_handler = changed_handler or function() end,
   }
 end
 
@@ -77,6 +81,7 @@ ReaSpeechCheckbox.renderer = function (self, column)
 
   if rv then
     self:set(value)
+    options.changed_handler(value)
   end
 end
 

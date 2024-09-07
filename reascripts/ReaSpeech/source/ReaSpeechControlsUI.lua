@@ -32,8 +32,13 @@ function ReaSpeechControlsUI:init()
     }
   }
 
-  self.log_enable = ReaSpeechCheckbox.simple(false, 'Enable')
-  self.log_debug = ReaSpeechCheckbox.simple(false, 'Debug')
+  self.log_enable = ReaSpeechCheckbox.simple(false, 'Enable', function(current)
+    Logging.show_logs = current
+  end)
+
+  self.log_debug = ReaSpeechCheckbox.simple(false, 'Debug', function(current)
+    Logging.show_debug_logs = current
+  end)
 
   self.language = ReaSpeechCombo.new {
     default = self.DEFAULT_LANGUAGE,

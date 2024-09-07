@@ -42,6 +42,8 @@ end
 function CurlRequest:init()
   assert(self.url, 'missing url')
 
+  Logging.init(self, "CurlRequest")
+
   self.query_data = self.query_data or {}
   self.http_method = self.http_method or self.DEFAULT_HTTP_METHOD
   self.headers = self.headers or self.DEFAULT_HEADERS
@@ -54,7 +56,7 @@ end
 function CurlRequest:execute()
   local command = self:build_curl_command()
 
-  app:debug('CurlRequest: ' .. command)
+  self:debug(command)
 
   if self.use_async then
     return self:execute_async(command)
@@ -79,11 +81,11 @@ function CurlRequest:ready()
     return false
   end
 
-  local http_status, body = self.http_status_and_body(f)
+  local http_status, body = self:http_status_and_body(f)
   f:close()
 
   if http_status == -1 then
-    app:debug(body .. ", trying again later")
+    self:debug(body .. ", trying again later")
     return false
   end
 
@@ -94,8 +96,8 @@ function CurlRequest:ready()
   if http_status ~= 200 then
     self.error_msg = "Server responded with status " .. http_status
     self.error_handler(self.error_msg)
-    app:log(self.error_msg)
-    app:debug(body)
+    self:log(self.error_msg)
+    self:debug(body)
     return false
   end
 
@@ -112,7 +114,7 @@ function CurlRequest:ready()
   else
     self.error_msg = "JSON parse error"
     self.error_handler(self.error_msg)
-    app:log(body)
+    self:log(body)
     return false
   end
 end
@@ -129,7 +131,7 @@ function CurlRequest:progress()
   local file = io.open(self.progress_file, "r")
   if not file then
     local msg = "Unable to open progress file"
-    app:log(msg)
+    self:log(msg)
     self.error_handler(msg)
     return nil
   end
@@ -157,7 +159,7 @@ function CurlRequest:execute_sync(command)
 
   if exec_result == nil then
     local msg = "Unable to run curl"
-    app:log(msg)
+    self:log(msg)
     self.error_handler(msg)
     return nil
   end
@@ -166,21 +168,21 @@ function CurlRequest:execute_sync(command)
   status = tonumber(status)
 
   if status == 28 then
-    app:debug("Curl timeout reached")
+    self:debug("Curl timeout reached")
     self.timeout_handler()
     return nil
   elseif status ~= 0 then
     local msg = "Curl failed with status " .. status
-    app:debug(msg)
+    self:debug(msg)
     self.error_handler(msg)
     return nil
   end
 
-  local response_status, response_body = self.http_status_and_body(output)
+  local response_status, response_body = self:http_status_and_body(output)
 
   if response_status >= 400 then
     local msg = "Request failed with status " .. response_status
-    app:log(msg)
+    self:log(msg)
     self.error_handler(msg)
     return nil
   end
@@ -191,8 +193,8 @@ function CurlRequest:execute_sync(command)
   end) then
     return response_json
   else
-    app:log("JSON parse error")
-    app:log(output)
+    self:log("JSON parse error")
+    self:log(output)
     return nil
   end
 end
@@ -202,7 +204,7 @@ function CurlRequest:execute_async(command)
 
   if not executor:background() then
     local err = "Unable to run curl"
-    app:log(err)
+    self:log(err)
     self.error_handler(err)
   end
 
@@ -302,9 +304,9 @@ function CurlRequest:check_sentinel()
   return contents and contents == "done"
 end
 
-function CurlRequest.http_status_and_body(response)
+function CurlRequest:http_status_and_body(response)
   local headers, content = CurlRequest._split_curl_response(response)
-  app:debug('Parsing response: ' .. dump(headers) .. ', ' .. dump(content))
+  self:debug('Parsing response: ' .. dump(headers) .. ', ' .. dump(content))
   local last_status_line = headers[#headers] and headers[#headers][1] or ''
 
   local status = last_status_line:match("^HTTP/%d%.%d%s+(%d+)")

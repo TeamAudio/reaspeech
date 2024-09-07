@@ -16,6 +16,9 @@ TranscriptExporter = Polo {
 
 function TranscriptExporter:init()
   assert(self.transcript, 'missing transcript')
+
+  Logging.init(self, 'TranscriptExporter')
+
   self.is_open = false
   self.export_formats = TranscriptExporterFormats.new {
     TranscriptExportFormat.exporter_json(),
@@ -210,7 +213,7 @@ end
 function TranscriptExporterFormats:selected_format()
   if not self.selected_format_key then
     if not self.formatters or #self.formatters < 1 then
-      app:debug('no formats to set for default')
+      self:debug('no formats to set for default')
       return
     end
 
