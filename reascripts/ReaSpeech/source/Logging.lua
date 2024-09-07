@@ -58,7 +58,7 @@ function Logging.make_log_entry(prefix, msg, is_debug)
   local log_level = is_debug and "DBG" or "LOG"
   local time = Logging.log_time()
 
-  local log_entry = ("[%s %s, %s] %s"):format(time, prefix, log_level, msg)
+  local log_entry = ("%s [%s, %s] %s"):format(time, prefix, log_level, msg)
   table.insert(Logging.logs, { log_entry, is_debug })
 end
 

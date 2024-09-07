@@ -35,8 +35,8 @@ function TestLogging:testLogMethod()
   instance:log(log_message2)
 
   lu.assertEquals(Logging.logs, {
-    { ("[<time> %s, LOG] %s"):format(prefix, log_message1), Logging.LOG_LEVEL_LOG },
-    { ("[<time> %s, LOG] %s"):format(prefix, log_message2), Logging.LOG_LEVEL_LOG },
+    { ("<time> [%s, LOG] %s"):format(prefix, log_message1), Logging.LOG_LEVEL_LOG },
+    { ("<time> [%s, LOG] %s"):format(prefix, log_message2), Logging.LOG_LEVEL_LOG },
   })
 end
 
@@ -62,8 +62,8 @@ function TestLogging:testDebugMethod()
   instance:debug(log_message2)
 
   lu.assertEquals(Logging.logs, {
-    { ("[<time> %s, DBG] %s"):format(prefix, log_message1), Logging.LOG_LEVEL_DEBUG },
-    { ("[<time> %s, DBG] %s"):format(prefix, log_message2), Logging.LOG_LEVEL_DEBUG },
+    { ("<time> [%s, DBG] %s"):format(prefix, log_message1), Logging.LOG_LEVEL_DEBUG },
+    { ("<time> [%s, DBG] %s"):format(prefix, log_message2), Logging.LOG_LEVEL_DEBUG },
   })
 end
 
@@ -91,9 +91,9 @@ function TestLogging:testMixedCalls()
   instance:log(log_message3)
 
   lu.assertEquals(Logging.logs, {
-    { ("[<time> %s, LOG] %s"):format(prefix, log_message1), Logging.LOG_LEVEL_LOG },
-    { ("[<time> %s, DBG] %s"):format(prefix, log_message2), Logging.LOG_LEVEL_DEBUG },
-    { ("[<time> %s, LOG] %s"):format(prefix, log_message3), Logging.LOG_LEVEL_LOG },
+    { ("<time> [%s, LOG] %s"):format(prefix, log_message1), Logging.LOG_LEVEL_LOG },
+    { ("<time> [%s, DBG] %s"):format(prefix, log_message2), Logging.LOG_LEVEL_DEBUG },
+    { ("<time> [%s, LOG] %s"):format(prefix, log_message3), Logging.LOG_LEVEL_LOG },
   })
 end
 
