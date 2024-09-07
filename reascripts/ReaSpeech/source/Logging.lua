@@ -9,6 +9,9 @@ Logging = {
   LOG_LEVEL_LOG = false,
   LOG_LEVEL_DEBUG = true,
 
+  show_logs = false,
+  show_debug_logs = false,
+
   logs = {},
 
   _loggers = {
@@ -21,6 +24,25 @@ Logging = {
     end
   }
 }
+
+function Logging:react()
+  if not self.show_logs then
+    self:reset()
+    return
+  end
+
+  for _, log in pairs(self.logs) do
+    local msg, dbg = table.unpack(log)
+
+    if dbg and self.show_debug_logs then
+      reaper.ShowConsoleMsg(msg .. '\n')
+    elseif not dbg then
+      reaper.ShowConsoleMsg(msg .. '\n')
+    end
+  end
+
+  self:reset()
+end
 
 function Logging.init(target, prefix)
   function target:log(msg)
@@ -42,4 +64,8 @@ end
 
 function Logging.log_time()
   return os.date("%Y-%m-%d %H:%M:%S")
+end
+
+function Logging:reset()
+  self.logs = {}
 end
