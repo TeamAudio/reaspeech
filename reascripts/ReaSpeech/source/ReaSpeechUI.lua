@@ -133,6 +133,8 @@ function ReaSpeechUI:react_to_worker_response()
 end
 
 function ReaSpeechUI:react_to_logging()
+  Logging:react()
+
   for _, log in pairs(self.logs) do
     local msg, dbg = table.unpack(log)
     if dbg and self.controls_ui.log_enable:value() and self.controls_ui.log_debug:value() then
