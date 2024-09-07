@@ -9,7 +9,6 @@ ReaSpeechWorker = Polo {}
 function ReaSpeechWorker:init()
   assert(self.requests, 'missing requests')
   assert(self.responses, 'missing responses')
-  assert(self.logs, 'missing logs')
 
   Logging.init(self, 'ReaSpeechWorker')
 

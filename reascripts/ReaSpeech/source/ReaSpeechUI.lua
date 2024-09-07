@@ -17,20 +17,20 @@ ReaSpeechUI = Polo {
 }
 
 function ReaSpeechUI:init()
+  Logging.init(self, 'ReaSpeechUI')
+
   self.onerror = function (e)
     self:log(e)
   end
 
   self.requests = {}
   self.responses = {}
-  self.logs = {}
 
   ReaSpeechAPI:init(Script.host, Script.protocol)
 
   self.worker = ReaSpeechWorker.new({
     requests = self.requests,
     responses = self.responses,
-    logs = self.logs,
   })
 
   if Script.env == 'demo' then
@@ -54,18 +54,6 @@ end
 
 ReaSpeechUI.config_flags = function ()
   return ImGui.ConfigFlags_DockingEnable()
-end
-
-ReaSpeechUI.log_time = function ()
-  return os.date('%Y-%m-%d %H:%M:%S')
-end
-
-function ReaSpeechUI:log(msg)
-  table.insert(self.logs, {msg, false})
-end
-
-function ReaSpeechUI:debug(msg)
-  table.insert(self.logs, {msg, true})
 end
 
 function ReaSpeechUI:trap(f)
@@ -106,7 +94,7 @@ end
 function ReaSpeechUI:get_react_handlers()
   return {
     function() self:react_to_worker_response() end,
-    function() self:react_to_logging() end,
+    function() Logging:react() end,
     function() self.worker:react() end,
     function() self:render() end
   }
@@ -130,21 +118,6 @@ function ReaSpeechUI:react_to_worker_response()
   if response.callback then
     response.callback(response)
   end
-end
-
-function ReaSpeechUI:react_to_logging()
-  Logging:react()
-
-  for _, log in pairs(self.logs) do
-    local msg, dbg = table.unpack(log)
-    if dbg and self.controls_ui.log_enable:value() and self.controls_ui.log_debug:value() then
-      reaper.ShowConsoleMsg(self:log_time() .. ' [DBG] ' .. tostring(msg) .. '\n')
-    elseif not dbg and self.controls_ui.log_enable:value() then
-      reaper.ShowConsoleMsg(self:log_time() .. ' [LOG] ' .. tostring(msg) .. '\n')
-    end
-  end
-
-  self.logs = {}
 end
 
 function ReaSpeechUI:render()
