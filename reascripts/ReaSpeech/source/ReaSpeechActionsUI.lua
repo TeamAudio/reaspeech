@@ -14,20 +14,23 @@ function ReaSpeechActionsUI.pluralizer(count, suffix)
   if count == 0 then
     return '', suffix
   elseif count == 1 then
-    return '1', ''
+    return '', ''
   else
-    return '', suffix
+    return count .. ' ', suffix
   end
 end
 
 function ReaSpeechActionsUI:render()
   local disable_if = self.disabler
-  local progress = self.worker:progress()
+  local progress
+  app:trap(function ()
+    progress = self.worker:progress()
+  end)
 
   disable_if(progress, function()
     local selected_track_count = reaper.CountSelectedTracks(ReaUtil.ACTIVE_PROJECT)
     disable_if(selected_track_count == 0, function()
-      local button_text = ("Process %s Selected Track%s")
+      local button_text = ("Process %sSelected Track%s")
         :format(self.pluralizer(selected_track_count, 's'))
 
       if ImGui.Button(ctx, button_text) then
@@ -39,7 +42,7 @@ function ReaSpeechActionsUI:render()
 
     local selected_item_count = reaper.CountSelectedMediaItems(ReaUtil.ACTIVE_PROJECT)
     disable_if(selected_item_count == 0, function()
-      local button_text = ("Process %s Selected Item%s")
+      local button_text = ("Process %sSelected Item%s")
         :format(self.pluralizer(selected_item_count, 's'))
 
       if ImGui.Button(ctx, button_text) then

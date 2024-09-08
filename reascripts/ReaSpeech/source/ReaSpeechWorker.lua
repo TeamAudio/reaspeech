@@ -123,6 +123,7 @@ function ReaSpeechWorker:cancel_job(job_id)
 end
 
 function ReaSpeechWorker:format_job_status(job_status)
+  if not job_status then return nil end
   local s = job_status:lower():gsub("_", " ")
   return s:gsub("(%w)(%w*)", function(first, rest)
     return first:upper() .. rest
