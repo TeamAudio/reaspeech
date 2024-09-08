@@ -13,14 +13,15 @@ end
 
 -- For debugging
 function dump(o)
-  if type(o) == 'table' then
-    local s = '{ '
-    for k,v in pairs(o) do
-      if type(k) ~= 'number' then k = '"'..k..'"' end
-      s = s .. '['..k..'] = ' .. dump(v) .. ','
-    end
-    return s .. '} '
-  else
-    return tostring(o)
+  if type(o) ~= "table" then return tostring(o) end
+  local result = {"{"}
+  for k, v in pairs(o) do
+    k = type(k) == "string" and k or "[" .. dump(k) .. "]"
+    v = type(v) == "string" and '"' .. v .. '"' or dump(v)
+    table.insert(result, k .. " = " .. v .. ",")
   end
+  if #result == 1 then return "{}" end
+  result[#result] = result[#result]:gsub(",$", "")
+  table.insert(result, "}")
+  return table.concat(result, " ")
 end
