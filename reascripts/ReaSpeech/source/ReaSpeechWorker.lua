@@ -80,7 +80,10 @@ function ReaSpeechWorker:progress()
   if self.active_job then
     local active_job = self.active_job
     if active_job.initial_request and not active_job.initial_request:ready() then
-      active_job_progress = active_job.initial_request:progress() / 100
+      initial_request_progress = active_job.initial_request:progress()
+      if initial_request_progress then
+        active_job_progress = initial_request_progress / 100
+      end
     elseif active_job.job and active_job.job.progress then
       local progress = active_job.job.progress
       active_job_progress = (progress.current / progress.total)
