@@ -22,12 +22,11 @@ CurlRequest = Polo {
 function CurlRequest.async(options)
   options.use_async = true
   options.output_file = Tempfile:name()
-  options.sentinel_file = Tempfile:name()
   options.progress_file = Tempfile:name()
+  os.remove(options.progress_file)
   options.extra_curl_options = table.flatten({
     options.extra_curl_options or {}, {
       '-o', options.output_file,
-      '--write-out', '"%output{' .. options.sentinel_file .. '}done"',
       '--stderr', options.progress_file,
       '-#',
 
@@ -77,7 +76,7 @@ function CurlRequest:ready()
   local f = io.open(self.output_file, 'r')
   if not f then
     self.error_msg = "Couldn't open output file: " .. tostring(self.output_file)
-    Tempfile:remove(self.sentinel_file)
+    Tempfile:remove(self.progress_file)
     return false
   end
 
@@ -90,7 +89,6 @@ function CurlRequest:ready()
   end
 
   Tempfile:remove(self.output_file)
-  Tempfile:remove(self.sentinel_file)
   Tempfile:remove(self.progress_file)
 
   if http_status ~= 200 then
@@ -136,7 +134,7 @@ function CurlRequest:progress()
     return nil
   end
 
-  local content = file:read("a")
+  local content = file:read("*all")
   file:close()
 
   local max_percentage = 0.0
@@ -292,16 +290,14 @@ function CurlRequest:curl_timeout_argument()
 end
 
 function CurlRequest:check_sentinel()
-  local sentinel = io.open(self.sentinel_file, 'r')
+  local sentinel = io.open(self.progress_file, 'r')
 
   if not sentinel then
     return false
   end
 
-  local contents = sentinel:read("a")
   sentinel:close()
-
-  return contents and contents == "done"
+  return true
 end
 
 function CurlRequest:http_status_and_body(response)
