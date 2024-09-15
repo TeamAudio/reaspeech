@@ -262,8 +262,13 @@ function CurlRequest.get_curl_cmd()
 end
 
 function CurlRequest.supports_sentinel()
+  -- Sentinel depends on --write-out %output{filename} feature,
+  -- which requires curl 8.3.0 or newer
   local version = CurlRequest.curl_version()
-  return version[1] == 8 and version[2] >= 3
+  if version[1] and version[1] > 7 then
+    return version[1] > 8 or version[2] >= 3
+  end
+  return false
 end
 
 function CurlRequest:get_url()
