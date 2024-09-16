@@ -21,26 +21,36 @@ function ReaSpeechPlugins:init()
   Logging.init(self, 'ReaSpeechPlugins')
 
   self:init_plugins()
+  self:init_tabs()
 end
 
 function ReaSpeechPlugins:init_plugins()
   self._plugins = {}
   for _, plugin in ipairs(self.plugins) do
-    local p = plugin.new(self.app)
-    table.insert(self._plugins, p)
+    table.insert(self._plugins, plugin.new(self.app))
   end
 end
 
 function ReaSpeechPlugins:tabs()
-  local tabs = {}
+  return self._tabs
+end
+
+function ReaSpeechPlugins:init_tabs()
+  self._tabs = {}
 
   for _, plugin in ipairs(self._plugins) do
     for _, tab in ipairs(plugin:tabs()) do
-      table.insert(tabs, tab)
+      table.insert(self._tabs, tab)
     end
   end
+end
 
-  return tabs
+function ReaSpeechPlugins.tab(key, label, renderer)
+  return {
+    tab = ReaSpeechTabBar.tab(key, label),
+    render = renderer,
+    is_selected = function(_, selected_key) return key == selected_key end
+  }
 end
 
 function ReaSpeechPlugins:actions()

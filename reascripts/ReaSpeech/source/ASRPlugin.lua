@@ -31,7 +31,15 @@ function ASRPlugin:asr(jobs)
   local request = self._controls:get_request_data()
   request.endpoint = ReaSpeechAPI.endpoints.asr
   request.jobs = jobs
-  request.callback = function(response)
+  request.callback = self:handle_response()
+
+  self.app.transcript:clear()
+
+  self.app:submit_request(request)
+end
+
+function ASRPlugin:handle_response()
+  return function(response)
     if not response.segments then
       return
     end
@@ -48,6 +56,4 @@ function ASRPlugin:asr(jobs)
 
     self.app.transcript:update()
   end
-
-  self.app:submit_request(request)
 end

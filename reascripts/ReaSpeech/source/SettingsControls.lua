@@ -29,9 +29,8 @@ end
 
 function SettingsControls:tabs()
   return {
-    { tab = ReaSpeechTabBar.tab('settings-general', 'ReaSpeech Settings'),
-      render = function(_) self.layout:render() end,
-      is_selected = function(_, key) return key == 'settings-general' end },
+    ReaSpeechPlugins.tab('settings-general', 'General',
+      function() self.layout:render() end),
   }
 end
 

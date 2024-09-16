@@ -71,12 +71,10 @@ end
 
 function ASRControls:tabs()
   return {
-    { tab = ReaSpeechTabBar.tab('asr-simple', 'ASR - Simple'),
-      render = function(_) self:render_simple() end,
-      is_selected = function(_, key) return key == 'asr-simple' end },
-    { tab = ReaSpeechTabBar.tab('asr-advanced', 'ASR - Advanced'),
-      render = function(_) self:render_advanced() end,
-      is_selected = function(_, key) return key == 'asr-advanced' end },
+    ReaSpeechPlugins.tab('asr-simple', 'ASR - Simple',
+      function() self:render_simple() end),
+    ReaSpeechPlugins.tab('asr-advanced', 'ASR - Advanced',
+      function() self:render_advanced() end),
   }
 end
 

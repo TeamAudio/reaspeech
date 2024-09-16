@@ -121,8 +121,6 @@ function ASRActions:process_jobs(job_generator)
     return
   end
 
-  app.transcript:clear()
-
   self.plugin:asr(jobs)
 end
 
