@@ -123,23 +123,7 @@ function ASRActions:process_jobs(job_generator)
 
   app.transcript:clear()
 
-  app:new_jobs(jobs, ReaSpeechAPI.endpoints.asr, function(response)
-    if not response.segments then
-      return
-    end
-
-    for _, segment in pairs(response.segments) do
-      for _, s in pairs(
-        TranscriptSegment.from_whisper(segment, response._job.item, response._job.take)
-      ) do
-        if s:get('text') then
-          app.transcript:add_segment(s)
-        end
-      end
-    end
-
-    app.transcript:update()
-  end)
+  self.plugin:asr(jobs)
 end
 
 function ASRActions.make_job(media_item, take)

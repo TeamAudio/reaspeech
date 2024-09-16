@@ -38,13 +38,11 @@ function ReaSpeechUI:init()
     self.welcome_ui:present()
   end
 
-  self.plugins = ReaSpeechPlugins.new({
-    plugins = {
-      ASRPlugin,
-    }
-  })
+  self.plugins = ReaSpeechPlugins.new(self, { ASRPlugin })
 
-  self.controls_ui = ReaSpeechControlsUI.new()
+  self.controls_ui = ReaSpeechControlsUI.new({
+    plugins = self.plugins,
+  })
 
   self.actions_ui = ReaSpeechActionsUI.new({
     plugins = self.plugins,
@@ -143,17 +141,9 @@ function ReaSpeechUI:render()
   ImGui.PopItemWidth(ctx)
 end
 
-function ReaSpeechUI:new_jobs(jobs, endpoint, callback)
-  local request = self.controls_ui:get_request_data()
-  callback = callback or function() end
-
-  assert(endpoint, "Endpoint required for API call")
-  request.endpoint = endpoint
-  request.jobs = jobs
-  request.callback = callback
-
-  self:debug('Request: ' .. dump(request))
-
+function ReaSpeechUI:submit_request(request)
+  assert(request.endpoint, "Endpoint required for API call")
+  request.callback = request.callback or function() end
   table.insert(self.requests, request)
 end
 
