@@ -19,13 +19,15 @@ function ReaSpeechActionsUI:render()
 
   disable_if(progress, function()
     local plugin_actions = self.plugins:actions()
-    for _, action in ipairs(plugin_actions) do
+    for i, action in ipairs(plugin_actions) do
+      if i > 1 then ImGui.SameLine(ctx) end
       action:render()
-      ImGui.SameLine(ctx)
     end
   end)
 
   if progress then
+    ImGui.SameLine(ctx)
+
     if ImGui.Button(ctx, "Cancel") then
       self.worker:cancel()
     end
