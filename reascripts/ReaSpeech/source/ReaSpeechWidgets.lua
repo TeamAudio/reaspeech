@@ -44,7 +44,7 @@ ReaSpeechCheckbox.new = function (options)
     width_threshold = nil,
   }
 
-  options.changed_handler = options.changed_handler or function() end
+  options.changed_handler = options.changed_handler or function(_) end
 
   local o = ReaSpeechWidget.new({
     default = options.default,
@@ -265,4 +265,31 @@ end
 
 ReaSpeechButtonBar.renderer = function (self)
   self.layout:render()
+end
+
+ReaSpeechButton = {}
+ReaSpeechButton.new = function(options)
+  options = options or {
+    label = nil,
+    disabled = false,
+    on_click = nil,
+  }
+
+  local o = ReaSpeechWidget.new({
+    default = true,
+    renderer = ReaSpeechButton.renderer,
+    options = options,
+  })
+
+  return o
+end
+
+ReaSpeechButton.renderer = function(self)
+  local disable_if = ReaUtil.disabler(self.ctx)
+
+  disable_if(self.options.disabled, function()
+    if ImGui.Button(self.ctx, self.options.label) then
+      app:trap(self.options.on_click)
+    end
+  end)
 end

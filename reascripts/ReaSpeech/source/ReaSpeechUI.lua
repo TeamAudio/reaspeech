@@ -38,9 +38,16 @@ function ReaSpeechUI:init()
     self.welcome_ui:present()
   end
 
+  self.plugins = ReaSpeechPlugins.new({
+    plugins = {
+      ASRPlugin,
+    }
+  })
+
   self.controls_ui = ReaSpeechControlsUI.new()
 
   self.actions_ui = ReaSpeechActionsUI.new({
+    plugins = self.plugins,
     worker = self.worker
   })
 
