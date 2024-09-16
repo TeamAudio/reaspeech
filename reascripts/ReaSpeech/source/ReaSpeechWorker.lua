@@ -145,39 +145,26 @@ function ReaSpeechWorker:handle_request(request)
   self:log('Processing speech...')
   self.job_count = #request.jobs
 
-  local data = {
-    task = request.translate and 'translate' or 'transcribe',
-    output = 'json',
-    use_async = 'true',
-    vad_filter = request.vad_filter and 'true' or 'false',
-    word_timestamps = 'true',
-    model_name = request.model_name,
-  }
-
-  if request.language and request.language ~= '' then
-    data.language = request.language
+  for _, job in ipairs(self:expand_jobs_from_request(request)) do
+    table.insert(self.pending_jobs, job)
   end
+end
 
-  if request.hotwords and request.hotwords ~= '' then
-    data.hotwords = request.hotwords
-  end
-
-  if request.initial_prompt and request.initial_prompt ~= '' then
-    data.initial_prompt = request.initial_prompt
-  end
-
+function ReaSpeechWorker:expand_jobs_from_request(request)
+  local jobs = {}
   local seen_path = {}
   for _, job in pairs(request.jobs) do
     if not seen_path[job.path] then
       seen_path[job.path] = true
-      table.insert(self.pending_jobs, {
+      table.insert(jobs, {
         job = job,
         endpoint = request.endpoint,
-        data = data,
+        data = request.data,
         callback = request.callback
       })
     end
   end
+  return jobs
 end
 
 -- May return true if the job has completed and should no longer be active
