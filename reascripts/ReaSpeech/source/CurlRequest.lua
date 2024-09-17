@@ -17,6 +17,7 @@ CurlRequest = Polo {
   DEFAULT_EXTRA_CURL_OPTIONS = {},
   DEFAULT_ERROR_HANDLER = function(_msg) end,
   DEFAULT_TIMEOUT_HANDLER = function() end,
+  SENTINEL = '-=-DONE-=-',
 }
 
 function CurlRequest.async(options)
@@ -25,25 +26,16 @@ function CurlRequest.async(options)
   options.progress_file = Tempfile:name()
   os.remove(options.progress_file)
 
-  sentinel_options = {}
-  if CurlRequest.supports_sentinel() then
-    options.sentinel_file = Tempfile:name()
-    os.remove(options.sentinel_file)
-    sentinel_options = {
-      '--write-out', '"%output{' .. options.sentinel_file .. '}done"',
-    }
-  end
-
   options.extra_curl_options = table.flatten({
     options.extra_curl_options or {}, {
       '-o', options.output_file,
       '--stderr', options.progress_file,
+      '--write-out', '"%{stderr}' .. CurlRequest.SENTINEL .. '"',
       '-#',
 
       -- useful for testing transfer progress
       -- '--limit-rate 2M',
-    },
-    sentinel_options
+    }
   })
 
   return CurlRequest.new(options)
@@ -84,13 +76,12 @@ function CurlRequest:ready()
     return false
   end
 
+  self:debug("Sentinel found, parsing response")
+
   local f = io.open(self.output_file, 'r')
   if not f then
     self.error_msg = "Couldn't open output file: " .. tostring(self.output_file)
     Tempfile:remove(self.progress_file)
-    if CurlRequest.supports_sentinel() then
-      Tempfile:remove(self.sentinel_file)
-    end
     return false
   end
 
@@ -104,9 +95,6 @@ function CurlRequest:ready()
 
   Tempfile:remove(self.output_file)
   Tempfile:remove(self.progress_file)
-  if CurlRequest.supports_sentinel() then
-    Tempfile:remove(self.sentinel_file)
-  end
 
   if http_status ~= 200 then
     self.error_msg = "Server responded with status " .. http_status
@@ -146,7 +134,7 @@ function CurlRequest:progress()
   local file = io.open(self.progress_file, "r")
   if not file then
     local msg = "Unable to open progress file"
-    self:log(msg)
+    self:debug(msg)
     self.error_handler(msg)
     return nil
   end
@@ -261,16 +249,6 @@ function CurlRequest.get_curl_cmd()
   return { curl }
 end
 
-function CurlRequest.supports_sentinel()
-  -- Sentinel depends on --write-out %output{filename} feature,
-  -- which requires curl 8.3.0 or newer
-  local version = CurlRequest.curl_version()
-  if version[1] and version[1] > 7 then
-    return version[1] > 8 or version[2] >= 3
-  end
-  return false
-end
-
 function CurlRequest:get_url()
   local query = {}
   for k, v in pairs(self.query_data) do
@@ -332,31 +310,21 @@ function CurlRequest:curl_timeout_argument()
 end
 
 function CurlRequest:check_sentinel()
-  local sentinel
-  if CurlRequest.supports_sentinel() then
-    sentinel = io.open(self.sentinel_file, 'r')
-  else
-    -- Sentinel file unsupported; check progress file instead
-    sentinel = io.open(self.progress_file, 'r')
-  end
+  local sentinel = io.open(self.progress_file, 'r')
 
   if not sentinel then
     return false
   end
 
-  if CurlRequest.supports_sentinel() then
-    local contents = sentinel:read("*all")
-    sentinel:close()
-    return contents and contents == "done"
-  else
-    sentinel:close()
-    return true
-  end
+  local contents = sentinel:read("*all")
+  sentinel:close()
+  self:debug('Checking sentinel: ' .. contents)
+  return contents and contents:find(CurlRequest.SENTINEL)
 end
 
 function CurlRequest:http_status_and_body(response)
   local headers, content = CurlRequest._split_curl_response(response)
-  self:debug('Parsing response: ' .. dump(headers) .. ', ' .. dump(content))
+  -- self:debug('Parsing response: ' .. dump(headers) .. ', ' .. dump(content))
   local last_status_line = headers[#headers] and headers[#headers][1] or ''
 
   local status = last_status_line:match("^HTTP/%d%.%d%s+(%d+)")

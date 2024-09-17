@@ -107,7 +107,7 @@ function ReaSpeechUI:react_to_worker_response()
     return
   end
 
-  self:debug('Response: ' .. dump(response))
+  -- self:debug('Response: ' .. dump(response))
 
   if response.error then
     self.failure:show(response.error)
