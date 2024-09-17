@@ -318,6 +318,11 @@ function CurlRequest:check_sentinel()
 
   local contents = sentinel:read("*all")
   sentinel:close()
+
+  -- Workaround for https://github.com/curl/curl/issues/10491
+  local version = CurlRequest.curl_version()
+  if version and version[1] < 8 then return true end
+
   self:debug('Checking sentinel: ' .. contents)
   return contents and contents:find(CurlRequest.SENTINEL)
 end
