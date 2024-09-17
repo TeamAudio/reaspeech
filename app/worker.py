@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 
@@ -135,26 +134,12 @@ def detect_language(self, audio_file_path: str, encode: bool):
 
     os.remove(audio_file_path)
 
-    filename = f"{self.request.id}.json"
-    output_directory = get_output_path(self.request.id)
-    output_path = f"{output_directory}/{filename}"
-
-    logger.info(f"Writing result to {output_path}")
-
-    if not os.path.exists(output_directory):
-        os.makedirs(output_directory)
+    logger.info(f"Returning result in job state")
 
     result_object = { "language_code": result }
 
-    with open(output_path, "w") as f:
-        f.write(json.dumps(result_object))
-
-    url_path = f"{get_output_url_path(detect_language.request.id)}/{filename}"
-
     return {
-        "output_filename": filename,
-        "output_path": output_path,
-        "url_path": url_path,
+        "result": result_object
     }
 
 def get_output_path(job_id: str):

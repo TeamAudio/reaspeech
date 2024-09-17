@@ -185,6 +185,12 @@ function ReaSpeechWorker:handle_job_status(active_job, response)
   end
 
   if response.job_status == 'SUCCESS' then
+    local job_result = response.job_result
+    if job_result.result then
+      self:handle_response(active_job, job_result.result)
+      self.active_job = nil
+      return false
+    end
     local transcript_url_path = response.job_result.url_path
     response._job = active_job.job
     active_job.transcript_request = ReaSpeechAPI:fetch_large(transcript_url_path)
