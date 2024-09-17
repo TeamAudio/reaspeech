@@ -29,7 +29,7 @@ end
 
 function SettingsControls:tabs()
   return {
-    ReaSpeechPlugins.tab('settings-general', 'General',
+    ReaSpeechPlugins.tab('settings-general', 'ReaSpeech Settings',
       function() self.layout:render() end),
   }
 end

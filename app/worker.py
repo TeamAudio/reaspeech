@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -40,9 +41,9 @@ tqdm.tqdm = _TQDM
 
 ASR_ENGINE = os.getenv("ASR_ENGINE", "faster_whisper")
 if ASR_ENGINE == "faster_whisper":
-    from .faster_whisper.core import load_model, transcribe as whisper_transcribe
+    from .faster_whisper.core import load_model, language_detection, transcribe as whisper_transcribe
 else:
-    from .openai_whisper.core import load_model, transcribe as whisper_transcribe
+    from .openai_whisper.core import load_model, language_detection, transcribe as whisper_transcribe
 
 LANGUAGE_CODES = sorted(list(tokenizer.LANGUAGES.keys()))
 
@@ -52,6 +53,7 @@ STATES = {
     'loading_model': 'LOADING_MODEL',
     'encoding': 'ENCODING',
     'transcribing': 'TRANSCRIBING',
+    'detecting_language': 'DETECTING_LANGUAGE',
 }
 celery = Celery(__name__)
 celery.conf.broker_connection_retry_on_startup = True
@@ -106,6 +108,48 @@ def transcribe(
         f.write(result.read())
 
     url_path = f"{get_output_url_path(transcribe.request.id)}/{filename}"
+
+    return {
+        "output_filename": filename,
+        "output_path": output_path,
+        "url_path": url_path,
+    }
+
+@celery.task(name="detect_language", bind=True)
+def detect_language(self, audio_file_path: str, encode: bool):
+    logger.info(f"Detecting language of {audio_file_path}")
+
+    with open(audio_file_path, "rb") as audio_file:
+        model_name = DEFAULT_MODEL_NAME
+        logger.info(f"Loading model {model_name}")
+        self.update_state(state=STATES["loading_model"], meta={"progress": {"units": "models", "total": 1, "current": 0}})
+        load_model(model_name)
+
+        logger.info(f"Loading audio from {audio_file_path}")
+        self.update_state(state=STATES["encoding"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
+        audio_data = load_audio(audio_file, encode)
+
+        logger.info(f"Detecting audio language")
+        self.update_state(state=STATES["detecting_language"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
+        result = language_detection(audio_data)
+
+    os.remove(audio_file_path)
+
+    filename = f"{self.request.id}.json"
+    output_directory = get_output_path(self.request.id)
+    output_path = f"{output_directory}/{filename}"
+
+    logger.info(f"Writing result to {output_path}")
+
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
+    result_object = { "language_code": result }
+
+    with open(output_path, "w") as f:
+        f.write(json.dumps(result_object))
+
+    url_path = f"{get_output_url_path(detect_language.request.id)}/{filename}"
 
     return {
         "output_filename": filename,
