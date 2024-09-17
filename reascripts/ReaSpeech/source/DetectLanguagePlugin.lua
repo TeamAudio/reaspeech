@@ -53,7 +53,8 @@ function DetectLanguagePlugin:handle_response()
     if not seen[guid] then
       seen[guid] = {}
       languages[guid] = {}
-      _, track_names[guid] = reaper.GetTrackName(track)
+      local retval, track_name = reaper.GetTrackName(track)
+      if retval then track_names[guid] = track_name end
     end
 
     if seen[guid][language_code] then return end
