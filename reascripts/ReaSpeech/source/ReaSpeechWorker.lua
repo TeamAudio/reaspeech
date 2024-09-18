@@ -191,9 +191,18 @@ function ReaSpeechWorker:handle_job_status(active_job, response)
       self.active_job = nil
       return false
     end
-    local transcript_url_path = response.job_result.url_path
+
     response._job = active_job.job
-    active_job.transcript_request = ReaSpeechAPI:fetch_large(transcript_url_path)
+
+    if response.job_result.url_path then
+      table.insert(active_job.requests, ReaSpeechAPI:fetch_large(response.job_result.url_path))
+    elseif response.job_result.url_paths then
+      for _, url_path in pairs(response.job_result.url_paths) do
+        table.insert(active_job.requests, function()
+           ReaSpeechAPI:fetch_large(url_path)
+        end)
+      end
+    end
 
     -- Job completion depends on non-blocking download of transcript
     return false
@@ -225,6 +234,7 @@ function ReaSpeechWorker:start_active_job()
   end
 
   local active_job = self.active_job
+  active_job.requests = {}
   active_job.initial_request = ReaSpeechAPI:post_request(
     active_job.endpoint, active_job.data, active_job.job.path)
 end
@@ -238,11 +248,19 @@ function ReaSpeechWorker:check_active_job()
     self:check_active_job_request_status()
   end
 
-  if active_job.transcript_request then
-    self:check_active_job_transcript_request_status()
-  else
-    self:check_active_job_status()
+  if #active_job.requests > 0 then
+    for key, request in pairs(active_job.requests) do
+      if type(request) ~= 'function' then
+        if not request:ready() then return end
+      else
+        active_job.requests[key] = request()
+        return
+      end
+    end
+    self:handle_responses()
   end
+
+  self:check_active_job_status()
 end
 
 function ReaSpeechWorker:check_active_job_status()
@@ -273,15 +291,19 @@ function ReaSpeechWorker:check_active_job_request_status()
   end
 end
 
-function ReaSpeechWorker:check_active_job_transcript_request_status()
+function ReaSpeechWorker:handle_responses()
   local active_job = self.active_job
-  local request = active_job.transcript_request
-
-  if request:ready() then
-    self:handle_response(active_job, request:result())
-    self.active_job = nil
-  elseif request:error() then
-    self:handle_error(active_job, request:error())
-    self.active_job = nil
+  active_job.responses = {}
+  for _, request in pairs(active_job.requests) do
+    if request:ready() then
+      table.insert(active_job.responses, request:result())
+    elseif request:error() then
+      self:handle_error(active_job, request:error())
+      self.active_job = nil
+      return
+    end
   end
+
+  self:handle_response(active_job, active_job.responses)
+  self.active_job = nil
 end

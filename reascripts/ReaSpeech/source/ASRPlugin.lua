@@ -65,13 +65,16 @@ end
 
 function ASRPlugin:handle_response()
   return function(response)
-    if not response.segments then
+    if not response[1] or not response[1].segments then
       return
     end
 
-    for _, segment in pairs(response.segments) do
+    local segments = response[1].segments
+    local job = response._job
+
+    for _, segment in pairs(segments) do
       for _, s in pairs(
-        TranscriptSegment.from_whisper(segment, response._job.item, response._job.take)
+        TranscriptSegment.from_whisper(segment, job.item, job.take)
       ) do
         if s:get('text') then
           self.app.transcript:add_segment(s)
