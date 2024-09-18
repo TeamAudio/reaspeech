@@ -17,18 +17,20 @@ CurlRequest = Polo {
   DEFAULT_EXTRA_CURL_OPTIONS = {},
   DEFAULT_ERROR_HANDLER = function(_msg) end,
   DEFAULT_TIMEOUT_HANDLER = function() end,
+  SENTINEL = '-=-DONE-=-',
 }
 
 function CurlRequest.async(options)
   options.use_async = true
   options.output_file = Tempfile:name()
-  options.sentinel_file = Tempfile:name()
   options.progress_file = Tempfile:name()
+  os.remove(options.progress_file)
+
   options.extra_curl_options = table.flatten({
     options.extra_curl_options or {}, {
       '-o', options.output_file,
-      '--write-out', '"%output{' .. options.sentinel_file .. '}done"',
       '--stderr', options.progress_file,
+      '--write-out', '"%{stderr}' .. CurlRequest.SENTINEL .. '"',
       '-#',
 
       -- useful for testing transfer progress
@@ -74,10 +76,12 @@ function CurlRequest:ready()
     return false
   end
 
+  self:debug("Sentinel found, parsing response")
+
   local f = io.open(self.output_file, 'r')
   if not f then
     self.error_msg = "Couldn't open output file: " .. tostring(self.output_file)
-    Tempfile:remove(self.sentinel_file)
+    Tempfile:remove(self.progress_file)
     return false
   end
 
@@ -90,7 +94,6 @@ function CurlRequest:ready()
   end
 
   Tempfile:remove(self.output_file)
-  Tempfile:remove(self.sentinel_file)
   Tempfile:remove(self.progress_file)
 
   if http_status ~= 200 then
@@ -131,12 +134,12 @@ function CurlRequest:progress()
   local file = io.open(self.progress_file, "r")
   if not file then
     local msg = "Unable to open progress file"
-    self:log(msg)
+    self:debug(msg)
     self.error_handler(msg)
     return nil
   end
 
-  local content = file:read("a")
+  local content = file:read("*all")
   file:close()
 
   local max_percentage = 0.0
@@ -223,6 +226,21 @@ function CurlRequest:build_curl_command()
   }), ' ')
 end
 
+function CurlRequest.curl_version()
+  if CurlRequest._curl_version then return CurlRequest._curl_version end
+  CurlRequest._curl_version = {}
+  local exec_result = (ExecProcess.new { CurlRequest.get_curl_cmd()[1] .. " -V" }):wait()
+  if exec_result then
+    local version = exec_result:match("curl ([%d%.]+)")
+    if version then
+      for v in version:gmatch("[%d]+") do
+        table.insert(CurlRequest._curl_version, tonumber(v))
+      end
+    end
+  end
+  return CurlRequest._curl_version
+end
+
 function CurlRequest.get_curl_cmd()
   local curl = "curl"
   if not reaper.GetOS():find("Win") then
@@ -292,21 +310,26 @@ function CurlRequest:curl_timeout_argument()
 end
 
 function CurlRequest:check_sentinel()
-  local sentinel = io.open(self.sentinel_file, 'r')
+  local sentinel = io.open(self.progress_file, 'r')
 
   if not sentinel then
     return false
   end
 
-  local contents = sentinel:read("a")
+  local contents = sentinel:read("*all")
   sentinel:close()
 
-  return contents and contents == "done"
+  -- Workaround for https://github.com/curl/curl/issues/10491
+  local version = CurlRequest.curl_version()
+  if version and version[1] < 8 then return true end
+
+  self:debug('Checking sentinel: ' .. contents)
+  return contents and contents:find(CurlRequest.SENTINEL)
 end
 
 function CurlRequest:http_status_and_body(response)
   local headers, content = CurlRequest._split_curl_response(response)
-  self:debug('Parsing response: ' .. dump(headers) .. ', ' .. dump(content))
+  -- self:debug('Parsing response: ' .. dump(headers) .. ', ' .. dump(content))
   local last_status_line = headers[#headers] and headers[#headers][1] or ''
 
   local status = last_status_line:match("^HTTP/%d%.%d%s+(%d+)")
