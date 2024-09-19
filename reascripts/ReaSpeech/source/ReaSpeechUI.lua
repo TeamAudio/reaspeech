@@ -52,7 +52,7 @@ function ReaSpeechUI:init()
   self.transcript = Transcript.new()
   self.transcript_ui = TranscriptUI.new { transcript = self.transcript }
 
-  self.failure = AlertPopup.new { title = 'Transcription Failed' }
+  self.alert_popup = AlertPopup.new { title = 'Transcription Failed' }
 
   self.react_handlers = self:get_react_handlers()
 end
@@ -115,7 +115,7 @@ function ReaSpeechUI:react_to_worker_response()
   self:debug('Response: ' .. dump(response))
 
   if response.error then
-    self.failure:show(response.error)
+    self.alert_popup:show(response.error)
     self.worker:cancel()
     return
   end
@@ -135,7 +135,7 @@ function ReaSpeechUI:render()
     self.controls_ui:render()
     self.actions_ui:render()
     self.transcript_ui:render()
-    self.failure:render()
+    self.alert_popup:render()
   end)
 
   ImGui.PopItemWidth(ctx)
