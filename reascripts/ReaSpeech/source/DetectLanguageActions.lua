@@ -4,12 +4,8 @@
 
 ]]--
 
-DetectLanguageActions = Polo {
-  new = function(plugin)
-    return {
-      plugin = plugin
-    }
-  end,
+DetectLanguageActions = PluginActions {
+  actions = function(self) return { self._button } end
 }
 
 function DetectLanguageActions:init()
@@ -25,10 +21,6 @@ function DetectLanguageActions:init_button()
       self:label_track_languages()
     end
   })
-end
-
-function DetectLanguageActions:actions()
-  return { self._button }
 end
 
 function DetectLanguageActions:label_track_languages()

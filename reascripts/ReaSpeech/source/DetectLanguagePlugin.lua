@@ -4,27 +4,13 @@
 
 ]]--
 
-DetectLanguagePlugin = Polo {
-  new = function(app)
-    return {
-      app = app
-    }
-  end,
-}
+DetectLanguagePlugin = Plugin {}
 
 function DetectLanguagePlugin:init()
   assert(self.app, 'DetectLanguagePlugin: plugin host app is required')
   Logging.init(self, 'DetectLanguagePlugin')
   self._controls = DetectLanguageControls.new(self)
   self._actions = DetectLanguageActions.new(self)
-end
-
-function DetectLanguagePlugin:tabs()
-  return self._controls:tabs()
-end
-
-function DetectLanguagePlugin:actions()
-  return self._actions:actions()
 end
 
 function DetectLanguagePlugin:detect_language(jobs)

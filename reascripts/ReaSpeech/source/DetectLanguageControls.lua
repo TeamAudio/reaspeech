@@ -4,19 +4,9 @@
 
 ]]--
 
-DetectLanguageControls = Polo {
-  new = function(plugin)
-    return {
-      plugin = plugin
-    }
-  end,
-}
+DetectLanguageControls = PluginControls {}
 
 function DetectLanguageControls:init()
   assert(self.plugin, 'DetectLanguageControls: plugin is required')
   Logging.init(self, 'DetectLanguageControls')
-end
-
-function DetectLanguageControls:tabs()
-  return {}
 end
