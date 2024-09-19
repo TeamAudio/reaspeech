@@ -4,7 +4,9 @@
 
 ]]--
 
-DetectLanguagePlugin = Plugin {}
+DetectLanguagePlugin = Plugin {
+  ENDPOINT = '/detect_language'
+}
 
 function DetectLanguagePlugin:init()
   assert(self.app, 'DetectLanguagePlugin: plugin host app is required')
@@ -17,7 +19,7 @@ function DetectLanguagePlugin:detect_language(jobs)
   local request = {
     data = {},
     jobs = jobs,
-    endpoint = '/detect_language',
+    endpoint = self.ENDPOINT,
     callback = self:handle_response()
   }
 

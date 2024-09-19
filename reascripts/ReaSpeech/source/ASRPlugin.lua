@@ -4,7 +4,9 @@
 
 ]]--
 
-ASRPlugin = Plugin {}
+ASRPlugin = Plugin {
+  ENDPOINT = '/asr'
+}
 
 function ASRPlugin:init()
   assert(self.app, 'ASRPlugin: plugin host app is required')
@@ -40,7 +42,7 @@ function ASRPlugin:asr(jobs)
   local request = {
     data = data,
     jobs = jobs,
-    endpoint = ReaSpeechAPI.endpoints.asr,
+    endpoint = self.ENDPOINT,
     callback = self:handle_response()
   }
 
