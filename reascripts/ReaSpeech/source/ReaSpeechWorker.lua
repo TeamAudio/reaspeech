@@ -184,6 +184,12 @@ function ReaSpeechWorker:handle_job_status(active_job, response)
     return true
   end
 
+  if response.result then
+    self:handle_response(active_job, response.result)
+    self.active_job = nil
+    return false
+  end
+
   active_job.job.job_id = response.job_id
   active_job.job.job_status = response.job_status
 
