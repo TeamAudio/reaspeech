@@ -10,7 +10,7 @@ VENDOR=json.lua url.lua
 source:=$(wildcard libs/*.lua source/*.lua source/include/*.lua)
 libs:=$(foreach lib, $(LIBS), ../common/libs/$(lib))
 vendor:=$(foreach lib, $(VENDOR), ../common/vendor/$(lib))
-tests:=$(wildcard tests/Test*.lua tests/libs/Test*.lua)
+tests:=$(wildcard tests/Test*.lua)
 dest=../../app/static/reascripts/ReaSpeech
 
 all: lint test publish
