@@ -152,6 +152,18 @@ async def reascript(request: Request, name: str, host: str, protocol: str):
         }
     )
 
+@app.post("/test_multiple_upload", tags=["Endpoints"])
+async def test_multiple_upload(
+    file1: UploadFile,
+    file2: UploadFile
+):
+    return JSONResponse({
+        'result': {
+            'file1': file1.filename,
+            'file2': file2.filename,
+        }
+    })
+
 @app.post("/detect_language", tags=["Endpoints"])
 async def detect_language(
     audio_file: UploadFile = File(...),

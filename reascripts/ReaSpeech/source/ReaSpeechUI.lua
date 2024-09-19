@@ -38,7 +38,9 @@ function ReaSpeechUI:init()
     self.welcome_ui:present()
   end
 
-  self.plugins = ReaSpeechPlugins.new(self, { ASRPlugin, DetectLanguagePlugin, SettingsPlugin })
+  self.plugins = ReaSpeechPlugins.new(self, {
+    ASRPlugin, DetectLanguagePlugin, SettingsPlugin, SampleMultipleUploadPlugin
+   })
 
   self.controls_ui = ReaSpeechControlsUI.new({
     plugins = self.plugins,
