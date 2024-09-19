@@ -158,8 +158,12 @@ function ReaSpeechWorker:expand_jobs_from_request(request)
       seen_path[job.path] = true
       local uploads = {}
       if request.file_uploads then
-        for key, path_function in pairs(request.file_uploads) do
-          uploads[key] = path_function(job)
+        for key, path_or_path_function in pairs(request.file_uploads) do
+          if type(path_or_path_function) == 'function' then
+            uploads[key] = path_or_path_function(job)
+          else
+            uploads[key] = path_or_path_function
+          end
         end
       end
       table.insert(jobs, {
@@ -171,7 +175,21 @@ function ReaSpeechWorker:expand_jobs_from_request(request)
       })
     end
   end
-  return jobs
+
+  if #jobs > 0 then
+    return jobs
+  end
+
+  for _, _ in pairs(request.file_uploads) do
+    table.insert(jobs, {
+      job = { path = nil },
+      endpoint = request.endpoint,
+      data = request.data,
+      file_uploads = request.file_uploads,
+      callback = request.callback
+    })
+    return jobs
+  end
 end
 
 -- May return true if the job has completed and should no longer be active
