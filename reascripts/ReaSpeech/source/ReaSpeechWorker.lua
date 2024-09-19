@@ -156,10 +156,17 @@ function ReaSpeechWorker:expand_jobs_from_request(request)
   for _, job in pairs(request.jobs) do
     if not seen_path[job.path] then
       seen_path[job.path] = true
+      local uploads = {}
+      if request.file_uploads then
+        for key, path_function in pairs(request.file_uploads) do
+          uploads[key] = path_function(job)
+        end
+      end
       table.insert(jobs, {
         job = job,
         endpoint = request.endpoint,
         data = request.data,
+        file_uploads = uploads,
         callback = request.callback
       })
     end
@@ -236,7 +243,7 @@ function ReaSpeechWorker:start_active_job()
   local active_job = self.active_job
   active_job.requests = {}
   active_job.initial_request = ReaSpeechAPI:post_request(
-    active_job.endpoint, active_job.data, active_job.job.path)
+    active_job.endpoint, active_job.data, active_job.file_uploads)
 end
 
 function ReaSpeechWorker:check_active_job()

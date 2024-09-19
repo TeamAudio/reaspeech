@@ -18,6 +18,9 @@ end
 function DetectLanguagePlugin:detect_language(jobs)
   local request = {
     data = {},
+    file_uploads = {
+      audio_file = function(job) return job.path end
+    },
     jobs = jobs,
     endpoint = self.ENDPOINT,
     callback = self:handle_response()
