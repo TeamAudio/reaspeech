@@ -4,7 +4,7 @@ ASRControls.lua - Controls/configuration for ASR plugin
 
 ]]--
 
-ASRControls = Polo {
+ASRControls = PluginControls {
   DEFAULT_TAB = 'asr-simple',
 
   DEFAULT_LANGUAGE = '',
@@ -16,11 +16,14 @@ ASRControls = Polo {
     {'Large', 'distil-large-v3'},
   },
 
-  new = function(plugin)
+  tabs = function(self)
     return {
-      plugin = plugin
+      ReaSpeechPlugins.tab('asr-simple', 'ASR - Simple',
+        function() self:render_simple() end),
+      ReaSpeechPlugins.tab('asr-advanced', 'ASR - Advanced',
+        function() self:render_advanced() end),
     }
-  end,
+  end
 }
 
 function ASRControls:init()
@@ -67,15 +70,6 @@ function ASRControls:init()
   end
 
   self:init_layouts()
-end
-
-function ASRControls:tabs()
-  return {
-    ReaSpeechPlugins.tab('asr-simple', 'ASR - Simple',
-      function() self:render_simple() end),
-    ReaSpeechPlugins.tab('asr-advanced', 'ASR - Advanced',
-      function() self:render_advanced() end),
-  }
 end
 
 function ASRControls:init_layouts()

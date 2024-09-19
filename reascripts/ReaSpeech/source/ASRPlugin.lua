@@ -4,27 +4,13 @@
 
 ]]--
 
-ASRPlugin = Polo {
-  new = function(app)
-    return {
-      app = app
-    }
-  end,
-}
+ASRPlugin = Plugin {}
 
 function ASRPlugin:init()
   assert(self.app, 'ASRPlugin: plugin host app is required')
   Logging.init(self, 'ASRPlugin')
   self._controls = ASRControls.new(self)
   self._actions = ASRActions.new(self)
-end
-
-function ASRPlugin:tabs()
-  return self._controls:tabs()
-end
-
-function ASRPlugin:actions()
-  return self._actions:actions()
 end
 
 function ASRPlugin:asr(jobs)

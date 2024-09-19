@@ -4,12 +4,14 @@
 
 ]]--
 
-ASRActions = Polo {
-  new = function(plugin)
+ASRActions = PluginActions {
+  actions = function(self)
     return {
-      plugin = plugin
+      self:selected_tracks_button(),
+      self:selected_items_button(),
+      self:all_items_button(),
     }
-  end,
+  end
 }
 
 function ASRActions:init()
@@ -18,14 +20,6 @@ function ASRActions:init()
   Logging.init(self, 'ASRActions')
 
   self.disabler = ReaUtil.disabler(ctx)
-end
-
-function ASRActions:actions()
-  return {
-    self:selected_tracks_button(),
-    self:selected_items_button(),
-    self:all_items_button(),
-  }
 end
 
 function ASRActions:selected_tracks_button()
