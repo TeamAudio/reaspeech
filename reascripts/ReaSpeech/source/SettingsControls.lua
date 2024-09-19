@@ -4,12 +4,13 @@
 
 ]]--
 
-SettingsControls = Polo {
-  new = function(plugin)
+SettingsControls = PluginControls {
+  tabs = function(self)
     return {
-      plugin = plugin
+      ReaSpeechPlugins.tab('settings-general', 'ReaSpeech Settings',
+        function() self.layout:render() end),
     }
-  end,
+  end
 }
 
 function SettingsControls:init()
@@ -25,13 +26,6 @@ function SettingsControls:init()
   end)
 
   self:init_layout()
-end
-
-function SettingsControls:tabs()
-  return {
-    ReaSpeechPlugins.tab('settings-general', 'ReaSpeech Settings',
-      function() self.layout:render() end),
-  }
 end
 
 function SettingsControls:init_layout()
