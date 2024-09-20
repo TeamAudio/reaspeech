@@ -67,31 +67,6 @@ function ReaSpeechUI:trap(f)
   return xpcall(f, self.onerror)
 end
 
-function ReaSpeechUI:has_js_ReaScriptAPI()
-  if reaper.JS_Dialog_BrowseForSaveFile then
-    return true
-  end
-  return false
-end
-
-function ReaSpeechUI:show_file_dialog(options)
-  local title = options.title or 'Save file'
-  local folder = options.folder or ''
-  local file = options.file or ''
-  local ext = options.ext or ''
-  local save = options.save or false
-  local multi = options.multi or false
-  if self:has_js_ReaScriptAPI() then
-    if save then
-      return reaper.JS_Dialog_BrowseForSaveFile(title, folder, file, ext)
-    else
-      return reaper.JS_Dialog_BrowseForOpenFiles(title, folder, file, ext, multi)
-    end
-  else
-    return nil
-  end
-end
-
 function ReaSpeechUI:react()
   for _, handler in pairs(self.react_handlers) do
     self:trap(handler)
