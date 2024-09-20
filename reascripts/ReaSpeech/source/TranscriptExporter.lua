@@ -26,7 +26,12 @@ function TranscriptExporter:init()
     TranscriptExportFormat.exporter_csv(),
   }
   self.export_options = {}
-  self.file = ''
+  self.file_selector = ReaSpeechFileSelector.new({
+    label = 'File',
+    save = true,
+    button_width = self.BUTTON_WIDTH,
+    input_width = self.FILE_WIDTH
+  })
   self.success = AlertPopup.new { title = 'Export Successful' }
   self.failure = AlertPopup.new { title = 'Export Failed' }
 end
@@ -36,7 +41,7 @@ function TranscriptExporter:show_success()
     self.success.onclose = nil
     self:close()
   end
-  self.success:show('Exported ' .. self.export_formats:selected_key() .. ' to: ' .. self.file)
+  self.success:show('Exported ' .. self.export_formats:selected_key() .. ' to: ' .. self.file_selector:value())
 end
 
 function TranscriptExporter:show_error(msg)
@@ -89,39 +94,12 @@ function TranscriptExporter:render_content()
   self:render_buttons()
 end
 
--- Display a text input for the output filename, with a Browse button if
--- the js_ReaScriptAPI extension is available.
 function TranscriptExporter:render_file_selector()
-  ImGui.Text(ctx, 'File')
-  if app:has_js_ReaScriptAPI() then
-    if ImGui.Button(ctx, 'Choose File', self.BUTTON_WIDTH, 0) then
-      local rv, file = app:show_file_dialog {
-        title = 'Save transcript',
-        file = self.file,
-        save = true,
-        ext = self.export_formats:file_selector_spec(),
-      }
-      if rv == 1 then
-        self.file = file
-      end
-    end
-    ImGui.SameLine(ctx)
-  end
-
-  ImGui.SetNextItemWidth(ctx, self.FILE_WIDTH)
-  local file_changed, file = ImGui.InputText(ctx, '##file', self.file, 256)
-  if file_changed then
-    self.file = file
-  end
-
-  if not app:has_js_ReaScriptAPI() then
-    ImGui.Text(ctx, "For a better experience, install js_ReaScriptAPI")
-    ImGui.Spacing(ctx)
-  end
+  self.file_selector:render()
 end
 
 function TranscriptExporter:render_buttons()
-  ReaUtil.disabler(ctx)(self.file == '', function()
+  ReaUtil.disabler(ctx)(self.file_selector:value() == '', function()
     if ImGui.Button(ctx, 'Export', self.BUTTON_WIDTH, 0) then
       if self:handle_export() then
         self:show_success()
@@ -142,13 +120,13 @@ function TranscriptExporter:render_separator()
 end
 
 function TranscriptExporter:handle_export()
-  if self.file == '' then
+  if self.file_selector:value() == '' then
     self:show_error('Please specify a file name.')
     return false
   end
-  local file = io.open(self.file, 'w')
+  local file = io.open(self.file_selector:value(), 'w')
   if not file then
-    self:show_error('Could not open file: ' .. self.file)
+    self:show_error('Could not open file: ' .. self.file_selector:value())
     return false
   end
   self.export_formats:write(self.transcript, file, self.export_options)
