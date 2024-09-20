@@ -39,7 +39,10 @@ function ReaSpeechUI:init()
   end
 
   self.plugins = ReaSpeechPlugins.new(self, {
-    ASRPlugin, DetectLanguagePlugin, SettingsPlugin, SampleMultipleUploadPlugin
+    ASRPlugin,
+    -- DetectLanguagePlugin,
+    -- SettingsPlugin,
+    -- SampleMultipleUploadPlugin
    })
 
   self.controls_ui = ReaSpeechControlsUI.new({
