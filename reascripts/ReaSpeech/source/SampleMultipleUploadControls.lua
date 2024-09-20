@@ -17,8 +17,8 @@ function SampleMultipleUploadControls:init()
   assert(self.plugin, 'SampleMultipleUploadControls: plugin is required')
   Logging.init(self, 'SampleMultipleUploadControls')
 
-  self.upload_file1 = ReaSpeechTextInput.simple('', 'Upload File 1')
-  self.upload_file2 = ReaSpeechTextInput.simple('', 'Upload File 2')
+  self.upload_file1 = ReaSpeechFileSelector.new({ label = 'Upload File 1' })
+  self.upload_file2 = ReaSpeechFileSelector.new({ label = 'Upload File 2' })
 
   self:init_layout()
 end
@@ -40,6 +40,7 @@ function SampleMultipleUploadControls:init_layout()
 
   function SampleMultipleUploadControls:render_controls()
     self.upload_file1:render()
+    ImGui.Dummy(ctx, 0, 5)
     self.upload_file2:render()
   end
 end
