@@ -31,6 +31,14 @@ function ASRControls:init()
 
   Logging.init(self, 'ASRControls')
 
+  self.log_enable = ReaSpeechCheckbox.simple(true, 'Enable', function(current)
+    Logging.show_logs = current
+  end)
+
+  self.log_debug = ReaSpeechCheckbox.simple(true, 'Debug', function(current)
+    Logging.show_debug_logs = current
+  end)
+
   self.language = ReaSpeechCombo.new {
     default = self.DEFAULT_LANGUAGE,
     label = 'Language',
@@ -79,7 +87,7 @@ end
 function ASRControls:init_advanced_layouts()
   local renderers = {
     {self.render_model_name, self.render_hotwords, self.render_language},
-    {self.render_options, self.render_initial_prompt, function() end },
+    {self.render_options, self.render_initial_prompt, self.render_logging},
   }
 
   self.advanced_layouts = {}
@@ -137,6 +145,17 @@ end
 
 function ASRControls:render_initial_prompt()
   self.initial_prompt:render()
+end
+
+function ASRControls:render_logging()
+  ReaSpeechControlsUI:render_input_label('Logging')
+
+  self.log_enable:render()
+
+  if self.log_enable:value() then
+    ImGui.SameLine(ctx)
+    self.log_debug:render()
+  end
 end
 
 function ASRControls:get_request_data()
