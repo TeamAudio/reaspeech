@@ -18,9 +18,9 @@ ASRControls = PluginControls {
 
   tabs = function(self)
     return {
-      ReaSpeechPlugins.tab('asr-simple', 'ASR - Simple',
+      ReaSpeechPlugins.tab('asr-simple', 'Simple',
         function() self:render_simple() end),
-      ReaSpeechPlugins.tab('asr-advanced', 'ASR - Advanced',
+      ReaSpeechPlugins.tab('asr-advanced', 'Advanced',
         function() self:render_advanced() end),
     }
   end
