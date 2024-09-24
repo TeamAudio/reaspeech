@@ -30,7 +30,6 @@ function DetectLanguagePlugin:detect_language(jobs)
 end
 
 function DetectLanguagePlugin:handle_response()
-  -- seen[<track GUID> .. <language code>] = true
   local seen = {}
   local languages = {}
   local track_names = {}
