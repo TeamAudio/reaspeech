@@ -180,6 +180,7 @@ function ReaSpeechWorker:expand_jobs_from_request(request)
     return jobs
   end
 
+  -- luacheck: ignore
   for _, _ in pairs(request.file_uploads) do
     table.insert(jobs, {
       job = { path = nil },
