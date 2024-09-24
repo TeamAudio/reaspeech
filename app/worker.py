@@ -40,9 +40,9 @@ tqdm.tqdm = _TQDM
 
 ASR_ENGINE = os.getenv("ASR_ENGINE", "faster_whisper")
 if ASR_ENGINE == "faster_whisper":
-    from .faster_whisper.core import load_model, language_detection, transcribe as whisper_transcribe
+    from .faster_whisper import core as asr_engine
 else:
-    from .openai_whisper.core import load_model, language_detection, transcribe as whisper_transcribe
+    from .openai_whisper import core as asr_engine
 
 LANGUAGE_CODES = sorted(list(tokenizer.LANGUAGES.keys()))
 
@@ -78,7 +78,7 @@ def transcribe(
             model_name = asr_options.get("model_name") or DEFAULT_MODEL_NAME
             logger.info(f"Loading model {model_name}")
             self.update_state(state=STATES["loading_model"], meta={"progress": {"units": "models", "total": 1, "current": 0}})
-            load_model(model_name)
+            asr_engine.load_model(model_name)
 
             logger.info(f"Loading audio from {audio_file_path}")
             self.update_state(state=STATES["encoding"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
@@ -86,7 +86,7 @@ def transcribe(
 
             logger.info(f"Transcribing audio")
             self.update_state(state=STATES["transcribing"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
-            result = whisper_transcribe(audio_data, asr_options, output_format)
+            result = asr_engine.transcribe(audio_data, asr_options, output_format)
         finally:
             _TQDM.set_progress_function(None)
 
@@ -122,7 +122,7 @@ def detect_language(self, audio_file_path: str, encode: bool):
         model_name = DEFAULT_MODEL_NAME
         logger.info(f"Loading model {model_name}")
         self.update_state(state=STATES["loading_model"], meta={"progress": {"units": "models", "total": 1, "current": 0}})
-        load_model(model_name)
+        asr_engine.load_model(model_name)
 
         logger.info(f"Loading audio from {audio_file_path}")
         self.update_state(state=STATES["encoding"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
@@ -130,7 +130,7 @@ def detect_language(self, audio_file_path: str, encode: bool):
 
         logger.info(f"Detecting audio language")
         self.update_state(state=STATES["detecting_language"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
-        result = language_detection(audio_data)
+        result = asr_engine.language_detection(audio_data)
 
     os.remove(audio_file_path)
 
