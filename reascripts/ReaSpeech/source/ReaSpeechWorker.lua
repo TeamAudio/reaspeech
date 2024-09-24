@@ -231,7 +231,7 @@ function ReaSpeechWorker:handle_job_status(active_job, response)
     elseif response.job_result.url_paths then
       for _, url_path in pairs(response.job_result.url_paths) do
         table.insert(active_job.requests, function()
-           ReaSpeechAPI:fetch_large(url_path)
+           return ReaSpeechAPI:fetch_large(url_path)
         end)
       end
     end
