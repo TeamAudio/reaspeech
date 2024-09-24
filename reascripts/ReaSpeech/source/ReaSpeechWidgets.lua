@@ -366,7 +366,7 @@ ReaSpeechFileSelector.renderer = function(self)
   end
 
   ImGui.SetNextItemWidth(self.ctx, w)
-  local file_changed, file = ImGui.InputText(self.ctx, '##file', self:value(), options.input_width)
+  local file_changed, file = ImGui.InputText(self.ctx, '##file', self:value())
   if file_changed then
     self:set(file)
   end

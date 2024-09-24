@@ -19,7 +19,7 @@ function AlertPopup:init()
   self.msg = ''
 end
 
-function AlertPopup:show(msg, title)
+function AlertPopup:show(title, msg)
   self.title = title or self.title
   self.msg = msg
   self:open()

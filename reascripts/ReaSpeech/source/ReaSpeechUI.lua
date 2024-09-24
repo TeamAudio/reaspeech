@@ -57,7 +57,7 @@ function ReaSpeechUI:init()
   self.transcript = Transcript.new()
   self.transcript_ui = TranscriptUI.new { transcript = self.transcript }
 
-  self.alert_popup = AlertPopup.new { title = 'Transcription Failed' }
+  self.alert_popup = AlertPopup.new {}
 
   self.react_handlers = self:get_react_handlers()
 end
@@ -95,7 +95,7 @@ function ReaSpeechUI:react_to_worker_response()
   self:debug('Response: ' .. dump(response))
 
   if response.error then
-    self.alert_popup:show(response.error)
+    self.alert_popup:show('Transcription Failed', response.error)
     self.worker:cancel()
     return
   end

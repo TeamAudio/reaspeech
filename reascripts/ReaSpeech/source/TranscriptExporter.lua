@@ -32,20 +32,20 @@ function TranscriptExporter:init()
     button_width = self.BUTTON_WIDTH,
     input_width = self.FILE_WIDTH
   })
-  self.success = AlertPopup.new { title = 'Export Successful' }
-  self.failure = AlertPopup.new { title = 'Export Failed' }
+
+  self.alert_popup = AlertPopup.new {}
 end
 
 function TranscriptExporter:show_success()
-  self.success.onclose = function ()
-    self.success.onclose = nil
+  self.alert_popup.onclose = function ()
+    self.alert_popup.onclose = nil
     self:close()
   end
-  self.success:show('Exported ' .. self.export_formats:selected_key() .. ' to: ' .. self.file_selector:value())
+  self.alert_popup:show('Export Successful', 'Exported ' .. self.export_formats:selected_key() .. ' to: ' .. self.file_selector:value())
 end
 
 function TranscriptExporter:show_error(msg)
-  self.failure:show(msg)
+  self.alert_popup:show('Export Failed', msg)
 end
 
 function TranscriptExporter:render()
@@ -68,8 +68,7 @@ function TranscriptExporter:render()
   if visible then
     app:trap(function ()
       self:render_content()
-      self.success:render()
-      self.failure:render()
+      self.alert_popup:render()
     end)
     ImGui.End(ctx)
   end
