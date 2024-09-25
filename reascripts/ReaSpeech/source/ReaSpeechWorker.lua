@@ -180,8 +180,12 @@ function ReaSpeechWorker:expand_jobs_from_request(request)
     return jobs
   end
 
-  -- luacheck: ignore
+  local is_empty = true
   for _, _ in pairs(request.file_uploads) do
+    is_empty = false
+  end
+
+  if not is_empty then
     table.insert(jobs, {
       job = { path = nil },
       endpoint = request.endpoint,
