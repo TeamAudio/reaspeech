@@ -145,38 +145,55 @@ function ReaSpeechWorker:handle_request(request)
   self:log('Processing speech...')
   self.job_count = #request.jobs
 
-  local data = {
-    task = request.translate and 'translate' or 'transcribe',
-    output = 'json',
-    use_async = 'true',
-    vad_filter = request.vad_filter and 'true' or 'false',
-    word_timestamps = 'true',
-    model_name = request.model_name,
-  }
-
-  if request.language and request.language ~= '' then
-    data.language = request.language
+  for _, job in ipairs(self:expand_jobs_from_request(request)) do
+    table.insert(self.pending_jobs, job)
   end
+end
 
-  if request.hotwords and request.hotwords ~= '' then
-    data.hotwords = request.hotwords
-  end
-
-  if request.initial_prompt and request.initial_prompt ~= '' then
-    data.initial_prompt = request.initial_prompt
-  end
-
+function ReaSpeechWorker:expand_jobs_from_request(request)
+  local jobs = {}
   local seen_path = {}
   for _, job in pairs(request.jobs) do
     if not seen_path[job.path] then
       seen_path[job.path] = true
-      table.insert(self.pending_jobs, {
+      local uploads = {}
+      if request.file_uploads then
+        for key, path_or_path_function in pairs(request.file_uploads) do
+          if type(path_or_path_function) == 'function' then
+            uploads[key] = path_or_path_function(job)
+          else
+            uploads[key] = path_or_path_function
+          end
+        end
+      end
+      table.insert(jobs, {
         job = job,
         endpoint = request.endpoint,
-        data = data,
+        data = request.data,
+        file_uploads = uploads,
         callback = request.callback
       })
     end
+  end
+
+  if #jobs > 0 then
+    return jobs
+  end
+
+  local is_empty = true
+  for _, _ in pairs(request.file_uploads) do
+    is_empty = false
+  end
+
+  if not is_empty then
+    table.insert(jobs, {
+      job = { path = nil },
+      endpoint = request.endpoint,
+      data = request.data,
+      file_uploads = request.file_uploads,
+      callback = request.callback
+    })
+    return jobs
   end
 end
 
@@ -190,6 +207,12 @@ function ReaSpeechWorker:handle_job_status(active_job, response)
     return true
   end
 
+  if response.result then
+    self:handle_response(active_job, response.result)
+    self.active_job = nil
+    return false
+  end
+
   active_job.job.job_id = response.job_id
   active_job.job.job_status = response.job_status
 
@@ -198,9 +221,24 @@ function ReaSpeechWorker:handle_job_status(active_job, response)
   end
 
   if response.job_status == 'SUCCESS' then
-    local transcript_url_path = response.job_result.url_path
+    local job_result = response.job_result
+    if job_result.result then
+      self:handle_response(active_job, job_result.result)
+      self.active_job = nil
+      return false
+    end
+
     response._job = active_job.job
-    active_job.transcript_request = ReaSpeechAPI:fetch_large(transcript_url_path)
+
+    if response.job_result.url_path then
+      table.insert(active_job.requests, ReaSpeechAPI:fetch_large(response.job_result.url_path))
+    elseif response.job_result.url_paths then
+      for _, url_path in pairs(response.job_result.url_paths) do
+        table.insert(active_job.requests, function()
+           return ReaSpeechAPI:fetch_large(url_path)
+        end)
+      end
+    end
 
     -- Job completion depends on non-blocking download of transcript
     return false
@@ -232,8 +270,9 @@ function ReaSpeechWorker:start_active_job()
   end
 
   local active_job = self.active_job
+  active_job.requests = {}
   active_job.initial_request = ReaSpeechAPI:post_request(
-    active_job.endpoint, active_job.data, active_job.job.path)
+    active_job.endpoint, active_job.data, active_job.file_uploads)
 end
 
 function ReaSpeechWorker:check_active_job()
@@ -245,11 +284,19 @@ function ReaSpeechWorker:check_active_job()
     self:check_active_job_request_status()
   end
 
-  if active_job.transcript_request then
-    self:check_active_job_transcript_request_status()
-  else
-    self:check_active_job_status()
+  if #active_job.requests > 0 then
+    for key, request in pairs(active_job.requests) do
+      if type(request) ~= 'function' then
+        if not request:ready() then return end
+      else
+        active_job.requests[key] = request()
+        return
+      end
+    end
+    self:handle_responses()
   end
+
+  self:check_active_job_status()
 end
 
 function ReaSpeechWorker:check_active_job_status()
@@ -280,15 +327,19 @@ function ReaSpeechWorker:check_active_job_request_status()
   end
 end
 
-function ReaSpeechWorker:check_active_job_transcript_request_status()
+function ReaSpeechWorker:handle_responses()
   local active_job = self.active_job
-  local request = active_job.transcript_request
-
-  if request:ready() then
-    self:handle_response(active_job, request:result())
-    self.active_job = nil
-  elseif request:error() then
-    self:handle_error(active_job, request:error())
-    self.active_job = nil
+  active_job.responses = {}
+  for _, request in pairs(active_job.requests) do
+    if request:ready() then
+      table.insert(active_job.responses, request:result())
+    elseif request:error() then
+      self:handle_error(active_job, request:error())
+      self.active_job = nil
+      return
+    end
   end
+
+  self:handle_response(active_job, active_job.responses)
+  self.active_job = nil
 end

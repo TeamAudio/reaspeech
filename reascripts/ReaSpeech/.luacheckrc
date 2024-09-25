@@ -8,6 +8,9 @@ globals = {
   "Polo",
   "ReaUtil",
   "table",
+  "Plugin",
+  "PluginActions",
+  "PluginControls",
 }
 
 allow_defined = true

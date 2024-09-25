@@ -7,7 +7,7 @@ LUACHECK=luacheck
 LIBS=ImGuiTheme.lua Polo.lua ReaIter.lua ReaUtil.lua TableUtils.lua Tempfile.lua
 VENDOR=json.lua url.lua
 
-source:=$(wildcard source/*.lua source/include/*.lua)
+source:=$(wildcard libs/*.lua source/*.lua source/include/*.lua)
 libs:=$(foreach lib, $(LIBS), ../common/libs/$(lib))
 vendor:=$(foreach lib, $(VENDOR), ../common/vendor/$(lib))
 tests:=$(wildcard tests/Test*.lua)
@@ -26,7 +26,7 @@ test: $(source) $(libs) $(tests)
 build: build/ReaSpeech-5.3.luac build/ReaSpeech-5.4.luac
 
 build/ReaSpeechBundle.lua: $(source) $(libs) $(vendor) version.lua
-	cat source/include/header.lua source/include/globals.lua $(libs) $(vendor) resources/images/*.lua source/*.lua version.lua source/include/main.lua > build/ReaSpeechBundle.lua
+	cat source/include/header.lua source/include/globals.lua $(libs) $(vendor) resources/images/*.lua libs/*.lua source/*.lua version.lua source/include/main.lua > build/ReaSpeechBundle.lua
 
 build/ReaSpeech-5.3.luac: build/ReaSpeechBundle.lua
 	$(LUAC53) -o build/ReaSpeech-5.3.luac -s build/ReaSpeechBundle.lua
@@ -42,6 +42,7 @@ publish: build
 .PHONY: tags
 tags:
 	find source/ -type f -iname '*.lua' -print0 | xargs -0 etags
+	find libs/ -type f -iname '*.lua' -print0 | xargs -0 etags
 	find ../common/libs/ -type f -iname '*.lua' -print0 | xargs -0 etags --append
 	find ../common/vendor/ -type f -iname '*.lua' -print0 | xargs -0 etags --append
 

@@ -8,7 +8,7 @@ tests=$(realpath $(foreach module, $(modules), $(wildcard $(dir $(module))tests/
 all: lint test
 
 lint: $(source_files)
-	$(LUACHECK) --config $(luacheckrc) $?
+	$(LUACHECK) --codes --config $(luacheckrc) $?
 
 test:
 	true $(foreach test, $(tests), \

@@ -29,11 +29,6 @@ function ReaSpeechWelcomeUI:init()
   self.is_demo = self.is_demo or false
   self.is_open = false
   self.presenting = false
-
-  self.url_opener_cmd = '/usr/bin/open "%s"'
-  if reaper.GetOS():match('Win') then
-    self.url_opener_cmd = 'start "" "%s"'
-  end
 end
 
 function ReaSpeechWelcomeUI:present()
@@ -92,7 +87,9 @@ function ReaSpeechWelcomeUI:render_demo_text()
   self:render_text("Please note that this version is a demo and may not be available at all times.")
   self:render_text("For a more reliable experience, you can run ReaSpeech locally using the ")
   ImGui.SameLine(ctx, 0, 0)
-  Widgets.link("Docker image", self:url_opener(self.DOCKER_DOC_URL), self.LINK_COLOR, self.LINK_COLOR)
+  Widgets.link("Docker image", ReaUtil.url_opener(self.DOCKER_DOC_URL), self.LINK_COLOR, self.LINK_COLOR)
+  ImGui.SameLine(ctx, 0, 0)
+  ImGui.Text(ctx, ".")
 end
 
 function ReaSpeechWelcomeUI:render_close_button()
@@ -138,17 +135,11 @@ function ReaSpeechWelcomeUI:render_footer()
   ImGui.Dummy(ctx, self.WIDTH, self.FOOTER_HEIGHT)
   ImGui.SetCursorPos(ctx, cursor_x + self.PADDING, cursor_y + self.PADDING)
 
-  Widgets.link("ReaSpeech Website", self:url_opener(self.HOME_URL))
+  Widgets.link("ReaSpeech Website", ReaUtil.url_opener(self.HOME_URL))
   ImGui.SameLine(ctx)
-  Widgets.link("GitHub", self:url_opener(self.GITHUB_URL))
+  Widgets.link("GitHub", ReaUtil.url_opener(self.GITHUB_URL))
   ImGui.SameLine(ctx)
-  Widgets.link("Docker Hub", self:url_opener(self.DOCKER_HUB_URL))
-end
-
-function ReaSpeechWelcomeUI:url_opener(url)
-  return function()
-    (ExecProcess.new { self.url_opener_cmd:format(url) }):wait()
-  end
+  Widgets.link("Docker Hub", ReaUtil.url_opener(self.DOCKER_HUB_URL))
 end
 
 function ReaSpeechWelcomeUI:_open()

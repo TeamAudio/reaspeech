@@ -15,6 +15,23 @@ function ReaUtil.proxy_main_on_command(command_number, flag)
   end
 end
 
+function ReaUtil.url_opener(url)
+  return function()
+    ReaUtil.open_url(url)
+  end
+end
+
+function ReaUtil.open_url(url)
+  local url_opener_cmd
+  if reaper.GetOS():match('Win') then
+    url_opener_cmd = 'start "" "%s"'
+  else
+    url_opener_cmd = '/usr/bin/open "%s"'
+  end
+
+  (ExecProcess.new { url_opener_cmd:format(url) }):wait()
+end
+
 function ReaUtil.disabler(context, error_handler)
   error_handler = error_handler or function(msg)
     reaper.ShowConsoleMsg(msg .. '\n')

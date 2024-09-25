@@ -13,11 +13,14 @@ AlertPopup = Polo {
 }
 
 function AlertPopup:init()
+  Logging.init(self, 'AlertPopup')
+
   self.title = self.title or self.DEFAULT_TITLE
   self.msg = ''
 end
 
-function AlertPopup:show(msg)
+function AlertPopup:show(title, msg)
+  self.title = title or self.title
   self.msg = msg
   self:open()
 end

@@ -38,7 +38,7 @@ from whisper import tokenizer
 import aiofiles
 
 from .util import apierror
-from .worker import transcribe
+from .worker import transcribe, detect_language as detect_language_task
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s', level=logging.INFO, force=True)
 logger = logging.getLogger(__name__)
@@ -151,6 +151,36 @@ async def reascript(request: Request, name: str, host: str, protocol: str):
             'Content-Disposition': f'attachment; filename="{filename}"'
         }
     )
+
+@app.post("/test_multiple_upload", tags=["Endpoints"])
+async def test_multiple_upload(
+    file1: UploadFile,
+    file2: UploadFile
+):
+    return JSONResponse({
+        'result': {
+            'file1': file1.filename,
+            'file2': file2.filename,
+        }
+    })
+
+@app.post("/detect_language", tags=["Endpoints"])
+async def detect_language(
+    audio_file: UploadFile = File(...),
+    encode: bool = Query(default=True, description="Encode audio first through ffmpeg"),
+):
+    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+        temp_file_path = temp_file.name
+
+    async with aiofiles.open(temp_file_path, 'wb') as out_file:
+        while content := await audio_file.read(1024 * 1024):  # Read in chunks of 1MB
+            await out_file.write(content)
+
+    job = detect_language_task \
+        .si(temp_file_path, encode) \
+        .apply_async(expires=TASK_EXPIRATION_SECONDS)
+
+    return JSONResponse({"job_id": job.id})
 
 @app.post("/asr", tags=["Endpoints"])
 async def asr(

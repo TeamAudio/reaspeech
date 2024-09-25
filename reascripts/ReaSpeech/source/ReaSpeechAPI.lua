@@ -7,9 +7,6 @@
 ReaSpeechAPI = {
   CURL_TIMEOUT_SECONDS = 5,
   base_url = nil,
-  endpoints = {
-    asr = '/asr',
-  }
 }
 
 function ReaSpeechAPI:init(host, protocol)
@@ -54,7 +51,7 @@ end
 -- Uploads a file to start a request for processing.
 -- This method is non-blocking, and does not give any indication that it has
 -- completed. The path to the output file is returned.
-function ReaSpeechAPI:post_request(url_path, data, file_path)
+function ReaSpeechAPI:post_request(url_path, data, file_uploads)
   local request = CurlRequest.async {
     url = self:get_api_url(url_path),
     method = 'POST',
@@ -62,9 +59,7 @@ function ReaSpeechAPI:post_request(url_path, data, file_path)
       ['Content-Type'] = 'multipart/form-data',
     },
     query_data = data,
-    file_uploads = {
-      audio_file = file_path,
-    },
+    file_uploads = file_uploads or {},
   }
 
   return request:execute()

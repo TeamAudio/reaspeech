@@ -38,16 +38,26 @@ function ReaSpeechUI:init()
     self.welcome_ui:present()
   end
 
-  self.controls_ui = ReaSpeechControlsUI.new()
+  self.plugins = ReaSpeechPlugins.new(self, {
+    ASRPlugin,
+    -- DetectLanguagePlugin,
+    -- SettingsPlugin,
+    -- SampleMultipleUploadPlugin
+   })
+
+  self.controls_ui = ReaSpeechControlsUI.new({
+    plugins = self.plugins,
+  })
 
   self.actions_ui = ReaSpeechActionsUI.new({
+    plugins = self.plugins,
     worker = self.worker
   })
 
   self.transcript = Transcript.new()
   self.transcript_ui = TranscriptUI.new { transcript = self.transcript }
 
-  self.failure = AlertPopup.new { title = 'Transcription Failed' }
+  self.alert_popup = AlertPopup.new {}
 
   self.react_handlers = self:get_react_handlers()
 end
@@ -58,31 +68,6 @@ end
 
 function ReaSpeechUI:trap(f)
   return xpcall(f, self.onerror)
-end
-
-function ReaSpeechUI:has_js_ReaScriptAPI()
-  if reaper.JS_Dialog_BrowseForSaveFile then
-    return true
-  end
-  return false
-end
-
-function ReaSpeechUI:show_file_dialog(options)
-  local title = options.title or 'Save file'
-  local folder = options.folder or ''
-  local file = options.file or ''
-  local ext = options.ext or ''
-  local save = options.save or false
-  local multi = options.multi or false
-  if self:has_js_ReaScriptAPI() then
-    if save then
-      return reaper.JS_Dialog_BrowseForSaveFile(title, folder, file, ext)
-    else
-      return reaper.JS_Dialog_BrowseForOpenFiles(title, folder, file, ext, multi)
-    end
-  else
-    return nil
-  end
 end
 
 function ReaSpeechUI:react()
@@ -110,7 +95,7 @@ function ReaSpeechUI:react_to_worker_response()
   -- self:debug('Response: ' .. dump(response))
 
   if response.error then
-    self.failure:show(response.error)
+    self.alert_popup:show('Transcription Failed', response.error)
     self.worker:cancel()
     return
   end
@@ -130,23 +115,15 @@ function ReaSpeechUI:render()
     self.controls_ui:render()
     self.actions_ui:render()
     self.transcript_ui:render()
-    self.failure:render()
+    self.alert_popup:render()
   end)
 
   ImGui.PopItemWidth(ctx)
 end
 
-function ReaSpeechUI:new_jobs(jobs, endpoint, callback)
-  local request = self.controls_ui:get_request_data()
-  callback = callback or function() end
-
-  assert(endpoint, "Endpoint required for API call")
-  request.endpoint = endpoint
-  request.jobs = jobs
-  request.callback = callback
-
-  self:debug('Request: ' .. dump(request))
-
+function ReaSpeechUI:submit_request(request)
+  assert(request.endpoint, "Endpoint required for API call")
+  request.callback = request.callback or function() end
   table.insert(self.requests, request)
 end
 
