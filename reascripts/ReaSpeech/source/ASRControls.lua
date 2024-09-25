@@ -31,11 +31,11 @@ function ASRControls:init()
 
   Logging.init(self, 'ASRControls')
 
-  self.log_enable = ReaSpeechCheckbox.simple(true, 'Enable', function(current)
+  self.log_enable = ReaSpeechCheckbox.simple(false, 'Enable', function(current)
     Logging.show_logs = current
   end)
 
-  self.log_debug = ReaSpeechCheckbox.simple(true, 'Debug', function(current)
+  self.log_debug = ReaSpeechCheckbox.simple(false, 'Debug', function(current)
     Logging.show_debug_logs = current
   end)
 
