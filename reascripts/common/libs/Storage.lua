@@ -134,7 +134,7 @@ function Storage._number_to_string(num)
 end
 
 function Storage._string_to_boolean(str)
-  return str ~= 'false'
+  return str == 'true'
 end
 
 function Storage._string_to_number(str)
