@@ -10,7 +10,7 @@ ReaSpeechWidget = Polo {
 function ReaSpeechWidget:init()
   if not self.state then
     assert(self.default ~= nil, "default value not provided")
-    self._value = self.default
+    self.state = Storage.memory(self.default)
   end
   assert(self.renderer, "renderer not provided")
   self.ctx = self.ctx or ctx
@@ -28,19 +28,11 @@ function ReaSpeechWidget:render(...)
 end
 
 function ReaSpeechWidget:value()
-  if self.state then
-    return self.state:get()
-  else
-    return self._value
-  end
+  return self.state:get()
 end
 
 function ReaSpeechWidget:set(value)
-  if self.state then
-    self.state:set(value)
-  else
-    self._value = value
-  end
+  self.state:set(value)
   if self.on_set then self:on_set() end
 end
 
