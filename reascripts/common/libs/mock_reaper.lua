@@ -1,8 +1,10 @@
 reaper = reaper or {
   __ext_state__ = {},
+  __proj_ext_state__ = {},
 
   __test_setUp = function ()
     reaper.__ext_state__ = {}
+    reaper.__proj_ext_state__ = {}
   end,
 
   APIExists = function (_)
@@ -34,6 +36,26 @@ reaper = reaper or {
     if reaper.__ext_state__[section] then
       reaper.__ext_state__[section][key] = nil
     end
+  end,
+
+  GetProjExtState = function (proj, extname, key)
+    if (reaper.__proj_ext_state__[proj]
+        and reaper.__proj_ext_state__[proj][extname]
+        and reaper.__proj_ext_state__[proj][extname][key]
+        and reaper.__proj_ext_state__[proj][extname][key] ~= "") then
+      return 1, reaper.__proj_ext_state__[proj][extname][key]
+    end
+    return 0, ""
+  end,
+
+  SetProjExtState = function (proj, extname, key, value)
+    if not reaper.__proj_ext_state__[proj] then
+      reaper.__proj_ext_state__[proj] = {}
+    end
+    if not reaper.__proj_ext_state__[proj][extname] then
+      reaper.__proj_ext_state__[proj][extname] = {}
+    end
+    reaper.__proj_ext_state__[proj][extname][key] = value
   end,
 
   genGuid = function()
