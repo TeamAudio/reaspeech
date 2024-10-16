@@ -39,33 +39,58 @@ function ASRControls:init()
     Logging.show_debug_logs = current
   end)
 
+  local storage = Storage.ExtState.make {
+    section = 'ReaSpeech.ASR',
+    persist = true,
+  }
+
+  self.settings = {
+    language = storage:string('language', self.DEFAULT_LANGUAGE),
+    translate = storage:boolean('translate', false),
+    hotwords = storage:string('hotwords', ''),
+    initial_prompt = storage:string('initial_prompt', ''),
+    model_name = storage:string('model_name', self.DEFAULT_MODEL_NAME),
+    vad_filter = storage:boolean('vad_filter', true),
+  }
+
   self.language = ReaSpeechCombo.new {
-    default = self.DEFAULT_LANGUAGE,
+    state = self.settings.language,
     label = 'Language',
     items = WhisperLanguages.LANGUAGE_CODES,
     item_labels = WhisperLanguages.LANGUAGES
   }
 
   self.translate = ReaSpeechCheckbox.new {
-    default = false,
+    state = self.settings.translate,
     label_long = 'Translate to English',
     label_short = 'Translate',
     width_threshold = ReaSpeechControlsUI.NARROW_COLUMN_WIDTH
   }
 
-  self.hotwords = ReaSpeechTextInput.simple('', 'Hot Words')
-  self.initial_prompt = ReaSpeechTextInput.simple('', 'Initial Prompt')
-  self.model_name = ReaSpeechTextInput.simple(self.DEFAULT_MODEL_NAME, 'Model Name')
+  self.hotwords = ReaSpeechTextInput.new {
+    state = self.settings.hotwords,
+    label = 'Hot Words'
+  }
+
+  self.initial_prompt = ReaSpeechTextInput.new {
+    state = self.settings.initial_prompt,
+    label = 'Initial Prompt'
+  }
+
+  self.model_name = ReaSpeechTextInput.new {
+    state = self.settings.model_name,
+    label = 'Model Name'
+  }
 
   self.vad_filter = ReaSpeechCheckbox.new {
-    default = true,
+    state = self.settings.vad_filter,
     label_long = 'Voice Activity Detection',
     label_short = 'VAD',
     width_threshold = ReaSpeechControlsUI.NARROW_COLUMN_WIDTH
   }
 
   self.model_name_buttons = ReaSpeechButtonBar.new {
-    default = self.DEFAULT_MODEL_NAME,
+    state = self.settings.model_name,
     label = 'Model Name',
     buttons = self.SIMPLE_MODEL_SIZES,
     column_padding = ReaSpeechControlsUI.COLUMN_PADDING,

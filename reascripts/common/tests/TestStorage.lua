@@ -77,11 +77,7 @@ function TestStorage:testProjExtState()
 end
 
 function TestStorage:testDerivedCell()
-  local settings = Storage.ExtState.make {
-    section = 'MyScript.Settings',
-  }
-
-  local my_setting = settings:string('my_setting', '')
+  local my_setting = Storage.memory('')
 
   local my_derived_setting = Storage.Cell.new {
     get = function () return my_setting:get():upper() end,

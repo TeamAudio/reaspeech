@@ -8,7 +8,10 @@ ReaSpeechWidget = Polo {
 }
 
 function ReaSpeechWidget:init()
-  assert(self.default ~= nil, "default value not provided")
+  if not self.state then
+    assert(self.default ~= nil, "default value not provided")
+    self.state = Storage.memory(self.default)
+  end
   assert(self.renderer, "renderer not provided")
   self.ctx = self.ctx or ctx
   self.widget_id = self.widget_id or reaper.genGuid()
@@ -25,11 +28,11 @@ function ReaSpeechWidget:render(...)
 end
 
 function ReaSpeechWidget:value()
-  return self._value
+  return self.state:get()
 end
 
 function ReaSpeechWidget:set(value)
-  self._value = value
+  self.state:set(value)
   if self.on_set then self:on_set() end
 end
 
@@ -38,6 +41,7 @@ end
 ReaSpeechCheckbox = {}
 ReaSpeechCheckbox.new = function (options)
   options = options or {
+    state = nil,
     default = nil,
     label_long = nil,
     label_short = nil,
@@ -47,14 +51,14 @@ ReaSpeechCheckbox.new = function (options)
   options.changed_handler = options.changed_handler or function(_) end
 
   local o = ReaSpeechWidget.new({
+    state = options.state,
     default = options.default,
     widget_id = options.widget_id,
     renderer = ReaSpeechCheckbox.renderer,
     options = options,
   })
 
-  o._value = o.default
-  options.changed_handler(o.default)
+  options.changed_handler(o:value())
 
   return o
 end
@@ -88,18 +92,18 @@ end
 ReaSpeechTextInput = {}
 ReaSpeechTextInput.new = function (options)
   options = options or {
+    state = nil,
     default = nil,
     label = nil,
   }
 
   local o = ReaSpeechWidget.new({
+    state = options.state,
     default = options.default,
     widget_id = options.widget_id,
     renderer = ReaSpeechTextInput.renderer,
     options = options,
   })
-
-  o._value = o.default
 
   return o
 end
@@ -130,6 +134,7 @@ ReaSpeechCombo = {}
 
 ReaSpeechCombo.new = function (options)
   options = options or {
+    state = nil,
     default = nil,
     label = nil,
     items = {},
@@ -137,13 +142,12 @@ ReaSpeechCombo.new = function (options)
   }
 
   local o = ReaSpeechWidget.new({
+    state = options.state,
     default = options.default,
     widget_id = options.widget_id,
     renderer = ReaSpeechCombo.renderer,
     options = options,
   })
-
-  o._value = o.default
 
   return o
 end
@@ -184,8 +188,6 @@ ReaSpeechTabBar.new = function (options)
     options = options,
   })
 
-  o._value = o.default
-
   return o
 end
 
@@ -214,6 +216,7 @@ ReaSpeechButtonBar = {}
 
 ReaSpeechButtonBar.new = function (options)
   options = options or {
+    state = nil,
     default = nil,
     label = nil,
     buttons = {},
@@ -221,13 +224,12 @@ ReaSpeechButtonBar.new = function (options)
   }
 
   local o = ReaSpeechWidget.new({
+    state = options.state,
     default = options.default,
     widget_id = options.widget_id,
     renderer = ReaSpeechButtonBar.renderer,
     options = options,
   })
-
-  o._value = o.default
 
   local with_button_color = function (selected, f)
     if selected then
@@ -340,8 +342,6 @@ ReaSpeechFileSelector.new = function(options)
       end
     end
   })
-
-  o._value = o.default
 
   return o
 end

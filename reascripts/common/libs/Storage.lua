@@ -60,6 +60,11 @@
         project (integer) - The project identifier.
         extname (string) - The extension name for the ProjExtState data.
 
+    Storage.memory(value)
+      Create a memory storage cell.
+
+      value (any) - The initial value for the storage data.
+
     storage:boolean(key, default)
       Create a boolean storage cell.
 
@@ -97,6 +102,14 @@ Storage = {
   end,
 }
 Storage.__index = Storage
+
+function Storage.memory(value)
+  return Storage.Cell.new {
+    get = function () return value end,
+    set = function (new_value) value = new_value end,
+    erase = function () value = nil end,
+  }
+end
 
 function Storage:boolean(key, default)
   local engine = self.engine
