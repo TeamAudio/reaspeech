@@ -29,7 +29,7 @@ function ReaUtil.open_url(url)
     url_opener_cmd = '/usr/bin/open "%s"'
   end
 
-  (ExecProcess.new { url_opener_cmd:format(url) }):wait()
+  (ExecProcess.new(url_opener_cmd:format(url))):wait()
 end
 
 function ReaUtil.disabler(context, error_handler)

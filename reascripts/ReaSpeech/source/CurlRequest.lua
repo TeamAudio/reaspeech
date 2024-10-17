@@ -158,7 +158,7 @@ function CurlRequest:progress()
 end
 
 function CurlRequest:execute_sync(command)
-  local exec_result = (ExecProcess.new { command }):wait()
+  local exec_result = (ExecProcess.new(command)):wait()
 
   if exec_result == nil then
     local msg = "Unable to run curl"
@@ -203,7 +203,7 @@ function CurlRequest:execute_sync(command)
 end
 
 function CurlRequest:execute_async(command)
-  local executor = ExecProcess.new { command }
+  local executor = ExecProcess.new(command)
 
   if not executor:background() then
     local err = "Unable to run curl"
@@ -229,7 +229,7 @@ end
 function CurlRequest.curl_version()
   if CurlRequest._curl_version then return CurlRequest._curl_version end
   CurlRequest._curl_version = {}
-  local exec_result = (ExecProcess.new { CurlRequest.get_curl_cmd()[1] .. " -V" }):wait()
+  local exec_result = (ExecProcess.new(CurlRequest.get_curl_cmd()[1] .. " -V")):wait()
   if exec_result then
     local version = exec_result:match("curl ([%d%.]+)")
     if version then
