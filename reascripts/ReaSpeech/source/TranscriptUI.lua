@@ -44,21 +44,40 @@ end
 function TranscriptUI:init()
   assert(self.transcript, 'missing transcript')
 
+  Logging.init(self, 'TranscriptUI')
+
   self.words = false
   self.colorize_words = false
   self.autoplay = true
 
   self.transcript_editor = TranscriptEditor.new { transcript = self.transcript }
   self.transcript_exporter = TranscriptExporter.new { transcript = self.transcript }
+  self.annotations = TranscriptAnnotations.new { transcript = self.transcript }
+
+  self.marker_types = {
+    project_regions = 'Project Regions',
+    project_markers = 'Project Markers',
+    take_markers = 'Take Markers',
+    notes_track = 'Notes Track'
+  }
+  self.marker_type_keys = {}
+  for key, _ in pairs(self.marker_types) do
+    table.insert(self.marker_type_keys, key)
+  end
+  self.marker_type_selector = ReaSpeechCombo.new {
+    default = 'take_markers',
+    imgui_label = '##marker_type',
+    items = self.marker_type_keys,
+    item_labels = self.marker_types,
+    selected = 1
+  }
 
   self:init_layouts()
 end
 
 function TranscriptUI:init_layouts()
   local renderers = {
-    self.render_create_regions,
-    self.render_create_markers,
-    self.render_create_notes,
+    self.render_annotations_popup_button,
     self.render_word_options,
     self.render_result_actions,
     self.render_auto_play,
@@ -74,6 +93,125 @@ function TranscriptUI:init_layouts()
   }
 end
 
+function TranscriptUI:render_annotations_popup_button(column)
+  if ImGui.Button(ctx, "Create Markers", column.width) then
+    ImGui.OpenPopup(ctx, "transcript_annotations")
+  end
+
+  if ImGui.BeginPopup(ctx, "transcript_annotations") then
+    app:trap(function()
+      self:render_annotation_popup()
+    end)
+    ImGui.EndPopup(ctx)
+  end
+end
+
+function TranscriptUI:render_annotation_popup()
+  self.annotation_settings = self.annotation_settings or {
+    take_markers = "by_word",
+    project_markers = "none",
+    project_regions = "none",
+    notes_track = "none",
+  }
+
+  if ImGui.BeginTable(ctx, "annotations", 4, ImGui.TableFlags_None()) then
+    app:trap(function()
+      ImGui.TableSetupColumn(ctx, "None", ImGui.TableColumnFlags_NoSort())
+      ImGui.TableSetupColumn(ctx, "By Segment", ImGui.TableColumnFlags_NoSort())
+      ImGui.TableSetupColumn(ctx, "By Word", ImGui.TableColumnFlags_NoSort())
+      ImGui.TableSetupColumn(ctx, "Annotation Type", ImGui.TableColumnFlags_NoSort())
+      ImGui.TableHeadersRow(ctx)
+
+      local _check
+
+      _check = self.annotation_settings.take_markers
+      ImGui.TableNextRow(ctx)
+      ImGui.TableNextColumn(ctx)
+      ImGui.PushID(ctx, "take_markers")
+      app:trap(function()
+        if ImGui.RadioButton(ctx, "##none", _check == 'none') then
+          self.annotation_settings.take_markers = "none"
+        end
+        ImGui.TableNextColumn(ctx)
+        if ImGui.RadioButton(ctx, "##by_segment", _check == 'by_segment') then
+          self.annotation_settings.take_markers = "by_segment"
+        end
+        ImGui.TableNextColumn(ctx)
+        if ImGui.RadioButton(ctx, "##by_word", _check == 'by_word') then
+          self.annotation_settings.take_markers = "by_word"
+        end
+      end)
+      ImGui.PopID(ctx)
+      ImGui.TableNextColumn(ctx)
+      ImGui.Text(ctx, "Take Markers")
+
+      _check = self.annotation_settings.project_markers
+      ImGui.TableNextRow(ctx)
+      ImGui.TableNextColumn(ctx)
+      ImGui.PushID(ctx, "project_markers")
+      app:trap(function()
+        if ImGui.RadioButton(ctx, "##none", _check == 'none') then
+          self.annotation_settings.project_markers = "none"
+        end
+        ImGui.TableNextColumn(ctx)
+        if ImGui.RadioButton(ctx, "##by_segment", _check == 'by_segment') then
+          self.annotation_settings.project_markers = "by_segment"
+        end
+        ImGui.TableNextColumn(ctx)
+        if ImGui.RadioButton(ctx, "##by_word", _check == 'by_word') then
+          self.annotation_settings.project_markers = "by_word"
+        end
+      end)
+      ImGui.PopID(ctx)
+      ImGui.TableNextColumn(ctx)
+      ImGui.Text(ctx, "Project Markers")
+
+      _check = self.annotation_settings.project_regions
+      ImGui.TableNextRow(ctx)
+      ImGui.TableNextColumn(ctx)
+      ImGui.PushID(ctx, "project_regions")
+      app:trap(function()
+        if ImGui.RadioButton(ctx, "##project_regions_none", _check == 'none') then
+          self.annotation_settings.project_regions = "none"
+        end
+        ImGui.TableNextColumn(ctx)
+        if ImGui.RadioButton(ctx, "##project_regions_by_segment", _check == 'by_segment') then
+          self.annotation_settings.project_regions = "by_segment"
+        end
+        ImGui.TableNextColumn(ctx)
+        if ImGui.RadioButton(ctx, "##project_regions_by_word", _check == 'by_word') then
+          self.annotation_settings.project_regions = "by_word"
+        end
+      end)
+      ImGui.PopID(ctx)
+      ImGui.TableNextColumn(ctx)
+      ImGui.Text(ctx, "Project Regions")
+
+      _check = self.annotation_settings.notes_track
+      ImGui.TableNextRow(ctx)
+      ImGui.TableNextColumn(ctx)
+      ImGui.PushID(ctx, 'notes_track')
+      app:trap(function()
+        if ImGui.RadioButton(ctx, "##notes_track_none", _check == 'none') then
+          self.annotation_settings.notes_track = "none"
+        end
+        ImGui.TableNextColumn(ctx)
+        if ImGui.RadioButton(ctx, "##notes_track_by_segment", _check == 'by_segment') then
+          self.annotation_settings.notes_track = "by_segment"
+        end
+        ImGui.TableNextColumn(ctx)
+        if ImGui.RadioButton(ctx, "##notes_track_by_word", _check == 'by_word') then
+          self.annotation_settings.notes_track = "by_word"
+        end
+      end)
+      ImGui.PopID(ctx)
+      ImGui.TableNextColumn(ctx)
+      ImGui.Text(ctx, "Notes Track")
+    end)
+    ImGui.EndTable(ctx)
+  end
+end
+
 function TranscriptUI:render()
   if self.transcript:has_segments() then
     ImGui.SeparatorText(ctx, "Transcript")
@@ -85,15 +223,35 @@ function TranscriptUI:render()
   self.transcript_exporter:render()
 end
 
+function TranscriptUI:render_marker_buttons(_column)
+  local cursor_y = ImGui.GetCursorPosY(ctx)
+  ImGui.SetCursorPosY(ctx, cursor_y + 7)
+  ImGui.Text(ctx, "Create Markers as: ")
+  ImGui.SameLine(ctx)
+  ImGui.SetCursorPosY(ctx, cursor_y)
+  self.marker_type_selector:render()
+  ImGui.SameLine(ctx)
+  ImGui.SetCursorPosY(ctx, cursor_y)
+  if ImGui.Button(ctx, "Create") then
+    self:handle_marker_creation()
+  end
+end
+
 function TranscriptUI:render_create_regions(column)
   if ImGui.Button(ctx, "Create Regions", column.width) then
-    self:handle_create_markers(true)
+    self:handle_create_regions()
   end
 end
 
 function TranscriptUI:render_create_markers(column)
   if ImGui.Button(ctx, "Create Markers", column.width) then
-    self:handle_create_markers(false)
+    self:handle_create_markers()
+  end
+end
+
+function TranscriptUI:render_create_take_markers(column)
+  if ImGui.Button(ctx, "Create Take Markers", column.width) then
+    self:handle_create_take_markers()
   end
 end
 
@@ -155,20 +313,24 @@ function TranscriptUI:render_search(column)
   ImGui.PopItemWidth(ctx)
 end
 
-function TranscriptUI:handle_create_markers(regions)
-  reaper.PreventUIRefresh(1)
-  reaper.Undo_BeginBlock()
-  self.transcript:create_markers(0, regions, self.words)
-  reaper.Undo_EndBlock(
-    ("Create %s from speech"):format(regions and 'regions' or 'markers'), -1)
-  reaper.PreventUIRefresh(-1)
-end
+function TranscriptUI:handle_marker_creation()
+  local marker_type = self.marker_type_selector:value()
 
-function TranscriptUI:handle_create_notes()
   reaper.PreventUIRefresh(1)
   reaper.Undo_BeginBlock()
-  self.transcript:create_notes_track(self.words)
-  reaper.Undo_EndBlock("Create notes from speech", -1)
+
+  if marker_type == 'project_regions' then
+    self.annotations:project_regions(0, self.words)
+  elseif marker_type == 'project_markers' then
+    self.annotations:project_markers(0, self.words)
+  elseif marker_type == 'take_markers' then
+    self.annotations:take_markers(self.words)
+  elseif marker_type == 'notes_track' then
+    self.annotations:notes_track(self.words)
+  end
+
+  local undo_label = ("Create %s from speech"):format(self.marker_types[marker_type])
+  reaper.Undo_EndBlock(undo_label, -1)
   reaper.PreventUIRefresh(-1)
 end
 
@@ -185,7 +347,6 @@ function TranscriptUI:handle_search(search)
   self.transcript:update()
 end
 
--- formerly ReaSpeechUI:render_table()
 function TranscriptUI:render_table()
   local columns = self.transcript:get_columns()
   local num_columns = #columns + 1
