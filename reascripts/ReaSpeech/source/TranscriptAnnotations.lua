@@ -20,8 +20,8 @@ function TranscriptAnnotations:init()
   self.is_open = false
 
   self.annotation_types = TranscriptAnnotationTypes.new {
-    TranscriptAnnotationType.type_project_markers(),
-    TranscriptAnnotationType.type_notes_track()
+    TranscriptAnnotationTypes.project_markers(),
+    TranscriptAnnotationTypes.notes_track()
   }
 end
 
@@ -135,7 +135,8 @@ function TranscriptAnnotations:create_project_markers(project, use_regions, use_
   end
 end
 
-function TranscriptAnnotations:notes_track(use_words)
+function TranscriptAnnotations:notes_track(use_words, track_name)
+  local track_name = track_name or 'Speech'
   local stretch = not use_words
   local original_position = reaper.GetCursorPosition()
 
@@ -143,7 +144,7 @@ function TranscriptAnnotations:notes_track(use_words)
   reaper.InsertTrackAtIndex(index, false)
   local track = reaper.GetTrack(0, index)
   reaper.SetOnlyTrackSelected(track)
-  reaper.GetSetMediaTrackInfo_String(track, 'P_NAME', 'Speech', true)
+  reaper.GetSetMediaTrackInfo_String(track, 'P_NAME', track_name, true)
 
   for element in self.transcript:iterator(use_words) do
     local offset = Transcript.calculate_offset(element.item, element.take)
@@ -196,10 +197,6 @@ TranscriptAnnotationTypes = Polo {
   end
 }
 
-function TranscriptAnnotationTypes:init()
-  Logging.init(self, 'TranscriptAnnotationTypes')
-end
-
 function TranscriptAnnotationTypes:render_combo(width)
   ImGui.SetNextItemWidth(ctx, width)
   local selected_type = self:selected_type()
@@ -241,18 +238,16 @@ function TranscriptAnnotationTypes:render_type_options(options)
   end)
 end
 
-TranscriptAnnotationType = Polo {
-  new = function(label, key, renderer, creator)
-    return {
-      label = label,
-      key = key,
-      renderer = renderer,
-      creator = creator
-    }
-  end
-}
+function TranscriptAnnotations.granularity_combo()
+  return ReaSpeechCombo.new {
+    state = Storage.memory('word'),
+    label = 'Granularity',
+    items = { 'word', 'segment' },
+    item_labels = { word = 'Word', segment = 'Segment' },
+  }
+end
 
-function TranscriptAnnotationType.type_project_markers()
+function TranscriptAnnotationTypes.project_markers()
   local item_labels = {
     take_markers = 'Take Markers',
     project_markers = 'Project Markers',
@@ -268,14 +263,14 @@ function TranscriptAnnotationType.type_project_markers()
 
   local granularity_combo = TranscriptAnnotations.granularity_combo()
 
-  return TranscriptAnnotationType.new(
-    'Project Markers & Regions',
-    'project_markers',
-    function ()
+  return {
+    label = 'Project Markers & Regions',
+    key = 'project_markers',
+    renderer = function ()
       marker_type_combo:render()
       granularity_combo:render()
     end,
-    function (annotations)
+    creator = function (annotations)
 
       local use_words = granularity_combo:value() == 'word'
       local marker_type = marker_type_combo:value()
@@ -295,36 +290,31 @@ function TranscriptAnnotationType.type_project_markers()
       reaper.Undo_EndBlock(undo_label, -1)
       reaper.PreventUIRefresh(-1)
     end
-  )
-end
-
-function TranscriptAnnotations.granularity_combo()
-  return ReaSpeechCombo.new {
-    state = Storage.memory('word'),
-    label = 'Granularity',
-    items = { 'word', 'segment' },
-    item_labels = { word = 'Word', segment = 'Segment' },
   }
 end
 
-function TranscriptAnnotationType.type_notes_track()
+function TranscriptAnnotationTypes.notes_track()
   local granularity_combo = TranscriptAnnotations.granularity_combo()
+  local track_name = ReaSpeechTextInput.simple('Transcript', 'Track Name')
 
-  return TranscriptAnnotationType.new(
-    'Subtitle Notes Track',
-    'notes_track',
-    function ()
+  return {
+    label = 'Subtitle Notes Track',
+    key = 'notes_track',
+
+    renderer = function ()
+      track_name:render()
       granularity_combo:render()
     end,
-    function (annotations)
+
+    creator = function (annotations)
       reaper.PreventUIRefresh(1)
       reaper.Undo_BeginBlock()
 
-      annotations:notes_track(granularity_combo:value() == 'word')
+      annotations:notes_track(granularity_combo:value() == 'word', track_name:value())
 
       local undo_label = 'Create subtitle notes track from transcript'
       reaper.Undo_EndBlock(undo_label, -1)
       reaper.PreventUIRefresh(-1)
     end
-  )
+  }
 end
