@@ -122,6 +122,53 @@ function TestTranscript:testFileColumn()
   lu.assertEquals(segments[1]:get('file'), "test_audio")
 end
 
+function TestTranscript:testIteratorIteratingSegments()
+  local t = self:make_transcript()
+
+  local results = {}
+  for element in t:iterator(false) do
+    table.insert(results, element)
+  end
+
+  lu.assertEquals(#results, 2)
+  lu.assertEquals(results[1].id, 1)
+  lu.assertEquals(results[1].start, 1.0)
+  lu.assertEquals(results[1].end_, 2.0)
+  lu.assertEquals(results[1].text, "test 1")
+  lu.assertEquals(results[2].id, 2)
+  lu.assertEquals(results[2].start, 2.0)
+  lu.assertEquals(results[2].end_, 3.0)
+  lu.assertEquals(results[2].text, "test 2")
+
+end
+
+function TestTranscript:testIteratorIteratingWords()
+  local t = self:make_transcript()
+
+  local results = {}
+  for element in t:iterator(true) do
+    table.insert(results, element)
+  end
+
+  lu.assertEquals(#results, 4)
+  lu.assertEquals(results[1].id, 1)
+  lu.assertEquals(results[1].start, 1.0)
+  lu.assertEquals(results[1].end_, 1.5)
+  lu.assertEquals(results[1].text, "test")
+  lu.assertEquals(results[2].id, 2)
+  lu.assertEquals(results[2].start, 1.5)
+  lu.assertEquals(results[2].end_, 2.0)
+  lu.assertEquals(results[2].text, "1")
+  lu.assertEquals(results[3].id, 3)
+  lu.assertEquals(results[3].start, 2.0)
+  lu.assertEquals(results[3].end_, 2.5)
+  lu.assertEquals(results[3].text, "test")
+  lu.assertEquals(results[4].id, 4)
+  lu.assertEquals(results[4].start, 2.5)
+  lu.assertEquals(results[4].end_, 3.0)
+  lu.assertEquals(results[4].text, "2")
+end
+
 function TestTranscript:testSearch()
   local t = Transcript.new()
   t:add_segment(self.segment {

@@ -88,6 +88,50 @@ function Transcript:get_segments()
   return self.data
 end
 
+function Transcript:iterator(use_words)
+  local segments = self.data
+  local segment_count = #segments
+  local count = 1
+  local segment_i = 1
+  local word_i = 1
+
+  return function ()
+    if segment_i <= segment_count then
+      local segment = segments[segment_i]
+
+      if use_words then
+        local word = segment.words[word_i]
+        local result = {
+          id = count,
+          start = word.start,
+          end_ = word.end_,
+          text = word.word,
+        }
+
+        if word_i < #segment.words then
+          word_i = word_i + 1
+        else
+          word_i = 1
+          segment_i = segment_i + 1
+        end
+
+        count = count + 1
+
+        return result
+      end
+
+      segment_i = segment_i + 1
+
+      return {
+        id = segment:get('id'),
+        start = segment:get('start'),
+        end_ = segment:get('end'),
+        text = segment:get('text'),
+      }
+    end
+  end
+end
+
 function Transcript:sort(column, ascending)
   self.data = {table.unpack(self.filtered_data)}
   table.sort(self.data, function (a, b)
