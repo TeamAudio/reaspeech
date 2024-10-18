@@ -103,6 +103,14 @@ function TranscriptAnnotations:handle_create()
   end
 end
 
+function TranscriptAnnotations:take_markers(use_words)
+    local oddly_specific_black = 0x01030405
+
+    for element in self.transcript:iterator(use_words) do
+      reaper.SetTakeMarker(element.take, -1, element.text, element.start, oddly_specific_black)
+    end
+end
+
 function TranscriptAnnotations:project_markers(project, use_words)
   self:create_project_markers(project, false, use_words)
 end
@@ -111,75 +119,39 @@ function TranscriptAnnotations:project_regions(project, use_words)
   self:create_project_markers(project, true, use_words)
 end
 
-function TranscriptAnnotations:take_markers(use_words)
-  for _, segment in pairs(self.transcript.data) do
-    local oddly_specific_black = 0x01030405
+function TranscriptAnnotations:create_project_markers(project, use_regions, use_words)
+  project = project or 0
+  use_regions = use_regions or false
+  use_words = use_words or false
 
-    if use_words then
-      for _, word in pairs(segment.words) do
-        reaper.SetTakeMarker(segment.take, -1, word.word, word.start, oddly_specific_black)
-      end
-    else
-      reaper.SetTakeMarker(segment.take, -1, segment.text, segment.start, oddly_specific_black)
-    end
+  for element in self.transcript:iterator(use_words) do
+    local offset = Transcript.calculate_offset(element.item, element.take)
+    local want_index = element.id or 0
+    local color = 0
+
+    local start = element.start + offset
+    local end_ = element.end_ + offset
+    reaper.AddProjectMarker2(project, use_regions, start, end_, element.text, want_index, color)
   end
 end
 
 function TranscriptAnnotations:notes_track(use_words)
-  self:create_notes_track(use_words)
-end
-
-function TranscriptAnnotations:create_project_markers(project, use_regions, use_words)
-  project = project or 0
-  use_regions = use_regions or false
-
-  for i, segment in pairs(self.transcript.data) do
-    self:debug('segment', segment)
-    local offset = Transcript.calculate_offset(segment.item, segment.take)
-    local want_index = segment:get('id', i)
-    local color = 0
-
-    if use_words then
-      for _, word in pairs(segment.words) do
-        local start = word.start + offset
-        local end_ = word.end_ + offset
-        local name = word.word
-        reaper.AddProjectMarker2(project, use_regions, start, end_, name, want_index, color)
-      end
-    else
-      local start = segment.start + offset
-      local end_ = segment.end_ + offset
-      local name = segment.text
-      reaper.AddProjectMarker2(project, use_regions, start, end_, name, want_index, color)
-    end
-  end
-end
-
-function TranscriptAnnotations:create_notes_track(use_words)
+  local stretch = not use_words
   local original_position = reaper.GetCursorPosition()
-  local index = 0
 
+  local index = 0
   reaper.InsertTrackAtIndex(index, false)
   local track = reaper.GetTrack(0, index)
   reaper.SetOnlyTrackSelected(track)
   reaper.GetSetMediaTrackInfo_String(track, 'P_NAME', 'Speech', true)
-  for _, segment in pairs(self.transcript.data) do
-    local offset = Transcript.calculate_offset(segment.item, segment.take)
 
-    if use_words then
-      for _, word in pairs(segment.words) do
-        local start = word.start + offset
-        local end_ = word.end_ + offset
-        local text = word.word
-        self:_create_note(start, end_, text, false)
-      end
-    else
-      local start = segment.start + offset
-      local end_ = segment.end_ + offset
-      local text = segment.text
-      self:_create_note(start, end_, text, true)
-    end
+  for element in self.transcript:iterator(use_words) do
+    local offset = Transcript.calculate_offset(element.item, element.take)
+    local start = element.start + offset
+    local end_ = element.end_ + offset
+    self:_create_note(start, end_, element.text, stretch)
   end
+
   reaper.SetEditCurPos(original_position, true, true)
 end
 
@@ -236,7 +208,6 @@ function TranscriptAnnotationTypes:render_combo(width)
       for _, type in pairs(self.types) do
         local is_selected = self.selected_type_key == type.key
         if ImGui.Selectable(ctx, type.label, is_selected, ImGui.SelectableFlags_None()) then
-          self:log('Selected type: ' .. dump(type))
           self.selected_type_key = type.key
         end
         if is_selected then

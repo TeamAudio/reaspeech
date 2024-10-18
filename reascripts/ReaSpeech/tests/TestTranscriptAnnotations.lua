@@ -280,12 +280,12 @@ function TestTranscriptMarkers:testCreateNotesTrack()
 
   local m = TranscriptAnnotations.new { transcript = t }
 
-  m:create_notes_track(false)
+  m:notes_track(false)
   lu.assertStrContains(reaper_state.item_state_chunk, [[<NOTES
 |test 1%
 >]])
   lu.assertStrContains(reaper_state.item_state_chunk, 'IMGRESOURCEFLAGS 11')
-  m:create_notes_track(true)
+  m:notes_track(true)
   lu.assertStrContains(reaper_state.item_state_chunk, [[<NOTES
 |1%
 >]])

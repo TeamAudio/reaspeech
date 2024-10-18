@@ -106,6 +106,8 @@ function Transcript:iterator(use_words)
           start = word.start,
           end_ = word.end_,
           text = word.word,
+          item = segment.item,
+          take = segment.take,
         }
 
         if word_i < #segment.words then
@@ -127,6 +129,8 @@ function Transcript:iterator(use_words)
         start = segment:get('start'),
         end_ = segment:get('end'),
         text = segment:get('text'),
+        item = segment.item,
+        take = segment.take,
       }
     end
   end
