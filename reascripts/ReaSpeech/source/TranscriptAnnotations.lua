@@ -99,6 +99,7 @@ function TranscriptAnnotations:render_buttons(is_disabled)
 end
 
 function TranscriptAnnotations:open()
+  self.annotation_types:reset()
   self.is_open = true
 end
 
@@ -208,6 +209,10 @@ TranscriptAnnotationTypes = Polo {
     }
   end
 }
+
+function TranscriptAnnotationTypes:reset()
+  self.selected_type_key = nil
+end
 
 function TranscriptAnnotationTypes:render_combo(width)
   ImGui.SetNextItemWidth(ctx, width)
