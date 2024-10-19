@@ -8,7 +8,7 @@ TranscriptAnnotations = Polo {
   TITLE = 'Transcript Annotations',
   WIDTH = 650,
   HEIGHT = 200,
-  INPUT_WIDTH = 200,
+  INPUT_WIDTH = 300,
   BUTTON_WIDTH = 120,
 }
 
@@ -16,6 +16,8 @@ function TranscriptAnnotations:init()
   assert(self.transcript, "TranscriptAnnotations: transcript is required")
 
   Logging.init(self, 'TranscriptAnnotations')
+
+  self.disabler = ReaUtil.disabler(ctx)
 
   self.is_open = false
 
@@ -57,15 +59,21 @@ end
 function TranscriptAnnotations:render_content()
   self.annotation_types:render_combo(self.INPUT_WIDTH)
 
-  ImGui.Spacing(ctx)
+  local selected_type = self.annotation_types:selected_type()
 
-  self.annotation_types:render_type_options(self.annotation_type)
+  if selected_type then
+    self:render_separator()
 
-  ImGui.Spacing(ctx)
+    ImGui.Spacing(ctx)
+
+    self.annotation_types:render_type_options(self.annotation_type)
+
+    ImGui.Spacing(ctx)
+  end
 
   self:render_separator()
 
-  self:render_buttons()
+  self:render_buttons(selected_type == nil)
 end
 
 function TranscriptAnnotations:render_separator()
@@ -74,10 +82,14 @@ function TranscriptAnnotations:render_separator()
   ImGui.Dummy(ctx, 0, 0)
 end
 
-function TranscriptAnnotations:render_buttons()
-  if ImGui.Button(ctx, 'Create', self.BUTTON_WIDTH, 0) then
-    self:handle_create()
-  end
+function TranscriptAnnotations:render_buttons(is_disabled)
+  local disable_if = self.disabler
+
+  disable_if(is_disabled, function()
+    if ImGui.Button(ctx, 'Create', self.BUTTON_WIDTH, 0) then
+      self:handle_create()
+    end
+  end)
 
   ImGui.SameLine(ctx)
 
