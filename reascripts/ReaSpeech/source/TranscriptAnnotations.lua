@@ -148,7 +148,7 @@ function TranscriptAnnotations:create_project_markers(project, use_regions, use_
 end
 
 function TranscriptAnnotations:notes_track(use_words, track_name)
-  local track_name = track_name or 'Speech'
+  track_name = track_name or 'Speech'
   local stretch = not use_words
   local original_position = reaper.GetCursorPosition()
 
