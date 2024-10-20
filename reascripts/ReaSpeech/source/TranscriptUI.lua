@@ -52,7 +52,7 @@ function TranscriptUI:init()
 
   self.transcript_editor = TranscriptEditor.new { transcript = self.transcript }
   self.transcript_exporter = TranscriptExporter.new { transcript = self.transcript }
-  self.annotations = TranscriptAnnotations.new { transcript = self.transcript }
+  self.annotations = TranscriptAnnotationsUI.new { transcript = self.transcript }
 
   self:init_layouts()
 end
