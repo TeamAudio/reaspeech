@@ -139,7 +139,6 @@ function TestTranscript:testIteratorIteratingSegments()
   lu.assertEquals(results[2].start, 2.0)
   lu.assertEquals(results[2].end_, 3.0)
   lu.assertEquals(results[2].text, "test 2")
-
 end
 
 function TestTranscript:testIteratorIteratingWords()

@@ -22,7 +22,9 @@ function TranscriptAnnotations:init()
   self.is_open = false
 
   self.annotation_types = TranscriptAnnotationTypes.new {
+    TranscriptAnnotationTypes.take_markers(),
     TranscriptAnnotationTypes.project_markers(),
+    TranscriptAnnotationTypes.project_regions(),
     TranscriptAnnotationTypes.notes_track()
   }
 end
@@ -277,56 +279,75 @@ function TranscriptAnnotationTypes:render_type_options(options)
 end
 
 function TranscriptAnnotations.granularity_combo()
-  return ReaSpeechCombo.new {
+  local combo = ReaSpeechCombo.new {
     state = Storage.memory('word'),
     label = 'Granularity',
     items = { 'word', 'segment' },
     item_labels = { word = 'Word', segment = 'Segment' },
   }
+
+  function combo:use_words()
+    return self:value() == 'word'
+  end
+
+  return combo
 end
 
-function TranscriptAnnotationTypes.project_markers()
-  local item_labels = {
-    take_markers = 'Take Markers',
-    project_markers = 'Project Markers',
-    project_regions = 'Project Regions'
-  }
-
-  local marker_type_combo = ReaSpeechCombo.new {
-    state = Storage.memory('take_markers'),
-    label = 'Marker Type',
-    items = { 'take_markers', 'project_markers', 'project_regions' },
-    item_labels = item_labels,
-  }
-
+function TranscriptAnnotationTypes.take_markers()
   local granularity_combo = TranscriptAnnotations.granularity_combo()
 
   return {
-    label = 'Project Markers & Regions',
-    key = 'project_markers',
+    label = 'Take Markers',
+    key = 'take_markers',
     renderer = function ()
-      marker_type_combo:render()
       granularity_combo:render()
     end,
     creator = function (annotations)
+      local undo_label = 'Create take markers from transcript'
 
-      local use_words = granularity_combo:value() == 'word'
-      local marker_type = marker_type_combo:value()
+      TranscriptAnnotationTypes._with_undo(undo_label, function()
+        annotations:take_markers(granularity_combo:use_words())
+      end)
+    end
+  }
+end
 
-      reaper.PreventUIRefresh(1)
-      reaper.Undo_BeginBlock()
+function TranscriptAnnotationTypes.project_markers()
+  local granularity_combo = TranscriptAnnotations.granularity_combo()
 
-      if marker_type == 'take_markers' then
-        annotations:take_markers(use_words)
-      elseif marker_type == 'project_markers' then
-        annotations:project_markers(0, use_words)
-      elseif marker_type == 'project_regions' then
-        annotations:project_regions(0, use_words)
-      end
+  return {
+    label = 'Project Markers',
+    key = 'project_markers',
+    renderer = function ()
+      granularity_combo:render()
+    end,
+    creator = function (annotations)
+      local undo_label = 'Create project markers from transcript'
 
-      local undo_label = ('Create %s from transcript'):format(item_labels[marker_type_combo:value()])
-      reaper.Undo_EndBlock(undo_label, -1)
-      reaper.PreventUIRefresh(-1)
+      TranscriptAnnotationTypes._with_undo(undo_label, function()
+        annotations:project_markers(0, granularity_combo:use_words())
+      end)
+    end
+  }
+end
+
+function TranscriptAnnotationTypes.project_regions()
+  local granularity_combo = TranscriptAnnotations.granularity_combo()
+
+  return {
+    label = 'Project Regions',
+    key = 'project_regions',
+
+    renderer = function ()
+      granularity_combo:render()
+    end,
+
+    creator = function (annotations)
+      local undo_label = 'Create project regions from transcript'
+
+      TranscriptAnnotationTypes._with_undo(undo_label, function()
+        annotations:project_regions(0, granularity_combo:use_words())
+      end)
     end
   }
 end
@@ -345,14 +366,19 @@ function TranscriptAnnotationTypes.notes_track()
     end,
 
     creator = function (annotations)
-      reaper.PreventUIRefresh(1)
-      reaper.Undo_BeginBlock()
-
-      annotations:notes_track(granularity_combo:value() == 'word', track_name:value())
-
       local undo_label = 'Create subtitle notes track from transcript'
-      reaper.Undo_EndBlock(undo_label, -1)
-      reaper.PreventUIRefresh(-1)
+
+      TranscriptAnnotationTypes._with_undo(undo_label, function()
+        annotations:notes_track(granularity_combo:use_words(), track_name:value())
+      end)
     end
   }
+end
+
+function TranscriptAnnotationTypes._with_undo(label, f)
+  reaper.PreventUIRefresh(1)
+  reaper.Undo_BeginBlock()
+  f()
+  reaper.Undo_EndBlock(label, -1)
+  reaper.PreventUIRefresh(-1)
 end
