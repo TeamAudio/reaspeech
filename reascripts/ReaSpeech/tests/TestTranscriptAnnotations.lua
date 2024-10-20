@@ -14,6 +14,7 @@ require('Polo')
 require('ReaUtil')
 require('Storage')
 require('source/Logging')
+require('source/ReaSpeechUI')
 require('source/ReaSpeechWidgets')
 require('source/Transcript')
 require('source/TranscriptAnnotations')
@@ -39,6 +40,13 @@ reaper.AddProjectMarker2 = function (proj, isrgn, pos, rgnend, name, wantidx, co
     color = color
   })
 end
+
+-- order matters here because ReaIter will make its iterators looking at the reaper table
+reaper.CountMediaItems = function () return 1 end
+reaper.GetMediaItem = function (_, _) return {} end
+reaper.CountTakes = function () return 1 end
+reaper.GetTake = function (_, _) return {} end
+require('ReaIter')
 
 reaper.SetItemStateChunk = function (item, str, isundo)
   reaper_state.item_state_chunk = str
@@ -84,6 +92,14 @@ SEL 0
 IGUID {589DC296-5CC1-48A9-AE70-421A55B654E6}
 IID 11
 >]]
+end
+
+reaper.GetSetMediaItemTakeInfo_String = function(_, param, _, _)
+  if param == "GUID" then
+    return true, "{589DC296-5CC1-48A9-AE70-421A55B654E6}"
+  end
+
+  return true, ""
 end
 
 TestTranscriptMarkers = {

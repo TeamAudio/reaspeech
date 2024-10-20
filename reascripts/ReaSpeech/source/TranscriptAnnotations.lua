@@ -119,8 +119,29 @@ end
 function TranscriptAnnotations:take_markers(use_words)
     local oddly_specific_black = 0x01030405
 
+    local takes = {}
+
     for element in self.transcript:iterator(use_words) do
-      reaper.SetTakeMarker(element.take, -1, element.text, element.start, oddly_specific_black)
+      local _, take_guid = reaper.GetSetMediaItemTakeInfo_String(element.take, 'GUID', '', false)
+
+      if not takes[take_guid] then
+        takes[take_guid] = {}
+        local path = ReaSpeechUI.get_source_path(element.take)
+
+        for item in ReaIter.each_media_item() do
+          for take in ReaIter.each_take(item) do
+            local take_path = ReaSpeechUI.get_source_path(take)
+
+            if take_path == path then
+              table.insert(takes[take_guid], take)
+            end
+          end
+        end
+      end
+
+      for _, take in ipairs(takes[take_guid]) do
+        reaper.SetTakeMarker(take, -1, element.text, element.start, oddly_specific_black)
+      end
     end
 end
 
