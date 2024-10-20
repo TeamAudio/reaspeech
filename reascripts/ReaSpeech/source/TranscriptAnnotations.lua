@@ -118,7 +118,9 @@ function TranscriptAnnotations:handle_create()
   end
 end
 
-function TranscriptAnnotations:take_markers(use_words)
+function TranscriptAnnotations:take_markers(use_words, track_filter_config)
+    track_filter_config = track_filter_config or { mode = 'ignore', tracks = {} }
+
     local oddly_specific_black = 0x01030405
 
     local takes = {}
@@ -135,7 +137,11 @@ function TranscriptAnnotations:take_markers(use_words)
             local take_path = ReaSpeechUI.get_source_path(take)
 
             if take_path == path then
-              table.insert(takes[take_guid], take)
+              local track_guid = reaper.GetTrackGUID(reaper.GetMediaItemTake_Track(take))
+              if track_filter_config.mode == 'ignore' and not track_filter_config.tracks[track_guid]
+              or track_filter_config.mode == 'include' and track_filter_config.tracks[track_guid] then
+                table.insert(takes[take_guid], take)
+              end
             end
           end
         end
@@ -296,17 +302,45 @@ end
 function TranscriptAnnotationTypes.take_markers()
   local granularity_combo = TranscriptAnnotations.granularity_combo()
 
+  local track_filter_mode = ReaSpeechButtonBar.new {
+    state = Storage.memory('ignore'),
+    label = 'Track Filter Mode',
+    buttons = { { 'Include', 'include' }, { 'Ignore', 'ignore' } },
+  }
+
+  local track_guids = {}
+  local track_names = {}
+  for k, v in pairs(ReaUtil.track_guid_map()) do
+    table.insert(track_guids, k)
+    local _, track_name = reaper.GetTrackName(v)
+    track_names[k] = track_name
+  end
+
+  local track_selector = ReaSpeechListBox.new {
+    state = Storage.memory({}),
+    label = 'Track Filter',
+    items = track_guids,
+    item_labels = track_names,
+  }
+
   return {
     label = 'Take Markers',
     key = 'take_markers',
     renderer = function ()
       granularity_combo:render()
+      track_filter_mode:render()
+      track_selector:render()
     end,
     creator = function (annotations)
       local undo_label = 'Create take markers from transcript'
 
+      local track_filter_config = {
+        mode = track_filter_mode:value(),
+        tracks = track_selector:value()
+      }
+
       TranscriptAnnotationTypes._with_undo(undo_label, function()
-        annotations:take_markers(granularity_combo:use_words())
+        annotations:take_markers(granularity_combo:use_words(), track_filter_config)
       end)
     end
   }

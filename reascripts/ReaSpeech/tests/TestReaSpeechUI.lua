@@ -6,6 +6,7 @@ require('Polo')
 require('ReaUtil')
 require('Storage')
 require('mock_reaper')
+require('ReaIter')
 
 require('source/AlertPopup')
 require('source/ColumnLayout')
