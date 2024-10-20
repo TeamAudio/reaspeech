@@ -52,3 +52,13 @@ function ReaUtil.disabler(context, error_handler)
     reaper.ImGui_EndDisabled(context)
   end
 end
+
+function ReaUtil.track_guid_map()
+  local map = {}
+
+  for track in ReaIter.each_track() do
+    map[reaper.GetTrackGUID(track)] = track
+  end
+
+  return map
+end

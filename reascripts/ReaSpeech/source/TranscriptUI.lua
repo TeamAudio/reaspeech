@@ -44,21 +44,22 @@ end
 function TranscriptUI:init()
   assert(self.transcript, 'missing transcript')
 
+  Logging.init(self, 'TranscriptUI')
+
   self.words = false
   self.colorize_words = false
   self.autoplay = true
 
   self.transcript_editor = TranscriptEditor.new { transcript = self.transcript }
   self.transcript_exporter = TranscriptExporter.new { transcript = self.transcript }
+  self.annotations = TranscriptAnnotationsUI.new { transcript = self.transcript }
 
   self:init_layouts()
 end
 
 function TranscriptUI:init_layouts()
   local renderers = {
-    self.render_create_regions,
-    self.render_create_markers,
-    self.render_create_notes,
+    self.render_annotations_button,
     self.render_word_options,
     self.render_result_actions,
     self.render_auto_play,
@@ -74,6 +75,12 @@ function TranscriptUI:init_layouts()
   }
 end
 
+function TranscriptUI:render_annotations_button(column)
+  if ImGui.Button(ctx, "Create Markers", column.width) then
+    self.annotations:open()
+  end
+end
+
 function TranscriptUI:render()
   if self.transcript:has_segments() then
     ImGui.SeparatorText(ctx, "Transcript")
@@ -83,24 +90,7 @@ function TranscriptUI:render()
 
   self.transcript_editor:render()
   self.transcript_exporter:render()
-end
-
-function TranscriptUI:render_create_regions(column)
-  if ImGui.Button(ctx, "Create Regions", column.width) then
-    self:handle_create_markers(true)
-  end
-end
-
-function TranscriptUI:render_create_markers(column)
-  if ImGui.Button(ctx, "Create Markers", column.width) then
-    self:handle_create_markers(false)
-  end
-end
-
-function TranscriptUI:render_create_notes(column)
-  if ImGui.Button(ctx, "Create Notes", column.width) then
-    self:handle_create_notes()
-  end
+  self.annotations:render()
 end
 
 function TranscriptUI:render_word_options()
@@ -155,23 +145,6 @@ function TranscriptUI:render_search(column)
   ImGui.PopItemWidth(ctx)
 end
 
-function TranscriptUI:handle_create_markers(regions)
-  reaper.PreventUIRefresh(1)
-  reaper.Undo_BeginBlock()
-  self.transcript:create_markers(0, regions, self.words)
-  reaper.Undo_EndBlock(
-    ("Create %s from speech"):format(regions and 'regions' or 'markers'), -1)
-  reaper.PreventUIRefresh(-1)
-end
-
-function TranscriptUI:handle_create_notes()
-  reaper.PreventUIRefresh(1)
-  reaper.Undo_BeginBlock()
-  self.transcript:create_notes_track(self.words)
-  reaper.Undo_EndBlock("Create notes from speech", -1)
-  reaper.PreventUIRefresh(-1)
-end
-
 function TranscriptUI:handle_export()
   self.transcript_exporter:open()
 end
@@ -185,7 +158,6 @@ function TranscriptUI:handle_search(search)
   self.transcript:update()
 end
 
--- formerly ReaSpeechUI:render_table()
 function TranscriptUI:render_table()
   local columns = self.transcript:get_columns()
   local num_columns = #columns + 1

@@ -15,6 +15,25 @@ reaper = reaper or {
     return (math.tointeger(r) or 0) + ((math.tointeger(g) or 0) << 8) + ((math.tointeger(b) or 0) << 16)
   end,
 
+  CountTracks = function (_)
+    return 2
+  end,
+
+  GetTrack = function (i, _)
+    return ({
+      [0] = "track 1",
+      [1] = "track 2",
+    })[i]
+  end,
+
+  GetTrackGUID = function (_, _)
+    return "00000000-0000-0000-0000-000000000000"
+  end,
+
+  GetTrackName = function (_, _)
+    return true, "track"
+  end,
+
   GetExtState = function (section, key)
     if reaper.__ext_state__[section] then
       return reaper.__ext_state__[section][key]

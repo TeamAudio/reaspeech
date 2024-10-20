@@ -386,3 +386,54 @@ ReaSpeechFileSelector.render_jsapi_notice = function(self)
   ImGui.Text(self.ctx, ".")
   ImGui.PopStyleVar(self.ctx)
 end
+
+ReaSpeechListBox = {}
+
+ReaSpeechListBox.new = function(options)
+  options = options or {
+    state = nil,
+    default = nil,
+    label = nil,
+    items = {},
+    item_labels = {},
+  }
+
+  local o = ReaSpeechWidget.new({
+    state = options.state,
+    default = options.default,
+    widget_id = options.widget_id,
+    renderer = ReaSpeechListBox.renderer,
+    options = options,
+  })
+
+  Logging.init(o, 'ReaSpeechListBox')
+
+  return o
+end
+
+ReaSpeechListBox.renderer = function(self)
+  local options = self.options
+
+  ImGui.Text(self.ctx, options.label)
+  ImGui.Dummy(self.ctx, 0, 0)
+
+  local imgui_label = ("##%s"):format(options.label)
+
+  if ImGui.BeginListBox(self.ctx, imgui_label) then
+    app:trap(function()
+      for i, item in ipairs(options.items) do
+        local is_selected = self:value()[item]
+        ImGui.PushID(ctx, 'item' .. i)
+        app:trap(function()
+          if ImGui.Selectable(self.ctx, options.item_labels[item], is_selected) then
+            local current = self.state:get()
+            current[item] = not current[item]
+            self:set(current)
+          end
+        end)
+        ImGui.PopID(ctx)
+      end
+    end)
+    ImGui.EndListBox(self.ctx)
+  end
+end
