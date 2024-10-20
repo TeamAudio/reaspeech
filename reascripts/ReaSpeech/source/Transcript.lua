@@ -99,39 +99,40 @@ function Transcript:iterator(use_words)
     if segment_i <= segment_count then
       local segment = segments[segment_i]
 
-      if use_words then
-        local word = segment.words[word_i]
-        local result = {
-          id = count,
-          start = word.start,
-          end_ = word.end_,
-          text = word.word,
+      if not use_words then
+        segment_i = segment_i + 1
+
+        return {
+          id = segment:get('id'),
+          start = segment:get('start'),
+          end_ = segment:get('end'),
+          text = segment:get('text'),
           item = segment.item,
           take = segment.take,
         }
-
-        if word_i < #segment.words then
-          word_i = word_i + 1
-        else
-          word_i = 1
-          segment_i = segment_i + 1
-        end
-
-        count = count + 1
-
-        return result
       end
 
-      segment_i = segment_i + 1
-
-      return {
-        id = segment:get('id'),
-        start = segment:get('start'),
-        end_ = segment:get('end'),
-        text = segment:get('text'),
+      local word = segment.words[word_i]
+      local result = {
+        id = count,
+        start = word.start,
+        end_ = word.end_,
+        text = word.word,
         item = segment.item,
         take = segment.take,
       }
+
+      if word_i < #segment.words then
+        word_i = word_i + 1
+      else
+        word_i = 1
+        segment_i = segment_i + 1
+      end
+
+      count = count + 1
+
+      return result
+
     end
   end
 end
