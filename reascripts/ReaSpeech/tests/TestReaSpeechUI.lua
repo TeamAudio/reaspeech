@@ -7,6 +7,7 @@ require('ReaUtil')
 require('Storage')
 require('mock_reaper')
 
+require('libs/ToolWindow')
 require('source/AlertPopup')
 require('source/ColumnLayout')
 require('source/KeyMap')
