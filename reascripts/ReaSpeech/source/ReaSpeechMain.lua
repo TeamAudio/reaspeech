@@ -25,7 +25,7 @@ function ReaSpeechMain:loop()
   return function()
     ImGui.PushFont(ctx, Fonts.main)
 
-    if app._tool_window.is_open then
+    if app:is_open() then
       if ReaSpeechUI.METRICS then
         ImGui.ShowMetricsWindow(ctx)
       end

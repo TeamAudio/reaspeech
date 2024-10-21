@@ -58,7 +58,7 @@ ToolWindow.init = function(o, config)
   o.ctx = config.ctx or ctx
 
   o._tool_window = {
-    guard = config.guard or function() return o._tool_window.is_open end,
+    guard = config.guard or function() return o:is_open() end,
     is_open = false,
     title = config.title or ToolWindow.DEFAULT_TITLE,
     window_flags = config.window_flags or ToolWindow.DEFAULT_WINDOW_FLAGS(),
@@ -87,12 +87,16 @@ ToolWindow.init = function(o, config)
     end
   end
 
+  function o:is_open()
+    return self._tool_window.is_open
+  end
+
   function o:render()
     if not self._tool_window.guard() then
       return
     end
 
-    local opening = not self._tool_window.is_open
+    local opening = not o:is_open()
     if opening then
       self:open()
     end

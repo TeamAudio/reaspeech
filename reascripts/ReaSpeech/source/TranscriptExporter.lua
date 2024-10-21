@@ -22,8 +22,10 @@ function TranscriptExporter:init()
     title = self.TITLE,
     width = self.WIDTH,
     height = self.HEIGHT,
-    window_flags = ImGui.WindowFlags_AlwaysAutoResize() | ImGui.WindowFlags_NoCollapse() | ImGui.WindowFlags_NoDocking(),
-    guard = function() return self._tool_window.is_open end
+    window_flags = 0
+      | ImGui.WindowFlags_AlwaysAutoResize()
+      | ImGui.WindowFlags_NoCollapse()
+      | ImGui.WindowFlags_NoDocking(),
   })
 
   self.export_formats = TranscriptExporterFormats.new {

@@ -39,7 +39,7 @@ function TestToolWindow:testInit()
   lu.assertEquals(o._tool_window.window_flags, 21)
   lu.assertEquals(o._tool_window.width, 300)
   lu.assertEquals(o._tool_window.height, 200)
-  lu.assertEquals(type(o._tool_window.is_open), 'boolean')
+  lu.assertEquals(type(o:is_open()), 'boolean')
   lu.assertEquals(type(o.open), 'function')
   lu.assertEquals(type(o.close), 'function')
   lu.assertEquals(type(o.render_separator), 'function')
@@ -73,6 +73,22 @@ function TestToolWindow:testModal()
   lu.assertEquals(o._tool_window.height, 200)
 end
 
+function TestToolWindow:testIsOpen()
+  local test_class = Polo {
+    init = function(self)
+      ToolWindow.init(self)
+    end
+  }
+
+  local o = test_class.new()
+  lu.assertNotNil(o._tool_window)
+  lu.assertEquals(o:is_open(), false)
+  o:open()
+  lu.assertEquals(o:is_open(), true)
+  o:close()
+  lu.assertEquals(o:is_open(), false)
+end
+
 function TestToolWindow:testOpen()
   local test_class = Polo {
     init = function(self)
@@ -87,9 +103,9 @@ function TestToolWindow:testOpen()
 
   local o = test_class.new()
   lu.assertNotNil(o._tool_window)
-  lu.assertEquals(o._tool_window.is_open, false)
+  lu.assertEquals(o:is_open(), false)
   o:open()
-  lu.assertEquals(o._tool_window.is_open, true)
+  lu.assertEquals(o:is_open(), true)
 end
 
 function TestToolWindow:testWrapOpen()
@@ -106,7 +122,7 @@ function TestToolWindow:testWrapOpen()
 
   local o = test_class.new()
   o:open()
-  lu.assertEquals(o._tool_window.is_open, true)
+  lu.assertEquals(o:is_open(), true)
   lu.assertEquals(wrapped_open_called, true)
 end
 
@@ -125,7 +141,7 @@ function TestToolWindow:testWrapClose()
   local o = test_class.new()
   o:open()
   o:close()
-  lu.assertEquals(o._tool_window.is_open, false)
+  lu.assertEquals(o:is_open(), false)
   lu.assertEquals(wrapped_close_called, true)
 end
 
@@ -143,11 +159,11 @@ function TestToolWindow:testClose()
 
   local o = test_class.new()
   lu.assertNotNil(o._tool_window)
-  lu.assertEquals(o._tool_window.is_open, false)
+  lu.assertEquals(o:is_open(), false)
   o:open()
-  lu.assertEquals(o._tool_window.is_open, true)
+  lu.assertEquals(o:is_open(), true)
   o:close()
-  lu.assertEquals(o._tool_window.is_open, false)
+  lu.assertEquals(o:is_open(), false)
 end
 
 app = {
@@ -190,24 +206,24 @@ function TestToolWindow:testRender()
   local o = test_class.new()
   o:render()
   lu.assertNotNil(o._tool_window)
-  lu.assertEquals(o._tool_window.is_open, false)
+  lu.assertEquals(o:is_open(), false)
   lu.assertEquals(render_content_called, false)
 
   o:open()
   o:render()
-  lu.assertEquals(o._tool_window.is_open, true)
+  lu.assertEquals(o:is_open(), true)
   lu.assertEquals(render_content_called, true)
 
   render_content_called = false
   o:close()
   o:render()
-  lu.assertEquals(o._tool_window.is_open, false)
+  lu.assertEquals(o:is_open(), false)
   lu.assertEquals(render_content_called, false)
 
   ImGui.Begin = function(_, _, _, _) return false end
 
   o:render()
-  lu.assertEquals(o._tool_window.is_open, false)
+  lu.assertEquals(o:is_open(), false)
   lu.assertEquals(render_content_called, false)
 
   ImGui = old_imgui
