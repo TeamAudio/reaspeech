@@ -30,25 +30,15 @@ ToolWindow.modal = function(o, config)
   config = config or {}
   config.is_modal = true
 
-  local original_open = o.open
-  function o:open()
-    ImGui.OpenPopup(ctx, o._tool_window.title)
+  ToolWindow._wrap_method(o, 'open', function()
+    ImGui.OpenPopup(o.ctx, o._tool_window.title)
+  end)
 
-    if original_open then
-      original_open(self)
-    end
-  end
+  ToolWindow._wrap_method(o, 'close', function()
+    ImGui.CloseCurrentPopup(o.ctx)
+  end)
 
-  local original_close = o.close
-  function o:close()
-    if original_close then
-      original_close(self)
-    end
-
-    ImGui.CloseCurrentPopup(ctx)
- end
-
- ToolWindow.init(o, config)
+   ToolWindow.init(o, config)
 end
 
 ToolWindow.init = function(o, config)
@@ -57,7 +47,27 @@ ToolWindow.init = function(o, config)
 
   o.ctx = config.ctx or ctx
 
-  o._tool_window = {
+  local state = ToolWindow._make_config(o, config)
+  o._tool_window = state
+
+  ToolWindow._wrap_method(o, 'open', function()
+    state.is_open = true
+  end)
+
+  ToolWindow._wrap_method(o, 'close', function()
+    state.is_open = false
+  end)
+
+  o.is_open = ToolWindow.is_open
+
+  o.render = ToolWindow.render
+
+  o.render_separator = ToolWindow.render_separator
+end
+
+function ToolWindow._make_config(o, config)
+  config = config or {}
+  return {
     guard = config.guard or function() return o:is_open() end,
     is_open = false,
     title = config.title or ToolWindow.DEFAULT_TITLE,
@@ -70,69 +80,67 @@ ToolWindow.init = function(o, config)
     theme = config.theme or ToolWindow.DEFAULT_THEME(),
     position = config.position or ToolWindow.POSITION_CENTER,
   }
+end
 
-  local original_open = o.open
-  function o:open()
-    self._tool_window.is_open = true
-    if original_open then
-      original_open(self)
+function ToolWindow._wrap_method(o, method_name, f)
+  local original = o[method_name]
+  o[method_name] = function()
+    f()
+    if original then
+      original(o)
     end
   end
+end
 
-  local original_close = o.close
-  function o:close()
-    self._tool_window.is_open = false
-    if original_close then
-      original_close(self)
-    end
+function ToolWindow.is_open(o)
+  return o._tool_window.is_open
+end
+
+function ToolWindow.render(o)
+  local state = o._tool_window
+
+  if not state.guard() then
+    return
   end
 
-  function o:is_open()
-    return self._tool_window.is_open
+  local opening = not o:is_open()
+  if opening then
+    o:open()
   end
 
-  function o:render()
-    if not self._tool_window.guard() then
-      return
-    end
+  if state.position == ToolWindow.POSITION_CENTER then
+    local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(o.ctx))}
+    ImGui.SetNextWindowPos(o.ctx, center[1], center[2], ImGui.Cond_Appearing(), 0.5, 0.5)
+  elseif type(state.position) == 'table' and #state.position == 2 then
+    local position = state.position
+    ImGui.SetNextWindowPos(o.ctx, position[1], position[2], ImGui.Cond_Appearing())
+  end
 
-    local opening = not o:is_open()
-    if opening then
-      self:open()
-    end
+  ImGui.SetNextWindowSize(o.ctx, state.width, state.height, ImGui.Cond_FirstUseEver())
 
-    if self._tool_window.position == ToolWindow.POSITION_CENTER then
-      local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(o.ctx))}
-      ImGui.SetNextWindowPos(o.ctx, center[1], center[2], ImGui.Cond_Appearing(), 0.5, 0.5)
-    elseif type(self._tool_window.position) == 'table' and #self._tool_window.position == 2 then
-      local position = self._tool_window.position
-      ImGui.SetNextWindowPos(o.ctx, position[1], position[2], ImGui.Cond_Appearing())
-    end
-
-    ImGui.SetNextWindowSize(o.ctx, o._tool_window.width, o._tool_window.height, ImGui.Cond_FirstUseEver())
-
-    o._tool_window.theme:wrap(o.ctx, function()
-      local visible, open = o._tool_window.begin_f(o.ctx, o._tool_window.title, true, o._tool_window.window_flags)
-      if visible then
-        app:trap(function ()
-          self:render_content()
-        end)
-        o._tool_window.end_f(o.ctx)
-      else
-        if not (o._tool_window.window_flags & ImGui.WindowFlags_NoCollapse()) then
-          self:close()
+  state.theme:wrap(o.ctx, function()
+    local visible, open = state.begin_f(o.ctx, state.title, true, state.window_flags)
+    if visible then
+      app:trap(function ()
+        if o.render_content then
+          o:render_content()
         end
+      end)
+      state.end_f(o.ctx)
+    else
+      if not (state.window_flags & ImGui.WindowFlags_NoCollapse()) then
+        o:close()
       end
+    end
 
-      if not open then
-        self:close()
-      end
-    end, function(f) return app:trap(f) end)
-  end
+    if not open then
+      o:close()
+    end
+  end, function(f) return app:trap(f) end)
+end
 
-  function o:render_separator()
-    ImGui.Dummy(ctx, 0, 0)
-    ImGui.Separator(ctx)
-    ImGui.Dummy(ctx, 0, 0)
-  end
+function ToolWindow.render_separator(o)
+  ImGui.Dummy(o.ctx, 0, 0)
+  ImGui.Separator(o.ctx)
+  ImGui.Dummy(o.ctx, 0, 0)
 end

@@ -322,12 +322,6 @@ function TranscriptEditor:zoom(zoom_level)
   reaper.GetSet_LoopTimeRange(true, true, start, end_, false)
 end
 
-function TranscriptEditor:render_separator()
-  ImGui.Dummy(ctx, self.MIN_CONTENT_WIDTH, 0)
-  ImGui.Separator(ctx)
-  ImGui.Dummy(ctx, 0, 0)
-end
-
 function TranscriptEditor:update_time_selection()
   if self.editing then
     self.editing.word:select_in_timeline(self:offset())
