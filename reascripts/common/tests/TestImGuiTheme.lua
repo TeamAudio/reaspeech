@@ -118,6 +118,30 @@ function TestImGuiTheme:testStyles()
   theme:pop("context")
 end
 
+function TestImGuiTheme:testWrap()
+  local theme = ImGuiTheme.new()
+
+  local push_called = false
+  local pop_called = false
+  function theme:push(ctx)
+    lu.assertEquals(ctx, "context")
+    push_called = true
+  end
+  function theme:pop(ctx)
+    lu.assertEquals(ctx, "context")
+    pop_called = true
+  end
+
+  local function_called = false
+  theme:wrap("context", function()
+    function_called = true
+  end)
+
+  lu.assertEquals(push_called, true)
+  lu.assertEquals(pop_called, true)
+  lu.assertEquals(function_called, true)
+end
+
 --
 
 os.exit(lu.LuaUnit.run())

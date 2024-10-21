@@ -50,6 +50,7 @@ ToolWindow.init = function(o, config)
     is_modal = config.is_modal and true,
     begin_f = config.is_modal and ImGui.BeginPopupModal or ImGui.Begin,
     end_f = config.is_modal and ImGui.EndPopup or ImGui.End,
+    theme = config.theme or ImGuiTheme.new(),
   }
 
   local original_open = o.open
@@ -79,19 +80,20 @@ ToolWindow.init = function(o, config)
     end
 
     local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(o.ctx))}
-    ImGui.SetNextWindowPos(ctx, center[1], center[2], ImGui.Cond_Appearing(), 0.5, 0.5)
-    ImGui.SetNextWindowSize(ctx, o._tool_window.width, o._tool_window.height, ImGui.Cond_FirstUseEver())
+    ImGui.SetNextWindowPos(o.ctx, center[1], center[2], ImGui.Cond_Appearing(), 0.5, 0.5)
+    ImGui.SetNextWindowSize(o.ctx, o._tool_window.width, o._tool_window.height, ImGui.Cond_FirstUseEver())
 
-    local visible, _ = o._tool_window.begin_f(o.ctx, o._tool_window.title, true, o._tool_window.window_flags)
-    if visible then
-      app:trap(function ()
-        self:render_content()
-      end)
-      o._tool_window.end_f(o.ctx)
-    else
-      self:close()
-    end
-
+    o._tool_window.theme:wrap(o.ctx, function()
+      local visible, _ = o._tool_window.begin_f(o.ctx, o._tool_window.title, true, o._tool_window.window_flags)
+      if visible then
+        app:trap(function ()
+          self:render_content()
+        end)
+        o._tool_window.end_f(o.ctx)
+      else
+        self:close()
+      end
+    end, function(f) return app:trap(f) end)
   end
 
   function o:render_separator()
