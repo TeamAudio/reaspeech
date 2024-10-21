@@ -22,7 +22,17 @@ TranscriptEditor = Polo {
 function TranscriptEditor:init()
   assert(self.transcript, 'missing transcript')
   self.editing = nil
-  self.is_open = false
+
+  Logging.init(self, 'TranscriptEditor')
+
+  ToolWindow.modal(self, {
+    title = self.TITLE,
+    width = self.WIDTH,
+    height = self.HEIGHT,
+    window_flags = ImGui.WindowFlags_AlwaysAutoResize(),
+    guard = function() return self.editing and true or false end
+  })
+
   self.sync_time_selection = false
   self.zoom_level = self.ZOOM_LEVEL.NONE.value
   self.key_bindings = self:make_key_bindings()
@@ -66,32 +76,8 @@ function TranscriptEditor:edit_word(index)
   end
 end
 
-function TranscriptEditor:render()
-  if not self.editing then
-    return
-  end
-
-  local opening = not self.is_open
-  if opening then
-    self:_open()
-  end
-
-  local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(ctx))}
-  ImGui.SetNextWindowPos(ctx, center[1], center[2], ImGui.Cond_Appearing(), 0.5, 0.5)
-  ImGui.SetNextWindowSize(ctx, self.WIDTH, self.HEIGHT, ImGui.Cond_FirstUseEver())
-
-  if ImGui.BeginPopupModal(ctx, self.TITLE, true, ImGui.WindowFlags_AlwaysAutoResize()) then
-    app:trap(function ()
-      self.key_bindings:react()
-      self:render_content()
-    end)
-    ImGui.EndPopup(ctx)
-  else
-    self:_close()
-  end
-end
-
 function TranscriptEditor:render_content()
+  self.key_bindings:react()
   if self.editing.word then
     self:render_word_navigation()
     self:render_separator()
@@ -113,12 +99,12 @@ function TranscriptEditor:render_content()
 
   if ImGui.Button(ctx, 'Save', self.BUTTON_WIDTH, 0) then
     self:handle_save()
-    self:_close()
+    self:close()
   end
 
   ImGui.SameLine(ctx)
   if ImGui.Button(ctx, 'Cancel', self.BUTTON_WIDTH, 0) then
-    self:_close()
+    self:close()
   end
 end
 
@@ -402,13 +388,6 @@ function TranscriptEditor:handle_zoom_change()
   end
 end
 
-function TranscriptEditor:_open()
-  ImGui.OpenPopup(ctx, self.TITLE)
-  self.is_open = true
-end
-
-function TranscriptEditor:_close()
-  ImGui.CloseCurrentPopup(ctx)
+function TranscriptEditor:close()
   self.editing = nil
-  self.is_open = false
 end
