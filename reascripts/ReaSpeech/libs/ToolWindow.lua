@@ -2,6 +2,43 @@
 
   ToolWindow.lua - extend an object with ImGui window functionality
 
+  API:
+
+    ToolWindow.init(target_object, config_table)
+      Extend an object with configurable windowing functionality
+      based on ImGui's Begin/End functions.
+
+      arguments:
+        target_object (table) - the object to extend
+        config_table (table) - configuration options
+          ctx (userdata) - the ImGui context to use
+            default: global ctx object
+          guard (function) - a function to determine if the window should render
+            default: function returning the value of is_open
+          title (string) - the window title
+            default: "Tool Window"
+          width (number) - the window width
+            default: 300
+          height (number) - the window height
+            default: 200
+          window_flags (number) - ImGui window flags
+            default: 0
+              | ImGui.WindowFlags_AlwaysAutoResize()
+              | ImGui.WindowFlags_NoCollapse()
+              | ImGui.WindowFlags_NoDocking()
+          theme (ImGuiTheme) - the theme to apply
+            default: empty theme
+          position (string|table) - the window position
+            'center' - (default) center the window
+            'automatic' - let ImGui decide
+            {x, y} - position the window at x, y
+
+    ToolWindow.modal(target_object, config_table)
+      Helper to define a modal window. Calls ToolWindow.init with
+      modal-specific configuration.
+
+      arguments:
+        (same as ToolWindow.init)
 ]]--
 
 ToolWindow = {
