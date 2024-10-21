@@ -137,4 +137,9 @@ gfx = gfx or {
 ImGui = ImGui or {
   Key_LeftArrow = function() return 1 end,
   Key_RightArrow = function() return 2 end,
+  WindowFlags_AlwaysAutoResize = function() return 0 end,
+  WindowFlags_NoCollapse = function() return 1 end,
+  WindowFlags_NoDocking = function() return 2 end,
+  Cond_FirstUseEver = function() return 0 end,
+  Cond_Appearing = function() return 1 end,
 }

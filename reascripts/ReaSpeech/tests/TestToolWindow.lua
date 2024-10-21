@@ -5,6 +5,7 @@ local lu = require('luaunit')
 require('mock_reaper')
 require('Polo')
 require('libs/ToolWindow')
+require('source/Logging')
 require('source/include/globals')
 
 --
@@ -51,6 +52,11 @@ function TestToolWindow:testOpen()
     end
   }
 
+  ImGui = ImGui or {}
+  ImGui.WindowFlags_AlwaysAutoResize = function() return 0 end
+  ImGui.WindowFlags_NoCollapse = function() return 1 end
+  ImGui.WindowFlags_NoDocking = function() return 2 end
+
   local o = test_class.new()
   lu.assertNotNil(o._tool_window)
   lu.assertEquals(o._tool_window.is_open, false)
@@ -76,12 +82,36 @@ function TestToolWindow:testWrapOpen()
   lu.assertEquals(wrapped_open_called, true)
 end
 
+function TestToolWindow:testWrapClose()
+  local test_class = Polo {
+    init = function(self)
+      ToolWindow.init(self)
+    end
+  }
+
+  local wrapped_close_called = false
+  function test_class:close()
+    wrapped_close_called = true
+  end
+
+  local o = test_class.new()
+  o:open()
+  o:close()
+  lu.assertEquals(o._tool_window.is_open, false)
+  lu.assertEquals(wrapped_close_called, true)
+end
+
 function TestToolWindow:testClose()
   local test_class = Polo {
     init = function(self)
       ToolWindow.init(self)
     end
   }
+
+  ImGui = ImGui or {}
+  ImGui.WindowFlags_AlwaysAutoResize = function() return 0 end
+  ImGui.WindowFlags_NoCollapse = function() return 1 end
+  ImGui.WindowFlags_NoDocking = function() return 2 end
 
   local o = test_class.new()
   lu.assertNotNil(o._tool_window)
@@ -145,9 +175,6 @@ function TestToolWindow:testRender()
   o:render()
   lu.assertEquals(o._tool_window.is_open, false)
   lu.assertEquals(render_content_called, false)
-
-  ImGui = ImGui or {}
-  local old_imgui = ImGui
 
   ImGui.Begin = function(_, _, _, _) return false end
 

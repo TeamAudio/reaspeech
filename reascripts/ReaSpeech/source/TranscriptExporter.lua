@@ -18,7 +18,14 @@ function TranscriptExporter:init()
 
   Logging.init(self, 'TranscriptExporter')
 
-  ToolWindow.init(self)
+  ToolWindow.init(self, {
+    title = self.TITLE,
+    width = self.WIDTH,
+    height = self.HEIGHT,
+    window_flags = ImGui.WindowFlags_AlwaysAutoResize() | ImGui.WindowFlags_NoCollapse() | ImGui.WindowFlags_NoDocking(),
+    condition_flags = ImGui.Cond_FirstUseEver(),
+    guard = function() return self._tool_window.is_open end
+  })
 
   self.export_formats = TranscriptExporterFormats.new {
     TranscriptExportFormat.exporter_json(),

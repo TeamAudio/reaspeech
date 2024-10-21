@@ -25,8 +25,12 @@ ToolWindow.init = function(o, config)
     end
   end
 
+  local original_close = o.close
   function o:close()
     self._tool_window.is_open = false
+    if original_close then
+      original_close(self)
+    end
   end
 
   function o:render()
