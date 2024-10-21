@@ -9,21 +9,34 @@ require('source/include/globals')
 
 --
 
-TestToolWindow = {}
+TestToolWindow = {
+  _test_class = function()
+    return Polo {
+      init = function(self)
+        ToolWindow.init(self, {
+          title = 'Test Tool Window',
+          width = 300,
+          height = 200,
+          window_flags = 21,
+        })
+      end
+    }
+  end
+}
 
 function TestToolWindow:setUp()
 end
 
 function TestToolWindow:testInit()
-  local test_class = Polo {
-    init = function(self)
-      ToolWindow.init(self)
-    end
-  }
+  local test_class = self._test_class()
 
   local o = test_class.new()
   lu.assertNotNil(o._tool_window)
   lu.assertEquals(type(o._tool_window), 'table')
+  lu.assertEquals(o._tool_window.title, 'Test Tool Window')
+  lu.assertEquals(o._tool_window.window_flags, 21)
+  lu.assertEquals(o._tool_window.width, 300)
+  lu.assertEquals(o._tool_window.height, 200)
   lu.assertEquals(type(o._tool_window.is_open), 'boolean')
   lu.assertEquals(type(o.open), 'function')
   lu.assertEquals(type(o.close), 'function')

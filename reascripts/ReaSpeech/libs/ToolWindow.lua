@@ -6,9 +6,15 @@
 
 ToolWindow = {}
 
-ToolWindow.init = function(o)
+ToolWindow.init = function(o, config)
+  config = config or {}
+
   o._tool_window = {
     is_open = false,
+    title = config.title or 'Tool Window',
+    window_flags = config.window_flags or 0,
+    width = config.width or 300,
+    height = config.height or 200,
   }
 
   local original_open = o.open
