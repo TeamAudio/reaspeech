@@ -12,7 +12,7 @@ ToolWindow.modal = function(o, config)
 
   local original_open = o.open
   function o:open()
-    ImGui.OpenPopup(ctx, self.TITLE)
+    ImGui.OpenPopup(ctx, o._tool_window.title)
 
     if original_open then
       original_open(self)
