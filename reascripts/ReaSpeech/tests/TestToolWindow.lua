@@ -45,6 +45,33 @@ function TestToolWindow:testInit()
   lu.assertEquals(type(o.render), 'function')
 end
 
+function TestToolWindow:testModal()
+  local test_class = Polo {
+    init = function(self)
+      ToolWindow.modal(self, {
+        title = 'Test Tool Window',
+        width = 300,
+        height = 200,
+        window_flags = 21,
+      })
+    end
+  }
+
+  ImGui = ImGui or {}
+  ImGui.WindowFlags_AlwaysAutoResize = function() return 0 end
+  ImGui.WindowFlags_NoCollapse = function() return 1 end
+  ImGui.WindowFlags_NoDocking = function() return 2 end
+
+  local o = test_class.new()
+  lu.assertNotNil(o._tool_window)
+  lu.assertEquals(o._tool_window.is_modal, true)
+  lu.assertEquals(type(o._tool_window), 'table')
+  lu.assertEquals(o._tool_window.title, 'Test Tool Window')
+  lu.assertEquals(o._tool_window.window_flags, 21)
+  lu.assertEquals(o._tool_window.width, 300)
+  lu.assertEquals(o._tool_window.height, 200)
+end
+
 function TestToolWindow:testOpen()
   local test_class = Polo {
     init = function(self)
