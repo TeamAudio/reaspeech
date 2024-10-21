@@ -11,7 +11,6 @@ TranscriptExporter = Polo {
   BUTTON_WIDTH = 120,
   INPUT_WIDTH = 120,
   FILE_WIDTH = 500,
-
 }
 
 function TranscriptExporter:init()
@@ -19,7 +18,16 @@ function TranscriptExporter:init()
 
   Logging.init(self, 'TranscriptExporter')
 
-  self.is_open = false
+  ToolWindow.init(self, {
+    title = self.TITLE,
+    width = self.WIDTH,
+    height = self.HEIGHT,
+    window_flags = 0
+      | ImGui.WindowFlags_AlwaysAutoResize()
+      | ImGui.WindowFlags_NoCollapse()
+      | ImGui.WindowFlags_NoDocking(),
+  })
+
   self.export_formats = TranscriptExporterFormats.new {
     TranscriptExportFormat.exporter_json(),
     TranscriptExportFormat.exporter_srt(),
@@ -48,36 +56,9 @@ function TranscriptExporter:show_error(msg)
   self.alert_popup:show('Export Failed', msg)
 end
 
-function TranscriptExporter:render()
-  if not self.is_open then
-    return
-  end
-
-  local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(ctx))}
-  ImGui.SetNextWindowPos(ctx, center[1], center[2], ImGui.Cond_Appearing(), 0.5, 0.5)
-  ImGui.SetNextWindowSize(ctx, self.WIDTH, self.HEIGHT, ImGui.Cond_FirstUseEver())
-
-  local flags = (
-    0
-    | ImGui.WindowFlags_AlwaysAutoResize()
-    | ImGui.WindowFlags_NoCollapse()
-    | ImGui.WindowFlags_NoDocking()
-  )
-
-  local visible, open = ImGui.Begin(ctx, self.TITLE, true, flags)
-  if visible then
-    app:trap(function ()
-      self:render_content()
-      self.alert_popup:render()
-    end)
-    ImGui.End(ctx)
-  end
-  if not open then
-    self:close()
-  end
-end
-
 function TranscriptExporter:render_content()
+  self.alert_popup:render()
+
   self.export_formats:render_combo(self.INPUT_WIDTH)
 
   ImGui.Spacing(ctx)
@@ -112,12 +93,6 @@ function TranscriptExporter:render_buttons()
   end
 end
 
-function TranscriptExporter:render_separator()
-  ImGui.Dummy(ctx, 0, 0)
-  ImGui.Separator(ctx)
-  ImGui.Dummy(ctx, 0, 0)
-end
-
 function TranscriptExporter:handle_export()
   if self.file_selector:value() == '' then
     self:show_error('Please specify a file name.')
@@ -131,14 +106,6 @@ function TranscriptExporter:handle_export()
   self.export_formats:write(self.transcript, file, self.export_options)
   file:close()
   return true
-end
-
-function TranscriptExporter:open()
-  self.is_open = true
-end
-
-function TranscriptExporter:close()
-  self.is_open = false
 end
 
 TranscriptExporterFormats = Polo {

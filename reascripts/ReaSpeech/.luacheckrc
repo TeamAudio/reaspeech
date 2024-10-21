@@ -8,6 +8,7 @@ globals = {
   "Polo",
   "ReaUtil",
   "table",
+  "ToolWindow",
   "Plugin",
   "PluginActions",
   "PluginControls",

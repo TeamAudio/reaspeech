@@ -27,40 +27,25 @@ ReaSpeechWelcomeUI = Polo {
 
 function ReaSpeechWelcomeUI:init()
   self.is_demo = self.is_demo or false
-  self.is_open = false
+
+  ToolWindow.modal(self, {
+    title = self.TITLE,
+    width = self.WIDTH,
+    height = self.HEIGHT,
+    window_flags = ImGui.WindowFlags_AlwaysAutoResize(),
+    guard = function() return self.presenting end,
+    theme = ImGuiTheme.new({
+      styles = {
+        {ImGui.StyleVar_WindowPadding, 0, 0 },
+      }
+    }),
+  })
+
   self.presenting = false
 end
 
 function ReaSpeechWelcomeUI:present()
   self.presenting = true
-end
-
-function ReaSpeechWelcomeUI:render()
-  if not self.presenting then
-    return
-  end
-
-  local opening = not self.is_open
-  if opening then
-    self:_open()
-  end
-
-  local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(ctx))}
-  ImGui.SetNextWindowPos(ctx, center[1], center[2], ImGui.Cond_Appearing(), 0.5, 0.5)
-  ImGui.SetNextWindowSize(ctx, self.WIDTH, self.HEIGHT, ImGui.Cond_FirstUseEver())
-
-  ImGui.PushStyleVar(ctx, ImGui.StyleVar_WindowPadding(), 0, 0)
-  app:trap(function ()
-    if ImGui.BeginPopupModal(ctx, self.TITLE, true, ImGui.WindowFlags_AlwaysAutoResize()) then
-      app:trap(function ()
-        self:render_content()
-      end)
-      ImGui.EndPopup(ctx)
-    else
-      self:_close()
-    end
-  end)
-  ImGui.PopStyleVar(ctx)
 end
 
 function ReaSpeechWelcomeUI:render_content()
@@ -96,7 +81,7 @@ function ReaSpeechWelcomeUI:render_close_button()
   ImGui.Dummy(ctx, self.WIDTH, self.PADDING - 2)
   ImGui.SetCursorPosX(ctx, self.PADDING - 2)
   if ImGui.Button(ctx, "Let's Go!") then
-    self:_close()
+    self:close()
   end
 end
 
@@ -142,13 +127,6 @@ function ReaSpeechWelcomeUI:render_footer()
   Widgets.link("Docker Hub", ReaUtil.url_opener(self.DOCKER_HUB_URL))
 end
 
-function ReaSpeechWelcomeUI:_open()
-  ImGui.OpenPopup(ctx, self.TITLE)
-  self.is_open = true
-end
-
-function ReaSpeechWelcomeUI:_close()
-  ImGui.CloseCurrentPopup(ctx)
-  self.is_open = false
+function ReaSpeechWelcomeUI:close()
   self.presenting = false
 end

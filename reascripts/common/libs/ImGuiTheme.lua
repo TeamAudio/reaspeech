@@ -25,9 +25,10 @@ ImGuiTheme = {
 
 ImGuiTheme.__index = ImGuiTheme
 ImGuiTheme.new = function(theme_definition)
+  theme_definition = theme_definition or {}
   local theme = {
-    colors = ImGuiTheme.get_attribute_values(theme_definition.colors),
-    styles = ImGuiTheme.get_attribute_values(theme_definition.styles),
+    colors = ImGuiTheme.get_attribute_values(theme_definition.colors or {}),
+    styles = ImGuiTheme.get_attribute_values(theme_definition.styles or {}),
   }
 
   setmetatable(theme, ImGuiTheme)
@@ -85,4 +86,11 @@ end
 function ImGuiTheme:pop(ctx)
   self.f_color_pop(ctx, self.color_count)
   self.f_style_pop(ctx, self.style_count)
+end
+
+function ImGuiTheme:wrap(ctx, f, trap_f)
+  trap_f = trap_f or function(f_) return xpcall(f_, reaper.ShowConsoleMsg) end
+  self:push(ctx)
+  trap_f(function() f(ctx) end)
+  self:pop(ctx)
 end
