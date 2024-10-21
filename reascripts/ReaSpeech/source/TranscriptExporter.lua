@@ -23,7 +23,6 @@ function TranscriptExporter:init()
     width = self.WIDTH,
     height = self.HEIGHT,
     window_flags = ImGui.WindowFlags_AlwaysAutoResize() | ImGui.WindowFlags_NoCollapse() | ImGui.WindowFlags_NoDocking(),
-    condition_flags = ImGui.Cond_FirstUseEver(),
     guard = function() return self._tool_window.is_open end
   })
 

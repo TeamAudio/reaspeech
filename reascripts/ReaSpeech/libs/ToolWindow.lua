@@ -4,7 +4,27 @@
 
 ]]--
 
-ToolWindow = {}
+ToolWindow = {
+  DEFAULT_TITLE = 'Tool Window',
+
+  DEFAULT_WIDTH = 300,
+  DEFAULT_HEIGHT = 200,
+
+  POSITION_CENTER = 'center',
+  POSITION_AUTOMATIC = 'automatic',
+  DEFAULT_POSITION = 'center',
+
+  DEFAULT_WINDOW_FLAGS = function()
+    return 0
+      | ImGui.WindowFlags_AlwaysAutoResize()
+      | ImGui.WindowFlags_NoCollapse()
+      | ImGui.WindowFlags_NoDocking()
+  end,
+
+  DEFAULT_THEME = function()
+    return ImGuiTheme.new()
+  end,
+}
 
 ToolWindow.modal = function(o, config)
   config = config or {}
@@ -40,17 +60,15 @@ ToolWindow.init = function(o, config)
   o._tool_window = {
     guard = config.guard or function() return o._tool_window.is_open end,
     is_open = false,
-    title = config.title or 'Tool Window',
-    window_flags = config.window_flags or 0
-      | ImGui.WindowFlags_AlwaysAutoResize()
-      | ImGui.WindowFlags_NoCollapse()
-      | ImGui.WindowFlags_NoDocking(),
-    width = config.width or 300,
-    height = config.height or 200,
+    title = config.title or ToolWindow.DEFAULT_TITLE,
+    window_flags = config.window_flags or ToolWindow.DEFAULT_WINDOW_FLAGS(),
+    width = config.width or ToolWindow.DEFAULT_WIDTH,
+    height = config.height or ToolWindow.DEFAULT_HEIGHT,
     is_modal = config.is_modal and true,
     begin_f = config.is_modal and ImGui.BeginPopupModal or ImGui.Begin,
     end_f = config.is_modal and ImGui.EndPopup or ImGui.End,
-    theme = config.theme or ImGuiTheme.new(),
+    theme = config.theme or ToolWindow.DEFAULT_THEME(),
+    position = config.position or ToolWindow.POSITION_CENTER,
   }
 
   local original_open = o.open
@@ -79,18 +97,30 @@ ToolWindow.init = function(o, config)
       self:open()
     end
 
-    local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(o.ctx))}
-    ImGui.SetNextWindowPos(o.ctx, center[1], center[2], ImGui.Cond_Appearing(), 0.5, 0.5)
+    if self._tool_window.position == ToolWindow.POSITION_CENTER then
+      local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(o.ctx))}
+      ImGui.SetNextWindowPos(o.ctx, center[1], center[2], ImGui.Cond_Appearing(), 0.5, 0.5)
+    elseif type(self._tool_window.position) == 'table' and #self._tool_window.position == 2 then
+      local position = self._tool_window.position
+      ImGui.SetNextWindowPos(o.ctx, position[1], position[2], ImGui.Cond_Appearing())
+    end
+
     ImGui.SetNextWindowSize(o.ctx, o._tool_window.width, o._tool_window.height, ImGui.Cond_FirstUseEver())
 
     o._tool_window.theme:wrap(o.ctx, function()
-      local visible, _ = o._tool_window.begin_f(o.ctx, o._tool_window.title, true, o._tool_window.window_flags)
+      local visible, open = o._tool_window.begin_f(o.ctx, o._tool_window.title, true, o._tool_window.window_flags)
       if visible then
         app:trap(function ()
           self:render_content()
         end)
         o._tool_window.end_f(o.ctx)
       else
+        if not (o._tool_window.window_flags & ImGui.WindowFlags_NoCollapse()) then
+          self:close()
+        end
+      end
+
+      if not open then
         self:close()
       end
     end, function(f) return app:trap(f) end)
