@@ -413,7 +413,7 @@ function TestTranscriptMarkers:testTakeMarkersTrackFilterInclude()
   ReaIter.each_media_item = ReaIter._make_iterator(reaper.CountMediaItems, reaper.GetMediaItem)
   ReaIter.each_take = ReaIter._make_iterator(reaper.CountTakes, reaper.GetTake)
 
-  ReaSpeechUI.get_source_path = function (source)
+  ReaUtil.get_source_path = function (source)
     return "some file"
   end
 
@@ -499,7 +499,7 @@ function TestTranscriptMarkers:testTakeMarkersTrackFilterIgnore()
   ReaIter.each_media_item = ReaIter._make_iterator(reaper.CountMediaItems, reaper.GetMediaItem)
   ReaIter.each_take = ReaIter._make_iterator(reaper.CountTakes, reaper.GetTake)
 
-  ReaSpeechUI.get_source_path = function (source)
+  ReaUtil.get_source_path = function (source)
     return "some file"
   end
 

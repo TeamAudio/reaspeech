@@ -62,3 +62,12 @@ function ReaUtil.track_guid_map()
 
   return map
 end
+
+function ReaUtil.get_source_path(take)
+  local source = reaper.GetMediaItemTake_Source(take)
+  if source then
+    local source_path = reaper.GetMediaSourceFileName(source)
+    return source_path
+  end
+  return nil
+end

@@ -44,7 +44,7 @@ function DetectLanguageActions:label_track_languages()
 end
 
 function DetectLanguageActions.make_job(media_item, take)
-  local path = ReaSpeechUI.get_source_path(take)
+  local path = ReaUtil.get_source_path(take)
 
   if path then
     return {item = media_item, take = take, path = path}

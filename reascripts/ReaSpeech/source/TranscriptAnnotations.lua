@@ -24,11 +24,11 @@ function TranscriptAnnotations:take_markers(use_words, track_filter_config)
 
       if not takes[take_guid] then
         takes[take_guid] = {}
-        local path = ReaSpeechUI.get_source_path(element.take)
+        local path = ReaUtil.get_source_path(element.take)
 
         for item in ReaIter.each_media_item() do
           for take in ReaIter.each_take(item) do
-            local take_path = ReaSpeechUI.get_source_path(take)
+            local take_path = ReaUtil.get_source_path(take)
 
             if take_path == path then
               local track_guid = reaper.GetTrackGUID(reaper.GetMediaItemTake_Track(take))
