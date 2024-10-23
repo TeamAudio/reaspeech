@@ -1,17 +1,17 @@
 globals = {
-  "Script",
-  "json",
-  "reaper",
-  "url",
-  "ImGuiTheme",
   "IMAGES",
-  "Polo",
-  "ReaUtil",
-  "table",
-  "ToolWindow",
+  "ImGuiTheme",
+  "json",
   "Plugin",
   "PluginActions",
   "PluginControls",
+  "Polo",
+  "reaper",
+  "ReaUtil",
+  "Script",
+  "table",
+  "ToolWindow",
+  "url",
 }
 
 allow_defined = true
