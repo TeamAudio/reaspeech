@@ -41,12 +41,11 @@ end
 ReaSpeechCheckbox = {}
 ReaSpeechCheckbox.new = function (options)
   options = options or {
-    state = nil,
-    default = nil,
     label_long = nil,
     label_short = nil,
     width_threshold = nil,
   }
+  options.default = options.default or false
 
   options.changed_handler = options.changed_handler or function(_) end
 
@@ -92,10 +91,9 @@ end
 ReaSpeechTextInput = {}
 ReaSpeechTextInput.new = function (options)
   options = options or {
-    state = nil,
-    default = nil,
     label = nil,
   }
+  options.default = options.default or ''
 
   local o = ReaSpeechWidget.new({
     state = options.state,
@@ -134,12 +132,11 @@ ReaSpeechCombo = {}
 
 ReaSpeechCombo.new = function (options)
   options = options or {
-    state = nil,
     default = nil,
     label = nil,
-    items = {},
-    item_labels = {},
   }
+  options.items = options.items or {}
+  options.item_labels = options.item_labels or {}
 
   local o = ReaSpeechWidget.new({
     state = options.state,
@@ -178,8 +175,8 @@ ReaSpeechTabBar = {}
 ReaSpeechTabBar.new = function (options)
   options = options or {
     default = nil,
-    tabs = {},
   }
+  options.tabs = options.tabs or {}
 
   local o = ReaSpeechWidget.new({
     default = options.default,
@@ -216,12 +213,11 @@ ReaSpeechButtonBar = {}
 
 ReaSpeechButtonBar.new = function (options)
   options = options or {
-    state = nil,
     default = nil,
     label = nil,
-    buttons = {},
-    styles = {}
   }
+  options.buttons = options.buttons or {}
+  options.styles = options.styles or {}
 
   local o = ReaSpeechWidget.new({
     state = options.state,
@@ -273,9 +269,9 @@ ReaSpeechButton = {}
 ReaSpeechButton.new = function(options)
   options = options or {
     label = nil,
-    disabled = false,
     on_click = nil,
   }
+  options.disabled = options.disabled or false
 
   local o = ReaSpeechWidget.new({
     default = true,
@@ -390,13 +386,9 @@ end
 ReaSpeechListBox = {}
 
 ReaSpeechListBox.new = function(options)
-  options = options or {
-    state = nil,
-    default = nil,
-    label = nil,
-    items = {},
-    item_labels = {},
-  }
+  options = options or {}
+  options.items = options.items or {}
+  options.item_labels = options.item_labels or {}
 
   local o = ReaSpeechWidget.new({
     state = options.state,
