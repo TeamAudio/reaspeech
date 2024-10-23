@@ -67,11 +67,11 @@ ToolWindow.modal = function(o, config)
   config = config or {}
   config.is_modal = true
 
-  ToolWindow._wrap_method(o, 'open', function()
+  ToolWindow._wrap_method_0_args(o, 'open', function()
     ImGui.OpenPopup(o.ctx, o._tool_window.title)
   end)
 
-  ToolWindow._wrap_method(o, 'close', function()
+  ToolWindow._wrap_method_0_args(o, 'close', function()
     ImGui.CloseCurrentPopup(o.ctx)
   end)
 
@@ -87,11 +87,11 @@ ToolWindow.init = function(o, config)
   local state = ToolWindow._make_config(o, config)
   o._tool_window = state
 
-  ToolWindow._wrap_method(o, 'open', function()
+  ToolWindow._wrap_method_0_args(o, 'open', function()
     state.is_open = true
   end)
 
-  ToolWindow._wrap_method(o, 'close', function()
+  ToolWindow._wrap_method_0_args(o, 'close', function()
     state.is_open = false
   end)
 
@@ -119,7 +119,7 @@ function ToolWindow._make_config(o, config)
   }
 end
 
-function ToolWindow._wrap_method(o, method_name, f)
+function ToolWindow._wrap_method_0_args(o, method_name, f)
   local original = o[method_name]
   o[method_name] = function()
     f()
