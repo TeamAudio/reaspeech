@@ -287,7 +287,7 @@ function TranscriptAnnotationTypes.notes_track()
   local track_name = ReaSpeechTextInput.simple('Transcript', 'Track Name')
 
   return {
-    label = 'Subtitle Notes Track',
+    label = 'Notes Track',
     key = 'notes_track',
 
     renderer = function ()
@@ -296,7 +296,7 @@ function TranscriptAnnotationTypes.notes_track()
     end,
 
     creator = function (annotations)
-      local undo_label = 'Create subtitle notes track from transcript'
+      local undo_label = 'Create notes track from transcript'
 
       TranscriptAnnotationTypes._with_undo(undo_label, function()
         annotations:notes_track(granularity_combo:use_words(), track_name:value())
