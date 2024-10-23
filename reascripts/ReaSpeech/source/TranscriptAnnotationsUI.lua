@@ -164,7 +164,7 @@ end
 
 function TranscriptAnnotationTypes:selected_type()
   if not self.selected_type_key then
-    return nil
+    return self.types[1]
   end
 
   return self.types[self.types_map[self.selected_type_key]]
