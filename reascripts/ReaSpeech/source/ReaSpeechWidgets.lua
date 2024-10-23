@@ -411,19 +411,27 @@ ReaSpeechListBox.renderer = function(self)
 
   local imgui_label = ("##%s"):format(options.label)
 
+  local needs_update = false
   if ImGui.BeginListBox(self.ctx, imgui_label) then
     app:trap(function()
+      local current = self:value()
       for i, item in ipairs(options.items) do
-        local is_selected = self:value()[item]
+        local is_selected = current[item]
+        local label = options.item_labels[item]
         ImGui.PushID(ctx, 'item' .. i)
         app:trap(function()
-          if ImGui.Selectable(self.ctx, options.item_labels[item], is_selected) then
-            local current = self.state:get()
-            current[item] = not current[item]
-            self:set(current)
+          local result, now_selected = ImGui.Selectable(self.ctx, label, is_selected)
+
+          if result and is_selected ~= now_selected then
+            needs_update = true
+            current[item] = now_selected
           end
         end)
         ImGui.PopID(ctx)
+      end
+
+      if needs_update then
+        self:set(current)
       end
     end)
     ImGui.EndListBox(self.ctx)
