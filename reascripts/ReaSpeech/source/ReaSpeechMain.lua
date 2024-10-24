@@ -23,11 +23,11 @@ end
 
 function ReaSpeechMain:loop()
   return function()
-    if app:is_open() then
-      if ReaSpeechUI.METRICS then
-        ImGui.ShowMetricsWindow(ctx)
-      end
+    if ReaSpeechUI.METRICS then
+      ImGui.ShowMetricsWindow(ctx)
+    end
 
+    if app:is_open() then
       app:trap(function() app:react() end)
 
       reaper.defer(self:loop())
