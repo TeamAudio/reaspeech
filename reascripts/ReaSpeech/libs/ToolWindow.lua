@@ -184,6 +184,11 @@ function ToolWindow._render_window(o)
     end)
     state.end_f(o.ctx)
   else
+    -- Checking for "not NoCollapse" here accounts for the main window
+    -- that can be minimized and expanded.
+    --
+    -- In other cases, not visible/not open is enough to say "yeah,
+    -- let's go ahead and shut this down."
     if not (state.window_flags & ImGui.WindowFlags_NoCollapse()) then
       o:close()
     end
