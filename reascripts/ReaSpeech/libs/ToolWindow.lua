@@ -26,6 +26,8 @@
               | ImGui.WindowFlags_AlwaysAutoResize()
               | ImGui.WindowFlags_NoCollapse()
               | ImGui.WindowFlags_NoDocking()
+          font (ImGuiFont, optional) - the font to use
+            default: (no default)
           theme (ImGuiTheme) - the theme to apply
             default: empty theme
           position (string|table) - the window position
@@ -114,6 +116,7 @@ function ToolWindow._make_config(o, config)
     is_modal = config.is_modal and true,
     begin_f = config.is_modal and ImGui.BeginPopupModal or ImGui.Begin,
     end_f = config.is_modal and ImGui.EndPopup or ImGui.End,
+    font = config.font,
     theme = config.theme or ToolWindow.DEFAULT_THEME(),
     position = config.position or ToolWindow.POSITION_CENTER,
   }
@@ -145,6 +148,24 @@ function ToolWindow.render(o)
     o:open()
   end
 
+  local trap = function(f) return app:trap(f) end
+
+  local f = function()
+    state.theme:wrap(o.ctx, function()
+      ToolWindow._render_window(o)
+    end, trap)
+  end
+
+  if state.font then
+    Fonts.wrap(ctx, Fonts.main, f, trap)
+  else
+    f()
+  end
+end
+
+function ToolWindow._render_window(o)
+  local state = o._tool_window
+
   if state.position == ToolWindow.POSITION_CENTER then
     local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(o.ctx))}
     ImGui.SetNextWindowPos(o.ctx, center[1], center[2], ImGui.Cond_Appearing(), 0.5, 0.5)
@@ -154,26 +175,23 @@ function ToolWindow.render(o)
   end
 
   ImGui.SetNextWindowSize(o.ctx, state.width, state.height, ImGui.Cond_FirstUseEver())
-
-  state.theme:wrap(o.ctx, function()
-    local visible, open = state.begin_f(o.ctx, state.title, true, state.window_flags)
-    if visible then
-      app:trap(function ()
-        if o.render_content then
-          o:render_content()
-        end
-      end)
-      state.end_f(o.ctx)
-    else
-      if not (state.window_flags & ImGui.WindowFlags_NoCollapse()) then
-        o:close()
+  local visible, open = state.begin_f(o.ctx, state.title, true, state.window_flags)
+  if visible then
+    app:trap(function ()
+      if o.render_content then
+        o:render_content()
       end
-    end
-
-    if not open then
+    end)
+    state.end_f(o.ctx)
+  else
+    if not (state.window_flags & ImGui.WindowFlags_NoCollapse()) then
       o:close()
     end
-  end, function(f) return app:trap(f) end)
+  end
+
+  if not open then
+    o:close()
+  end
 end
 
 function ToolWindow.render_separator(o)

@@ -23,8 +23,6 @@ end
 
 function ReaSpeechMain:loop()
   return function()
-    ImGui.PushFont(ctx, Fonts.main)
-
     if app:is_open() then
       if ReaSpeechUI.METRICS then
         ImGui.ShowMetricsWindow(ctx)
@@ -34,7 +32,6 @@ function ReaSpeechMain:loop()
 
       reaper.defer(self:loop())
     end
-    ImGui.PopFont(ctx)
   end
 end
 

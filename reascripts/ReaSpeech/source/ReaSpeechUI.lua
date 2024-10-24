@@ -25,6 +25,7 @@ function ReaSpeechUI:init()
     width = self.WIDTH,
     height = self.HEIGHT,
     window_flags = ImGui.WindowFlags_None(),
+    font = Fonts.main,
     theme = Theme(),
     position = ToolWindow.POSITION_AUTOMATIC,
   })
