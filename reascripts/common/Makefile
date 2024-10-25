@@ -4,7 +4,7 @@ LUA54=lua5.4
 LUAC54=luac5.4
 LUACHECK=luacheck
 
-source:=$(wildcard libs/*.lua tests/*.lua)
+source:=$(wildcard libs/*.lua tests/*.lua) vendor/json.lua
 tests:=$(wildcard tests/Test*.lua)
 
 all: lint test

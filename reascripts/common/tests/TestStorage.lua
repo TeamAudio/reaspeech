@@ -4,6 +4,7 @@ local lu = require('luaunit')
 
 require('Storage')
 
+require('json')
 require('mock_reaper')
 
 --
@@ -43,6 +44,22 @@ function TestStorage:testExtState()
   lu.assertEquals(my_string:get(), 'hello world')
   my_string:erase()
   lu.assertEquals(my_string:get(), 'hello')
+
+  local my_table = settings:table('my_table', {})
+  local my_table_raw = settings:string('my_table', '{}')
+
+  local my_table_value = my_table:get()
+  lu.assertEquals(my_table_value, {})
+  my_table:set({ key = 'value' })
+  lu.assertEquals(my_table:get(), { key = 'value' })
+  lu.assertEquals(my_table_raw:get(), '{"key":"value"}')
+
+  my_table:erase()
+  lu.assertEquals(my_table:get(), {})
+
+  my_table:set({ 1, 2, 3 })
+  lu.assertEquals(my_table:get(), { 1, 2, 3 })
+  lu.assertEquals(my_table_raw:get(), '[1,2,3]')
 end
 
 function TestStorage:testProjExtState()
@@ -74,6 +91,22 @@ function TestStorage:testProjExtState()
   lu.assertEquals(my_string:get(), 'hello world')
   my_string:erase()
   lu.assertEquals(my_string:get(), 'hello')
+
+  local my_table = settings:table('my_table', {})
+  local my_table_raw = settings:string('my_table', '{}')
+
+  local my_table_value = my_table:get()
+  lu.assertEquals(my_table_value, {})
+  my_table:set({ key = 'value' })
+  lu.assertEquals(my_table:get(), { key = 'value' })
+  lu.assertEquals(my_table_raw:get(), '{"key":"value"}')
+
+  my_table:erase()
+  lu.assertEquals(my_table:get(), {})
+
+  my_table:set({ 1, 2, 3 })
+  lu.assertEquals(my_table:get(), { 1, 2, 3 })
+  lu.assertEquals(my_table_raw:get(), '[1,2,3]')
 end
 
 function TestStorage:testDerivedCell()

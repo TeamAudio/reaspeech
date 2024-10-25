@@ -23,6 +23,10 @@
     local my_string_value = my_string:get()
     my_string:set(my_string_value .. ' world')
 
+    local my_table = settings:table('my_table', { foo = 'bar' })
+    local my_table_value = my_table:get()
+    my_table:set({ foo = 'baz' })
+
   ProjExtState Example:
 
     local proj_storage = Storage.ProjExtState.make {
@@ -83,6 +87,12 @@
       key (string) - The key for the storage data.
       default (string) - The default value for the storage data.
 
+    storage:table(key, default)
+      Create a table storage cell.
+
+      key (string) - The key for the storage data.
+      default (table) - The default value for the storage data.
+
     cell:get()
       Get the value of the storage cell.
 
@@ -134,6 +144,15 @@ function Storage:string(key, default)
   return Storage.Cell.new {
     get = function () return engine.get_string(key, default) end,
     set = function (value) engine.set_string(key, value) end,
+    erase = function () engine.erase(key) end,
+  }
+end
+
+function Storage:table(key, default)
+  local engine = self.engine
+  return Storage.Cell.new {
+    get = function () return engine.get_table(key, default) end,
+    set = function (value) engine.set_table(key, value) end,
     erase = function () engine.erase(key) end,
   }
 end
@@ -207,6 +226,10 @@ Storage.ExtState = {
         if not exists(key) then return default end
         return reaper.GetExtState(section, key)
       end,
+      get_table = function (key, default)
+        if not exists(key) then return default end
+        return json.decode(reaper.GetExtState(section, key))
+      end,
       set_boolean = function (key, value)
         reaper.SetExtState(section, key, Storage._boolean_to_string(value), persist)
       end,
@@ -215,6 +238,9 @@ Storage.ExtState = {
       end,
       set_string = function (key, value)
         reaper.SetExtState(section, key, tostring(value), persist)
+      end,
+      set_table = function (key, value)
+        reaper.SetExtState(section, key, json.encode(value), persist)
       end,
       erase = function (key)
         reaper.DeleteExtState(section, key, persist)
@@ -247,6 +273,11 @@ Storage.ProjExtState = {
         if rv == 0 then return default end
         return value
       end,
+      get_table = function (key, default)
+        local rv, value = reaper.GetProjExtState(project, extname, key)
+        if rv == 0 then return default end
+        return json.decode(value)
+      end,
       set_boolean = function (key, value)
         reaper.SetProjExtState(project, extname, key, Storage._boolean_to_string(value))
       end,
@@ -255,6 +286,9 @@ Storage.ProjExtState = {
       end,
       set_string = function (key, value)
         reaper.SetProjExtState(project, extname, key, tostring(value))
+      end,
+      set_table = function (key, value)
+        reaper.SetProjExtState(project, extname, key, json.encode(value))
       end,
       erase = function (key)
         reaper.SetProjExtState(project, extname, key, '')
