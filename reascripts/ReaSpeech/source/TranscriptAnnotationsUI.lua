@@ -202,6 +202,7 @@ function TranscriptAnnotationTypes.take_markers()
     state = Storage.memory('ignore'),
     label = 'Track Filter Mode',
     buttons = { { 'Include', 'include' }, { 'Ignore', 'ignore' } },
+    column_padding = 10,
   }
 
   local track_guids = {}
@@ -224,7 +225,9 @@ function TranscriptAnnotationTypes.take_markers()
     key = 'take_markers',
     renderer = function ()
       granularity_combo:render()
+      ImGui.Spacing(ctx)
       track_filter_mode:render()
+      ImGui.Spacing(ctx)
       track_selector:render()
     end,
     creator = function (annotations)
@@ -292,6 +295,7 @@ function TranscriptAnnotationTypes.notes_track()
 
     renderer = function ()
       track_name:render()
+      ImGui.Spacing(ctx)
       granularity_combo:render()
     end,
 
