@@ -434,7 +434,9 @@ ReaSpeechListBox.renderer = function(self)
   if ImGui.BeginListBox(self.ctx, imgui_label) then
     app:trap(function()
       local current = self:value()
+      local new_value = {}
       for i, item in ipairs(options.items) do
+        new_value[item] = current[item] or false
         local is_selected = current[item]
         local label = options.item_labels[item]
         ImGui.PushID(ctx, 'item' .. i)
@@ -443,14 +445,14 @@ ReaSpeechListBox.renderer = function(self)
 
           if result and is_selected ~= now_selected then
             needs_update = true
-            current[item] = now_selected
+            new_value[item] = now_selected
           end
         end)
         ImGui.PopID(ctx)
       end
 
       if needs_update then
-        self:set(current)
+        self:set(new_value)
       end
     end)
     ImGui.EndListBox(self.ctx)
