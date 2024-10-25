@@ -13,37 +13,8 @@ require('source/TranscriptWord')
 
 --
 
-reaper.GetCursorPosition = function () return 0 end
-reaper.GetMediaItemInfo_Value = function (_, _) return 0 end
-reaper.GetMediaItemTakeInfo_Value = function (_, _) return 0 end
 reaper.GetMediaItemTake_Source = function () return {fileName = "test_audio.wav"} end
 reaper.GetMediaSourceFileName = function (source) return source.fileName end
-reaper.GetSelectedMediaItem = function (_, _) return {} end
-reaper.GetSetMediaTrackInfo_String = function (_, _, _, _) end
-reaper.GetTrack = function (_, _) return {} end
-reaper.InsertTrackAtIndex = function (_, _) end
-reaper.Main_OnCommand = function (_, _) end
-reaper.SelectAllMediaItems = function (_, _) end
-reaper.SetEditCurPos = function (_, _, _) end
-reaper.SetMediaItemLength = function (_, _, _) end
-reaper.SetMediaItemPosition = function (_, _, _) end
-reaper.SetOnlyTrackSelected = function (_) end
-
-reaper.GetItemStateChunk = function (item, str, isundo)
-  return true, [[<ITEM
-POSITION 0
-SNAPOFFS 0
-LENGTH 5
-LOOP 1
-ALLTAKES 0
-FADEIN 1 0 0 1 0 0 0
-FADEOUT 1 0 0 1 0 0 0
-MUTE 0 0
-SEL 0
-IGUID {589DC296-5CC1-48A9-AE70-421A55B654E6}
-IID 11
->]]
-end
 
 TestTranscript = {
   segment = function (data)
@@ -66,24 +37,6 @@ function TestTranscript:setUp()
   function app:trap(f) return xpcall(f, function(e) print(tostring(e)) end) end
 
   reaper.__test_setUp()
-
-  self.markers = {}
-  reaper.AddProjectMarker2 = function (proj, isrgn, pos, rgnend, name, wantidx, color)
-    table.insert(self.markers, {
-      proj = proj,
-      isrgn = isrgn,
-      pos = pos,
-      rgnend = rgnend,
-      name = name,
-      wantidx = wantidx,
-      color = color
-    })
-  end
-
-  self.item_state_chunk = ""
-  reaper.SetItemStateChunk = function (item, str, isundo)
-    self.item_state_chunk = str
-  end
 end
 
 function TestTranscript:make_transcript()
@@ -167,6 +120,52 @@ function TestTranscript:testFileColumn()
   local segments = t:get_segments()
   lu.assertEquals(segments[1]:get_file(), "test_audio")
   lu.assertEquals(segments[1]:get('file'), "test_audio")
+end
+
+function TestTranscript:testIteratorIteratingSegments()
+  local t = self:make_transcript()
+
+  local results = {}
+  for element in t:iterator(false) do
+    table.insert(results, element)
+  end
+
+  lu.assertEquals(#results, 2)
+  lu.assertEquals(results[1].id, 1)
+  lu.assertEquals(results[1].start, 1.0)
+  lu.assertEquals(results[1].end_, 2.0)
+  lu.assertEquals(results[1].text, "test 1")
+  lu.assertEquals(results[2].id, 2)
+  lu.assertEquals(results[2].start, 2.0)
+  lu.assertEquals(results[2].end_, 3.0)
+  lu.assertEquals(results[2].text, "test 2")
+end
+
+function TestTranscript:testIteratorIteratingWords()
+  local t = self:make_transcript()
+
+  local results = {}
+  for element in t:iterator(true) do
+    table.insert(results, element)
+  end
+
+  lu.assertEquals(#results, 4)
+  lu.assertEquals(results[1].id, 1)
+  lu.assertEquals(results[1].start, 1.0)
+  lu.assertEquals(results[1].end_, 1.5)
+  lu.assertEquals(results[1].text, "test")
+  lu.assertEquals(results[2].id, 2)
+  lu.assertEquals(results[2].start, 1.5)
+  lu.assertEquals(results[2].end_, 2.0)
+  lu.assertEquals(results[2].text, "1")
+  lu.assertEquals(results[3].id, 3)
+  lu.assertEquals(results[3].start, 2.0)
+  lu.assertEquals(results[3].end_, 2.5)
+  lu.assertEquals(results[3].text, "test")
+  lu.assertEquals(results[4].id, 4)
+  lu.assertEquals(results[4].start, 2.5)
+  lu.assertEquals(results[4].end_, 3.0)
+  lu.assertEquals(results[4].text, "2")
 end
 
 function TestTranscript:testSearch()
@@ -295,93 +294,6 @@ function TestTranscript:testSplitWords()
   lu.assertEquals(words[2].start, 1.5)
   lu.assertEquals(words[2].end_, 2.0)
   lu.assertAlmostEquals(words[2].probability, 1.0, 0.01)
-end
-
-function TestTranscript:testCreateMarkers()
-  local t = Transcript.new()
-  t:add_segment(self.segment {
-    id = 1,
-    start = 1.0,
-    end_ = 2.0,
-    text = "test 1"
-  })
-  t:add_segment(self.segment {
-    id = 2,
-    start = 2.0,
-    end_ = 3.0,
-    text = "test 2"
-  })
-  t:update()
-  t:create_markers(0, false, false)
-  lu.assertEquals(#self.markers, 2)
-  lu.assertEquals(self.markers[1].proj, 0)
-  lu.assertEquals(self.markers[1].isrgn, false)
-  lu.assertEquals(self.markers[1].pos, 1.0)
-  lu.assertEquals(self.markers[1].rgnend, 2.0)
-  lu.assertEquals(self.markers[1].name, "test 1")
-  lu.assertEquals(self.markers[1].wantidx, 1)
-  lu.assertEquals(self.markers[2].proj, 0)
-  lu.assertEquals(self.markers[2].isrgn, false)
-  lu.assertEquals(self.markers[2].pos, 2.0)
-  lu.assertEquals(self.markers[2].rgnend, 3.0)
-  lu.assertEquals(self.markers[2].name, "test 2")
-  lu.assertEquals(self.markers[2].wantidx, 2)
-end
-
-function TestTranscript:testCreateRegions()
-  local t = Transcript.new()
-  t:add_segment(self.segment {
-    id = 1,
-    start = 1.0,
-    end_ = 2.0,
-    text = "test 1"
-  })
-  t:add_segment(self.segment {
-    id = 2,
-    start = 2.0,
-    end_ = 3.0,
-    text = "test 2"
-  })
-  t:update()
-  t:create_markers(0, true, false)
-  lu.assertEquals(#self.markers, 2)
-  lu.assertEquals(self.markers[1].proj, 0)
-  lu.assertEquals(self.markers[1].isrgn, true)
-  lu.assertEquals(self.markers[1].pos, 1.0)
-  lu.assertEquals(self.markers[1].rgnend, 2.0)
-  lu.assertEquals(self.markers[1].name, "test 1")
-  lu.assertEquals(self.markers[1].wantidx, 1)
-  lu.assertEquals(self.markers[2].proj, 0)
-  lu.assertEquals(self.markers[2].isrgn, true)
-  lu.assertEquals(self.markers[2].pos, 2.0)
-  lu.assertEquals(self.markers[2].rgnend, 3.0)
-  lu.assertEquals(self.markers[2].name, "test 2")
-  lu.assertEquals(self.markers[2].wantidx, 2)
-end
-
-function TestTranscript:testCreateNotesTrack()
-  local t = Transcript.new()
-  t:add_segment(self.segment {
-    id = 1,
-    start = 1.0,
-    end_ = 2.0,
-    text = "test 1%",
-    words = {
-      self.word { word = "test", start = 1.0, end_ = 1.5, probability = 1.0 },
-      self.word { word = "1%", start = 1.5, end_ = 2.0, probability = 0.5 }
-    }
-  })
-  t:update()
-  t:create_notes_track(false)
-  lu.assertStrContains(self.item_state_chunk, [[<NOTES
-|test 1%
->]])
-  lu.assertStrContains(self.item_state_chunk, 'IMGRESOURCEFLAGS 11')
-  t:create_notes_track(true)
-  lu.assertStrContains(self.item_state_chunk, [[<NOTES
-|1%
->]])
-  lu.assertNotStrContains(self.item_state_chunk, 'IMGRESOURCEFLAGS 11')
 end
 
 function TestTranscript:testToJson()

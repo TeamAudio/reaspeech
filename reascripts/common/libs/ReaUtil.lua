@@ -52,3 +52,22 @@ function ReaUtil.disabler(context, error_handler)
     reaper.ImGui_EndDisabled(context)
   end
 end
+
+function ReaUtil.track_guids()
+  local guids = {}
+
+  for track in ReaIter.each_track() do
+    table.insert(guids, { reaper.GetTrackGUID(track), track })
+  end
+
+  return guids
+end
+
+function ReaUtil.get_source_path(take)
+  local source = reaper.GetMediaItemTake_Source(take)
+  if source then
+    local source_path = reaper.GetMediaSourceFileName(source)
+    return source_path
+  end
+  return nil
+end

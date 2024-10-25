@@ -41,12 +41,11 @@ end
 ReaSpeechCheckbox = {}
 ReaSpeechCheckbox.new = function (options)
   options = options or {
-    state = nil,
-    default = nil,
     label_long = nil,
     label_short = nil,
     width_threshold = nil,
   }
+  options.default = options.default or false
 
   options.changed_handler = options.changed_handler or function(_) end
 
@@ -92,10 +91,9 @@ end
 ReaSpeechTextInput = {}
 ReaSpeechTextInput.new = function (options)
   options = options or {
-    state = nil,
-    default = nil,
     label = nil,
   }
+  options.default = options.default or ''
 
   local o = ReaSpeechWidget.new({
     state = options.state,
@@ -133,13 +131,16 @@ end
 ReaSpeechCombo = {}
 
 ReaSpeechCombo.new = function (options)
-  options = options or {
-    state = nil,
-    default = nil,
-    label = nil,
-    items = {},
-    item_labels = {},
-  }
+  options = options or {}
+
+  -- nothing is selected by default
+  options.default = options.default or nil
+
+  -- nil label won't render anything that takes space
+  options.label = options.label or ""
+
+  options.items = options.items or {}
+  options.item_labels = options.item_labels or {}
 
   local o = ReaSpeechWidget.new({
     state = options.state,
@@ -176,10 +177,12 @@ end
 ReaSpeechTabBar = {}
 
 ReaSpeechTabBar.new = function (options)
-  options = options or {
-    default = nil,
-    tabs = {},
-  }
+  options = options or {}
+
+  -- nothing is selected by default
+  options.default = options.default or nil
+
+  options.tabs = options.tabs or {}
 
   local o = ReaSpeechWidget.new({
     default = options.default,
@@ -215,13 +218,16 @@ end
 ReaSpeechButtonBar = {}
 
 ReaSpeechButtonBar.new = function (options)
-  options = options or {
-    state = nil,
-    default = nil,
-    label = nil,
-    buttons = {},
-    styles = {}
-  }
+  options = options or {}
+
+  -- nothing is selected by default
+  options.default = options.default or nil
+
+  -- nil label won't render anything that takes space
+  options.label = options.label or ""
+
+  options.buttons = options.buttons or {}
+  options.styles = options.styles or {}
 
   local o = ReaSpeechWidget.new({
     state = options.state,
@@ -271,11 +277,14 @@ end
 
 ReaSpeechButton = {}
 ReaSpeechButton.new = function(options)
-  options = options or {
-    label = nil,
-    disabled = false,
-    on_click = nil,
-  }
+  options = options or {}
+
+  assert(options.on_click, "on_click handler not provided")
+
+  -- nil label won't render anything that takes space
+  options.label = options.label or ""
+
+  options.disabled = options.disabled or false
 
   local o = ReaSpeechWidget.new({
     default = true,
@@ -385,4 +394,67 @@ ReaSpeechFileSelector.render_jsapi_notice = function(self)
   ImGui.SameLine(self.ctx)
   ImGui.Text(self.ctx, ".")
   ImGui.PopStyleVar(self.ctx)
+end
+
+ReaSpeechListBox = {}
+
+ReaSpeechListBox.new = function(options)
+  options = options or {}
+
+  options = options or {}
+
+  -- nothing is selected by default
+  options.default = options.default or nil
+
+  options.items = options.items or {}
+  options.item_labels = options.item_labels or {}
+
+  local o = ReaSpeechWidget.new({
+    state = options.state,
+    default = options.default,
+    widget_id = options.widget_id,
+    renderer = ReaSpeechListBox.renderer,
+    options = options,
+  })
+
+  Logging.init(o, 'ReaSpeechListBox')
+
+  return o
+end
+
+ReaSpeechListBox.renderer = function(self)
+  local options = self.options
+
+  ImGui.Text(self.ctx, options.label)
+  ImGui.Dummy(self.ctx, 0, 0)
+
+  local imgui_label = ("##%s"):format(options.label)
+
+  local needs_update = false
+  if ImGui.BeginListBox(self.ctx, imgui_label) then
+    app:trap(function()
+      local current = self:value()
+      local new_value = {}
+      for i, item in ipairs(options.items) do
+        new_value[item] = current[item] or false
+        local is_selected = current[item]
+        local label = options.item_labels[item]
+        ImGui.PushID(ctx, 'item' .. i)
+        app:trap(function()
+          local result, now_selected = ImGui.Selectable(self.ctx, label, is_selected)
+
+          if result and is_selected ~= now_selected then
+            needs_update = true
+            new_value[item] = now_selected
+          end
+        end)
+        ImGui.PopID(ctx)
+      end
+
+      if needs_update then
+        self:set(new_value)
+      end
+    end)
+    ImGui.EndListBox(self.ctx)
+  end
 end
