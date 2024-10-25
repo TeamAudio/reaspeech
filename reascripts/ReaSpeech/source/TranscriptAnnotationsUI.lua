@@ -17,9 +17,17 @@ function TranscriptAnnotationsUI:init()
 
   Logging.init(self, 'TranscriptAnnotationsUI')
 
-  self.disabler = ReaUtil.disabler(ctx)
+  ToolWindow.init(self, {
+    title = self.TITLE,
+    width = self.WIDTH,
+    height = self.HEIGHT,
+    window_flags = 0
+      | ImGui.WindowFlags_AlwaysAutoResize()
+      | ImGui.WindowFlags_NoCollapse()
+      | ImGui.WindowFlags_NoDocking(),
+  })
 
-  self.is_open = false
+  self.disabler = ReaUtil.disabler(ctx)
 
   self.annotation_types = TranscriptAnnotationTypes.new {
     TranscriptAnnotationTypes.take_markers(),
@@ -29,35 +37,6 @@ function TranscriptAnnotationsUI:init()
   }
 
   self.annotations = TranscriptAnnotations.new { transcript = self.transcript }
-end
-
-function TranscriptAnnotationsUI:render()
-  if not self.is_open then
-    return
-  end
-
-  local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(ctx))}
-  ImGui.SetNextWindowPos(ctx, center[1], center[2], ImGui.Cond_Appearing(), 0.5, 0.5)
-  ImGui.SetNextWindowSize(ctx, self.WIDTH, self.HEIGHT, ImGui.Cond_FirstUseEver())
-
-  local flags = (
-    0
-    | ImGui.WindowFlags_AlwaysAutoResize()
-    | ImGui.WindowFlags_NoCollapse()
-    | ImGui.WindowFlags_NoDocking()
-  )
-
-  local visible, open = ImGui.Begin(ctx, self.TITLE, true, flags)
-  if visible then
-    app:trap(function ()
-      self:render_content()
-    end)
-    ImGui.End(ctx)
-  end
-
-  if not visible or not open then
-    self:close()
-  end
 end
 
 function TranscriptAnnotationsUI:render_content()
@@ -80,12 +59,6 @@ function TranscriptAnnotationsUI:render_content()
   self:render_buttons(selected_type == nil)
 end
 
-function TranscriptAnnotationsUI:render_separator()
-  ImGui.Dummy(ctx, 0, 0)
-  ImGui.Separator(ctx)
-  ImGui.Dummy(ctx, 0, 0)
-end
-
 function TranscriptAnnotationsUI:render_buttons(is_disabled)
   local disable_if = self.disabler
 
@@ -104,11 +77,6 @@ end
 
 function TranscriptAnnotationsUI:open()
   self.annotation_types:reset()
-  self.is_open = true
-end
-
-function TranscriptAnnotationsUI:close()
-  self.is_open = false
 end
 
 function TranscriptAnnotationsUI:handle_create()
