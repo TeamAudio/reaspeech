@@ -126,12 +126,3 @@ function ReaSpeechUI:submit_request(request)
   request.callback = request.callback or function() end
   table.insert(self.requests, request)
 end
-
-function ReaSpeechUI.get_source_path(take)
-  local source = reaper.GetMediaItemTake_Source(take)
-  if source then
-    local source_path = reaper.GetMediaSourceFileName(source)
-    return source_path
-  end
-  return nil
-end
