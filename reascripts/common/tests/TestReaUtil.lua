@@ -133,13 +133,14 @@ function TestReaUtil:testDisablerWrapping()
   lu.assertEquals(end_marker, false)
 end
 
-function TestReaUtil:testTrackGuidMap()
+function TestReaUtil:testTrackGuids()
   reaper.GetTrackGUID = function(_track)
     return "guid"
   end
 
-  local guid_map = ReaUtil.track_guid_map()
-  lu.assertEquals(guid_map["guid"], "track")
+  local guids = ReaUtil.track_guids()
+  lu.assertEquals(guids[1][1], "guid")
+  lu.assertEquals(guids[1][2], "track")
 end
 
 --

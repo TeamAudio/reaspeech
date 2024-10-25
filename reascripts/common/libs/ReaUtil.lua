@@ -53,14 +53,14 @@ function ReaUtil.disabler(context, error_handler)
   end
 end
 
-function ReaUtil.track_guid_map()
-  local map = {}
+function ReaUtil.track_guids()
+  local guids = {}
 
   for track in ReaIter.each_track() do
-    map[reaper.GetTrackGUID(track)] = track
+    table.insert(guids, { reaper.GetTrackGUID(track), track })
   end
 
-  return map
+  return guids
 end
 
 function ReaUtil.get_source_path(take)

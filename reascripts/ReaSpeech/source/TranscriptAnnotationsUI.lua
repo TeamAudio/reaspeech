@@ -205,12 +205,14 @@ function TranscriptAnnotationTypes.take_markers()
     column_padding = 10,
   }
 
+  local guids_with_tracks = ReaUtil.track_guids()
   local track_guids = {}
   local track_names = {}
-  for k, v in pairs(ReaUtil.track_guid_map()) do
-    table.insert(track_guids, k)
-    local _, track_name = reaper.GetTrackName(v)
-    track_names[k] = track_name
+  for _, guid_with_track in ipairs(guids_with_tracks) do
+    local guid, track = table.unpack(guid_with_track)
+    local _, track_name = reaper.GetTrackName(track)
+    table.insert(track_guids, guid)
+    track_names[guid] = track_name
   end
 
   local track_selector = ReaSpeechListBox.new {
