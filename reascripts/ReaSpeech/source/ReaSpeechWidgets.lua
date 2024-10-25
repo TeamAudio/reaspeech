@@ -131,10 +131,14 @@ end
 ReaSpeechCombo = {}
 
 ReaSpeechCombo.new = function (options)
-  options = options or {
-    default = nil,
-    label = nil,
-  }
+  options = options or {}
+
+  -- nothing is selected by default
+  options.default = options.default or nil
+
+  -- nil label won't render anything that takes space
+  options.label = options.label or ""
+
   options.items = options.items or {}
   options.item_labels = options.item_labels or {}
 
@@ -173,9 +177,11 @@ end
 ReaSpeechTabBar = {}
 
 ReaSpeechTabBar.new = function (options)
-  options = options or {
-    default = nil,
-  }
+  options = options or {}
+
+  -- nothing is selected by default
+  options.default = options.default or nil
+
   options.tabs = options.tabs or {}
 
   local o = ReaSpeechWidget.new({
@@ -212,10 +218,14 @@ end
 ReaSpeechButtonBar = {}
 
 ReaSpeechButtonBar.new = function (options)
-  options = options or {
-    default = nil,
-    label = nil,
-  }
+  options = options or {}
+
+  -- nothing is selected by default
+  options.default = options.default or nil
+
+  -- nil label won't render anything that takes space
+  options.label = options.label or ""
+
   options.buttons = options.buttons or {}
   options.styles = options.styles or {}
 
@@ -267,10 +277,13 @@ end
 
 ReaSpeechButton = {}
 ReaSpeechButton.new = function(options)
-  options = options or {
-    label = nil,
-    on_click = nil,
-  }
+  options = options or {}
+
+  assert(options.on_click, "on_click handler not provided")
+
+  -- nil label won't render anything that takes space
+  options.label = options.label or ""
+
   options.disabled = options.disabled or false
 
   local o = ReaSpeechWidget.new({
@@ -387,6 +400,12 @@ ReaSpeechListBox = {}
 
 ReaSpeechListBox.new = function(options)
   options = options or {}
+
+  options = options or {}
+
+  -- nothing is selected by default
+  options.default = options.default or nil
+
   options.items = options.items or {}
   options.item_labels = options.item_labels or {}
 
