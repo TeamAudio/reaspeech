@@ -279,12 +279,14 @@ ReaSpeechButton = {}
 ReaSpeechButton.new = function(options)
   options = options or {}
 
-  assert(options.on_click, "on_click handler not provided")
-
   -- nil label won't render anything that takes space
   options.label = options.label or ""
 
   options.disabled = options.disabled or false
+
+  if not options.disabled then
+    assert(options.on_click, "on_click handler not provided")
+  end
 
   local o = ReaSpeechWidget.new({
     default = true,
