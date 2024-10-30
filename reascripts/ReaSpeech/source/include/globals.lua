@@ -12,15 +12,24 @@ for name, func in pairs(reaper) do
 end
 
 -- For debugging
-function dump(o)
-  if type(o) == 'table' then
-    local s = '{ '
-    for k,v in pairs(o) do
-      if type(k) ~= 'number' then k = '"'..k..'"' end
-      s = s .. '['..k..'] = ' .. dump(v) .. ','
-    end
-    return s .. '} '
-  else
-    return tostring(o)
+function dump(o, seen_tables)
+  seen_tables = seen_tables or {}
+  if type(o) ~= "table" then return tostring(o) end
+
+  if seen_tables[tostring(o)] then
+    return "{ circular reference detected }"
   end
+
+  seen_tables[tostring(o)] = true
+
+  local result = {"{"}
+  for k, v in pairs(o) do
+    k = type(k) == "string" and k or "[" .. dump(k, seen_tables) .. "]"
+    v = type(v) == "string" and '"' .. v .. '"' or dump(v, seen_tables)
+    table.insert(result, k .. " = " .. v .. ",")
+  end
+  if #result == 1 then return "{}" end
+  result[#result] = result[#result]:gsub(",$", "")
+  table.insert(result, "}")
+  return table.concat(result, " ")
 end

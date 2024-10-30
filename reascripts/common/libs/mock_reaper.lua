@@ -1,8 +1,10 @@
 reaper = reaper or {
   __ext_state__ = {},
+  __proj_ext_state__ = {},
 
   __test_setUp = function ()
     reaper.__ext_state__ = {}
+    reaper.__proj_ext_state__ = {}
   end,
 
   APIExists = function (_)
@@ -11,6 +13,25 @@ reaper = reaper or {
 
   ColorToNative = function (r, g, b)
     return (math.tointeger(r) or 0) + ((math.tointeger(g) or 0) << 8) + ((math.tointeger(b) or 0) << 16)
+  end,
+
+  CountTracks = function (_)
+    return 2
+  end,
+
+  GetTrack = function (i, _)
+    return ({
+      [0] = "track 1",
+      [1] = "track 2",
+    })[i]
+  end,
+
+  GetTrackGUID = function (_, _)
+    return "00000000-0000-0000-0000-000000000000"
+  end,
+
+  GetTrackName = function (_, _)
+    return true, "track"
   end,
 
   GetExtState = function (section, key)
@@ -34,6 +55,26 @@ reaper = reaper or {
     if reaper.__ext_state__[section] then
       reaper.__ext_state__[section][key] = nil
     end
+  end,
+
+  GetProjExtState = function (proj, extname, key)
+    if (reaper.__proj_ext_state__[proj]
+        and reaper.__proj_ext_state__[proj][extname]
+        and reaper.__proj_ext_state__[proj][extname][key]
+        and reaper.__proj_ext_state__[proj][extname][key] ~= "") then
+      return 1, reaper.__proj_ext_state__[proj][extname][key]
+    end
+    return 0, ""
+  end,
+
+  SetProjExtState = function (proj, extname, key, value)
+    if not reaper.__proj_ext_state__[proj] then
+      reaper.__proj_ext_state__[proj] = {}
+    end
+    if not reaper.__proj_ext_state__[proj][extname] then
+      reaper.__proj_ext_state__[proj][extname] = {}
+    end
+    reaper.__proj_ext_state__[proj][extname][key] = value
   end,
 
   genGuid = function()
@@ -115,4 +156,10 @@ gfx = gfx or {
 ImGui = ImGui or {
   Key_LeftArrow = function() return 1 end,
   Key_RightArrow = function() return 2 end,
+  WindowFlags_None = function() return 0 end,
+  WindowFlags_AlwaysAutoResize = function() return 1 end,
+  WindowFlags_NoCollapse = function() return 2 end,
+  WindowFlags_NoDocking = function() return 3 end,
+  Cond_FirstUseEver = function() return 0 end,
+  Cond_Appearing = function() return 1 end,
 }

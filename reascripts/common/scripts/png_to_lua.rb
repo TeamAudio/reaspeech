@@ -19,28 +19,6 @@ File.open(output_filename, 'w') do |f|
   f.write("  width = #{image.width},\n")
   f.write("  height = #{image.height},\n")
 
-  f.write("  pixels = {\n")
-  (0...image.height).each do |y|
-    row = '{'
-    x = 0
-    while x < image.width do
-      length = 1
-      rgba = ChunkyPNG::Color.to_truecolor_alpha_bytes(image[x, y])
-      while x + length < image.width do
-        if rgba == ChunkyPNG::Color.to_truecolor_alpha_bytes(image[x + length, y]) then
-          length += 1
-        else
-          break
-        end
-      end
-      row << "#{length},#{rgba[0]},#{rgba[1]},#{rgba[2]},#{rgba[3]},"
-      x += length
-    end
-    row << '}'
-    f.write("    #{row},\n")
-  end
-  f.write("  },\n")
-
   f.write("  bytes = table.concat({\n")
   image.to_blob.bytes.each_slice(100) do |slice|
     f.write("string.char(#{slice.join(",")}),\n")

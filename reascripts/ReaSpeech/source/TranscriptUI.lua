@@ -44,21 +44,22 @@ end
 function TranscriptUI:init()
   assert(self.transcript, 'missing transcript')
 
+  Logging.init(self, 'TranscriptUI')
+
   self.words = false
   self.colorize_words = false
   self.autoplay = true
 
   self.transcript_editor = TranscriptEditor.new { transcript = self.transcript }
   self.transcript_exporter = TranscriptExporter.new { transcript = self.transcript }
+  self.annotations = TranscriptAnnotationsUI.new { transcript = self.transcript }
 
   self:init_layouts()
 end
 
 function TranscriptUI:init_layouts()
   local renderers = {
-    self.render_create_regions,
-    self.render_create_markers,
-    self.render_create_notes,
+    self.render_annotations_button,
     self.render_word_options,
     self.render_result_actions,
     self.render_auto_play,
@@ -74,6 +75,12 @@ function TranscriptUI:init_layouts()
   }
 end
 
+function TranscriptUI:render_annotations_button(column)
+  if ImGui.Button(ctx, "Create Markers", column.width) then
+    self.annotations:open()
+  end
+end
+
 function TranscriptUI:render()
   if self.transcript:has_segments() then
     ImGui.SeparatorText(ctx, "Transcript")
@@ -83,24 +90,7 @@ function TranscriptUI:render()
 
   self.transcript_editor:render()
   self.transcript_exporter:render()
-end
-
-function TranscriptUI:render_create_regions(column)
-  if ImGui.Button(ctx, "Create Regions", column.width) then
-    self:handle_create_markers(true)
-  end
-end
-
-function TranscriptUI:render_create_markers(column)
-  if ImGui.Button(ctx, "Create Markers", column.width) then
-    self:handle_create_markers(false)
-  end
-end
-
-function TranscriptUI:render_create_notes(column)
-  if ImGui.Button(ctx, "Create Notes", column.width) then
-    self:handle_create_notes()
-  end
+  self.annotations:render()
 end
 
 function TranscriptUI:render_word_options()
@@ -155,23 +145,6 @@ function TranscriptUI:render_search(column)
   ImGui.PopItemWidth(ctx)
 end
 
-function TranscriptUI:handle_create_markers(regions)
-  reaper.PreventUIRefresh(1)
-  reaper.Undo_BeginBlock()
-  self.transcript:create_markers(0, regions, self.words)
-  reaper.Undo_EndBlock(
-    ("Create %s from speech"):format(regions and 'regions' or 'markers'), -1)
-  reaper.PreventUIRefresh(-1)
-end
-
-function TranscriptUI:handle_create_notes()
-  reaper.PreventUIRefresh(1)
-  reaper.Undo_BeginBlock()
-  self.transcript:create_notes_track(self.words)
-  reaper.Undo_EndBlock("Create notes from speech", -1)
-  reaper.PreventUIRefresh(-1)
-end
-
 function TranscriptUI:handle_export()
   self.transcript_exporter:open()
 end
@@ -185,7 +158,6 @@ function TranscriptUI:handle_search(search)
   self.transcript:update()
 end
 
--- formerly ReaSpeechUI:render_table()
 function TranscriptUI:render_table()
   local columns = self.transcript:get_columns()
   local num_columns = #columns + 1
@@ -229,18 +201,12 @@ function TranscriptUI:render_table()
 end
 
 function TranscriptUI:render_segment_actions(segment, index)
-  ImGui.PushFont(ctx, Fonts.icons)
-  app:trap(function()
-    ImGui.Text(ctx, Fonts.ICON.pencil)
-  end)
-  ImGui.PopFont(ctx)
+  if Widgets.icon(Icons.pencil, "##edit" .. index, 14, 14, "Edit") then
+    self.transcript_editor:edit_segment(segment, index)
+  end
   if ImGui.IsItemHovered(ctx) then
     ImGui.SetMouseCursor(ctx, ImGui.MouseCursor_Hand())
   end
-  if ImGui.IsItemClicked(ctx) then
-    self.transcript_editor:edit_segment(segment, index)
-  end
-  app:tooltip("Edit")
 end
 
 function TranscriptUI:render_table_cell(segment, column)
@@ -261,30 +227,6 @@ function TranscriptUI:render_table_cell(segment, column)
   end
 end
 
-function TranscriptUI:render_link(text, onclick, text_color, underline_color)
-  text_color = text_color or 0xffffffff
-  underline_color = underline_color or 0xffffffa0
-
-  ImGui.TextColored(ctx, text_color, text)
-
-  if ImGui.IsItemHovered(ctx) then
-    local rect_min_x, rect_min_y = ImGui.GetItemRectMin(ctx)
-    local rect_max_x, _ = ImGui.GetItemRectMax(ctx)
-    local _, rect_size_y = ImGui.GetItemRectSize(ctx)
-    local line_y = rect_min_y + rect_size_y - 1
-
-    ImGui.DrawList_AddLine(
-      ImGui.GetWindowDrawList(ctx),
-      rect_min_x, line_y, rect_max_x, line_y,
-      underline_color, 1.0)
-    ImGui.SetMouseCursor(ctx, ImGui.MouseCursor_Hand())
-  end
-
-  if ImGui.IsItemClicked(ctx) then
-    onclick()
-  end
-end
-
 function TranscriptUI:render_text(segment, column)
   if self.words then
     self:render_text_words(segment, column)
@@ -294,7 +236,7 @@ function TranscriptUI:render_text(segment, column)
 end
 
 function TranscriptUI:render_text_simple(segment, column)
-  self:render_link(segment:get(column, ""), function () segment:navigate(nil,self.autoplay) end)
+  Widgets.link(segment:get(column, ""), function () segment:navigate(nil,self.autoplay) end)
 end
 
 function TranscriptUI:render_text_words(segment, _)
@@ -309,7 +251,7 @@ function TranscriptUI:render_text_words(segment, _)
       if self.colorize_words then
         color = self.score_color(word:score())
       end
-      self:render_link(word.word, function () segment:navigate(i, self.autoplay) end, color)
+      Widgets.link(word.word, function () segment:navigate(i, self.autoplay) end, color)
     end
   end
 end
@@ -344,24 +286,27 @@ end
 
 function TranscriptUI:sort_table()
   local specs_dirty, has_specs = ImGui.TableNeedSort(ctx)
-  if has_specs and specs_dirty then
-    local columns = self.transcript:get_columns()
-    local column = nil
-    local ascending = true
+  if not specs_dirty then return end
 
-    for next_id = 0, math.huge do
-      local ok, _, col_idx, _, sort_direction =
-        ImGui.TableGetColumnSortSpecs(ctx, next_id)
-      if not ok then break end
+  if not has_specs then
+    self.transcript:update()
+    return
+  end
 
-      column = columns[col_idx]
-      ascending = (sort_direction == ImGui.SortDirection_Ascending())
-    end
+  local columns = self.transcript:get_columns()
+  local column = nil
+  local ascending = true
 
-    if column then
-      self.transcript:sort(column, ascending)
-    else
-      self.transcript:update()
-    end
+  for next_id = 0, math.huge do
+    local ok, col_idx, _, sort_direction =
+      ImGui.TableGetColumnSortSpecs(ctx, next_id)
+    if not ok then break end
+
+    column = columns[col_idx]
+    ascending = (sort_direction == ImGui.SortDirection_Ascending())
+  end
+
+  if column then
+    self.transcript:sort(column, ascending)
   end
 end

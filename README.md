@@ -1,8 +1,8 @@
 # ReaSpeech
 ![Lint & Test](https://github.com/teamaudio/reaspeech/actions/workflows/check-reascripts.yml/badge.svg)
 
-### Painless speech-to-transcript inside of REAPER
-ReaSpeech is a REAScript frontend that will take your project's media items and run them through a docker-hosted whisper backend, building a searchable, project-marker based index of the resulting transcription. That's right - not only do you reap (zing!) the benefits of a staff of transcribers, but you get to add "familiar with Docker" to your resume.
+### Painless speech-to-text transcription inside of REAPER
+ReaSpeech is a ReaScript frontend that will take your project's media items and run them through a Docker-hosted Whisper backend, building a searchable, project-marker based index of the resulting transcription. That's right - not only do you reap (zing!) the benefits of a staff of transcribers, but you get to add "familiar with Docker" to your resume.
 
 ![Screenshot](docs/assets/img/reaspeech-screenshot.png)
 
@@ -16,18 +16,18 @@ ReaSpeech is a REAScript frontend that will take your project's media items and 
 
 ### CPU
 
-    docker run -d -p 9000:9000 techaudiodoc/reaspeech:latest
+    docker run -d -p 9000:9000 --name reaspeech techaudiodoc/reaspeech:latest
 
 ### GPU (currently Windows/NVIDIA only)
 
-    docker run -d --gpus all -p 9000:9000 techaudiodoc/reaspeech:latest-gpu
+    docker run -d --gpus all -p 9000:9000 --name reaspeech-gpu techaudiodoc/reaspeech:latest-gpu
 
 For more detailed instructions, see [Docker Usage](docs/docker.md)
 
 # Documentation
 
 * [Docker Usage](docs/docker.md)
-* [Running Outside of Docker](docs/nodocker.md)
+* [Running Outside of Docker](docs/no-docker.md)
 * [Contributing](docs/CONTRIBUTING.md)
 * [Development](docs/development.md)
 

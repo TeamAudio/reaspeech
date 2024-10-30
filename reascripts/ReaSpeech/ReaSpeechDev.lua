@@ -12,7 +12,7 @@ dofile(script_path .. '../common/vendor/url.lua')
 
 -- Considering extracting this into a function, but we're getting into
 -- chicken/egg territory with where that would be defined and how it'd be used.
-for _, source_dir in pairs({'resources/images', '../common/libs', 'source'}) do
+for _, source_dir in pairs({'resources/images', '../common/libs', 'libs', 'source'}) do
   local source_file, source_index = '', 0
   while (source_file ~= nil) do
     source_file = reaper.EnumerateFiles(script_path .. source_dir, source_index)
@@ -29,11 +29,10 @@ Script = {
   name = "ReaSpeechDev",
   host = "localhost:9000",
   protocol = "http:",
+  env = "production",
   lua = _VERSION:match('[%d.]+'),
   timeout = 30000,
 }
-
-Fonts.LOCAL_FILE = script_path .. "../../app/static/reascripts/ReaSpeech/icons.ttf"
 
 dofile(script_path .. 'source/include/main.lua')
 

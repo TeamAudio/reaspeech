@@ -88,12 +88,63 @@ function Transcript:get_segments()
   return self.data
 end
 
+function Transcript:iterator(use_words)
+  local segments = self.data
+  local segment_count = #segments
+  local count = 1
+  local segment_i = 1
+  local word_i = 1
+
+  return function ()
+    if segment_i <= segment_count then
+      local segment = segments[segment_i]
+
+      if not use_words then
+        segment_i = segment_i + 1
+
+        return {
+          id = segment:get('id'),
+          start = segment:get('start'),
+          end_ = segment:get('end'),
+          text = segment:get('text'),
+          item = segment.item,
+          take = segment.take,
+        }
+      end
+
+      local word = segment.words[word_i]
+      local result = {
+        id = count,
+        start = word.start,
+        end_ = word.end_,
+        text = word.word,
+        item = segment.item,
+        take = segment.take,
+      }
+
+      if word_i < #segment.words then
+        word_i = word_i + 1
+      else
+        word_i = 1
+        segment_i = segment_i + 1
+      end
+
+      count = count + 1
+
+      return result
+
+    end
+  end
+end
+
 function Transcript:sort(column, ascending)
   self.data = {table.unpack(self.filtered_data)}
   table.sort(self.data, function (a, b)
     local a_val, b_val = a:get(column), b:get(column)
     if a_val == nil then a_val = '' end
     if b_val == nil then b_val = '' end
+    if type(a_val) == 'table' then a_val = table.concat(a_val, ', ') end
+    if type(b_val) == 'table' then b_val = table.concat(b_val, ', ') end
     if not ascending then
       a_val, b_val = b_val, a_val
     end
@@ -151,79 +202,4 @@ function Transcript:update()
   end
 
   self.data = self.filtered_data
-end
-
-function Transcript:create_markers(proj, regions, words)
-  proj = proj or 0
-  regions = regions or false
-  for i, segment in pairs(self.data) do
-    local offset = self.calculate_offset(segment.item, segment.take)
-    local want_index = segment:get('id', i)
-    local color = 0
-    if words then
-      for _, word in pairs(segment.words) do
-        local start = word.start + offset
-        local end_ = word.end_ + offset
-        local name = word.word
-        reaper.AddProjectMarker2(proj, regions, start, end_, name, want_index, color)
-      end
-    else
-      local start = segment.start + offset
-      local end_ = segment.end_ + offset
-      local name = segment.text
-      reaper.AddProjectMarker2(proj, regions, start, end_, name, want_index, color)
-    end
-  end
-end
-
-function Transcript:create_notes_track(words)
-  local cur_pos = reaper.GetCursorPosition()
-  local index = 0
-  reaper.InsertTrackAtIndex(index, false)
-  local track = reaper.GetTrack(0, index)
-  reaper.SetOnlyTrackSelected(track)
-  reaper.GetSetMediaTrackInfo_String(track, 'P_NAME', 'Speech', true)
-  for _, segment in pairs(self.data) do
-    local offset = self.calculate_offset(segment.item, segment.take)
-    if words then
-      for _, word in pairs(segment.words) do
-        local start = word.start + offset
-        local end_ = word.end_ + offset
-        local text = word.word
-        self:_create_note(start, end_, text, false)
-      end
-    else
-      local start = segment.start + offset
-      local end_ = segment.end_ + offset
-      local text = segment.text
-      self:_create_note(start, end_, text, true)
-    end
-  end
-  reaper.SetEditCurPos(cur_pos, true, true)
-end
-
-function Transcript:_create_note(start, end_, text, stretch)
-  local item = self:_create_empty_item(start, end_)
-  self:_set_note_text(item, text, stretch)
-end
-
-function Transcript:_create_empty_item(start, end_)
-  self:_insert_empty_item()
-  local item = reaper.GetSelectedMediaItem(0, 0)
-  reaper.SelectAllMediaItems(0, false)
-  reaper.SetMediaItemPosition(item, start, true)
-  reaper.SetMediaItemLength(item, end_ - start, true)
-  return item
-end
-
-function Transcript:_insert_empty_item()
-  reaper.Main_OnCommand(40142, 0)
-end
-
-function Transcript:_set_note_text(item, text, stretch)
-  local _, chunk = reaper.GetItemStateChunk(item, "", false)
-  local notes_chunk = ("<NOTES\n|%s\n>\n"):format(text:match("^%s*(.-)%s*$"))
-  local flags_chunk = (stretch and "IMGRESOURCEFLAGS 11\n" or "")
-  chunk = chunk:gsub('>', notes_chunk:gsub('%%', '%%%%') .. flags_chunk .. '>')
-  reaper.SetItemStateChunk(item, chunk, false)
 end

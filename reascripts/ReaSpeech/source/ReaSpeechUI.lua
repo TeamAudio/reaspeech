@@ -17,32 +17,58 @@ ReaSpeechUI = Polo {
 }
 
 function ReaSpeechUI:init()
+  Logging.init(self, 'ReaSpeechUI')
+
+  ToolWindow.init(self, {
+    ctx = ctx,
+    title = self.TITLE,
+    width = self.WIDTH,
+    height = self.HEIGHT,
+    window_flags = ImGui.WindowFlags_None(),
+    font = Fonts.main,
+    theme = Theme(),
+    position = ToolWindow.POSITION_AUTOMATIC,
+  })
+
   self.onerror = function (e)
     self:log(e)
   end
 
   self.requests = {}
   self.responses = {}
-  self.logs = {}
 
   ReaSpeechAPI:init(Script.host, Script.protocol)
 
   self.worker = ReaSpeechWorker.new({
     requests = self.requests,
     responses = self.responses,
-    logs = self.logs,
   })
 
-  self.controls_ui = ReaSpeechControlsUI.new()
+  if Script.env == 'demo' then
+    self.welcome_ui = ReaSpeechWelcomeUI.new { is_demo = true }
+    self.welcome_ui:present()
+  end
+
+  self.plugins = ReaSpeechPlugins.new(self, {
+    ASRPlugin,
+    -- DetectLanguagePlugin,
+    -- SettingsPlugin,
+    -- SampleMultipleUploadPlugin
+   })
+
+  self.controls_ui = ReaSpeechControlsUI.new({
+    plugins = self.plugins,
+  })
 
   self.actions_ui = ReaSpeechActionsUI.new({
+    plugins = self.plugins,
     worker = self.worker
   })
 
   self.transcript = Transcript.new()
   self.transcript_ui = TranscriptUI.new { transcript = self.transcript }
 
-  self.failure = AlertPopup.new { title = 'Transcription Failed' }
+  self.alert_popup = AlertPopup.new {}
 
   self.react_handlers = self:get_react_handlers()
 end
@@ -51,61 +77,8 @@ ReaSpeechUI.config_flags = function ()
   return ImGui.ConfigFlags_DockingEnable()
 end
 
-ReaSpeechUI.log_time = function ()
-  return os.date('%Y-%m-%d %H:%M:%S')
-end
-
-function ReaSpeechUI:log(msg)
-  table.insert(self.logs, {msg, false})
-end
-
-function ReaSpeechUI:debug(msg)
-  table.insert(self.logs, {msg, true})
-end
-
 function ReaSpeechUI:trap(f)
   return xpcall(f, self.onerror)
-end
-
-function ReaSpeechUI:has_js_ReaScriptAPI()
-  if reaper.JS_Dialog_BrowseForSaveFile then
-    return true
-  end
-  return false
-end
-
-function ReaSpeechUI:show_file_dialog(options)
-  local title = options.title or 'Save file'
-  local folder = options.folder or ''
-  local file = options.file or ''
-  local ext = options.ext or ''
-  local save = options.save or false
-  local multi = options.multi or false
-  if self:has_js_ReaScriptAPI() then
-    if save then
-      return reaper.JS_Dialog_BrowseForSaveFile(title, folder, file, ext)
-    else
-      return reaper.JS_Dialog_BrowseForOpenFiles(title, folder, file, ext, multi)
-    end
-  else
-    return nil
-  end
-end
-
-function ReaSpeechUI:tooltip(text)
-  if not ImGui.IsItemHovered(ctx, ImGui.HoveredFlags_DelayNormal()) or
-     not ImGui.BeginTooltip(ctx)
-  then return end
-
-  self:trap(function()
-    ImGui.PushTextWrapPos(ctx, ImGui.GetFontSize(ctx) * 42)
-    self:trap(function()
-      ImGui.Text(ctx, text)
-    end)
-    ImGui.PopTextWrapPos(ctx)
-  end)
-
-  ImGui.EndTooltip(ctx)
 end
 
 function ReaSpeechUI:react()
@@ -117,7 +90,7 @@ end
 function ReaSpeechUI:get_react_handlers()
   return {
     function() self:react_to_worker_response() end,
-    function() self:react_to_logging() end,
+    function() Logging:react() end,
     function() self.worker:react() end,
     function() self:render() end
   }
@@ -130,10 +103,10 @@ function ReaSpeechUI:react_to_worker_response()
     return
   end
 
-  self:debug('Response: ' .. dump(response))
+  -- self:debug('Response: ' .. dump(response))
 
   if response.error then
-    self.failure:show(response.error)
+    self.alert_popup:show('Transcription Failed', response.error)
     self.worker:cancel()
     return
   end
@@ -143,65 +116,24 @@ function ReaSpeechUI:react_to_worker_response()
   end
 end
 
-function ReaSpeechUI:react_to_logging()
-  for _, log in pairs(self.logs) do
-    local msg, dbg = table.unpack(log)
-    if dbg and self.controls_ui.log_enable:value() and self.controls_ui.log_debug:value() then
-      reaper.ShowConsoleMsg(self:log_time() .. ' [DBG] ' .. tostring(msg) .. '\n')
-    elseif not dbg and self.controls_ui.log_enable:value() then
-      reaper.ShowConsoleMsg(self:log_time() .. ' [LOG] ' .. tostring(msg) .. '\n')
-    end
-  end
-
-  self.logs = {}
-end
-
-function ReaSpeechUI:render()
+function ReaSpeechUI:render_content()
   ImGui.PushItemWidth(ctx, self.ITEM_WIDTH)
 
   self:trap(function ()
+    if self.welcome_ui then
+      self.welcome_ui:render()
+    end
     self.controls_ui:render()
     self.actions_ui:render()
     self.transcript_ui:render()
-    self.failure:render()
+    self.alert_popup:render()
   end)
 
   ImGui.PopItemWidth(ctx)
 end
 
-function ReaSpeechUI:new_jobs(jobs, endpoint, callback)
-  local request = self.controls_ui:get_request_data()
-  callback = callback or function() end
-
-  assert(endpoint, "Endpoint required for API call")
-  request.endpoint = endpoint
-  request.jobs = jobs
-  request.callback = callback
-
-  self:debug('Request: ' .. dump(request))
-
+function ReaSpeechUI:submit_request(request)
+  assert(request.endpoint, "Endpoint required for API call")
+  request.callback = request.callback or function() end
   table.insert(self.requests, request)
-end
-
-function ReaSpeechUI.png_from_bytes(image_key)
-  if not IMAGES[image_key] or not IMAGES[image_key].bytes then
-    return
-  end
-
-  local image = IMAGES[image_key]
-
-  if not ImGui.ValidatePtr(image.imgui_image, 'ImGui_Image*') then
-    image.imgui_image = ImGui.CreateImageFromMem(image.bytes)
-  end
-
-  ImGui.Image(ctx, image.imgui_image, image.width, image.height)
-end
-
-function ReaSpeechUI.get_source_path(take)
-  local source = reaper.GetMediaItemTake_Source(take)
-  if source then
-    local source_path = reaper.GetMediaSourceFileName(source)
-    return source_path
-  end
-  return nil
 end

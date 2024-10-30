@@ -42,7 +42,6 @@ function TestImGuiTheme:testColorInit()
   lu.assertEquals(theme.colors[1][2], 0xFF0000FF)
   lu.assertEquals(theme.colors[2][1], "just a key")
   lu.assertEquals(theme.colors[2][2], 0x00FF0000)
-  lu.assertEquals(theme.color_count, 2)
 end
 
 function TestImGuiTheme:testColors()
@@ -87,7 +86,6 @@ function TestImGuiTheme:testStyleInit()
   lu.assertEquals(theme.styles[2][1], "multiple arguments")
   lu.assertEquals(theme.styles[2][2], 2.0)
   lu.assertEquals(theme.styles[2][3], 3.0)
-  lu.assertEquals(theme.style_count, 2)
 end
 
 function TestImGuiTheme:testStyles()
@@ -118,6 +116,30 @@ function TestImGuiTheme:testStyles()
 
   theme:push("context")
   theme:pop("context")
+end
+
+function TestImGuiTheme:testWrap()
+  local theme = ImGuiTheme.new()
+
+  local push_called = false
+  local pop_called = false
+  function theme:push(ctx)
+    lu.assertEquals(ctx, "context")
+    push_called = true
+  end
+  function theme:pop(ctx)
+    lu.assertEquals(ctx, "context")
+    pop_called = true
+  end
+
+  local function_called = false
+  theme:wrap("context", function()
+    function_called = true
+  end)
+
+  lu.assertEquals(push_called, true)
+  lu.assertEquals(pop_called, true)
+  lu.assertEquals(function_called, true)
 end
 
 --

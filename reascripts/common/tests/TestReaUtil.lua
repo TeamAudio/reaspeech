@@ -6,6 +6,16 @@ require('ReaUtil')
 
 require('mock_reaper')
 
+reaper.CountTracks = function(_proj)
+  return 1
+end
+
+reaper.GetTrack = function(_proj, _track_idx)
+  return "track"
+end
+
+require('ReaIter')
+
 TestReaUtil = {}
 
 function TestReaUtil:setUp()
@@ -121,6 +131,16 @@ function TestReaUtil:testDisablerWrapping()
   lu.assertEquals(begin_marker, false)
   lu.assertEquals(function_called_marker, true)
   lu.assertEquals(end_marker, false)
+end
+
+function TestReaUtil:testTrackGuids()
+  reaper.GetTrackGUID = function(_track)
+    return "guid"
+  end
+
+  local guids = ReaUtil.track_guids()
+  lu.assertEquals(guids[1][1], "guid")
+  lu.assertEquals(guids[1][2], "track")
 end
 
 --

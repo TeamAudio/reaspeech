@@ -22,7 +22,17 @@ TranscriptEditor = Polo {
 function TranscriptEditor:init()
   assert(self.transcript, 'missing transcript')
   self.editing = nil
-  self.is_open = false
+
+  Logging.init(self, 'TranscriptEditor')
+
+  ToolWindow.modal(self, {
+    title = self.TITLE,
+    width = self.WIDTH,
+    height = self.HEIGHT,
+    window_flags = ImGui.WindowFlags_AlwaysAutoResize(),
+    guard = function() return self.editing and true or false end
+  })
+
   self.sync_time_selection = false
   self.zoom_level = self.ZOOM_LEVEL.NONE.value
   self.key_bindings = self:make_key_bindings()
@@ -66,32 +76,8 @@ function TranscriptEditor:edit_word(index)
   end
 end
 
-function TranscriptEditor:render()
-  if not self.editing then
-    return
-  end
-
-  local opening = not self.is_open
-  if opening then
-    self:_open()
-  end
-
-  local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(ctx))}
-  ImGui.SetNextWindowPos(ctx, center[1], center[2], ImGui.Cond_Appearing(), 0.5, 0.5)
-  ImGui.SetNextWindowSize(ctx, self.WIDTH, self.HEIGHT, ImGui.Cond_FirstUseEver())
-
-  if ImGui.BeginPopupModal(ctx, self.TITLE, true, ImGui.WindowFlags_AlwaysAutoResize()) then
-    app:trap(function ()
-      self.key_bindings:react()
-      self:render_content()
-    end)
-    ImGui.EndPopup(ctx)
-  else
-    self:_close()
-  end
-end
-
 function TranscriptEditor:render_content()
+  self.key_bindings:react()
   if self.editing.word then
     self:render_word_navigation()
     self:render_separator()
@@ -113,12 +99,12 @@ function TranscriptEditor:render_content()
 
   if ImGui.Button(ctx, 'Save', self.BUTTON_WIDTH, 0) then
     self:handle_save()
-    self:_close()
+    self:close()
   end
 
   ImGui.SameLine(ctx)
   if ImGui.Button(ctx, 'Cancel', self.BUTTON_WIDTH, 0) then
-    self:_close()
+    self:close()
   end
 end
 
@@ -149,7 +135,7 @@ function TranscriptEditor:render_word_navigation()
   if ImGui.Button(ctx, 'Add') then
     self:handle_word_add()
   end
-  app:tooltip('Add word after current word')
+  Widgets.tooltip('Add word after current word')
 
   ImGui.SameLine(ctx, 0, spacing)
 
@@ -158,13 +144,13 @@ function TranscriptEditor:render_word_navigation()
       self:handle_word_delete()
     end
   end)
-  app:tooltip('Delete current word')
+  Widgets.tooltip('Delete current word')
 
   ImGui.SameLine(ctx, 0, spacing)
   if ImGui.Button(ctx, 'Split') then
     self:handle_word_split()
   end
-  app:tooltip('Split current word into two words')
+  Widgets.tooltip('Split current word into two words')
 
   ImGui.SameLine(ctx, 0, spacing)
   disable_if(word_index >= num_words, function()
@@ -172,7 +158,7 @@ function TranscriptEditor:render_word_navigation()
       self:handle_word_merge()
     end
   end)
-  app:tooltip('Merge current word with next word')
+  Widgets.tooltip('Merge current word with next word')
 end
 
 function TranscriptEditor:render_words()
@@ -258,32 +244,20 @@ function TranscriptEditor:render_score_input()
   end
 end
 
-function TranscriptEditor:render_icon_button(icon, callback)
-  ImGui.PushFont(ctx, Fonts.icons)
-  app:trap(function ()
-    if ImGui.Button(ctx, Fonts.ICON[icon]) then
-      callback()
-    end
-  end)
-  ImGui.PopFont(ctx)
-end
-
 function TranscriptEditor:render_word_actions()
-  self:render_icon_button('play', function ()
+  if Widgets.icon_button(Icons.play, '##play', 27, 27, 'Play word') then
     self:update_time_selection()
     reaper.Main_OnCommand(1016, 0) -- Transport: Stop
     reaper.Main_OnCommand(40630, 0) -- Go to start of time selection
     reaper.Main_OnCommand(40044, 0) -- Transport: Play/stop
-  end)
-  app:tooltip('Play word')
+  end
 
   local spacing = ImGui.GetStyleVar(ctx, ImGui.StyleVar_ItemInnerSpacing())
   ImGui.SameLine(ctx, 0, spacing)
 
-  self:render_icon_button('stop', function ()
+  if Widgets.icon_button(Icons.stop, '##stop', 27, 27, 'Stop') then
     reaper.Main_OnCommand(1016, 0) -- Transport: Stop
-  end)
-  app:tooltip('Stop')
+  end
 
   ImGui.SameLine(ctx)
   local rv, value = ImGui.Checkbox(ctx, 'sync time selection', self.sync_time_selection)
@@ -348,12 +322,6 @@ function TranscriptEditor:zoom(zoom_level)
   reaper.GetSet_LoopTimeRange(true, true, start, end_, false)
 end
 
-function TranscriptEditor:render_separator()
-  ImGui.Dummy(ctx, self.MIN_CONTENT_WIDTH, 0)
-  ImGui.Separator(ctx)
-  ImGui.Dummy(ctx, 0, 0)
-end
-
 function TranscriptEditor:update_time_selection()
   if self.editing then
     self.editing.word:select_in_timeline(self:offset())
@@ -414,13 +382,6 @@ function TranscriptEditor:handle_zoom_change()
   end
 end
 
-function TranscriptEditor:_open()
-  ImGui.OpenPopup(ctx, self.TITLE)
-  self.is_open = true
-end
-
-function TranscriptEditor:_close()
-  ImGui.CloseCurrentPopup(ctx)
+function TranscriptEditor:close()
   self.editing = nil
-  self.is_open = false
 end

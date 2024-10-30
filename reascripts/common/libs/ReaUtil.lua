@@ -15,6 +15,23 @@ function ReaUtil.proxy_main_on_command(command_number, flag)
   end
 end
 
+function ReaUtil.url_opener(url)
+  return function()
+    ReaUtil.open_url(url)
+  end
+end
+
+function ReaUtil.open_url(url)
+  local url_opener_cmd
+  if reaper.GetOS():match('Win') then
+    url_opener_cmd = 'start "" "%s"'
+  else
+    url_opener_cmd = '/usr/bin/open "%s"'
+  end
+
+  (ExecProcess.new(url_opener_cmd:format(url))):wait()
+end
+
 function ReaUtil.disabler(context, error_handler)
   error_handler = error_handler or function(msg)
     reaper.ShowConsoleMsg(msg .. '\n')
@@ -34,4 +51,23 @@ function ReaUtil.disabler(context, error_handler)
     safe_f()
     reaper.ImGui_EndDisabled(context)
   end
+end
+
+function ReaUtil.track_guids()
+  local guids = {}
+
+  for track in ReaIter.each_track() do
+    table.insert(guids, { reaper.GetTrackGUID(track), track })
+  end
+
+  return guids
+end
+
+function ReaUtil.get_source_path(take)
+  local source = reaper.GetMediaItemTake_Source(take)
+  if source then
+    local source_path = reaper.GetMediaSourceFileName(source)
+    return source_path
+  end
+  return nil
 end
