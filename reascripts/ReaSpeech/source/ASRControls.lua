@@ -10,12 +10,6 @@ ASRControls = PluginControls {
   DEFAULT_LANGUAGE = '',
   DEFAULT_MODEL_NAME = 'small',
 
-  SIMPLE_MODEL_SIZES = {
-    {'Small', 'small'},
-    {'Medium', 'medium'},
-    {'Large', 'distil-large-v3'},
-  },
-
   tabs = function(self)
     return {
       ReaSpeechPlugins.tab('asr-simple', 'Simple',
@@ -30,14 +24,7 @@ function ASRControls:init()
   assert(self.plugin, 'ASRControls: plugin is required')
 
   Logging.init(self, 'ASRControls')
-
-  self.log_enable = ReaSpeechCheckbox.simple(false, 'Enable', function(current)
-    Logging.show_logs = current
-  end)
-
-  self.log_debug = ReaSpeechCheckbox.simple(false, 'Debug', function(current)
-    Logging.show_debug_logs = current
-  end)
+  self:init_logging()
 
   local storage = Storage.ExtState.make {
     section = 'ReaSpeech.ASR',
@@ -89,29 +76,64 @@ function ASRControls:init()
     width_threshold = ReaSpeechControlsUI.NARROW_COLUMN_WIDTH
   }
 
-  self.model_name_buttons = ReaSpeechButtonBar.new {
+  self.model_combo = ReaSpeechCombo.new {
     state = self.settings.model_name,
-    label = 'Model Name',
-    buttons = self.SIMPLE_MODEL_SIZES,
-    column_padding = ReaSpeechControlsUI.COLUMN_PADDING,
-    margin_bottom = ReaSpeechControlsUI.MARGIN_BOTTOM,
-    margin_left = ReaSpeechControlsUI.MARGIN_LEFT,
-    margin_right = ReaSpeechControlsUI.MARGIN_RIGHT,
+    label = 'Model',
+    items = WhisperModels.get_model_names(),
+    item_labels = self:get_model_labels(),
   }
-  self.model_name_buttons.on_set = function()
-    self.model_name:set(self.model_name_buttons:value())
-  end
 
   self:init_layouts()
 end
 
+function ASRControls:init_logging()
+  local storage = Storage.ExtState.make {
+    section = 'ReaSpeech.Logging',
+    persist = true,
+  }
+
+  Logging.show_logs = storage:boolean('show_logs', false)
+  Logging.show_debug_logs = storage:boolean('show_debug_logs', false)
+
+  self.log_enable = ReaSpeechCheckbox.new {
+    state = Logging.show_logs,
+    label_long = 'Log',
+    label_short = 'Log',
+  }
+
+  self.log_debug = ReaSpeechCheckbox.new {
+    state = Logging.show_debug_logs,
+    label_long = 'Debug',
+    label_short = 'Debug',
+  }
+end
+
 function ASRControls:init_layouts()
+  self:init_simple_layout()
   self:init_advanced_layouts()
+end
+
+function ASRControls:init_simple_layout()
+  local renderers = {self.render_model}
+
+  self.simple_layout = ColumnLayout.new {
+    column_padding = ReaSpeechControlsUI.COLUMN_PADDING,
+    margin_bottom = ReaSpeechControlsUI.MARGIN_BOTTOM,
+    margin_left = ReaSpeechControlsUI.MARGIN_LEFT,
+    margin_right = ReaSpeechControlsUI.MARGIN_RIGHT,
+    num_columns = #renderers,
+
+    render_column = function (column)
+      ImGui.PushItemWidth(ctx, column.width)
+      app:trap(function () renderers[column.num](self, column) end)
+      ImGui.PopItemWidth(ctx)
+    end
+  }
 end
 
 function ASRControls:init_advanced_layouts()
   local renderers = {
-    {self.render_model_name, self.render_hotwords, self.render_language},
+    {self.render_model, self.render_hotwords, self.render_language},
     {self.render_options, self.render_initial_prompt, self.render_logging},
   }
 
@@ -135,7 +157,7 @@ function ASRControls:init_advanced_layouts()
 end
 
 function ASRControls:render_simple()
-  self.model_name_buttons:render()
+  self.simple_layout:render()
 end
 
 function ASRControls:render_advanced()
@@ -150,12 +172,8 @@ function ASRControls:render_language(column)
   self.translate:render(column)
 end
 
-function ASRControls:render_model_name()
-  self.model_name:render()
-end
-
-function ASRControls:render_model_sizes()
-  self.model_sizes_layout:render()
+function ASRControls:render_model()
+  self.model_combo:render()
 end
 
 function ASRControls:render_hotwords()
@@ -192,4 +210,17 @@ function ASRControls:get_request_data()
     model_name = self.model_name:value(),
     vad_filter = self.vad_filter:value(),
   }
+end
+
+function ASRControls:get_model_labels()
+  local model_labels = {}
+
+  for _, model in pairs(WhisperModels.MODELS) do
+    model_labels[model.name] = model.label
+    if model.lang then
+      model_labels[model.name] = model.label .. ' (' .. WhisperLanguages.LANGUAGES[model.lang] .. ')'
+    end
+  end
+
+  return model_labels
 end
