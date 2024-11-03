@@ -4,6 +4,7 @@ local lu = require('luaunit')
 
 require('mock_reaper')
 require('Polo')
+require('Storage')
 require('source/Logging')
 
 --
@@ -160,7 +161,7 @@ function TestLogging:testPatchedDebugMethod()
 end
 
 function TestLogging:testReactRespectsShowLogsOff()
-  Logging.show_logs = false
+  Logging.show_logs:set(false)
   Logging.logs = {
     { "This is a log message", Logging.LOG_LEVEL_LOG },
     { "This is a debug message", Logging.LOG_LEVEL_DEBUG },
@@ -179,8 +180,8 @@ function TestLogging:testReactRespectsShowLogsOff()
 end
 
 function TestLogging:testReactRespectsShowLogsOn()
-  Logging.show_logs = true
-  Logging.show_debug_logs = false
+  Logging.show_logs:set(true)
+  Logging.show_debug_logs:set(false)
 
   Logging.logs = {
     { "This is a log message", Logging.LOG_LEVEL_LOG },
@@ -205,8 +206,8 @@ function TestLogging:testReactRespectsShowLogsOn()
 end
 
 function TestLogging:testReactRespectsShowDebugLogsOn()
-  Logging.show_logs = true
-  Logging.show_debug_logs = true
+  Logging.show_logs:set(true)
+  Logging.show_debug_logs:set(true)
   Logging.logs = {
     { "This is a log message", Logging.LOG_LEVEL_LOG },
     { "This is a debug message", Logging.LOG_LEVEL_DEBUG },
@@ -225,8 +226,8 @@ function TestLogging:testReactRespectsShowDebugLogsOn()
 end
 
 function TestLogging:testReactIgnoresShowDebugLogsIfShowLogsOff()
-  Logging.show_logs = false
-  Logging.show_debug_logs = true
+  Logging.show_logs:set(false)
+  Logging.show_debug_logs:set(true)
   Logging.logs = {
     { "This is a log message", Logging.LOG_LEVEL_LOG },
     { "This is a debug message", Logging.LOG_LEVEL_DEBUG },

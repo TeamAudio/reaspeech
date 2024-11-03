@@ -18,11 +18,11 @@ function SettingsControls:init()
   Logging.init(self, 'SettingsControls')
 
   self.log_enable = ReaSpeechCheckbox.simple(false, 'Enable', function(current)
-    Logging.show_logs = current
+    Logging.show_logs:set(current)
   end)
 
   self.log_debug = ReaSpeechCheckbox.simple(false, 'Debug', function(current)
-    Logging.show_debug_logs = current
+    Logging.show_debug_logs:set(current)
   end)
 
   self:init_layout()
