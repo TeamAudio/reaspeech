@@ -19,17 +19,6 @@ ReaSpeechUI = Polo {
 function ReaSpeechUI:init()
   Logging.init(self, 'ReaSpeechUI')
 
-  ToolWindow.init(self, {
-    ctx = ctx,
-    title = self.TITLE,
-    width = self.WIDTH,
-    height = self.HEIGHT,
-    window_flags = ImGui.WindowFlags_None(),
-    font = Fonts.main,
-    theme = Theme(),
-    position = ToolWindow.POSITION_AUTOMATIC,
-  })
-
   self.onerror = function (e)
     self:log(e)
   end
@@ -116,7 +105,7 @@ function ReaSpeechUI:react_to_worker_response()
   end
 end
 
-function ReaSpeechUI:render_content()
+function ReaSpeechUI:render()
   ImGui.PushItemWidth(ctx, self.ITEM_WIDTH)
 
   self:trap(function ()
