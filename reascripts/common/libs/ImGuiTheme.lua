@@ -77,7 +77,13 @@ function ImGuiTheme:push(ctx)
   self.style_count = 0
   for i = 1, #self.styles do
     if self.styles[i][1] then
-      self.f_style_push(ctx, self.styles[i][1], table.unpack(self.styles[i], 2))
+      local args
+      if type(self.styles[i][2]) == 'function' then
+        args = self.styles[i][2]()
+      else
+        args = {table.unpack(self.styles[i], 2)}
+      end
+      self.f_style_push(ctx, self.styles[i][1], table.unpack(args))
       self.style_count = self.style_count + 1
     end
   end

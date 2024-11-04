@@ -92,13 +92,15 @@ function TestImGuiTheme:testStyles()
   local theme = ImGuiTheme.new {
     styles = {
       { function() return "single argument" end, 1.0 },
-      { "multiple arguments", 2.0, 3.0 }
+      { "multiple arguments", 2.0, 3.0 },
+      { "function argument", function() return { 4.0, 5.0 } end }
   }
 }
 
   local expectations = {
     { "single argument", 1.0 },
-    { "multiple arguments", 2.0, 3.0 }
+    { "multiple arguments", 2.0, 3.0 },
+    { "function argument", 4.0, 5.0 }
   }
 
   local i = 1
@@ -111,7 +113,7 @@ function TestImGuiTheme:testStyles()
   end
 
   ImGuiTheme.f_style_pop = function(_ctx, count)
-    lu.assertEquals(count, 2)
+    lu.assertEquals(count, 3)
   end
 
   theme:push("context")
