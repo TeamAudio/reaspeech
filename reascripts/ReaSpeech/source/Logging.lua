@@ -9,8 +9,8 @@ Logging = {
   LOG_LEVEL_LOG = false,
   LOG_LEVEL_DEBUG = true,
 
-  show_logs = false,
-  show_debug_logs = false,
+  show_logs = Storage.memory(false),
+  show_debug_logs = Storage.memory(false),
 
   logs = {},
 
@@ -26,7 +26,7 @@ Logging = {
 }
 
 function Logging:react()
-  if not self.show_logs then
+  if not self.show_logs:get() then
     self:reset()
     return
   end
@@ -34,7 +34,7 @@ function Logging:react()
   for _, log in pairs(self.logs) do
     local msg, dbg = table.unpack(log)
 
-    if dbg and self.show_debug_logs then
+    if dbg and self.show_debug_logs:get() then
       reaper.ShowConsoleMsg(msg .. '\n')
     elseif not dbg then
       reaper.ShowConsoleMsg(msg .. '\n')
