@@ -25,7 +25,8 @@ function TranscriptExporter:init()
     window_flags = 0
       | ImGui.WindowFlags_AlwaysAutoResize()
       | ImGui.WindowFlags_NoCollapse()
-      | ImGui.WindowFlags_NoDocking(),
+      | ImGui.WindowFlags_NoDocking()
+      | ImGui.WindowFlags_TopMost(),
   })
 
   self.export_formats = TranscriptExporterFormats.new {
