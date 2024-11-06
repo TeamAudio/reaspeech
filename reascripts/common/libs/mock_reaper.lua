@@ -160,6 +160,7 @@ ImGui = ImGui or {
   WindowFlags_AlwaysAutoResize = function() return 1 end,
   WindowFlags_NoCollapse = function() return 2 end,
   WindowFlags_NoDocking = function() return 3 end,
+  WindowFlags_TopMost = function() return 4 end,
   Cond_FirstUseEver = function() return 0 end,
   Cond_Appearing = function() return 1 end,
 }

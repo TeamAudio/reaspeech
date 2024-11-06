@@ -24,15 +24,16 @@ function TranscriptAnnotationsUI:init()
     window_flags = 0
       | ImGui.WindowFlags_AlwaysAutoResize()
       | ImGui.WindowFlags_NoCollapse()
-      | ImGui.WindowFlags_NoDocking(),
+      | ImGui.WindowFlags_NoDocking()
+      | ImGui.WindowFlags_TopMost(),
   })
 
   self.disabler = ReaUtil.disabler(ctx)
 
   self.annotation_types = TranscriptAnnotationTypes.new {
-    TranscriptAnnotationTypes.take_markers(),
     TranscriptAnnotationTypes.project_markers(),
     TranscriptAnnotationTypes.project_regions(),
+    TranscriptAnnotationTypes.take_markers(),
     TranscriptAnnotationTypes.notes_track()
   }
 
@@ -40,13 +41,11 @@ function TranscriptAnnotationsUI:init()
 end
 
 function TranscriptAnnotationsUI:render_content()
-  self.annotation_types:render_combo(self.INPUT_WIDTH)
+  self.annotation_types:render_tab_bar()
 
   local selected_type = self.annotation_types:selected_type()
 
   if selected_type then
-    self:render_separator()
-
     ImGui.Spacing(ctx)
 
     self.annotation_types:render_type_options(self.annotation_type)
@@ -107,23 +106,16 @@ function TranscriptAnnotationTypes:reset()
   self.selected_type_key = nil
 end
 
-function TranscriptAnnotationTypes:render_combo(width)
-  ImGui.SetNextItemWidth(ctx, width)
-  local selected_type = self:selected_type()
-  if ImGui.BeginCombo(ctx, "##annotation_type", selected_type and selected_type.label or "Annotation Type") then
-    app:trap(function()
-      for _, type in pairs(self.types) do
-        local is_selected = self.selected_type_key == type.key
-        if ImGui.Selectable(ctx, type.label, is_selected, ImGui.SelectableFlags_None()) then
-          self.selected_type_key = type.key
-        end
-        if is_selected then
-          ImGui.SetItemDefaultFocus(ctx)
-        end
-      end
-    end)
-    ImGui.EndCombo(ctx)
-  end
+function TranscriptAnnotationTypes:init()
+  self.tab_bar = ReaSpeechTabBar.new {
+    default = self.types[1].key,
+    tabs = self.types,
+  }
+end
+
+function TranscriptAnnotationTypes:render_tab_bar()
+  self.tab_bar:render()
+  self.selected_type_key = self.tab_bar:value()
 end
 
 function TranscriptAnnotationTypes:selected_key()
@@ -150,7 +142,7 @@ end
 
 function TranscriptAnnotationsUI.granularity_combo()
   local combo = ReaSpeechCombo.new {
-    state = Storage.memory('word'),
+    state = Storage.memory('segment'),
     label = 'Granularity',
     items = { 'word', 'segment' },
     item_labels = { word = 'Word', segment = 'Segment' },
