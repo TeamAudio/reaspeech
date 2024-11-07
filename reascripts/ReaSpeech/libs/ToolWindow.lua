@@ -108,7 +108,6 @@ ToolWindow.modal = function(o, config)
 end
 
 ToolWindow.init = function(o, config)
-  Logging.init(o, 'ToolWindow')
   config = config or {}
 
   o.ctx = config.ctx or ctx
@@ -125,10 +124,10 @@ ToolWindow.init = function(o, config)
     state.is_open = false
   end)
 
+  o.is_open = ToolWindow.is_open
+
   o.present = ToolWindow.present
   o.presenting = ToolWindow.presenting
-
-  o.is_open = ToolWindow.is_open
 
   o.render = ToolWindow.render
 
