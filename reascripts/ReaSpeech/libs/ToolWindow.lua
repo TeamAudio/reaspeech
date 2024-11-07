@@ -14,7 +14,7 @@
           ctx (userdata) - the ImGui context to use
             default: global ctx object
           guard (function) - a function to determine if the window should render
-            default: function returning the value of is_open
+            default: function returning true if (presenting or is_open)
           title (string) - the window title
             default: "Tool Window"
           width (number) - the window width
@@ -41,6 +41,33 @@
 
       arguments:
         (same as ToolWindow.init)
+
+  Applied object methods:
+
+    present()
+      Set the window to be opened on the next render cycle.
+
+    open()
+      Open the window at call time (will fail outside of a render context).
+
+      Called internally by ToolWindow.render.
+
+      Objects can provide their own open() method which will be wrapped with ToolWindow versions that will call it as the last step.
+
+    close()
+      Close the window.
+
+    presenting()
+      Determine if the window is currently being rendered.
+
+    is_open()
+      Determine if the window is open.
+
+    render()
+      Render the window.
+
+    render_separator()
+      Render a separator.
 ]]--
 
 ToolWindow = {
@@ -94,8 +121,12 @@ ToolWindow.init = function(o, config)
   end)
 
   ToolWindow._wrap_method_0_args(o, 'close', function()
+    state.presenting = false
     state.is_open = false
   end)
+
+  o.present = ToolWindow.present
+  o.presenting = ToolWindow.presenting
 
   o.is_open = ToolWindow.is_open
 
@@ -107,18 +138,19 @@ end
 function ToolWindow._make_config(o, config)
   config = config or {}
   return {
-    guard = config.guard or function() return o:is_open() end,
-    is_open = false,
-    title = config.title or ToolWindow.DEFAULT_TITLE,
-    window_flags = config.window_flags or ToolWindow.DEFAULT_WINDOW_FLAGS(),
-    width = config.width or ToolWindow.DEFAULT_WIDTH,
-    height = config.height or ToolWindow.DEFAULT_HEIGHT,
-    is_modal = config.is_modal and true,
     begin_f = config.is_modal and ImGui.BeginPopupModal or ImGui.Begin,
     end_f = config.is_modal and ImGui.EndPopup or ImGui.End,
     font = config.font,
-    theme = config.theme or ToolWindow.DEFAULT_THEME(),
+    guard = config.guard or ToolWindow.default_guard(o),
+    height = config.height or ToolWindow.DEFAULT_HEIGHT,
+    is_modal = config.is_modal and true,
+    is_open = false,
     position = config.position or ToolWindow.POSITION_CENTER,
+    presenting = false,
+    theme = config.theme or ToolWindow.DEFAULT_THEME(),
+    title = config.title or ToolWindow.DEFAULT_TITLE,
+    width = config.width or ToolWindow.DEFAULT_WIDTH,
+    window_flags = config.window_flags or ToolWindow.DEFAULT_WINDOW_FLAGS(),
   }
 end
 
@@ -130,6 +162,20 @@ function ToolWindow._wrap_method_0_args(o, method_name, f)
       original(o)
     end
   end
+end
+
+function ToolWindow.default_guard(o)
+  return function()
+    return o:presenting() or o:is_open()
+  end
+end
+
+function ToolWindow.present(o)
+  o._tool_window.presenting = true
+end
+
+function ToolWindow.presenting(o)
+  return o._tool_window.presenting
 end
 
 function ToolWindow.is_open(o)
