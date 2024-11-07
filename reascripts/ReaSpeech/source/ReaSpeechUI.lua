@@ -30,10 +30,6 @@ function ReaSpeechUI:init()
 
   Logging.init(self, 'ReaSpeechUI')
 
-  if ReaSpeechUI.METRICS then
-    ImGui.ShowMetricsWindow(ctx)
-  end
-
   self.onerror = function (e)
     self:log(e)
   end
@@ -121,6 +117,10 @@ function ReaSpeechUI:react_to_worker_response()
 end
 
 function ReaSpeechUI:render_content()
+  if ReaSpeechUI.METRICS then
+    ImGui.ShowMetricsWindow(ctx)
+  end
+
   ImGui.PushItemWidth(ctx, self.ITEM_WIDTH)
 
   self:trap(function ()
