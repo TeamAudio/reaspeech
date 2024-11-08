@@ -77,7 +77,7 @@ end
 
 function TranscriptUI:render_annotations_button(column)
   if ImGui.Button(ctx, "Create Markers", column.width) then
-    self.annotations:open()
+    self.annotations:present()
   end
 end
 
@@ -146,7 +146,7 @@ function TranscriptUI:render_search(column)
 end
 
 function TranscriptUI:handle_export()
-  self.transcript_exporter:open()
+  self.transcript_exporter:present()
 end
 
 function TranscriptUI:handle_transcript_clear()

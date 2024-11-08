@@ -33,19 +33,12 @@ function ReaSpeechWelcomeUI:init()
     width = self.WIDTH,
     height = self.HEIGHT,
     window_flags = ImGui.WindowFlags_AlwaysAutoResize(),
-    guard = function() return self.presenting end,
     theme = ImGuiTheme.new({
       styles = {
         {ImGui.StyleVar_WindowPadding, 0, 0 },
       }
     }),
   })
-
-  self.presenting = false
-end
-
-function ReaSpeechWelcomeUI:present()
-  self.presenting = true
 end
 
 function ReaSpeechWelcomeUI:render_content()
@@ -125,8 +118,4 @@ function ReaSpeechWelcomeUI:render_footer()
   Widgets.link("GitHub", ReaUtil.url_opener(self.GITHUB_URL))
   ImGui.SameLine(ctx)
   Widgets.link("Docker Hub", ReaUtil.url_opener(self.DOCKER_HUB_URL))
-end
-
-function ReaSpeechWelcomeUI:close()
-  self.presenting = false
 end

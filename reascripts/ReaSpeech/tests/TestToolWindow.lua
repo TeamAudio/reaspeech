@@ -74,6 +74,22 @@ function TestToolWindow:testModal()
   lu.assertEquals(o._tool_window.height, 200)
 end
 
+function TestToolWindow:testPresentAndPresenting()
+  local test_class = Polo {
+    init = function(self)
+      ToolWindow.init(self)
+    end
+  }
+
+  local o = test_class.new()
+  lu.assertNotNil(o._tool_window)
+  lu.assertEquals(o:presenting(), false)
+  o:present()
+  lu.assertEquals(o:presenting(), true)
+  o:close()
+  lu.assertEquals(o:presenting(), false)
+end
+
 function TestToolWindow:testIsOpen()
   local test_class = Polo {
     init = function(self)
@@ -182,7 +198,7 @@ function TestToolWindow:testRender()
 
   ImGui.Cond_Appearing = function() return 1 end
   ImGui.Cond_FirstUseEver = function() return 2 end
-  ImGui.End = function() end
+  ImGui.End = function(_) end
   ImGui.GetWindowViewport = function() end
   ImGui.SetNextWindowPos = function(_, _, _, _, _, _) end
   ImGui.SetNextWindowSize = function(_, _, _, _) end

@@ -28,7 +28,7 @@ end
 function AlertPopup:show(title, msg)
   self._tool_window.title = title or self._tool_window.title
   self.msg = msg
-  self:open()
+  self:present()
 end
 
 function AlertPopup:render_content()
