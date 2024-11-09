@@ -53,7 +53,11 @@ function TranscriptExporter:init()
 end
 
 function TranscriptExporter:open()
-  self.theme.styles[1][2] = Tween.linear(0.0, 1.0, 0.2)
+  local tween = Tween.linear(0.0, 1.0, 0.2, function()
+    self.theme.styles[1][2] = 1.0
+  end)
+
+  self.theme.styles[1][2] = function() return {tween()} end
 end
 
 function TranscriptExporter:show_success()

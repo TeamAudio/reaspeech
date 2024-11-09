@@ -4,51 +4,53 @@
 
 ]]--
 
-Tween = Polo {
-  new = function(start_value, end_value, duration)
-    local self = {}
-    self.start_value = start_value
-    self.end_value = end_value
-    self.duration = duration
-    return self
-  end,
-}
+Tween = {
+  __call = function(_, f, time_f)
+    time_f = time_f or reaper and reaper.time_precise
+    local tween_definition = { f = f }
+    setmetatable(tween_definition, tween_definition)
 
-function Tween:init()
-  self.current_value = self.start_value
-  self:reset()
-end
+    tween_definition.__call = function(_self, start_value, end_value, duration, on_end)
+      local t = {}
+      t.start_value = start_value
+      t.end_value = end_value
+      t.duration = duration
+      t.change = end_value - start_value
+      t.start_time = time_f()
+      t.on_end = on_end or function() end
 
-function Tween:update()
-  local current_time = reaper.time_precise()
+      t.__call = function(self)
+        local time = time_f()
+        self:debug('tween called @ ' .. time)
 
-  if self:is_done(current_time) then return end
+        if time >= t.start_time + t.duration then
+          self:debug('tween done')
+          if t.on_end then
+            self.on_end()
+            self.on_end = function() end
+          end
 
-  local progress = (current_time - self.start_time) / (self.end_time - self.start_time)
-  self.current_value = self.start_value + (self.end_value - self.start_value) * progress
-end
+          return self.end_value
+        else
+          return tween_definition.f(
+            time - self.start_time,
+            self.start_value,
+            self.end_value - self.start_value,
+            self.duration
+          )
+        end
+      end
 
-function Tween:reset()
-  self.start_time = reaper.time_precise()
-  self.end_time = self.start_time + self.duration
-end
+      setmetatable(t, t)
+      Logging.init(t, 'Tween')
+      return t
+    end
 
-function Tween:is_done(current_time)
-  current_time = current_time or reaper.time_precise()
-  return current_time >= self.end_time
-end
-
-function Tween:value()
-  self:update()
-  if self:is_done() then
-    return self.end_value
-  else
-    return self.current_value
+    return tween_definition
   end
-end
+}
+setmetatable(Tween, Tween)
 
-function Tween.linear(start, end_, duration)
-  local t = Tween.new(start, end_, duration)
-
-  return function() return { t:value() } end
-end
+Tween.linear = Tween(function(t, b, c, d)
+  return b + c * t / d
+end)
