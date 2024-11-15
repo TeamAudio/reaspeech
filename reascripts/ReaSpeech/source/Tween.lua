@@ -50,10 +50,8 @@ Tween = {
 
       t.__call = function(self)
         local time = time_f()
-        self:debug('tween called @ ' .. time)
 
         if time >= t.start_time + t.duration then
-          self:debug('tween done')
           if t.on_end then
             self.on_end()
             self.on_end = function() end
@@ -71,7 +69,6 @@ Tween = {
       end
 
       setmetatable(t, t)
-      Logging.init(t, 'Tween')
       return t
     end
 

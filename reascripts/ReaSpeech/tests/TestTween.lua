@@ -4,7 +4,6 @@ local lu = require('luaunit')
 
 require('Polo')
 require('Storage')
-require('source/Logging')
 
 reaper = {
   time_precise = function()
