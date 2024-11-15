@@ -83,3 +83,13 @@ setmetatable(Tween, Tween)
 Tween.linear = Tween(function(t, b, c, d)
   return b + c * t / d
 end)
+
+Tween.inQuad = Tween(function(t, b, c, d)
+  t = t / d
+  return c * t ^ 2 + b
+end)
+
+Tween.inCubic = Tween(function(t, b, c, d)
+  t = t / d
+  return c * t ^ 3 + b
+end)
