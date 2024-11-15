@@ -65,6 +65,41 @@ ImGuiTheme.get_function = function(key, default)
   return ImGuiTheme[key] or default
 end
 
+function ImGuiTheme._attr_row(key, value)
+  if type(key) == 'function' then
+    key = key()
+  end
+
+  if type(value) == 'table' then
+    return { key, table.unpack(value) }
+  end
+
+  return { key, value }
+end
+
+function ImGuiTheme:set_style(key, value)
+  self.styles = ImGuiTheme._set_attr(self.styles, key, value)
+end
+
+function ImGuiTheme:set_color(key, value)
+  self.colors = ImGuiTheme._set_attr(self.colors, key, value)
+end
+
+function ImGuiTheme._set_attr(attr_table, key, value)
+  local row = ImGuiTheme._attr_row(key, value)
+
+  local result = {}
+  for _, v in ipairs(attr_table) do
+    if v[1] == row[1] then
+      table.insert(result, row)
+    else
+      table.insert(result, v)
+    end
+  end
+
+  return result
+end
+
 function ImGuiTheme:push(ctx)
   self.color_count = 0
   for i = 1, #self.colors do

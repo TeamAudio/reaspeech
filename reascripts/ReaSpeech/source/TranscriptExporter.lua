@@ -57,15 +57,15 @@ function TranscriptExporter:open()
 
   local on_done = function()
     -- set the style to a static value
-    self.theme.styles[1][2] = opaque
+    self.theme:set_style(ImGui.StyleVar_Alpha, opaque)
   end
 
   local tween = Tween.linear(transparent, opaque, duration, on_done)
 
   -- activate the tween as a style-returning function
-  self.theme.styles[1][2] = function()
+  self.theme:set_style(ImGui.StyleVar_Alpha, function()
     return { tween() }
-  end
+  end)
 end
 
 function TranscriptExporter:show_success()
