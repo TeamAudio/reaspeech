@@ -65,10 +65,16 @@ ImGuiTheme.get_function = function(key, default)
   return ImGuiTheme[key] or default
 end
 
-function ImGuiTheme._attr_row(key, value)
+function ImGuiTheme._attr_key(key)
   if type(key) == 'function' then
-    key = key()
+    return key()
   end
+
+  return key
+end
+
+function ImGuiTheme._attr_row(key, value)
+  key = ImGuiTheme._attr_key(key)
 
   if type(value) == 'table' then
     return { key, table.unpack(value) }
@@ -77,12 +83,37 @@ function ImGuiTheme._attr_row(key, value)
   return { key, value }
 end
 
-function ImGuiTheme:set_style(key, value)
-  self.styles = ImGuiTheme._set_attr(self.styles, key, value)
+function ImGuiTheme:get_color(key)
+  return ImGuiTheme:_get_attr(self.colors, key)
+end
+
+function ImGuiTheme:get_style(key)
+  return ImGuiTheme:_get_attr(self.styles, key)
+end
+
+function ImGuiTheme:_get_attr(attr_table, key)
+  for _, v in ipairs(attr_table) do
+    if v[1] == key then
+      local result = { select(2, table.unpack(v)) }
+      if #result == 1 then
+        if type(result[1]) == 'function' then
+          return result[1]()
+        else
+          return result[1]
+        end
+      else
+        return result
+      end
+    end
+  end
 end
 
 function ImGuiTheme:set_color(key, value)
   self.colors = ImGuiTheme._set_attr(self.colors, key, value)
+end
+
+function ImGuiTheme:set_style(key, value)
+  self.styles = ImGuiTheme._set_attr(self.styles, key, value)
 end
 
 function ImGuiTheme._set_attr(attr_table, key, value)

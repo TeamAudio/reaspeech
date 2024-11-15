@@ -144,6 +144,32 @@ function TestImGuiTheme:testWrap()
   lu.assertEquals(function_called, true)
 end
 
+function TestImGuiTheme:testGetStyle()
+  local theme = ImGuiTheme.new {
+    styles = {
+      { function() return "single argument" end, 1.0 },
+      { "multiple arguments", 2.0, 3.0 },
+      { "function argument", function() return { 4.0, 5.0 } end }
+    }
+  }
+
+  lu.assertEquals(theme:get_style("single argument"), 1.0)
+  lu.assertEquals(theme:get_style("multiple arguments"), { 2.0, 3.0 })
+  lu.assertEquals(theme:get_style("function argument"), { 4.0, 5.0 })
+end
+
+function TestImGuiTheme:testGetColor()
+  local theme = ImGuiTheme.new {
+    colors = {
+      { function() return "single argument" end, 0x00FF0000 },
+      { "key", 0x00FF0001 }
+    }
+  }
+
+  lu.assertEquals(theme:get_color("single argument"), 0x00FF0000)
+  lu.assertEquals(theme:get_color("key"), 0x00FF0001)
+end
+
 function TestImGuiTheme:testSetStyle()
   local theme = ImGuiTheme.new {
     styles = {

@@ -8,6 +8,7 @@ require('Polo')
 require('Storage')
 require('libs/ToolWindow')
 require('source/Logging')
+require('source/Tween')
 require('source/include/globals')
 
 --

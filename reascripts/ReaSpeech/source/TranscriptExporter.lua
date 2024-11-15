@@ -18,12 +18,6 @@ function TranscriptExporter:init()
 
   Logging.init(self, 'TranscriptExporter')
 
-  self.theme = ImGuiTheme.new {
-    styles = {
-      { ImGui.StyleVar_Alpha, 0 },
-    }
-  }
-
   ToolWindow.init(self, {
     title = self.TITLE,
     width = self.WIDTH,
@@ -33,7 +27,6 @@ function TranscriptExporter:init()
       | ImGui.WindowFlags_NoCollapse()
       | ImGui.WindowFlags_NoDocking()
       | ImGui.WindowFlags_TopMost(),
-    theme = self.theme,
   })
 
   self.export_formats = TranscriptExporterFormats.new {
@@ -50,22 +43,6 @@ function TranscriptExporter:init()
   })
 
   self.alert_popup = AlertPopup.new {}
-end
-
-function TranscriptExporter:open()
-  local transparent, opaque, duration = 0.0, 1.0, 0.2
-
-  local on_done = function()
-    -- set the style to a static value
-    self.theme:set_style(ImGui.StyleVar_Alpha, opaque)
-  end
-
-  local tween = Tween.linear(transparent, opaque, duration, on_done)
-
-  -- activate the tween as a style-returning function
-  self.theme:set_style(ImGui.StyleVar_Alpha, function()
-    return { tween() }
-  end)
 end
 
 function TranscriptExporter:show_success()
