@@ -114,6 +114,8 @@ reaper = reaper or {
 
   ImGui_BeginDisabled = function(_context, _disabled) end,
   ImGui_EndDisabled = function(_context) end,
+
+  time_precise = function() return 0 end,
 }
 
 if reaper.__test_setUp then reaper.__test_setUp() end

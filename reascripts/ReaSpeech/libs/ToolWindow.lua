@@ -88,7 +88,11 @@ ToolWindow = {
   end,
 
   DEFAULT_THEME = function()
-    return ImGuiTheme.new()
+    return ImGuiTheme.new {
+      styles = {
+        { ImGui.StyleVar_Alpha, 0 }
+      },
+    }
   end,
 }
 
@@ -113,9 +117,24 @@ ToolWindow.init = function(o, config)
   o.ctx = config.ctx or ctx
 
   local state = ToolWindow._make_config(o, config)
+
+  state.theme:set_style(ImGui.StyleVar_Alpha, 0)
+
   o._tool_window = state
 
   ToolWindow._wrap_method_0_args(o, 'open', function()
+    local theme = o._tool_window.theme
+
+    local final_alpha = theme:get_style(ImGui.StyleVar_Alpha) or 1.0
+
+    local tween = Tween.linear(0.0, 1.0, 0.2, function()
+      theme:set_style(ImGui.StyleVar_Alpha, final_alpha)
+    end)
+
+    theme:set_style(ImGui.StyleVar_Alpha, function()
+      return { tween() }
+    end)
+
     state.is_open = true
   end)
 
