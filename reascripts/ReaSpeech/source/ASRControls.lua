@@ -26,6 +26,8 @@ function ASRControls:init()
   Logging.init(self, 'ASRControls')
   self:init_logging()
 
+  self:init_asr_info()
+
   local storage = Storage.ExtState.make {
     section = 'ReaSpeech.ASR',
     persist = true,
@@ -56,7 +58,7 @@ function ASRControls:init()
 
   self.hotwords = ReaSpeechTextInput.new {
     state = self.settings.hotwords,
-    label = 'Hot Words'
+    label = 'Preserved Words'
   }
 
   self.initial_prompt = ReaSpeechTextInput.new {
@@ -79,11 +81,24 @@ function ASRControls:init()
   self.model_combo = ReaSpeechCombo.new {
     state = self.settings.model_name,
     label = 'Model',
-    items = WhisperModels.get_model_names(),
+    items = WhisperModels.get_model_names(self.asr_engine),
     item_labels = self:get_model_labels(),
   }
 
   self:init_layouts()
+end
+
+function ASRControls:init_asr_info()
+  local asr_info = ReaSpeechAPI:fetch_json('asr_info', 'GET', function(error_message)
+    self:debug("Error getting ASR info: " .. error_message)
+  end)
+  self.asr_engine = asr_info and asr_info.engine
+  self.asr_options = {}
+  if asr_info and asr_info.options then
+    for _, option in pairs(asr_info.options) do
+      self.asr_options[option] = true
+    end
+  end
 end
 
 function ASRControls:init_logging()
@@ -97,8 +112,9 @@ function ASRControls:init_logging()
 
   self.log_enable = ReaSpeechCheckbox.new {
     state = Logging.show_logs,
-    label_long = 'Log',
+    label_long = 'Logging',
     label_short = 'Log',
+    width_threshold = ReaSpeechControlsUI.NARROW_COLUMN_WIDTH
   }
 
   self.log_debug = ReaSpeechCheckbox.new {
@@ -110,7 +126,7 @@ end
 
 function ASRControls:init_layouts()
   self:init_simple_layout()
-  self:init_advanced_layouts()
+  self:init_advanced_layout()
 end
 
 function ASRControls:init_simple_layout()
@@ -131,29 +147,29 @@ function ASRControls:init_simple_layout()
   }
 end
 
-function ASRControls:init_advanced_layouts()
+function ASRControls:init_advanced_layout()
   local renderers = {
-    {self.render_model, self.render_hotwords, self.render_language},
-    {self.render_options, self.render_initial_prompt, self.render_logging},
+    {self.render_model, self.render_options},
+    {self.asr_options.hotwords and self.render_hotwords or self.render_initial_prompt},
+    {self.render_language},
   }
 
-  self.advanced_layouts = {}
+  self.advanced_layout = ColumnLayout.new {
+    column_padding = ReaSpeechControlsUI.COLUMN_PADDING,
+    margin_bottom = ReaSpeechControlsUI.MARGIN_BOTTOM,
+    margin_left = ReaSpeechControlsUI.MARGIN_LEFT,
+    margin_right = ReaSpeechControlsUI.MARGIN_RIGHT,
+    num_columns = #renderers,
 
-  for row = 1, #renderers do
-    self.advanced_layouts[row] = ColumnLayout.new {
-      column_padding = ReaSpeechControlsUI.COLUMN_PADDING,
-      margin_bottom = ReaSpeechControlsUI.MARGIN_BOTTOM,
-      margin_left = ReaSpeechControlsUI.MARGIN_LEFT,
-      margin_right = ReaSpeechControlsUI.MARGIN_RIGHT,
-      num_columns = #renderers[row],
-
-      render_column = function (column)
-        ImGui.PushItemWidth(ctx, column.width)
-        app:trap(function () renderers[row][column.num](self, column) end)
-        ImGui.PopItemWidth(ctx)
+    render_column = function (column)
+      ImGui.PushItemWidth(ctx, column.width)
+      for row, renderer in ipairs(renderers[column.num]) do
+        if row > 1 then ImGui.Spacing(ctx) end
+        app:trap(function () renderer(self, column) end)
       end
-    }
-  end
+      ImGui.PopItemWidth(ctx)
+    end
+  }
 end
 
 function ASRControls:render_simple()
@@ -161,15 +177,14 @@ function ASRControls:render_simple()
 end
 
 function ASRControls:render_advanced()
-  for row = 1, #self.advanced_layouts do
-    self.advanced_layouts[row]:render()
-  end
+  self.advanced_layout:render()
 end
 
 function ASRControls:render_language(column)
-  self.language:render()
-
-  self.translate:render(column)
+  if self.asr_options.language then
+    self.language:render()
+    self.translate:render(column)
+  end
 end
 
 function ASRControls:render_model()
@@ -177,27 +192,29 @@ function ASRControls:render_model()
 end
 
 function ASRControls:render_hotwords()
-  self.hotwords:render()
+  if self.asr_options.hotwords then
+    self.hotwords:render()
+  end
 end
 
 function ASRControls:render_options(column)
   ReaSpeechControlsUI:render_input_label('Options')
 
-  self.vad_filter:render(column)
-end
-
-function ASRControls:render_initial_prompt()
-  self.initial_prompt:render()
-end
-
-function ASRControls:render_logging()
-  ReaSpeechControlsUI:render_input_label('Logging')
-
-  self.log_enable:render()
+  self.log_enable:render(column)
 
   if self.log_enable:value() then
     ImGui.SameLine(ctx)
     self.log_debug:render()
+  end
+
+  if self.asr_options.vad_filter then
+    self.vad_filter:render(column)
+  end
+end
+
+function ASRControls:render_initial_prompt()
+  if self.asr_options.initial_prompt then
+    self.initial_prompt:render()
   end
 end
 

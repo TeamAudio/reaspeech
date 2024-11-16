@@ -32,15 +32,7 @@ import whisper
 from faster_whisper import WhisperModel
 
 from .utils import ResultWriter, WriteTXT, WriteSRT, WriteVTT, WriteTSV, WriteJSON
-
-ASR_ENGINE_OPTIONS = frozenset([
-    "task",
-    "language",
-    "hotwords",
-    "initial_prompt",
-    "vad_filter",
-    "word_timestamps",
-])
+from .constants import ASR_ENGINE_OPTIONS
 
 model_name = os.getenv("ASR_MODEL", "small")
 model_path = os.getenv("ASR_MODEL_PATH", os.path.join(os.path.expanduser("~"), ".cache", "whisper"))
