@@ -219,14 +219,18 @@ function ASRControls:render_initial_prompt()
 end
 
 function ASRControls:get_request_data()
-  return {
+  local request_data = {
     language = self.language:value(),
     translate = self.translate:value(),
-    hotwords = self.hotwords:value(),
-    initial_prompt = self.initial_prompt:value(),
     model_name = self.model_name:value(),
     vad_filter = self.vad_filter:value(),
   }
+  if self.asr_options.hotwords then
+    request_data.hotwords = self.hotwords:value()
+  else
+    request_data.initial_prompt = self.initial_prompt:value()
+  end
+  return request_data
 end
 
 function ASRControls:get_model_labels()
