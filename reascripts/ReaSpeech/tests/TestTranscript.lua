@@ -7,6 +7,7 @@ local lu = require('luaunit')
 require('json')
 require('mock_reaper')
 require('Polo')
+require('ReaIter')
 require('ReaUtil')
 require('source/Transcript')
 require('source/TranscriptSegment')
@@ -407,6 +408,123 @@ function TestTranscript:testSegmentToJson()
   end
   table.sort(keys)
   lu.assertEquals(keys, {"end", "probability", "start", "word"})
+end
+
+function TestTranscript:TestFromJson()
+  reaper.CountMediaItems = function() return 2 end
+  reaper.GetMediaItem = function(_, idx)
+    if idx == 0 then
+      return "media_item_userdata1"
+    elseif idx == 1 then
+      return "media_item_userdata2"
+    end
+  end
+
+  ReaIter.each_media_item = ReaIter._make_iterator(reaper.CountMediaItems, reaper.GetMediaItem)
+
+  reaper.GetMediaItemTakeByGUID = function(_, guid)
+    -- print('take guid: ' .. guid .. '\n')
+    if guid == "take_guid1" then
+      return "take_userdata1"
+    elseif guid == "take_guid2" then
+      return "take_userdata2"
+    end
+  end
+
+  local fake_vals = {
+    media_item_userdata1 = "media_item_guid1",
+    media_item_userdata2 = "media_item_guid2",
+    take_userdata1 = "take_guid1",
+    take_userdata2 = "take_guid2",
+  }
+
+  local fake_getset = function(item_userdata, param)
+    if param == 'GUID' then
+      return true, fake_vals[item_userdata]
+    end
+  end
+  reaper.GetSetMediaItemInfo_String = fake_getset
+  reaper.GetSetMediaItemTakeInfo_String = fake_getset
+
+  local json_str = [[
+    {
+      "segments": [
+        {
+          "id": 1,
+          "start": 1.0,
+          "end": 2.0,
+          "text": "test 1",
+          "words": [
+            {
+              "word": "test",
+              "start": 1.0,
+              "end": 1.5,
+              "probability": 1.0
+            },
+            {
+              "word": "1",
+              "start": 1.5,
+              "end": 2.0,
+              "probability": 0.5
+            }
+          ],
+          "item": "media_item_guid1",
+          "take": "take_guid1"
+        },
+        {
+          "id": 2,
+          "start": 2.0,
+          "end": 3.0,
+          "text": "test 2",
+          "words": [
+            {
+              "word": "test",
+              "start": 2.0,
+              "end": 2.5,
+              "probability": 1.0
+            },
+            {
+              "word": "2",
+              "start": 2.5,
+              "end": 3.0,
+              "probability": 0.5
+            }
+          ],
+          "item": "media_item_guid2",
+          "take": "take_guid2"
+        }
+      ]
+    }
+  ]]
+
+  local t = Transcript.from_json(json_str)
+  lu.assertEquals(#t.init_data, 2)
+  lu.assertEquals(#t.filtered_data, 2)
+  lu.assertEquals(#t.data, 2)
+  lu.assertEquals(t.init_data[1].data.id, 1)
+  lu.assertEquals(t.init_data[1].data.start, 1.0)
+  lu.assertEquals(t.init_data[1].words[1].word, "test")
+  lu.assertEquals(t.init_data[1].words[1].start, 1.0)
+  lu.assertEquals(t.init_data[1].words[1].end_, 1.5)
+  lu.assertEquals(t.init_data[1].words[1].probability, 1.0)
+  lu.assertEquals(t.init_data[1].words[2].word, "1")
+  lu.assertEquals(t.init_data[1].words[2].start, 1.5)
+  lu.assertEquals(t.init_data[1].words[2].end_, 2.0)
+  lu.assertEquals(t.init_data[1].words[2].probability, 0.5)
+  lu.assertEquals(t.init_data[1].item, "media_item_userdata1")
+  lu.assertEquals(t.init_data[1].take, "take_userdata1")
+  lu.assertEquals(t.init_data[2].data.id, 2)
+  lu.assertEquals(t.init_data[2].data.start, 2.0)
+  lu.assertEquals(t.init_data[2].words[1].word, "test")
+  lu.assertEquals(t.init_data[2].words[1].start, 2.0)
+  lu.assertEquals(t.init_data[2].words[1].end_, 2.5)
+  lu.assertEquals(t.init_data[2].words[1].probability, 1.0)
+  lu.assertEquals(t.init_data[2].words[2].word, "2")
+  lu.assertEquals(t.init_data[2].words[2].start, 2.5)
+  lu.assertEquals(t.init_data[2].words[2].end_, 3.0)
+  lu.assertEquals(t.init_data[2].words[2].probability, 0.5)
+  lu.assertEquals(t.init_data[2].item, "media_item_userdata2")
+  lu.assertEquals(t.init_data[2].take, "take_userdata2")
 end
 
 --

@@ -164,6 +164,17 @@ function Transcript:to_json()
   return json.encode(self:to_table())
 end
 
+function Transcript.from_json(json_str)
+  local data = json.decode(json_str)
+  local t = Transcript.new()
+  for _, segment_data in pairs(data.segments) do
+    local segment = TranscriptSegment.from_table(segment_data)
+    t:add_segment(segment)
+  end
+  t:update()
+  return t
+end
+
 function Transcript:update()
   if #self.init_data == 0 then
     self:clear()
