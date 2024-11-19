@@ -68,6 +68,8 @@ function ReaSpeechUI:init()
   self.transcript = Transcript.new()
   self.transcript_ui = TranscriptUI.new { transcript = self.transcript }
 
+  self.importer = TranscriptImporter.new()
+
   self.alert_popup = AlertPopup.new {}
 
   self.react_handlers = self:get_react_handlers()
@@ -127,6 +129,7 @@ function ReaSpeechUI:render_content()
     if self.welcome_ui then
       self.welcome_ui:render()
     end
+    self.importer:render()
     self.controls_ui:render()
     self.actions_ui:render()
     self.transcript_ui:render()
@@ -134,6 +137,11 @@ function ReaSpeechUI:render_content()
   end)
 
   ImGui.PopItemWidth(ctx)
+end
+
+function ReaSpeechUI:load_transcript(transcript)
+  self.transcript = transcript
+  self.transcript_ui = TranscriptUI.new { transcript = self.transcript }
 end
 
 function ReaSpeechUI:submit_request(request)

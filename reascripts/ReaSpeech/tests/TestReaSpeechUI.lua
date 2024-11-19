@@ -29,6 +29,7 @@ require('source/TranscriptAnnotations')
 require('source/TranscriptAnnotationsUI')
 require('source/TranscriptEditor')
 require('source/TranscriptExporter')
+require('source/TranscriptImporter')
 require('source/TranscriptUI')
 require('source/WhisperLanguages')
 

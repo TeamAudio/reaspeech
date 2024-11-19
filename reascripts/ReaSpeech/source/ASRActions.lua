@@ -10,6 +10,7 @@ ASRActions = PluginActions {
       self:selected_tracks_button(),
       self:selected_items_button(),
       self:all_items_button(),
+      self:import_button(),
     }
   end
 }
@@ -95,6 +96,17 @@ function ASRActions:all_items_button()
   })
 
   return self._all_items_button
+end
+
+function ASRActions:import_button()
+  if self._import_button then
+    return self._import_button
+  end
+
+  self._import_button = ReaSpeechButton.new({
+    label = "Import Transcript",
+    on_click = function () app.importer:open() end
+  })
 end
 
 function ASRActions.pluralizer(count, suffix)
