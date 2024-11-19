@@ -143,6 +143,51 @@ function TestReaUtil:testTrackGuids()
   lu.assertEquals(guids[1][2], "track")
 end
 
+function TestReaUtil:testGetItemInfo()
+  reaper.GetSetMediaItemInfo_String = function(item, param, _, is_set)
+    lu.assertIsFalse(is_set)
+    if item == 'item' and param == "GUID" then
+      return true, "item_guid"
+    end
+  end
+
+  lu.assertIsNil(ReaUtil.get_item_info("derp", "GUID"))
+  lu.assertEquals(ReaUtil.get_item_info("item", "GUID"), "item_guid")
+end
+
+function TestReaUtil:testGetTakeInfo()
+  reaper.GetSetMediaItemTakeInfo_String = function(take, param, _, is_set)
+    lu.assertIsFalse(is_set)
+    if take == 'take' and param == "GUID" then
+      return true, "take_guid"
+    end
+  end
+
+  lu.assertIsNil(ReaUtil.get_take_info("derp", "GUID"))
+  lu.assertEquals(ReaUtil.get_take_info("take", "GUID"), "take_guid")
+end
+
+function TestReaUtil:testGetObjectInfoDefaults()
+  reaper.GetSetMediaItemInfo_String = function(item, param, _, is_set)
+    lu.assertIsFalse(is_set)
+    if item == 'item' and param == "GUID" then
+      return true, "item_guid"
+    end
+  end
+
+  reaper.GetSetMediaItemTakeInfo_String = function(take, param, _, is_set)
+    lu.assertIsFalse(is_set)
+    if take == 'take' and param == "GUID" then
+      return true, "take_guid"
+    end
+  end
+
+  lu.assertEquals(ReaUtil.get_item_info('item', 'GUID', 'derpfault'), 'item_guid')
+  lu.assertEquals(ReaUtil.get_item_info('duh', 'GUID', 'derpfault'), 'derpfault')
+  lu.assertEquals(ReaUtil.get_take_info('take', 'GUID', 'derpfault'), 'take_guid')
+  lu.assertEquals(ReaUtil.get_take_info('duh', 'GUID', 'derpfault'), 'derpfault')
+end
+
 --
 
 os.exit(lu.LuaUnit.run())

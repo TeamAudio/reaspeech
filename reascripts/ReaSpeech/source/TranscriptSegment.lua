@@ -212,6 +212,9 @@ function TranscriptSegment:to_table()
       table.insert(result['words'], word:to_table())
     end
   end
+
+  result.item = ReaUtil.get_item_info(self.item, 'GUID')
+  result.take = ReaUtil.get_take_info(self.take, 'GUID')
   return result
 end
 

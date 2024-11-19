@@ -7,6 +7,7 @@ local lu = require('luaunit')
 require('json')
 require('mock_reaper')
 require('Polo')
+require('ReaUtil')
 require('source/Transcript')
 require('source/TranscriptSegment')
 require('source/TranscriptWord')
@@ -24,8 +25,8 @@ TestTranscript = {
     data.end_ = nil
     return TranscriptSegment.new {
       data = data,
-      item = {},
-      take = {},
+      item = data.item or 'media_item_userdata',
+      take = data.take or 'take_userdata',
       words = words
     }
   end,
@@ -49,7 +50,9 @@ function TestTranscript:make_transcript()
     words = {
       self.word { word = "test", start = 1.0, end_ = 1.5, probability = 1.0 },
       self.word { word = "1", start = 1.5, end_ = 2.0, probability = 0.5 }
-    }
+    },
+    item = 'media_item_userdata1',
+    take = 'take_userdata1',
   })
   t:add_segment(self.segment {
     id = 2,
@@ -59,7 +62,9 @@ function TestTranscript:make_transcript()
     words = {
       self.word { word = "test", start = 2.0, end_ = 2.5, probability = 1.0 },
       self.word { word = "2", start = 2.5, end_ = 3.0, probability = 0.5 }
-    }
+    },
+    item = 'media_item_userdata2',
+    take = 'take_userdata2',
   })
   t:update()
   return t
@@ -297,6 +302,21 @@ function TestTranscript:testSplitWords()
 end
 
 function TestTranscript:testToJson()
+  local fake_vals = {
+    media_item_userdata1 = "media_item_guid1",
+    media_item_userdata2 = "media_item_guid2",
+    take_userdata1 = "take_guid1",
+    take_userdata2 = "take_guid2",
+  }
+
+  local fake_getset = function(item_userdata, param)
+    if param == 'GUID' then
+      return true, fake_vals[item_userdata]
+    end
+  end
+  reaper.GetSetMediaItemInfo_String = fake_getset
+  reaper.GetSetMediaItemTakeInfo_String = fake_getset
+
   local t = TestTranscript:make_transcript()
   local result = t:to_json()
   local parsed = json.decode(result)
@@ -312,6 +332,8 @@ function TestTranscript:testToJson()
   lu.assertEquals(parsed.segments[1].words[2].start, 1.5)
   lu.assertEquals(parsed.segments[1].words[2]['end'], 2.0)
   lu.assertEquals(parsed.segments[1].words[2].probability, 0.5)
+  lu.assertEquals(parsed.segments[1].item, "media_item_guid1")
+  lu.assertEquals(parsed.segments[1].take, "take_guid1")
   lu.assertEquals(parsed.segments[2].id, 2)
   lu.assertEquals(parsed.segments[2].start, 2.0)
   lu.assertEquals(parsed.segments[2]['end'], 3.0)
@@ -324,12 +346,14 @@ function TestTranscript:testToJson()
   lu.assertEquals(parsed.segments[2].words[2].start, 2.5)
   lu.assertEquals(parsed.segments[2].words[2]['end'], 3.0)
   lu.assertEquals(parsed.segments[2].words[2].probability, 0.5)
+  lu.assertEquals(parsed.segments[2].item, "media_item_guid2")
+  lu.assertEquals(parsed.segments[2].take, "take_guid2")
   local keys = {}
   for k, _ in pairs(parsed.segments[1]) do
     table.insert(keys, k)
   end
   table.sort(keys)
-  lu.assertEquals(keys, {"end", "file", "id", "start", "text", "words"})
+  lu.assertEquals(keys, {"end", "file", "id", "item", "start", "take", "text", "words"})
   keys = {}
   for k, _ in pairs(parsed.segments[1].words[1]) do
     table.insert(keys, k)
@@ -339,6 +363,21 @@ function TestTranscript:testToJson()
 end
 
 function TestTranscript:testSegmentToJson()
+  local fake_vals = {
+    media_item_userdata1 = "media_item_guid1",
+    media_item_userdata2 = "media_item_guid2",
+    take_userdata1 = "take_guid1",
+    take_userdata2 = "take_guid2",
+  }
+
+  local fake_getset = function(item_userdata, param)
+    if param == 'GUID' then
+      return true, fake_vals[item_userdata]
+    end
+  end
+  reaper.GetSetMediaItemInfo_String = fake_getset
+  reaper.GetSetMediaItemTakeInfo_String = fake_getset
+
   local t = TestTranscript:make_transcript()
   local result = t:get_segments()[1]:to_json()
   local parsed = json.decode(result)
@@ -354,12 +393,14 @@ function TestTranscript:testSegmentToJson()
   lu.assertEquals(parsed.words[2].start, 1.5)
   lu.assertEquals(parsed.words[2]['end'], 2.0)
   lu.assertEquals(parsed.words[2].probability, 0.5)
+  lu.assertEquals(parsed.item, "media_item_guid1")
+  lu.assertEquals(parsed.take, "take_guid1")
   local keys = {}
   for k, _ in pairs(parsed) do
     table.insert(keys, k)
   end
   table.sort(keys)
-  lu.assertEquals(keys, {"end", "file", "id", "start", "text", "words"})
+  lu.assertEquals(keys, {"end", "file", "id", "item", "start", "take", "text", "words"})
   keys = {}
   for k, _ in pairs(parsed.words[1]) do
     table.insert(keys, k)
