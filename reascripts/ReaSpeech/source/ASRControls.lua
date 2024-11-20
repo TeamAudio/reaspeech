@@ -63,7 +63,7 @@ function ASRControls:init()
 
   self.initial_prompt = ReaSpeechTextInput.new {
     state = self.settings.initial_prompt,
-    label = 'Initial Prompt'
+    label = 'Preserved Words'
   }
 
   self.model_name = ReaSpeechTextInput.new {
