@@ -65,6 +65,41 @@ TranscriptSegment.from_whisper = function(segment, item, take)
   return result
 end
 
+TranscriptSegment.from_table = function(data)
+  local segment_data = {}
+  local words = data.words
+  local item, take
+  data.words = nil
+
+  if words then
+    local transcript_words = {}
+    for _, word in pairs(words) do
+      table.insert(transcript_words, TranscriptWord.from_table(word))
+    end
+    data.words = transcript_words
+  end
+
+  for k, v in pairs(data) do
+    if k == 'item' then
+      item = ReaUtil.get_item_by_guid(v) or {}
+    elseif k == 'take' then
+      take = reaper.GetMediaItemTakeByGUID(0, v) or {}
+    --luacheck: ignore
+    elseif k == 'words' then
+      -- empty branch is okay! already handled
+    else
+      segment_data[k] = v
+    end
+  end
+
+  return TranscriptSegment.new {
+    data = segment_data,
+    item = item,
+    take = take,
+    words = data.words
+  }
+end
+
 TranscriptSegment.default_hide = function(column)
   return Transcript.DEFAULT_HIDE[column] or false
 end
@@ -212,6 +247,9 @@ function TranscriptSegment:to_table()
       table.insert(result['words'], word:to_table())
     end
   end
+
+  result.item = ReaUtil.get_item_info(self.item, 'GUID')
+  result.take = ReaUtil.get_take_info(self.take, 'GUID')
   return result
 end
 
