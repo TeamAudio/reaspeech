@@ -107,6 +107,8 @@ function ASRActions:import_button()
     label = "Import Transcript",
     on_click = function () app.importer:open() end
   })
+
+  return self._import_button
 end
 
 function ASRActions.pluralizer(count, suffix)
