@@ -19,15 +19,15 @@ priority = "explicit"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-unidecode = "^1.3.4"
-uvicorn = { extras = ["standard"], version = "^0.18.2" }
-gunicorn = "^20.1.0"
-tqdm = "^4.64.1"
-python-multipart = "^0.0.5"
+unidecode = "^1.3.8"
+uvicorn = { extras = ["standard"], version = "^0.32.1" }
+gunicorn = "^23.0.0"
+tqdm = "^4.67.0"
+python-multipart = "^0.0.17"
 ffmpeg-python = "^0.2.0"
-fastapi = "^0.95.1"
-llvmlite = "^0.39.1"
-numba = "^0.56.4"
+fastapi = "^0.115.5"
+llvmlite = "^0.43.0"
+numba = "^0.60.0"
 openai-whisper = "20240930"
 faster-whisper = "^1.0.3"
 torch = [
@@ -38,14 +38,14 @@ torch = [
   {markers = "sys_platform == 'linux' and platform_machine == 'x86_64'", url="https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp310-cp310-linux_x86_64.whl"},
   {markers = "sys_platform == 'win' and platform_machine == 'amd64'", url="https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp310-cp310-win_amd64.whl"},
 ]
-jinja2 = "^3.1.2"
-celery = "^5.2.7"
-redis = "^4.5.4"
-ctranslate2 = "4.2.1"
-aiofiles = "^23.2.1"
+jinja2 = "^3.1.4"
+celery = "^5.4.0"
+redis = "^5.2.0"
+ctranslate2 = "4.4.0"
+aiofiles = "^24.1.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.5"
+pytest = "^8.3.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
