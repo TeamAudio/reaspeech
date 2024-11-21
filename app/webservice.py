@@ -60,6 +60,11 @@ ASR_OPTIONS = frozenset([
     "model_name",
 ])
 
+if ASR_ENGINE == "faster_whisper":
+    from .faster_whisper.constants import ASR_ENGINE_OPTIONS
+else:
+    from .openai_whisper.constants import ASR_ENGINE_OPTIONS
+
 DEFAULT_MODEL_NAME = os.getenv("ASR_MODEL", "small")
 
 LANGUAGE_CODES = sorted(list(tokenizer.LANGUAGES.keys()))
@@ -181,6 +186,13 @@ async def detect_language(
         .apply_async(expires=TASK_EXPIRATION_SECONDS)
 
     return JSONResponse({"job_id": job.id})
+
+@app.get("/asr_info")
+async def asr_info():
+    return JSONResponse({
+        "engine": ASR_ENGINE,
+        "options": list(ASR_ENGINE_OPTIONS),
+    })
 
 @app.post("/asr", tags=["Endpoints"])
 async def asr(

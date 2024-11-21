@@ -160,8 +160,10 @@ ReaSpeechCombo.renderer = function (self)
   ImGui.Dummy(self.ctx, 0, 0)
 
   local imgui_label = ("##%s"):format(options.label)
+  local item_label = options.item_labels[self:value()] or ""
+  local combo_flags = ImGui.ComboFlags_HeightLarge()
 
-  if ImGui.BeginCombo(self.ctx, imgui_label, options.item_labels[self:value()]) then
+  if ImGui.BeginCombo(self.ctx, imgui_label, item_label, combo_flags) then
     app:trap(function()
       for _, item in pairs(options.items) do
         local is_selected = (item == self:value())
