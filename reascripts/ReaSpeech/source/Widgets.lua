@@ -71,9 +71,9 @@ function Widgets.tooltip(text)
      not ImGui.BeginTooltip(ctx)
   then return end
 
-  app:trap(function()
+  Trap(function()
     ImGui.PushTextWrapPos(ctx, ImGui.GetFontSize(ctx) * 42)
-    app:trap(function()
+    Trap(function()
       ImGui.Text(ctx, text)
     end)
     ImGui.PopTextWrapPos(ctx)

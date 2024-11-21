@@ -21,7 +21,7 @@ function ReaSpeechWorker:react()
   local time = reaper.time_precise()
   local fs = self:interval_functions()
   for i = 1, #fs do
-    app:trap(function ()
+    Trap(function ()
       fs[i]:react(time)
     end)
   end

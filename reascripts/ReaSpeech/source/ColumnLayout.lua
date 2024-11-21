@@ -65,6 +65,6 @@ end
 
 function ColumnLayout:_with_group(f)
   ImGui.BeginGroup(ctx)
-  app:trap(f)
+  Trap(f)
   ImGui.EndGroup(ctx)
 end

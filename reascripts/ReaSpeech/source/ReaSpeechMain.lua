@@ -23,7 +23,7 @@ end
 function ReaSpeechMain:loop()
   return function()
     if app:presenting() or app:is_open() then
-      app:trap(function() app:react() end)
+      Trap(function() app:react() end)
       reaper.defer(self:loop())
     end
   end

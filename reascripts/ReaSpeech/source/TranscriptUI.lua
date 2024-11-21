@@ -136,7 +136,7 @@ end
 function TranscriptUI:render_search(column)
   ImGui.SetCursorPosX(ctx, ImGui.GetWindowWidth(ctx) - column.width - self.ACTIONS_MARGIN)
   ImGui.PushItemWidth(ctx, column.width)
-  app:trap(function()
+  Trap(function()
     local search_changed, search = ImGui.InputTextWithHint(ctx, '##search', 'Search', self.transcript.search)
     if search_changed then
       self:handle_search(search)
@@ -164,7 +164,7 @@ function TranscriptUI:render_table()
 
   local ok = ImGui.BeginTable(ctx, "results", num_columns, self.table_flags(true))
   if ok then
-    app:trap(function ()
+    Trap(function ()
       ImGui.TableSetupColumn(ctx, "##actions", ImGui.TableColumnFlags_NoSort(), 20)
 
       for _, column in pairs(columns) do

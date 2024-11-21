@@ -6,6 +6,7 @@ require('ImGuiTheme')
 require('Polo')
 require('ReaUtil')
 require('Storage')
+require('Trap')
 require('mock_reaper')
 require('ReaIter')
 

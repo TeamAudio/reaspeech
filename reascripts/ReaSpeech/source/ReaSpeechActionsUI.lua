@@ -13,7 +13,7 @@ end
 function ReaSpeechActionsUI:render()
   local disable_if = self.disabler
   local progress
-  app:trap(function ()
+  Trap(function ()
     progress = self.worker:progress()
   end)
 
