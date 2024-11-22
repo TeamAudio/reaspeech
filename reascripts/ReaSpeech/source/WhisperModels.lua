@@ -19,7 +19,6 @@ WhisperModels = {
     { name = 'large-v2', label = 'Large v2' },
     { name = 'large-v3', label = 'Large v3' },
     { name = 'large-v3-turbo', label = 'Large v3 Turbo' },
-    { name = 'turbo', label = 'Turbo' },
     { name = 'distil-small.en', label = 'Distil Small', lang = 'en', engine = 'faster_whisper' },
     { name = 'distil-medium.en', label = 'Distil Medium', lang = 'en', engine = 'faster_whisper' },
     { name = 'distil-large-v2', label = 'Distil Large v2', lang = 'en', engine = 'faster_whisper' },
