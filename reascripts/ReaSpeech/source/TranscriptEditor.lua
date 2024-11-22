@@ -116,7 +116,7 @@ function TranscriptEditor:render_word_navigation()
   local disable_if = ReaUtil.disabler(ctx, app.onerror)
 
   ImGui.PushButtonRepeat(ctx, true)
-  app:trap(function ()
+  Trap(function ()
     if ImGui.ArrowButton(ctx, '##left', ImGui.Dir_Left()) then
       self:edit_word(self.editing.word_index - 1)
     end
@@ -171,7 +171,7 @@ function TranscriptEditor:render_words()
     if self.editing.word_index ~= i then
       ImGui.PushStyleColor(ctx, ImGui.Col_Button(), 0xffffff33)
     end
-    app:trap(function()
+    Trap(function()
       if ImGui.Button(ctx, word.word .. '##' .. i) then
         edit_requested = i
       end
@@ -233,7 +233,7 @@ function TranscriptEditor:render_score_input()
     ImGui.PushStyleColor(ctx, ImGui.Col_SliderGrab(), color)
     ImGui.PushStyleColor(ctx, ImGui.Col_SliderGrabActive(), color)
   end
-  app:trap(function ()
+  Trap(function ()
     local rv, value = ImGui.SliderDouble(ctx, 'score', self.editing.word.probability, 0, 1)
     if rv then
       self.editing.word.probability = value
@@ -281,10 +281,10 @@ function TranscriptEditor:render_zoom_combo()
   ImGui.Text(ctx, "zoom to")
   ImGui.SameLine(ctx)
   ImGui.PushItemWidth(ctx, self.BUTTON_WIDTH)
-  app:trap(function()
+  Trap(function()
     disable_if(not self.sync_time_selection, function()
       if ImGui.BeginCombo(ctx, "##zoom_level", self.zoom_level) then
-        app:trap(function()
+        Trap(function()
           for _, zoom in pairs(self.ZOOM_LEVEL) do
             if ImGui.Selectable(ctx, zoom.description, self.zoom_level == zoom.value) then
               self.zoom_level = zoom.value

@@ -141,7 +141,7 @@ function ASRControls:init_simple_layout()
 
     render_column = function (column)
       ImGui.PushItemWidth(ctx, column.width)
-      app:trap(function () renderers[column.num](self, column) end)
+      Trap(function () renderers[column.num](self, column) end)
       ImGui.PopItemWidth(ctx)
     end
   }
@@ -165,7 +165,7 @@ function ASRControls:init_advanced_layout()
       ImGui.PushItemWidth(ctx, column.width)
       for row, renderer in ipairs(renderers[column.num]) do
         if row > 1 then ImGui.Spacing(ctx) end
-        app:trap(function () renderer(self, column) end)
+        Trap(function () renderer(self, column) end)
       end
       ImGui.PopItemWidth(ctx)
     end

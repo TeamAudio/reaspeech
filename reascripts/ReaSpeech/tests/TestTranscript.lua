@@ -9,6 +9,7 @@ require('mock_reaper')
 require('Polo')
 require('ReaIter')
 require('ReaUtil')
+require('Trap')
 require('source/Transcript')
 require('source/TranscriptSegment')
 require('source/TranscriptWord')
@@ -36,8 +37,6 @@ TestTranscript = {
 }
 
 function TestTranscript:setUp()
-  function app:trap(f) return xpcall(f, function(e) print(tostring(e)) end) end
-
   reaper.__test_setUp()
 end
 

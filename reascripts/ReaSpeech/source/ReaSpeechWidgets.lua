@@ -21,7 +21,7 @@ end
 function ReaSpeechWidget:render(...)
   ImGui.PushID(self.ctx, self.widget_id)
   local args = ...
-  app:trap(function()
+  Trap(function()
     self.renderer(self, args)
   end)
   ImGui.PopID(self.ctx)
@@ -164,7 +164,7 @@ ReaSpeechCombo.renderer = function (self)
   local combo_flags = ImGui.ComboFlags_HeightLarge()
 
   if ImGui.BeginCombo(self.ctx, imgui_label, item_label, combo_flags) then
-    app:trap(function()
+    Trap(function()
       for _, item in pairs(options.items) do
         local is_selected = (item == self:value())
         if ImGui.Selectable(self.ctx, options.item_labels[item], is_selected) then
@@ -200,7 +200,7 @@ ReaSpeechTabBar.renderer = function (self)
   if ImGui.BeginTabBar(self.ctx, 'TabBar') then
     for _, tab in pairs(self.options.tabs) do
       if ImGui.BeginTabItem(self.ctx, tab.label) then
-        app:trap(function()
+        Trap(function()
           self:set(tab.key)
         end)
         ImGui.EndTabItem(self.ctx)
@@ -242,7 +242,7 @@ ReaSpeechButtonBar.new = function (options)
   local with_button_color = function (selected, f)
     if selected then
       ImGui.PushStyleColor(o.ctx, ImGui.Col_Button(), Theme.colors.dark_gray_translucent)
-      app:trap(f)
+      Trap(f)
       ImGui.PopStyleColor(o.ctx)
     else
       f()
@@ -305,7 +305,7 @@ ReaSpeechButton.renderer = function(self)
 
   disable_if(options.disabled, function()
     if ImGui.Button(self.ctx, options.label, options.width) then
-      app:trap(options.on_click)
+      Trap(options.on_click)
     end
   end)
 end
@@ -436,7 +436,7 @@ ReaSpeechListBox.renderer = function(self)
 
   local needs_update = false
   if ImGui.BeginListBox(self.ctx, imgui_label) then
-    app:trap(function()
+    Trap(function()
       local current = self:value()
       local new_value = {}
       for i, item in ipairs(options.items) do
@@ -444,7 +444,7 @@ ReaSpeechListBox.renderer = function(self)
         local is_selected = current[item]
         local label = options.item_labels[item]
         ImGui.PushID(ctx, 'item' .. i)
-        app:trap(function()
+        Trap(function()
           local result, now_selected = ImGui.Selectable(self.ctx, label, is_selected)
 
           if result and is_selected ~= now_selected then

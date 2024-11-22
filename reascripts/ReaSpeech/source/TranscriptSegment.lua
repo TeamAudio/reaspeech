@@ -186,7 +186,7 @@ function TranscriptSegment:get_file(include_extensions)
   include_extensions = include_extensions or false
 
   local file = ''
-  app:trap(function ()
+  Trap(function ()
     local source = reaper.GetMediaItemTake_Source(self.take)
     if source then
       local source_path = reaper.GetMediaSourceFileName(source)

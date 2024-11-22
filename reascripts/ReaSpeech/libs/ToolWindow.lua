@@ -212,16 +212,14 @@ function ToolWindow.render(o)
     o:open()
   end
 
-  local trap = function(f) return app:trap(f) end
-
   local f = function()
     state.theme:wrap(o.ctx, function()
       ToolWindow._render_window(o)
-    end, trap)
+    end, Trap)
   end
 
   if state.font then
-    Fonts.wrap(ctx, Fonts.main, f, trap)
+    Fonts.wrap(ctx, Fonts.main, f, Trap)
   else
     f()
   end
@@ -241,7 +239,7 @@ function ToolWindow._render_window(o)
   ImGui.SetNextWindowSize(o.ctx, state.width, state.height, ImGui.Cond_FirstUseEver())
   local visible, open = state.begin_f(o.ctx, state.title, true, state.window_flags)
   if visible then
-    app:trap(function ()
+    Trap(function ()
       if o.render_content then
         o:render_content()
       end

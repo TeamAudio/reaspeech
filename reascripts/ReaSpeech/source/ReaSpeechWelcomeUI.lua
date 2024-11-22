@@ -80,7 +80,7 @@ end
 
 function ReaSpeechWelcomeUI:render_heading(text)
   ImGui.PushFont(ctx, Fonts.bold)
-  app:trap(function ()
+  Trap(function ()
     ImGui.Dummy(ctx, self.WIDTH, self.HEADING_MARGIN)
     ImGui.SetCursorPosX(ctx, self.PADDING)
     ImGui.Text(ctx, text)
