@@ -29,7 +29,7 @@ fastapi = "^0.115.5"
 llvmlite = "^0.43.0"
 numba = "^0.60.0"
 openai-whisper = "20240930"
-faster-whisper = "^1.0.3"
+faster-whisper = "^1.1.0"
 torch = [
   {markers = "sys_platform == 'darwin' and platform_machine == 'arm64'", url = "https://download.pytorch.org/whl/cpu/torch-1.13.1-cp310-none-macosx_11_0_arm64.whl"},
   {markers = "sys_platform == 'linux' and platform_machine == 'arm64'", url="https://download.pytorch.org/whl/cpu/torch-1.13.1-cp310-none-macosx_11_0_arm64.whl"},
@@ -41,7 +41,7 @@ torch = [
 jinja2 = "^3.1.4"
 celery = "^5.4.0"
 redis = "^5.2.0"
-ctranslate2 = "4.4.0"
+ctranslate2 = "4.3.1"
 aiofiles = "^24.1.0"
 
 [tool.poetry.dev-dependencies]
