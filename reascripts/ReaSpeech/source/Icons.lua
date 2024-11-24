@@ -80,3 +80,29 @@ function Icons.stop(dl, x, y, w, h, color)
     y + h * 0.7,
     color)
 end
+
+function Icons.info(dl, x, y, w, h, color)
+  ImGui.DrawList_AddCircle(
+    dl,
+    x + w * 0.5,
+    y + h * 0.5,
+    w * 0.5,
+    color,
+    20)
+  -- Dot of the i
+  ImGui.DrawList_AddRectFilled(
+    dl,
+    x + w * 0.46,
+    y + h * 0.3,
+    x + w * 0.54,
+    y + h * 0.35,
+    color)
+  -- Body of the i
+  ImGui.DrawList_AddRectFilled(
+    dl,
+    x + w * 0.46,
+    y + h * 0.45,
+    x + w * 0.54,
+    y + h * 0.7,
+    color)
+end

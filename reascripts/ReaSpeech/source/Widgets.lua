@@ -6,11 +6,14 @@
 
 Widgets = {}
 
-function Widgets.icon(icon, id, w, h, tooltip, color)
+function Widgets.icon(icon, id, w, h, tooltip, color, hover_color)
   assert(tooltip, 'missing tooltip for icon')
   color = color or 0xffffffff
   local x, y = ImGui.GetCursorScreenPos(ctx)
   local rv = ImGui.InvisibleButton(ctx, id, w, h)
+  if ImGui.IsItemHovered(ctx) then
+    color = hover_color or color
+  end
   local dl = ImGui.GetWindowDrawList(ctx)
   icon(dl, x, y, w, h, color)
   Widgets.tooltip(tooltip)

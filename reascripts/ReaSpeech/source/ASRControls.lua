@@ -10,6 +10,11 @@ ASRControls = PluginControls {
   DEFAULT_LANGUAGE = '',
   DEFAULT_MODEL_NAME = 'small',
 
+  HELP_MODEL = 'Model to use for transcription. Larger models provide better accuracy but use more resources.',
+  HELP_LANGUAGE = 'Language spoken in audio. Set to "Detect" to auto-detect language.',
+  HELP_PRESERVED_WORDS = 'Comma-separated list of words to preserve in transcript. Example: Jane Doe, CyberCorp',
+  HELP_VAD = 'Enable Voice Activity Detection (VAD) to filter out silence.',
+
   tabs = function(self)
     return {
       ReaSpeechPlugins.tab('asr-simple', 'Simple',
@@ -45,6 +50,7 @@ function ASRControls:init()
   self.language = ReaSpeechCombo.new {
     state = self.settings.language,
     label = 'Language',
+    help_text = self.HELP_LANGUAGE,
     items = WhisperLanguages.LANGUAGE_CODES,
     item_labels = WhisperLanguages.LANGUAGES
   }
@@ -58,29 +64,28 @@ function ASRControls:init()
 
   self.hotwords = ReaSpeechTextInput.new {
     state = self.settings.hotwords,
-    label = 'Preserved Words'
+    label = 'Preserved Words',
+    help_text = self.HELP_PRESERVED_WORDS
   }
 
   self.initial_prompt = ReaSpeechTextInput.new {
     state = self.settings.initial_prompt,
-    label = 'Preserved Words'
-  }
-
-  self.model_name = ReaSpeechTextInput.new {
-    state = self.settings.model_name,
-    label = 'Model Name'
+    label = 'Preserved Words',
+    help_text = self.HELP_PRESERVED_WORDS
   }
 
   self.vad_filter = ReaSpeechCheckbox.new {
     state = self.settings.vad_filter,
     label_long = 'Voice Activity Detection',
     label_short = 'VAD',
+    help_text = self.HELP_VAD,
     width_threshold = ReaSpeechControlsUI.NARROW_COLUMN_WIDTH
   }
 
-  self.model_combo = ReaSpeechCombo.new {
+  self.model_name = ReaSpeechCombo.new {
     state = self.settings.model_name,
     label = 'Model',
+    help_text = self.HELP_MODEL,
     items = WhisperModels.get_model_names(self.asr_engine),
     item_labels = self:get_model_labels(),
   }
@@ -188,7 +193,7 @@ function ASRControls:render_language(column)
 end
 
 function ASRControls:render_model()
-  self.model_combo:render()
+  self.model_name:render()
 end
 
 function ASRControls:render_hotwords()
