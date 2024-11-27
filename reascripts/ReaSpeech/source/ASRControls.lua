@@ -10,9 +10,9 @@ ASRControls = PluginControls {
   DEFAULT_LANGUAGE = '',
   DEFAULT_MODEL_NAME = 'small',
 
-  HELP_MODEL = 'Model to use for transcription. Larger models provide better accuracy but use more resources.',
-  HELP_LANGUAGE = 'Language spoken in audio. Set to "Detect" to auto-detect language.',
-  HELP_PRESERVED_WORDS = 'Comma-separated list of words to preserve in transcript. Example: Jane Doe, CyberCorp',
+  HELP_MODEL = 'Model to use for transcription. Larger models provide better accuracy but use more resources like disk space and memory.',
+  HELP_LANGUAGE = 'Language spoken in source audio.\nSet this to "Detect" to auto-detect the language.',
+  HELP_PRESERVED_WORDS = 'Comma-separated list of words to preserve in transcript.\nExample: Jane Doe, CyberCorp',
   HELP_VAD = 'Enable Voice Activity Detection (VAD) to filter out silence.',
 
   tabs = function(self)
