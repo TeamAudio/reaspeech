@@ -41,7 +41,7 @@ function ReaSpeechWidget:render_label(label)
   ImGui.Text(self.ctx, label)
 
   if label ~= '' and options.help_text then
-    ImGui.SameLine(ctx)
+    ImGui.SameLine(self.ctx)
     self:render_help_icon()
   end
 
@@ -104,8 +104,8 @@ ReaSpeechCheckbox.renderer = function (self, column)
   local rv, value = ImGui.Checkbox(self.ctx, label, self:value())
 
   if options.help_text then
-    ImGui.SameLine(ctx)
-    ImGui.SetCursorPosY(ctx, ImGui.GetCursorPosY(ctx) + 7)
+    ImGui.SameLine(self.ctx)
+    ImGui.SetCursorPosY(self.ctx, ImGui.GetCursorPosY(self.ctx) + 7)
     self:render_help_icon()
   end
 
@@ -466,7 +466,7 @@ ReaSpeechListBox.renderer = function(self)
         new_value[item] = current[item] or false
         local is_selected = current[item]
         local label = options.item_labels[item]
-        ImGui.PushID(ctx, 'item' .. i)
+        ImGui.PushID(self.ctx, 'item' .. i)
         Trap(function()
           local result, now_selected = ImGui.Selectable(self.ctx, label, is_selected)
 
@@ -475,7 +475,7 @@ ReaSpeechListBox.renderer = function(self)
             new_value[item] = now_selected
           end
         end)
-        ImGui.PopID(ctx)
+        ImGui.PopID(self.ctx)
       end
 
       if needs_update then
