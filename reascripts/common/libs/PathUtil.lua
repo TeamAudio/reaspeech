@@ -44,9 +44,9 @@ PathUtil.get_reveal_command = function(path_arg)
     return 'explorer /select,"' .. path_arg .. '"'
   elseif PathUtil._is_mac() then
     return 'open -R "' .. path_arg .. '"'
+  else
+    return '[ -x /usr/bin/xdg-open ] && xdg-open "' .. path_arg .. '"'
   end
-
-  return ""
 end
 
 PathUtil._is_full_path = function(path)
