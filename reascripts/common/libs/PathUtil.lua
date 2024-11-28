@@ -13,28 +13,17 @@ PathUtil.apply_extension = function(filepath, extension)
     return ""
   end
 
-  local path = ""
+  local root, _, ext = filepath:match("([^%.]*)(%.?([^\\/%.]*))")
 
-  local path_part, file_part = filepath:match("(.+)[\\/](.+)")
-
-  if path_part then
-    path = path_part .. PathUtil._path_separator()
-    filepath = file_part
+  if not root or #root < 1 then
+    return ""
   end
 
-  -- split the path by ".", if last chunk is alphanumeric don't apply extension
-  local chunks = {}
-  for chunk in filepath:gmatch("[^%.]+") do
-    table.insert(chunks, chunk)
+  if #ext > 0 then
+    return filepath
   end
 
-  local last_chunk = chunks[#chunks]
-
-  if #chunks > 1 and last_chunk:find("%w+") then
-    return path .. filepath
-  end
-
-  return path .. filepath .. '.' .. extension
+  return filepath .. '.' .. extension
 end
 
 -- Returns the given path if a full path, otherwise returns given path
