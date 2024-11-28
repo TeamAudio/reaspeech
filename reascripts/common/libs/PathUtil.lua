@@ -53,7 +53,7 @@ PathUtil._is_full_path = function(path)
   local found
 
   if PathUtil._is_windows() then
-    found = path:find("^%w:\\")
+    found = path:find("^%w:\\") or path:find("^\\")
   else
     found = path:find("^/")
   end

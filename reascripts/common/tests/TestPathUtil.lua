@@ -110,6 +110,7 @@ function TestPathUtil:testIsFullPath()
     [true] = {
       "C:\\path\\to\\some-file.json",
       "Z:\\path\\to\\some-file.json",
+      "\\Server\\Volume\\File"
     },
     [false] = {
       "path\\to\\some-file.json",
