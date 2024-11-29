@@ -45,7 +45,7 @@ PathUtil.get_reveal_command = function(path_arg)
   elseif PathUtil._is_mac() then
     return '/usr/bin/open -R "' .. path_arg .. '"'
   else
-    return '[ -x /usr/bin/xdg-open ] && xdg-open "' .. path_arg .. '"'
+    return '/bin/[ -x /usr/bin/xdg-open ] && /usr/bin/xdg-open "' .. path_arg .. '"'
   end
 end
 
