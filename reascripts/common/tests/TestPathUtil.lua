@@ -86,10 +86,10 @@ end
 
 function TestPathUtil:testGetRevealCommand()
   local windows_path = "C:\\path\\to\\some-file.json"
-  local windows_expectation = 'explorer /select,"' .. windows_path .. '"'
+  local windows_expectation = '%SystemRoot%\\explorer.exe /select,"' .. windows_path .. '"'
 
   local mac_and_other_path = "/path/to/some-file.json"
-  local mac_expectation = 'open -R "' .. mac_and_other_path .. '"'
+  local mac_expectation = '/usr/bin/open -R "' .. mac_and_other_path .. '"'
   local other_expectation = '[ -x /usr/bin/xdg-open ] && xdg-open "' .. mac_and_other_path .. '"'
 
   reaper.GetOS = function() return "Win64" end
