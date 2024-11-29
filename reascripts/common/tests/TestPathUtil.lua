@@ -2,6 +2,7 @@ package.path = '../common/libs/?.lua;../common/vendor/?.lua;' .. package.path
 
 local lu = require('luaunit')
 
+require('EnvUtil')
 require('PathUtil')
 
 TestPathUtil = {

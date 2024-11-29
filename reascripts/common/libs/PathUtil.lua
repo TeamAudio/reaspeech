@@ -40,9 +40,9 @@ end
 -- Returns the command to reveal the given path in the OS file explorer.
 -- Works for Windows and macOS. To quote a wise philosopher, "Linux is a mess."
 PathUtil.get_reveal_command = function(path_arg)
-  if PathUtil._is_windows() then
+  if EnvUtil.is_windows() then
     return '%SystemRoot%\\explorer.exe /select,"' .. path_arg .. '"'
-  elseif PathUtil._is_mac() then
+  elseif EnvUtil.is_mac() then
     return '/usr/bin/open -R "' .. path_arg .. '"'
   else
     return '/bin/[ -x /usr/bin/xdg-open ] && /usr/bin/xdg-open "' .. path_arg .. '"'
@@ -52,7 +52,7 @@ end
 PathUtil._is_full_path = function(path)
   local found
 
-  if PathUtil._is_windows() then
+  if EnvUtil.is_windows() then
     found = path:find("^%w:\\") or path:find("^\\")
   else
     found = path:find("^/")
@@ -61,18 +61,8 @@ PathUtil._is_full_path = function(path)
   return found and true or false
 end
 
-PathUtil._is_mac = function()
-  local _os = reaper.GetOS()
-  local is_mac = _os:find("OSX", 1, true) or _os:find("macOS", 1, true)
-  return is_mac and true or false
-end
-
-PathUtil._is_windows = function()
-  return reaper.GetOS():find("Win") and true or false
-end
-
 PathUtil._path_separator = function()
-  if PathUtil._is_windows() then
+  if EnvUtil.is_windows() then
     return "\\"
   else
     return "/"

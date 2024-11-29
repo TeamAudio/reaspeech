@@ -9,7 +9,7 @@ Tempfile = {
 }
 
 function Tempfile:name()
-  if reaper.GetOS():find("Win") then
+  if EnvUtil.is_windows() then
     return self:_add_name(os.getenv("TEMP") .. os.tmpname())
   else
     return self:_add_name(os.tmpname())

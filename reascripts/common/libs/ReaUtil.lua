@@ -23,7 +23,7 @@ end
 
 function ReaUtil.open_url(url)
   local url_opener_cmd
-  if reaper.GetOS():match('Win') then
+  if EnvUtil.is_windows() then
     url_opener_cmd = 'start "" "%s"'
   else
     url_opener_cmd = '/usr/bin/open "%s"'
