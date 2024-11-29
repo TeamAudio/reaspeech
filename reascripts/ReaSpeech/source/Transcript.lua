@@ -13,7 +13,11 @@ Transcript = Polo {
 
   init = function(self)
     self:clear()
-  end
+  end,
+
+  __len = function(self)
+    return #self.data
+  end,
 }
 
 Transcript.calculate_offset = function (item, take)
@@ -82,6 +86,10 @@ end
 
 function Transcript:has_segments()
   return #self.init_data > 0
+end
+
+function Transcript:get_segment(row)
+  return self.data[row]
 end
 
 function Transcript:get_segments()
