@@ -57,12 +57,12 @@ function TranscriptUI:init()
   self:init_layouts()
 end
 
-function TranscriptUI:_clipper()
-  if not ImGui.ValidatePtr(self.clipper, 'ImGui_ListClipper*') then
-    self.clipper = ImGui.CreateListClipper(ctx)
+function TranscriptUI:clipper()
+  if not ImGui.ValidatePtr(self._clipper, 'ImGui_ListClipper*') then
+    self._clipper = ImGui.CreateListClipper(ctx)
   end
 
-  return self.clipper
+  return self._clipper
 end
 
 function TranscriptUI:init_layouts()
@@ -190,7 +190,7 @@ function TranscriptUI:render_table()
 
       ImGui.TableSetupScrollFreeze(ctx, 0, 1)
 
-      local clipper = self:_clipper()
+      local clipper = self:clipper()
 
       ImGui.ListClipper_Begin(clipper, #self.transcript + 1)
 
