@@ -4,13 +4,18 @@
 
 ]]--
 
-Widgets = {}
+Widgets = {
+  TOOLTIP_WRAP_CHARS = 30,
+}
 
-function Widgets.icon(icon, id, w, h, tooltip, color)
+function Widgets.icon(icon, id, w, h, tooltip, color, hover_color)
   assert(tooltip, 'missing tooltip for icon')
   color = color or 0xffffffff
   local x, y = ImGui.GetCursorScreenPos(ctx)
   local rv = ImGui.InvisibleButton(ctx, id, w, h)
+  if ImGui.IsItemHovered(ctx) then
+    color = hover_color or color
+  end
   local dl = ImGui.GetWindowDrawList(ctx)
   icon(dl, x, y, w, h, color)
   Widgets.tooltip(tooltip)
@@ -72,7 +77,7 @@ function Widgets.tooltip(text)
   then return end
 
   Trap(function()
-    ImGui.PushTextWrapPos(ctx, ImGui.GetFontSize(ctx) * 42)
+    ImGui.PushTextWrapPos(ctx, ImGui.GetFontSize(ctx) * Widgets.TOOLTIP_WRAP_CHARS)
     Trap(function()
       ImGui.Text(ctx, text)
     end)
