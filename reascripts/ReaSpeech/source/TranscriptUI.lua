@@ -57,6 +57,14 @@ function TranscriptUI:init()
   self:init_layouts()
 end
 
+function TranscriptUI:clipper()
+  if not ImGui.ValidatePtr(self._clipper, 'ImGui_ListClipper*') then
+    self._clipper = ImGui.CreateListClipper(ctx)
+  end
+
+  return self._clipper
+end
+
 function TranscriptUI:init_layouts()
   local renderers = {
     self.render_annotations_button,
@@ -162,8 +170,7 @@ function TranscriptUI:render_table()
   local columns = self.transcript:get_columns()
   local num_columns = #columns + 1
 
-  local ok = ImGui.BeginTable(ctx, "results", num_columns, self.table_flags(true))
-  if ok then
+  if ImGui.BeginTable(ctx, "results", num_columns, self.table_flags(true)) then
     Trap(function ()
       ImGui.TableSetupColumn(ctx, "##actions", ImGui.TableColumnFlags_NoSort(), 20)
 
@@ -182,17 +189,28 @@ function TranscriptUI:render_table()
       end
 
       ImGui.TableSetupScrollFreeze(ctx, 0, 1)
-      ImGui.TableHeadersRow(ctx)
 
-      self:sort_table()
+      local clipper = self:clipper()
 
-      for index, segment in pairs(self.transcript:get_segments()) do
-        ImGui.TableNextRow(ctx)
-        ImGui.TableNextColumn(ctx)
-        self:render_segment_actions(segment, index)
-        for _, column in pairs(columns) do
-          ImGui.TableNextColumn(ctx)
-          self:render_table_cell(segment, column)
+      ImGui.ListClipper_Begin(clipper, #self.transcript + 1)
+
+      while ImGui.ListClipper_Step(clipper) do
+        local display_start, display_end = ImGui.ListClipper_GetDisplayRange(clipper)
+
+        for row = display_start, display_end - 1 do
+          if row == 0 then
+            ImGui.TableHeadersRow(ctx)
+            self:sort_table()
+          else
+            local segment = self.transcript:get_segment(row)
+            ImGui.TableNextRow(ctx)
+            ImGui.TableNextColumn(ctx)
+            self:render_segment_actions(segment, row)
+            for _, column in pairs(columns) do
+              ImGui.TableNextColumn(ctx)
+              self:render_table_cell(segment, column)
+            end
+          end
         end
       end
     end)
