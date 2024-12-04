@@ -6,8 +6,10 @@ require('mock_reaper')
 require('ImGuiTheme')
 require('Polo')
 require('Storage')
+require('Trap')
 require('libs/ToolWindow')
 require('source/Logging')
+require('source/Tween')
 require('source/include/globals')
 
 --
@@ -182,10 +184,6 @@ function TestToolWindow:testClose()
   o:close()
   lu.assertEquals(o:is_open(), false)
 end
-
-app = {
-  trap = function(self, f) return xpcall(f, function(e) print(tostring(e)) end) end
-}
 
 function TestToolWindow:testRender()
   ImGui = ImGui or {}

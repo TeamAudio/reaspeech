@@ -35,6 +35,15 @@ function TranscriptWord:to_table()
   }
 end
 
+function TranscriptWord.from_table(data)
+  return TranscriptWord.new {
+    word = data.word,
+    start = data.start,
+    end_ = data['end'],
+    probability = data.probability,
+  }
+end
+
 function TranscriptWord:select_in_timeline(offset)
   offset = offset or 0
   local start = self.start + offset

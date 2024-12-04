@@ -6,6 +6,7 @@ local lu = require('luaunit')
 
 require('mock_reaper')
 require('Polo')
+require('Trap')
 require('source/SRTWriter')
 require('source/Transcript')
 require('source/TranscriptSegment')
@@ -18,8 +19,6 @@ reaper.GetMediaSourceFileName = function (source) return source.fileName end
 TestSRTWriter = {}
 
 function TestSRTWriter:setUp()
-  function app:trap(f) return xpcall(f, function(e) print(tostring(e)) end) end
-
   reaper.__test_setUp()
 end
 

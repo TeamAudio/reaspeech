@@ -1,11 +1,5 @@
 package.path = '../common/libs/?.lua;../common/vendor/?.lua;' .. package.path
 
-app = {
-  trap = function(self, f)
-    return xpcall(f, function(e) print(tostring(e)) end)
-  end
-}
-
 local lu = require('luaunit')
 
 require('json')
@@ -13,6 +7,7 @@ require('mock_reaper')
 require('Polo')
 require('ReaUtil')
 require('Storage')
+require('Trap')
 require('source/ColumnLayout')
 require('source/Logging')
 require('source/ReaSpeechUI')

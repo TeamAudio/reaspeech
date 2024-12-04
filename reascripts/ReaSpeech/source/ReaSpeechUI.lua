@@ -30,7 +30,7 @@ function ReaSpeechUI:init()
 
   Logging.init(self, 'ReaSpeechUI')
 
-  self.onerror = function (e)
+  Trap.on_error = function (e)
     self:log(e)
   end
 
@@ -68,6 +68,8 @@ function ReaSpeechUI:init()
   self.transcript = Transcript.new()
   self.transcript_ui = TranscriptUI.new { transcript = self.transcript }
 
+  self.importer = TranscriptImporter.new()
+
   self.alert_popup = AlertPopup.new {}
 
   self.react_handlers = self:get_react_handlers()
@@ -77,13 +79,9 @@ ReaSpeechUI.config_flags = function ()
   return ImGui.ConfigFlags_DockingEnable()
 end
 
-function ReaSpeechUI:trap(f)
-  return xpcall(f, self.onerror)
-end
-
 function ReaSpeechUI:react()
   for _, handler in pairs(self.react_handlers) do
-    self:trap(handler)
+    Trap(handler)
   end
 end
 
@@ -123,10 +121,11 @@ function ReaSpeechUI:render_content()
 
   ImGui.PushItemWidth(ctx, self.ITEM_WIDTH)
 
-  self:trap(function ()
+  Trap(function ()
     if self.welcome_ui then
       self.welcome_ui:render()
     end
+    self.importer:render()
     self.controls_ui:render()
     self.actions_ui:render()
     self.transcript_ui:render()
@@ -134,6 +133,11 @@ function ReaSpeechUI:render_content()
   end)
 
   ImGui.PopItemWidth(ctx)
+end
+
+function ReaSpeechUI:load_transcript(transcript)
+  self.transcript = transcript
+  self.transcript_ui = TranscriptUI.new { transcript = self.transcript }
 end
 
 function ReaSpeechUI:submit_request(request)

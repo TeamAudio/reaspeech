@@ -13,7 +13,11 @@ Transcript = Polo {
 
   init = function(self)
     self:clear()
-  end
+  end,
+
+  __len = function(self)
+    return #self.data
+  end,
 }
 
 Transcript.calculate_offset = function (item, take)
@@ -82,6 +86,10 @@ end
 
 function Transcript:has_segments()
   return #self.init_data > 0
+end
+
+function Transcript:get_segment(row)
+  return self.data[row]
 end
 
 function Transcript:get_segments()
@@ -162,6 +170,17 @@ end
 
 function Transcript:to_json()
   return json.encode(self:to_table())
+end
+
+function Transcript.from_json(json_str)
+  local data = json.decode(json_str)
+  local t = Transcript.new()
+  for _, segment_data in pairs(data.segments) do
+    local segment = TranscriptSegment.from_table(segment_data)
+    t:add_segment(segment)
+  end
+  t:update()
+  return t
 end
 
 function Transcript:update()

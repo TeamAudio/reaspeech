@@ -5,6 +5,7 @@
 ]]--
 
 ReaSpeechWidget = Polo {
+  HELP_ICON_SIZE = 15,
 }
 
 function ReaSpeechWidget:init()
@@ -21,10 +22,30 @@ end
 function ReaSpeechWidget:render(...)
   ImGui.PushID(self.ctx, self.widget_id)
   local args = ...
-  app:trap(function()
+  Trap(function()
     self.renderer(self, args)
   end)
   ImGui.PopID(self.ctx)
+end
+
+function ReaSpeechWidget:render_help_icon()
+  local options = self.options
+  local size = self.HELP_ICON_SIZE
+  Widgets.icon(Icons.info, '##help-text', size, size, options.help_text, 0xffffffa0, 0xffffffff)
+end
+
+function ReaSpeechWidget:render_label(label)
+  local options = self.options
+  label = label or options.label
+
+  ImGui.Text(self.ctx, label)
+
+  if label ~= '' and options.help_text then
+    ImGui.SameLine(self.ctx)
+    self:render_help_icon()
+  end
+
+  ImGui.Dummy(self.ctx, 0, 0)
 end
 
 function ReaSpeechWidget:value()
@@ -82,6 +103,12 @@ ReaSpeechCheckbox.renderer = function (self, column)
 
   local rv, value = ImGui.Checkbox(self.ctx, label, self:value())
 
+  if options.help_text then
+    ImGui.SameLine(self.ctx)
+    ImGui.SetCursorPosY(self.ctx, ImGui.GetCursorPosY(self.ctx) + 7)
+    self:render_help_icon()
+  end
+
   if rv then
     self:set(value)
     options.changed_handler(value)
@@ -116,8 +143,7 @@ end
 ReaSpeechTextInput.renderer = function (self)
   local options = self.options
 
-  ImGui.Text(self.ctx, options.label)
-  ImGui.Dummy(self.ctx, 0, 0)
+  self:render_label()
 
   local imgui_label = ("##%s"):format(options.label)
 
@@ -156,13 +182,14 @@ end
 ReaSpeechCombo.renderer = function (self)
   local options = self.options
 
-  ImGui.Text(self.ctx, options.label)
-  ImGui.Dummy(self.ctx, 0, 0)
+  self:render_label()
 
   local imgui_label = ("##%s"):format(options.label)
+  local item_label = options.item_labels[self:value()] or ""
+  local combo_flags = ImGui.ComboFlags_HeightLarge()
 
-  if ImGui.BeginCombo(self.ctx, imgui_label, options.item_labels[self:value()]) then
-    app:trap(function()
+  if ImGui.BeginCombo(self.ctx, imgui_label, item_label, combo_flags) then
+    Trap(function()
       for _, item in pairs(options.items) do
         local is_selected = (item == self:value())
         if ImGui.Selectable(self.ctx, options.item_labels[item], is_selected) then
@@ -198,7 +225,7 @@ ReaSpeechTabBar.renderer = function (self)
   if ImGui.BeginTabBar(self.ctx, 'TabBar') then
     for _, tab in pairs(self.options.tabs) do
       if ImGui.BeginTabItem(self.ctx, tab.label) then
-        app:trap(function()
+        Trap(function()
           self:set(tab.key)
         end)
         ImGui.EndTabItem(self.ctx)
@@ -240,7 +267,7 @@ ReaSpeechButtonBar.new = function (options)
   local with_button_color = function (selected, f)
     if selected then
       ImGui.PushStyleColor(o.ctx, ImGui.Col_Button(), Theme.colors.dark_gray_translucent)
-      app:trap(f)
+      Trap(f)
       ImGui.PopStyleColor(o.ctx)
     else
       f()
@@ -257,8 +284,7 @@ ReaSpeechButtonBar.new = function (options)
 
     render_column = function (column)
       local bar_label = column.num == 1 and options.label or ""
-      ImGui.Text(o.ctx, bar_label)
-      ImGui.Dummy(o.ctx, 0, 0)
+      o:render_label(bar_label)
 
       local button_label, model_name = table.unpack(options.buttons[column.num])
       with_button_color(o:value() == model_name, function ()
@@ -303,7 +329,7 @@ ReaSpeechButton.renderer = function(self)
 
   disable_if(options.disabled, function()
     if ImGui.Button(self.ctx, options.label, options.width) then
-      app:trap(options.on_click)
+      Trap(options.on_click)
     end
   end)
 end
@@ -427,22 +453,21 @@ end
 ReaSpeechListBox.renderer = function(self)
   local options = self.options
 
-  ImGui.Text(self.ctx, options.label)
-  ImGui.Dummy(self.ctx, 0, 0)
+  self:render_label()
 
   local imgui_label = ("##%s"):format(options.label)
 
   local needs_update = false
   if ImGui.BeginListBox(self.ctx, imgui_label) then
-    app:trap(function()
+    Trap(function()
       local current = self:value()
       local new_value = {}
       for i, item in ipairs(options.items) do
         new_value[item] = current[item] or false
         local is_selected = current[item]
         local label = options.item_labels[item]
-        ImGui.PushID(ctx, 'item' .. i)
-        app:trap(function()
+        ImGui.PushID(self.ctx, 'item' .. i)
+        Trap(function()
           local result, now_selected = ImGui.Selectable(self.ctx, label, is_selected)
 
           if result and is_selected ~= now_selected then
@@ -450,7 +475,7 @@ ReaSpeechListBox.renderer = function(self)
             new_value[item] = now_selected
           end
         end)
-        ImGui.PopID(ctx)
+        ImGui.PopID(self.ctx)
       end
 
       if needs_update then

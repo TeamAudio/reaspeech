@@ -27,20 +27,11 @@ from threading import Lock
 from typing import Union, BinaryIO
 
 import torch
-import tqdm
 import whisper
 from faster_whisper import WhisperModel
 
 from .utils import ResultWriter, WriteTXT, WriteSRT, WriteVTT, WriteTSV, WriteJSON
-
-ASR_ENGINE_OPTIONS = frozenset([
-    "task",
-    "language",
-    "hotwords",
-    "initial_prompt",
-    "vad_filter",
-    "word_timestamps",
-])
+from .constants import ASR_ENGINE_OPTIONS
 
 model_name = os.getenv("ASR_MODEL", "small")
 model_path = os.getenv("ASR_MODEL_PATH", os.path.join(os.path.expanduser("~"), ".cache", "whisper"))
@@ -72,14 +63,12 @@ def transcribe(audio, asr_options, output):
         segments = []
         text = ""
         segment_generator, info = model.transcribe(audio, beam_size=5, **options_dict)
-        with tqdm.tqdm(total=round(info.duration), unit='sec') as tqdm_pbar:
-            for segment in segment_generator:
-                segment_dict = segment._asdict()
-                if segment.words:
-                    segment_dict["words"] = [word._asdict() for word in segment.words]
-                segments.append(segment_dict)
-                text = text + segment.text
-                tqdm_pbar.update(segment.end - segment.start)
+        for segment in segment_generator:
+            segment_dict = segment._asdict()
+            if segment.words:
+                segment_dict["words"] = [word._asdict() for word in segment.words]
+            segments.append(segment_dict)
+            text = text + segment.text
         result = {
             "language": options_dict.get("language", info.language),
             "segments": segments,

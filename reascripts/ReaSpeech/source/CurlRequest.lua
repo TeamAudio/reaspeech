@@ -110,7 +110,7 @@ function CurlRequest:ready()
     return false
   end
 
-  if app:trap(function()
+  if pcall(function()
     self.response = json.decode(body)
   end) then
     return true
@@ -191,7 +191,7 @@ function CurlRequest:execute_sync(command)
   end
 
   local response_json = nil
-  if app:trap(function()
+  if pcall(function()
     response_json = json.decode(response_body)
   end) then
     return response_json

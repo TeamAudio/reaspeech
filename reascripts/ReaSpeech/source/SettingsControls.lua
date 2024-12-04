@@ -40,7 +40,7 @@ function SettingsControls:init_layout()
 
     render_column = function (column)
       ImGui.PushItemWidth(ctx, column.width)
-      app:trap(function () renderers[column.num](self, column) end)
+      Trap(function () renderers[column.num](self, column) end)
       ImGui.PopItemWidth(ctx)
     end
   }

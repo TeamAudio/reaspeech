@@ -71,3 +71,28 @@ function ReaUtil.get_source_path(take)
   end
   return nil
 end
+
+function ReaUtil._get_object_info(getter_f, object, param)
+  local result, value = getter_f(object, param, '', false)
+
+  return result and value or nil
+end
+
+function ReaUtil.get_item_info(item, param, default)
+  return ReaUtil._get_object_info(reaper.GetSetMediaItemInfo_String, item, param)
+    or default
+end
+
+function ReaUtil.get_take_info(take, param, default)
+  return ReaUtil._get_object_info(reaper.GetSetMediaItemTakeInfo_String, take, param)
+    or default
+end
+
+function ReaUtil.get_item_by_guid(guid)
+  for item in ReaIter.each_media_item() do
+    if ReaUtil.get_item_info(item, 'GUID') == guid then
+      return item
+    end
+  end
+  return nil
+end

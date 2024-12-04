@@ -128,7 +128,7 @@ function TranscriptExporterFormats:render_combo(width)
   ImGui.Text(ctx, 'Format')
   ImGui.SetNextItemWidth(ctx, width)
   if ImGui.BeginCombo(ctx, "##format", self.selected_format_key) then
-    app:trap(function()
+    Trap(function()
       for _, format in pairs(self.formatters) do
         local is_selected = self.selected_format_key == format.key
         if ImGui.Selectable(ctx, format.key, is_selected) then
@@ -171,7 +171,7 @@ function TranscriptExporterFormats:selected_format()
 end
 
 function TranscriptExporterFormats:render_format_options(options)
-  app:trap(function()
+  Trap(function()
     local format = self:selected_format()
 
     if format then
@@ -290,7 +290,7 @@ function TranscriptExportFormat.options_csv(options)
   end
 
   if ImGui.BeginCombo(ctx, 'Delimiter', selected_delimiter.name) then
-    app:trap(function()
+    Trap(function()
       for _, delimiter in ipairs(delimiters) do
         local is_selected = options.delimiter == delimiter.char
         if ImGui.Selectable(ctx, delimiter.name, is_selected) then

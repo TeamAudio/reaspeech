@@ -131,7 +131,7 @@ function TranscriptAnnotationTypes:selected_type()
 end
 
 function TranscriptAnnotationTypes:render_type_options(options)
-  app:trap(function()
+  Trap(function()
     local type = self:selected_type()
 
     if type then
