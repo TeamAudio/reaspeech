@@ -192,8 +192,11 @@ function ToolWindow.default_guard(o)
 end
 
 function ToolWindow.present(o)
-  o._tool_window.presenting = true
-  o._tool_window.focusing = true
+  if o._tool_window.presenting then
+    o._tool_window.focusing = true
+  else
+    o._tool_window.presenting = true
+  end
 end
 
 function ToolWindow.focus(o)
@@ -218,6 +221,13 @@ function ToolWindow.render(o)
   local opening = not o:is_open()
   if opening then
     o:open()
+  elseif state.focusing then
+    -- ImGui.SetNextWindowFocus doesn't seem to bring windows to the top.
+    -- Instead, close and schedule reopening of the window.
+    o:close()
+    state.presenting = true
+    state.focusing = false
+    return
   end
 
   local f = function()
@@ -235,12 +245,6 @@ end
 
 function ToolWindow._render_window(o)
   local state = o._tool_window
-
-  if state.focusing then
-    app:debug('trying to focus')
-    ImGui.SetNextWindowFocus(o.ctx)
-    state.focusing = false
-  end
 
   if state.position == ToolWindow.POSITION_CENTER then
     local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(o.ctx))}
