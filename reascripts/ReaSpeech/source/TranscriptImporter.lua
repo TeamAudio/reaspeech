@@ -22,7 +22,6 @@ function TranscriptImporter:init()
       | ImGui.WindowFlags_AlwaysAutoResize()
       | ImGui.WindowFlags_NoCollapse()
       | ImGui.WindowFlags_NoDocking()
-      | ImGui.WindowFlags_TopMost(),
   })
 
   self.file_selector = ReaSpeechFileSelector.new({
