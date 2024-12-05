@@ -140,6 +140,7 @@ ToolWindow.init = function(o, config)
 
   ToolWindow._wrap_method_0_args(o, 'close', function()
     state.presenting = false
+    state.focusing = false
     state.is_open = false
   end)
 
@@ -147,6 +148,7 @@ ToolWindow.init = function(o, config)
 
   o.present = ToolWindow.present
   o.presenting = ToolWindow.presenting
+  o.focusing = ToolWindow.focusing
 
   o.render = ToolWindow.render
 
@@ -165,6 +167,7 @@ function ToolWindow._make_config(o, config)
     is_open = false,
     position = config.position or ToolWindow.POSITION_CENTER,
     presenting = false,
+    focusing = false,
     theme = config.theme or ToolWindow.DEFAULT_THEME(),
     title = config.title or ToolWindow.DEFAULT_TITLE,
     width = config.width or ToolWindow.DEFAULT_WIDTH,
@@ -190,6 +193,11 @@ end
 
 function ToolWindow.present(o)
   o._tool_window.presenting = true
+  o._tool_window.focusing = true
+end
+
+function ToolWindow.focus(o)
+  o._tool_window.focusing = true
 end
 
 function ToolWindow.presenting(o)
@@ -227,6 +235,12 @@ end
 
 function ToolWindow._render_window(o)
   local state = o._tool_window
+
+  if state.focusing then
+    app:debug('trying to focus')
+    ImGui.SetNextWindowFocus(o.ctx)
+    state.focusing = false
+  end
 
   if state.position == ToolWindow.POSITION_CENTER then
     local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(o.ctx))}

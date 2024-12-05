@@ -105,7 +105,7 @@ function ASRActions:import_button()
 
   self._import_button = ReaSpeechButton.new({
     label = "Import Transcript",
-    on_click = function () app.importer:open() end
+    on_click = function () app.importer:present() end
   })
 
   return self._import_button
