@@ -1,14 +1,15 @@
 Theme = {
   theme = nil,
   colors = {
-    dark_gray_semi_transparent = 0x404040FB,
     black_near_transparent = 0x000000E8,
-    medium_gray_opaque = 0x5C5C5CFF,
-    dark_gray_translucent = 0x2B2B2B8A,
-    dark_gray_opaque = 0x404040FF,
     dark_blue_gray_opaque = 0x4A5459FF,
-    pink_opaque = 0xE24097FF,
+    dark_gray_opaque = 0x404040FF,
     dark_gray_semi_opaque = 0x404040FB,
+    dark_gray_semi_transparent = 0x4040408A,
+    dark_gray_translucent = 0x2B2B2B8A,
+    medium_gray_opaque = 0x5C5C5CFF,
+    pink_opaque = 0xE24097FF,
+    very_dark_gray_semi_opaque = 0x1A1A1AFB,
   }
 }
 setmetatable(Theme, { __call = function () return Theme.init() end })
@@ -20,12 +21,12 @@ function Theme.init()
 
   Theme.theme = ImGuiTheme.new({
     colors = {
-      { ImGui.Col_WindowBg, Theme.colors.dark_gray_semi_transparent },
+      { ImGui.Col_WindowBg, Theme.colors.dark_gray_semi_opaque },
       { ImGui.Col_Border, Theme.colors.black_near_transparent },
       { ImGui.Col_Button, Theme.colors.medium_gray_opaque },
       { ImGui.Col_ButtonHovered, Theme.colors.dark_gray_translucent },
       { ImGui.Col_ButtonActive, Theme.colors.dark_gray_opaque },
-      { ImGui.Col_TitleBg, Theme.colors.dark_gray_semi_transparent },
+      { ImGui.Col_TitleBg, Theme.colors.dark_gray_semi_opaque },
       { ImGui.Col_TitleBgActive, Theme.colors.dark_blue_gray_opaque },
       { ImGui.Col_FrameBg, Theme.colors.dark_gray_translucent },
       { ImGui.Col_FrameBgHovered, Theme.colors.dark_gray_translucent },
