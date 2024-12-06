@@ -243,7 +243,7 @@ end
 
 function CurlRequest.get_curl_cmd()
   local curl = "curl"
-  if not reaper.GetOS():find("Win") then
+  if not EnvUtil.is_windows() then
     curl = "/usr/bin/curl"
   end
   return { curl }
@@ -294,7 +294,7 @@ function CurlRequest:file_upload_arguments()
 end
 
 function CurlRequest._maybe_quote(str)
-  if reaper.GetOS():find("Win") then
+  if EnvUtil.is_windows() then
     return str
   else
     return "'" .. str .. "'"
