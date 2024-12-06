@@ -21,6 +21,13 @@ ExecProcess = {
     function ep:run(timeout)
       local tempfile = Tempfile:name()
 
+      if EnvUtil.is_windows() then
+        local tempfile_cmd = tempfile .. '.cmd'
+        Tempfile._names[tempfile_cmd] = true
+        Tempfile._names[tempfile] = nil
+        tempfile = tempfile_cmd
+      end
+
       local f = io.open(tempfile, "w")
       if not f then
         return nil, "Unable to open tempfile"
@@ -32,7 +39,7 @@ ExecProcess = {
       if EnvUtil.is_windows() then
         ep.command = 'cmd /c "' .. tempfile .. '"'
       else
-        ep.command = '/bin/bash ' .. tempfile
+        ep.command = '/bin/sh ' .. tempfile
       end
 
       local result = ExecProcess.run(ep, timeout)
