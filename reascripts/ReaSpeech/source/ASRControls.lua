@@ -47,6 +47,8 @@ function ASRControls:init()
     vad_filter = storage:boolean('vad_filter', true),
   }
 
+  self:init_model_name()
+
   self.language = ReaSpeechCombo.new {
     state = self.settings.language,
     label = 'Language',
@@ -82,6 +84,10 @@ function ASRControls:init()
     width_threshold = ReaSpeechControlsUI.NARROW_COLUMN_WIDTH
   }
 
+  self:init_layouts()
+end
+
+function ASRControls:init_model_name()
   self.model_name = ReaSpeechCombo.new {
     state = self.settings.model_name,
     label = 'Model',
@@ -89,20 +95,36 @@ function ASRControls:init()
     items = WhisperModels.get_model_names(self.asr_engine),
     item_labels = self:get_model_labels(),
   }
-
-  self:init_layouts()
 end
 
 function ASRControls:init_asr_info()
-  local asr_info = ReaSpeechAPI:fetch_json('asr_info', 'GET', function(error_message)
-    self:debug("Error getting ASR info: " .. error_message)
-  end)
-  self.asr_engine = asr_info and asr_info.engine
+  self.asr_engine = nil
   self.asr_options = {}
-  if asr_info and asr_info.options then
-    for _, option in pairs(asr_info.options) do
-      self.asr_options[option] = true
+
+  local request = CurlRequest.async {
+    url = ReaSpeechAPI:get_api_url('asr_info'),
+    method = 'GET',
+  }
+
+  self.asr_info_request = request:execute()
+end
+
+function ASRControls:check_asr_info()
+  if self.asr_engine then return end
+
+  if self.asr_info_request and self.asr_info_request:ready() then
+    local asr_info = self.asr_info_request:result()
+    self:debug(dump(asr_info))
+
+    self.asr_engine = asr_info and asr_info.engine
+
+    if asr_info and asr_info.options then
+      for _, option in pairs(asr_info.options) do
+        self.asr_options[option] = true
+      end
     end
+
+    self:init_model_name()
   end
 end
 
@@ -178,10 +200,12 @@ function ASRControls:init_advanced_layout()
 end
 
 function ASRControls:render_simple()
+  self:check_asr_info()
   self.simple_layout:render()
 end
 
 function ASRControls:render_advanced()
+  self:check_asr_info()
   self.advanced_layout:render()
 end
 

@@ -140,6 +140,7 @@ ToolWindow.init = function(o, config)
 
   ToolWindow._wrap_method_0_args(o, 'close', function()
     state.presenting = false
+    state.focusing = false
     state.is_open = false
   end)
 
@@ -147,6 +148,7 @@ ToolWindow.init = function(o, config)
 
   o.present = ToolWindow.present
   o.presenting = ToolWindow.presenting
+  o.focusing = ToolWindow.focusing
 
   o.render = ToolWindow.render
 
@@ -165,6 +167,7 @@ function ToolWindow._make_config(o, config)
     is_open = false,
     position = config.position or ToolWindow.POSITION_CENTER,
     presenting = false,
+    focusing = false,
     theme = config.theme or ToolWindow.DEFAULT_THEME(),
     title = config.title or ToolWindow.DEFAULT_TITLE,
     width = config.width or ToolWindow.DEFAULT_WIDTH,
@@ -189,7 +192,15 @@ function ToolWindow.default_guard(o)
 end
 
 function ToolWindow.present(o)
-  o._tool_window.presenting = true
+  if o._tool_window.presenting then
+    o._tool_window.focusing = true
+  else
+    o._tool_window.presenting = true
+  end
+end
+
+function ToolWindow.focus(o)
+  o._tool_window.focusing = true
 end
 
 function ToolWindow.presenting(o)
@@ -210,6 +221,13 @@ function ToolWindow.render(o)
   local opening = not o:is_open()
   if opening then
     o:open()
+  elseif state.focusing then
+    -- ImGui.SetNextWindowFocus doesn't seem to bring windows to the top.
+    -- Instead, close and schedule reopening of the window.
+    o:close()
+    state.presenting = true
+    state.focusing = false
+    return
   end
 
   local f = function()

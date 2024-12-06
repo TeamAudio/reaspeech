@@ -25,7 +25,6 @@ function TranscriptAnnotationsUI:init()
       | ImGui.WindowFlags_AlwaysAutoResize()
       | ImGui.WindowFlags_NoCollapse()
       | ImGui.WindowFlags_NoDocking()
-      | ImGui.WindowFlags_TopMost(),
   })
 
   self.disabler = ReaUtil.disabler(ctx)
