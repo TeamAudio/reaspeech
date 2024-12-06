@@ -1,6 +1,19 @@
 Changelog
 =========
 
+[0.4.2] (2024-12-05)
+--------------------
+
+### Changed
+
+- Optimized table rendering for large transcripts
+- Added help tooltips for ASR options
+
+### Fixed
+
+- ImGui_Context errors preventing startup
+- Redundant progress updates with faster-whisper
+
 [0.4.1] (2024-11-22)
 --------------------
 

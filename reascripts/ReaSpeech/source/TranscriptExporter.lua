@@ -17,13 +17,16 @@ function TranscriptExporter:init()
 
     Logging.init(self, 'TranscriptExporter')
 
-    ToolWindow.init(self, {
-        title = self.TITLE,
-        width = self.WIDTH,
-        height = self.HEIGHT,
-        window_flags = 0 | ImGui.WindowFlags_AlwaysAutoResize() | ImGui.WindowFlags_NoCollapse() |
-            ImGui.WindowFlags_NoDocking() | ImGui.WindowFlags_TopMost()
-    })
+  ToolWindow.init(self, {
+    title = self.TITLE,
+    width = self.WIDTH,
+    height = self.HEIGHT,
+    window_flags = 0
+      | ImGui.WindowFlags_AlwaysAutoResize()
+      | ImGui.WindowFlags_NoCollapse()
+      | ImGui.WindowFlags_NoDocking()
+  })
+
 
     self.export_formats = TranscriptExporterFormats.new {TranscriptExportFormat.exporter_json(),
                                                          TranscriptExportFormat.exporter_srt(),
