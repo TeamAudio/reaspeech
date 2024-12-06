@@ -41,7 +41,9 @@ function TestPathUtil:testApplyExtension()
   for _, p in ipairs({
     'some-file.json',
     'path\\to\\some-file.json',
-    'C:\\path\\to\\some-file.json'
+    'C:\\path\\to\\some-file.json',
+    'path\\to\\.json',
+    '.json'
   }) do
     _assert_unapplied(p)
   end
@@ -62,7 +64,9 @@ function TestPathUtil:testApplyExtension()
     for _, p in ipairs({
       'some-file.json',
       'path/to/some-file.json',
-      '/path/to/some-file.json'
+      '/path/to/some-file.json',
+      '.json',
+      '/path/to/.json',
     }) do
       _assert_unapplied(p)
     end

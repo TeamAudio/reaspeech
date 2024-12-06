@@ -16,6 +16,10 @@ PathUtil.apply_extension = function(filepath, extension)
   local root, _, ext = filepath:match("([^%.]*)(%.?([^\\/%.]*))")
 
   if not root or #root < 1 then
+    if ext and #ext > 0 then
+      return filepath
+    end
+
     return ""
   end
 
