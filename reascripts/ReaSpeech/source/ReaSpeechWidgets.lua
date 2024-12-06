@@ -265,7 +265,8 @@ ReaSpeechButtonBar.new = function (options)
   })
 
   local with_button_color = function (selected, f)
-    local color = selected and Theme.colors.medium_gray_opaque or Theme.colors.dark_gray_translucent
+    local color = Theme.COLORS.dark_gray_translucent
+    if selected then color = Theme.COLORS.medium_gray_opaque end
     ImGui.PushStyleColor(o.ctx, ImGui.Col_Button(), color)
     Trap(f)
     ImGui.PopStyleColor(o.ctx)
