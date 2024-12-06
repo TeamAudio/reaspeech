@@ -1,6 +1,11 @@
+--[[
+
+  Theme.lua - Theme configuration
+
+]]--
+
 Theme = {
-  theme = nil,
-  colors = {
+  COLORS = {
     black_near_transparent = 0x000000E8,
     dark_blue_gray_opaque = 0x4A5459FF,
     dark_gray_opaque = 0x404040FF,
@@ -12,44 +17,43 @@ Theme = {
     very_dark_gray_semi_opaque = 0x1A1A1AFB,
   }
 }
-setmetatable(Theme, { __call = function () return Theme.init() end })
 
-function Theme.init()
-  if Theme.theme ~= nil then
-    return Theme.theme
-  end
-
-  Theme.theme = ImGuiTheme.new({
+function Theme:init()
+  self.main = ImGuiTheme.new {
     colors = {
-      { ImGui.Col_WindowBg, Theme.colors.dark_gray_semi_opaque },
-      { ImGui.Col_Border, Theme.colors.black_near_transparent },
-      { ImGui.Col_Button, Theme.colors.medium_gray_opaque },
-      { ImGui.Col_ButtonHovered, Theme.colors.dark_gray_translucent },
-      { ImGui.Col_ButtonActive, Theme.colors.dark_gray_opaque },
-      { ImGui.Col_TitleBg, Theme.colors.dark_gray_semi_opaque },
-      { ImGui.Col_TitleBgActive, Theme.colors.dark_blue_gray_opaque },
-      { ImGui.Col_FrameBg, Theme.colors.dark_gray_translucent },
-      { ImGui.Col_FrameBgHovered, Theme.colors.dark_gray_translucent },
-      { ImGui.Col_FrameBgActive, Theme.colors.pink_opaque },
-      { ImGui.Col_CheckMark, Theme.colors.pink_opaque },
-      { ImGui.Col_HeaderHovered, Theme.colors.dark_gray_semi_opaque },
-      { ImGui.Col_HeaderActive, Theme.colors.dark_gray_semi_transparent },
-      { ImGui.Col_Header, Theme.colors.dark_gray_semi_opaque },
-      { ImGui.Col_Tab, Theme.colors.dark_gray_opaque },
-      { ImGui.Col_TabActive, Theme.colors.medium_gray_opaque },
-      { ImGui.Col_TabHovered, Theme.colors.dark_gray_translucent },
-      { ImGui.Col_TabSelected, Theme.colors.medium_gray_opaque },
+      { ImGui.Col_Border, self.COLORS.black_near_transparent },
+      { ImGui.Col_Button, self.COLORS.medium_gray_opaque },
+      { ImGui.Col_ButtonActive, self.COLORS.dark_gray_opaque },
+      { ImGui.Col_ButtonHovered, self.COLORS.dark_gray_translucent },
+      { ImGui.Col_CheckMark, self.COLORS.pink_opaque },
+      { ImGui.Col_FrameBg, self.COLORS.dark_gray_translucent },
+      { ImGui.Col_FrameBgActive, self.COLORS.pink_opaque },
+      { ImGui.Col_FrameBgHovered, self.COLORS.dark_gray_translucent },
+      { ImGui.Col_Header, self.COLORS.dark_gray_semi_opaque },
+      { ImGui.Col_HeaderActive, self.COLORS.dark_gray_semi_transparent },
+      { ImGui.Col_HeaderHovered, self.COLORS.dark_gray_semi_opaque },
+      { ImGui.Col_Tab, self.COLORS.dark_gray_opaque },
+      { ImGui.Col_TabActive, self.COLORS.medium_gray_opaque },
+      { ImGui.Col_TabHovered, self.COLORS.dark_gray_translucent },
+      { ImGui.Col_TabSelected, self.COLORS.medium_gray_opaque },
+      { ImGui.Col_TitleBg, self.COLORS.dark_gray_semi_opaque },
+      { ImGui.Col_TitleBgActive, self.COLORS.dark_blue_gray_opaque },
+      { ImGui.Col_WindowBg, self.COLORS.dark_gray_semi_opaque },
     },
 
     styles = {
+      { ImGui.StyleVar_FrameBorderSize, 1.0 },
       { ImGui.StyleVar_FramePadding, 10.0, 6.0 },
       { ImGui.StyleVar_FrameRounding, 12.0 },
       { ImGui.StyleVar_GrabRounding, 4.0 },
-      { ImGui.StyleVar_FrameBorderSize, 1.0 },
+      { ImGui.StyleVar_PopupBorderSize, 1.0 },
       { ImGui.StyleVar_WindowBorderSize, 1.0 },
-      { ImGui.StyleVar_PopupBorderSize, 1.0 }
     }
-  })
+  }
 
-  return Theme.theme
+  self.popup = ImGuiTheme.new {
+    colors = {
+      { ImGui.Col_WindowBg, self.COLORS.very_dark_gray_semi_opaque },
+    }
+  }
 end

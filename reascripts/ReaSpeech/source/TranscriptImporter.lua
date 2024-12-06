@@ -18,11 +18,7 @@ function TranscriptImporter:init()
     title = self.TITLE,
     width = self.WIDTH,
     height = self.HEIGHT,
-    theme = ImGuiTheme.new({
-      colors = {
-        { ImGui.Col_WindowBg, Theme.colors.very_dark_gray_semi_opaque },
-      }
-    }),
+    theme = Theme.popup,
     window_flags = 0
       | ImGui.WindowFlags_AlwaysAutoResize()
       | ImGui.WindowFlags_NoCollapse()
