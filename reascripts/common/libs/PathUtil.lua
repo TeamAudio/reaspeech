@@ -47,9 +47,9 @@ PathUtil.get_reveal_command = function(path_arg)
   if EnvUtil.is_windows() then
     return '%SystemRoot%\\explorer.exe /select,"' .. path_arg .. '"'
   elseif EnvUtil.is_mac() then
-    return '/bin/[ -x /usr/bin/open ] && /usr/bin/open -R "' .. path_arg .. '"'
+    return '/usr/bin/env open -R "' .. path_arg .. '"'
   else
-    return '/bin/[ -x /usr/bin/xdg-open ] && /usr/bin/xdg-open "' .. path_arg .. '"'
+    return '/usr/bin/env xdg-open "' .. path_arg .. '"'
   end
 end
 
