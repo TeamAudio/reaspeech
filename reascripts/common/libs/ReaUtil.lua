@@ -26,7 +26,7 @@ function ReaUtil.open_url(url)
   if EnvUtil.is_windows() then
     url_opener_cmd = 'start "" "%s"'
   else
-    url_opener_cmd = '/usr/bin/open "%s"'
+    url_opener_cmd = '/usr/bin/env open "%s"'
   end
 
   (ExecProcess.new(url_opener_cmd:format(url))):wait()
