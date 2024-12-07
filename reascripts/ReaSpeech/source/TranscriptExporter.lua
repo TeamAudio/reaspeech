@@ -17,16 +17,13 @@ function TranscriptExporter:init()
 
     Logging.init(self, 'TranscriptExporter')
 
-  ToolWindow.init(self, {
-    title = self.TITLE,
-    width = self.WIDTH,
-    height = self.HEIGHT,
-    window_flags = 0
-      | ImGui.WindowFlags_AlwaysAutoResize()
-      | ImGui.WindowFlags_NoCollapse()
-      | ImGui.WindowFlags_NoDocking()
-  })
-
+    ToolWindow.init(self, {
+        title = self.TITLE,
+        width = self.WIDTH,
+        height = self.HEIGHT,
+        window_flags = 0 | ImGui.WindowFlags_AlwaysAutoResize() | ImGui.WindowFlags_NoCollapse() |
+            ImGui.WindowFlags_NoDocking()
+    })
 
     self.export_formats = TranscriptExporterFormats.new {TranscriptExportFormat.exporter_json(),
                                                          TranscriptExportFormat.exporter_srt(),
@@ -212,7 +209,7 @@ function TranscriptExportFormat.options_json(options)
         options.json_widgets = {
             object_per_segment = ReaSpeechCheckbox.new {
                 state = storage:boolean('object_per_segment', false),
-                label_long = 'One Object per Transcript Segment',  -- Changed from label to label_long
+                label_long = 'One Object per Transcript Segment', -- Changed from label to label_long
                 help_text = [[Each transcript segment is exported a separate JSON object.]]
             }
         }
@@ -386,22 +383,20 @@ function TranscriptExportFormat.options_vtt(options)
             text_direction = ReaSpeechCombo.new {
                 state = storage:string('text_direction', 'Horizontal'),
                 label = 'Text Direction',
-                -- widget_id = 'vtt_text_direction',
                 help_text = [[Horizontal: default text, for languages like Japanese that can be written vertically:
-    • Right to Left - Vertical text written right-to-left
-    • Left to Right - Vertical text written left-to-right]],
+    Right to Left - Vertical text written right-to-left
+    Left to Right - Vertical text written left-to-right]],
                 items = {'Horizontal', 'Right to Left', 'Left to Right'}
             },
 
             line = ReaSpeechTextInput.new {
                 state = storage:string('line', ''),
                 label = 'Line Position',
-                -- widget_id = 'vtt_line',
                 help_text = [[line position of captions:
-    • Numbers: Place on specific line
+    Numbers: Place on specific line
       - Positive (1,2,3...) counts from top
       - Negative (-1,-2,-3...) counts from bottom
-    • Percentages: Position relative to video height
+    Percentages: Position relative to video height
       - 0% = top
       - 100% = bottom]]
             },
@@ -409,27 +404,19 @@ function TranscriptExportFormat.options_vtt(options)
             position = ReaSpeechTextInput.new {
                 state = storage:string('position', ''),
                 label = 'Position %',
-                -- widget_id = 'vtt_position',
                 help_text = [[Sets horizontal position: 0% = left edge, 50% = center, 100% = right edge]]
             },
 
             size = ReaSpeechTextInput.new {
                 state = storage:string('size', ''),
                 label = 'Size %',
-                -- widget_id = 'vtt_size',
                 help_text = [[Sets caption box width (0-100% of video width), Default auto-sizes to fit text]]
             },
 
             align = ReaSpeechCombo.new {
                 state = storage:string('align', 'Default'),
                 label = 'Alignment',
-                -- widget_id = 'vtt_align',
-                help_text = [[• Start - Aligns to start of text direction
-  (left for horizontal, top for vertical)
-• Middle - Centers text (default)
-• End - Aligns to end of text direction
-  (right for horizontal, bottom for vertical)]],
-                items = {'Default', 'Start', 'Middle', 'End'}
+                items = {'Start', 'Center', 'End', 'Left', 'Right'}
             }
         }
     end
@@ -450,8 +437,9 @@ function TranscriptExportFormat.options_vtt(options)
         options.vtt_widgets.align:render()
         ImGui.Spacing(ctx)
 
-        options.vertical = options.vtt_widgets.text_direction:value() == 'Horizontal' and nil or
-                               options.vtt_widgets.text_direction:value() == 'Right to Left' and 'rl' or 'lr'
+        local direction = options.vtt_widgets.text_direction:value()
+        options.vertical = direction == 'Right to Left' and 'rl' or direction == 'Left to Right' and 'lr' or nil -- Horizontal case
+
         options.line = options.vtt_widgets.line:value()
         options.position = options.vtt_widgets.position:value()
         options.size = options.vtt_widgets.size:value()
