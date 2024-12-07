@@ -241,6 +241,16 @@ function TranscriptExportFormat.strip_non_numeric(value)
     return value:gsub("[^0-9]", ""):gsub("^0+", "")
 end
 
+function TranscriptExportFormat.strip_non_numeric_percent(value)
+    -- Remove any % sign from the end
+    value = value:gsub("%%$", "")
+    -- Keep only numbers, decimal points
+    value = value:gsub("[^0-9%.]", "")
+    -- Remove leading zeros (but keep single zero)
+    value = value:gsub("^0+(%d)", "%1")
+    return value
+end
+
 function TranscriptExportFormat.options_srt(options)
     if not options.srt_widgets then
         local storage = Storage.ExtState.make {
@@ -383,7 +393,8 @@ function TranscriptExportFormat.options_vtt(options)
             text_direction = ReaSpeechCombo.new {
                 state = storage:string('text_direction', 'Horizontal'),
                 label = 'Text Direction',
-                help_text = [[Horizontal: default text, for languages like Japanese that can be written vertically:
+                help_text = [[Horizontal: default text
+for languages like Japanese that can be written vertically:
     Right to Left - Vertical text written right-to-left
     Left to Right - Vertical text written left-to-right]],
                 items = {'Horizontal', 'Right to Left', 'Left to Right'}
@@ -403,19 +414,19 @@ function TranscriptExportFormat.options_vtt(options)
 
             position = ReaSpeechTextInput.new {
                 state = storage:string('position', ''),
-                label = 'Position %',
+                label = 'Horizontal Position %',
                 help_text = [[Sets horizontal position: 0% = left edge, 50% = center, 100% = right edge]]
             },
 
             size = ReaSpeechTextInput.new {
                 state = storage:string('size', ''),
-                label = 'Size %',
+                label = 'Caption Box Size %',
                 help_text = [[Sets caption box width (0-100% of video width), Default auto-sizes to fit text]]
             },
 
             align = ReaSpeechCombo.new {
                 state = storage:string('align', 'Default'),
-                label = 'Alignment',
+                label = 'Text Alignment',
                 items = {'Start', 'Center', 'End', 'Left', 'Right'}
             }
         }
@@ -441,8 +452,8 @@ function TranscriptExportFormat.options_vtt(options)
         options.vertical = direction == 'Right to Left' and 'rl' or direction == 'Left to Right' and 'lr' or nil -- Horizontal case
 
         options.line = options.vtt_widgets.line:value()
-        options.position = options.vtt_widgets.position:value()
-        options.size = options.vtt_widgets.size:value()
+        options.position = TranscriptExportFormat.strip_non_numeric_percent(options.vtt_widgets.position:value())
+        options.size = TranscriptExportFormat.strip_non_numeric_percent(options.vtt_widgets.size:value())
         options.align = options.vtt_widgets.align:value() ~= 'Default' and
                             string.lower(options.vtt_widgets.align:value()) or nil
     end)
