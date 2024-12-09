@@ -18,7 +18,7 @@ EnvUtil.is_mac = function()
 end
 
 EnvUtil.is_linux = function()
-  return EnvUtil._bool(reaper.GetOS():find('Other'))
+  return EnvUtil._bool(reaper.GetOS():find('Other', 1, true))
 end
 
 EnvUtil._bool = function(val) return val and true or false end
