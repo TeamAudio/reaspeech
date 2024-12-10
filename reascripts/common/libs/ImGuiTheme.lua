@@ -166,3 +166,18 @@ function ImGuiTheme:wrap(ctx, f, trap_f)
   trap_f(function() f(ctx) end)
   self:pop(ctx)
 end
+
+function ImGuiTheme:clone()
+  local clone = {
+    colors = {},
+    styles = {},
+  }
+
+  for k, _ in pairs(clone) do
+    for _, attr in ipairs(self[k]) do
+      table.insert(clone[k], { table.unpack(attr) })
+    end
+  end
+
+  return ImGuiTheme.new(clone)
+end

@@ -54,6 +54,10 @@ function Theme:init()
   self.popup = ImGuiTheme.new {
     colors = {
       { ImGui.Col_WindowBg, self.COLORS.very_dark_gray_semi_opaque },
+    },
+
+    styles = {
+      { ImGui.StyleVar_Alpha, 1.0 },
     }
   }
 end
