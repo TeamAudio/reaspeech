@@ -265,13 +265,12 @@ ReaSpeechButtonBar.new = function (options)
   })
 
   local with_button_color = function (selected, f)
-    if selected then
-      ImGui.PushStyleColor(o.ctx, ImGui.Col_Button(), Theme.colors.dark_gray_translucent)
-      Trap(f)
-      ImGui.PopStyleColor(o.ctx)
-    else
-      f()
-    end
+    local color = Theme.COLORS.dark_gray_translucent
+    if selected then color = Theme.COLORS.medium_gray_opaque end
+    ImGui.PushStyleColor(o.ctx, ImGui.Col_Button(), color)
+    ImGui.PushStyleColor(o.ctx, ImGui.Col_ButtonHovered(), color)
+    Trap(f)
+    ImGui.PopStyleColor(o.ctx, 2)
   end
 
   o.layout = ColumnLayout.new {

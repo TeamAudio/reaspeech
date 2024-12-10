@@ -168,7 +168,7 @@ function ToolWindow._make_config(o, config)
     position = config.position or ToolWindow.POSITION_CENTER,
     presenting = false,
     focusing = false,
-    theme = config.theme or ToolWindow.DEFAULT_THEME(),
+    theme = config.theme and config.theme:clone() or ToolWindow.DEFAULT_THEME(),
     title = config.title or ToolWindow.DEFAULT_TITLE,
     width = config.width or ToolWindow.DEFAULT_WIDTH,
     window_flags = config.window_flags or ToolWindow.DEFAULT_WINDOW_FLAGS(),

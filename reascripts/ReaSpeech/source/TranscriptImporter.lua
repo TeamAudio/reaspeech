@@ -18,6 +18,7 @@ function TranscriptImporter:init()
     title = self.TITLE,
     width = self.WIDTH,
     height = self.HEIGHT,
+    theme = Theme.popup,
     window_flags = 0
       | ImGui.WindowFlags_AlwaysAutoResize()
       | ImGui.WindowFlags_NoCollapse()
