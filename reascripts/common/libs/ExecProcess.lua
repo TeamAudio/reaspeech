@@ -13,6 +13,46 @@ ExecProcess = {
     local o = { command = command }
     setmetatable(o, ExecProcess)
     return o
+  end,
+
+  via_tempfile = function(command)
+    local ep = ExecProcess.new(command)
+
+    function ep:run(timeout)
+      local tempfile = Tempfile:name()
+
+      if EnvUtil.is_windows() then
+        local tempfile_cmd = tempfile .. '.cmd'
+        Tempfile._names[tempfile_cmd] = true
+        Tempfile._names[tempfile] = nil
+        tempfile = tempfile_cmd
+      end
+
+      local f = io.open(tempfile, "w")
+      if not f then
+        return nil, "Unable to open tempfile"
+      end
+
+      f:write(ep.command)
+      f:close()
+
+      if EnvUtil.is_windows() then
+        ep.command = 'cmd /c "' .. tempfile .. '"'
+      else
+        ep.command = '/bin/sh ' .. tempfile
+      end
+
+      local result = ExecProcess.run(ep, timeout)
+
+      --     TODO: is this safe?      --
+      -- how temp can a temp file be? --
+      --     more testing needed      --
+      Tempfile:remove(tempfile)
+
+      return result
+    end
+
+    return ep
   end
 }
 ExecProcess.__index = ExecProcess

@@ -1,6 +1,6 @@
 --[[
 
-  Fonts.lua - Font configuration and loader
+  Fonts.lua - Font configuration
 
 ]]--
 
@@ -8,7 +8,7 @@ Fonts = {
   SIZE = 15,
 }
 
-function Fonts:load()
+function Fonts:init()
   self.main = ImGui.CreateFont('sans-serif', self.SIZE)
   ImGui.Attach(ctx, self.main)
 
