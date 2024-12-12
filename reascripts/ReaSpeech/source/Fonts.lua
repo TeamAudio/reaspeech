@@ -8,7 +8,7 @@ Fonts = {
   SIZE = 15,
 }
 
-function Fonts:init()
+function Fonts:init(ctx)
   self.main = ImGui.CreateFont('sans-serif', self.SIZE)
   ImGui.Attach(ctx, self.main)
 

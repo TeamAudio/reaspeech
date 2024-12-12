@@ -13,8 +13,7 @@ function ReaSpeechMain:main()
   if not self:check_imgui() then return end
   reaper.atexit(function () self:onexit() end)
 
-  ctx = ImGui.CreateContext(ReaSpeechUI.TITLE, ReaSpeechUI.config_flags())
-  Fonts:init()
+  self:build_ctx()
   Theme:init()
   app = ReaSpeechUI.new()
   app:present()
@@ -24,9 +23,17 @@ end
 function ReaSpeechMain:loop()
   return function()
     if app:presenting() or app:is_open() then
+      self:build_ctx()
       Trap(function() app:react() end)
       reaper.defer(self:loop())
     end
+  end
+end
+
+function ReaSpeechMain:build_ctx()
+  if not ImGui.ValidatePtr(ctx, 'ImGui_Context*') then
+    ctx = ImGui.CreateContext(ReaSpeechUI.TITLE, ReaSpeechUI.config_flags())
+    Fonts:init(ctx)
   end
 end
 

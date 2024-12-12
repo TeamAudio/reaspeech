@@ -28,8 +28,6 @@ function TranscriptAnnotationsUI:init()
       | ImGui.WindowFlags_NoDocking()
   })
 
-  self.disabler = ReaUtil.disabler(ctx)
-
   self.annotation_types = TranscriptAnnotationTypes.new {
     TranscriptAnnotationTypes.project_markers(),
     TranscriptAnnotationTypes.project_regions(),
@@ -59,7 +57,7 @@ function TranscriptAnnotationsUI:render_content()
 end
 
 function TranscriptAnnotationsUI:render_buttons(is_disabled)
-  local disable_if = self.disabler
+  local disable_if = ReaUtil.disabler(ctx)
 
   disable_if(is_disabled, function()
     if ImGui.Button(ctx, 'Create', self.BUTTON_WIDTH, 0) then

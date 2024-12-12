@@ -18,7 +18,6 @@ ReaSpeechUI = Polo {
 
 function ReaSpeechUI:init()
   ToolWindow.init(self, {
-    ctx = ctx,
     title = self.TITLE,
     width = self.WIDTH,
     height = self.HEIGHT,

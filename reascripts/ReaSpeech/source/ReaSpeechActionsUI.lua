@@ -7,11 +7,10 @@ ReaSpeechActionsUI.lua - Main action bar UI in ReaSpeech
 ReaSpeechActionsUI = Polo {}
 
 function ReaSpeechActionsUI:init()
-  self.disabler = ReaUtil.disabler(ctx)
 end
 
 function ReaSpeechActionsUI:render()
-  local disable_if = self.disabler
+  local disable_if = ReaUtil.disabler(ctx)
   local progress
   Trap(function ()
     progress = self.worker:progress()
