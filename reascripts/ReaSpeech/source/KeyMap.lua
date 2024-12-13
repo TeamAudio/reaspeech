@@ -18,13 +18,12 @@ KeyMap = Polo {
 }
 
 function KeyMap:init()
-  self.ctx = self.ctx or ctx
   self.bindings = self.bindings or {}
 end
 
 function KeyMap:react()
   for key, binding in pairs(self.bindings) do
-    if ImGui.IsKeyPressed(self.ctx, key) then
+    if ImGui.IsKeyPressed(ctx, key) then
       if type(binding) == 'function' then
         binding()
       elseif type(binding) == 'table' then

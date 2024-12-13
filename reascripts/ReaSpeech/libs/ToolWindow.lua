@@ -11,8 +11,6 @@
       arguments:
         target_object (table) - the object to extend
         config_table (table) - configuration options
-          ctx (userdata) - the ImGui context to use
-            default: global ctx object
           guard (function) - a function to determine if the window should render
             default: function returning true if (presenting or is_open)
           title (string) - the window title
@@ -101,11 +99,11 @@ ToolWindow.modal = function(o, config)
   config.is_modal = true
 
   ToolWindow._wrap_method_0_args(o, 'open', function()
-    ImGui.OpenPopup(o.ctx, o._tool_window.title)
+    ImGui.OpenPopup(ctx, o._tool_window.title)
   end)
 
   ToolWindow._wrap_method_0_args(o, 'close', function()
-    ImGui.CloseCurrentPopup(o.ctx)
+    ImGui.CloseCurrentPopup(ctx)
   end)
 
    ToolWindow.init(o, config)
@@ -113,8 +111,6 @@ end
 
 ToolWindow.init = function(o, config)
   config = config or {}
-
-  o.ctx = config.ctx or ctx
 
   local state = ToolWindow._make_config(o, config)
 
@@ -231,7 +227,7 @@ function ToolWindow.render(o)
   end
 
   local f = function()
-    state.theme:wrap(o.ctx, function()
+    state.theme:wrap(ctx, function()
       ToolWindow._render_window(o)
     end, Trap)
   end
@@ -247,22 +243,22 @@ function ToolWindow._render_window(o)
   local state = o._tool_window
 
   if state.position == ToolWindow.POSITION_CENTER then
-    local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(o.ctx))}
-    ImGui.SetNextWindowPos(o.ctx, center[1], center[2], ImGui.Cond_Appearing(), 0.5, 0.5)
+    local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(ctx))}
+    ImGui.SetNextWindowPos(ctx, center[1], center[2], ImGui.Cond_Appearing(), 0.5, 0.5)
   elseif type(state.position) == 'table' and #state.position == 2 then
     local position = state.position
-    ImGui.SetNextWindowPos(o.ctx, position[1], position[2], ImGui.Cond_Appearing())
+    ImGui.SetNextWindowPos(ctx, position[1], position[2], ImGui.Cond_Appearing())
   end
 
-  ImGui.SetNextWindowSize(o.ctx, state.width, state.height, ImGui.Cond_FirstUseEver())
-  local visible, open = state.begin_f(o.ctx, state.title, true, state.window_flags)
+  ImGui.SetNextWindowSize(ctx, state.width, state.height, ImGui.Cond_FirstUseEver())
+  local visible, open = state.begin_f(ctx, state.title, true, state.window_flags)
   if visible then
     Trap(function ()
       if o.render_content then
         o:render_content()
       end
     end)
-    state.end_f(o.ctx)
+    state.end_f(ctx)
   else
     -- Checking for "not NoCollapse" here accounts for the main window
     -- that can be minimized and expanded.
@@ -279,8 +275,8 @@ function ToolWindow._render_window(o)
   end
 end
 
-function ToolWindow.render_separator(o)
-  ImGui.Dummy(o.ctx, 0, 0)
-  ImGui.Separator(o.ctx)
-  ImGui.Dummy(o.ctx, 0, 0)
+function ToolWindow.render_separator(_o)
+  ImGui.Dummy(ctx, 0, 0)
+  ImGui.Separator(ctx)
+  ImGui.Dummy(ctx, 0, 0)
 end
