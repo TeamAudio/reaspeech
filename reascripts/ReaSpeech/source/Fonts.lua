@@ -5,14 +5,34 @@
 ]]--
 
 Fonts = {
-  SIZE = 15,
+  DEFAULT_SIZE = 15,
+  MIN_SIZE = 8,
+  MAX_SIZE = 24,
 }
 
 function Fonts:init(ctx)
-  self.main = ImGui.CreateFont('sans-serif', self.SIZE)
+  local storage = Storage.ExtState.make {
+    section = 'ReaSpeech.General',
+    persist = true,
+  }
+
+  local font_size = storage:number('font_size', self.DEFAULT_SIZE)
+  self.size = Storage.Cell.new {
+    get = function () return font_size:get() end,
+    set = function (value)
+      if value < self.MIN_SIZE then
+        value = self.MIN_SIZE
+      elseif value > self.MAX_SIZE then
+        value = self.MAX_SIZE
+      end
+      font_size:set(value)
+    end
+  }
+
+  self.main = ImGui.CreateFont('sans-serif', self.size:get())
   ImGui.Attach(ctx, self.main)
 
-  self.bold = ImGui.CreateFont('sans-serif', self.SIZE, ImGui.FontFlags_Bold())
+  self.bold = ImGui.CreateFont('sans-serif', self.size:get(), ImGui.FontFlags_Bold())
   ImGui.Attach(ctx, self.bold)
 end
 

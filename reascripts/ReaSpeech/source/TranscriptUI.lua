@@ -191,8 +191,10 @@ function TranscriptUI:render_table()
       ImGui.TableSetupScrollFreeze(ctx, 0, 1)
 
       local clipper = self:clipper()
+      local items_count = #self.transcript + 1
+      local items_height = ImGui.GetTextLineHeightWithSpacing(ctx)
 
-      ImGui.ListClipper_Begin(clipper, #self.transcript + 1)
+      ImGui.ListClipper_Begin(clipper, items_count, items_height)
 
       while ImGui.ListClipper_Step(clipper) do
         local display_start, display_end = ImGui.ListClipper_GetDisplayRange(clipper)
@@ -219,7 +221,8 @@ function TranscriptUI:render_table()
 end
 
 function TranscriptUI:render_segment_actions(segment, index)
-  if Widgets.icon(Icons.pencil, "##edit" .. index, 14, 14, "Edit") then
+  local icon_size = Fonts.size:get() - 1
+  if Widgets.icon(Icons.pencil, "##edit" .. index, icon_size, icon_size, "Edit") then
     self.transcript_editor:edit_segment(segment, index)
   end
   if ImGui.IsItemHovered(ctx) then
