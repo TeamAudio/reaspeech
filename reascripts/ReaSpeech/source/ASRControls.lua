@@ -29,7 +29,6 @@ function ASRControls:init()
   assert(self.plugin, 'ASRControls: plugin is required')
 
   Logging.init(self, 'ASRControls')
-  self:init_logging()
 
   self:init_asr_info()
 
@@ -128,29 +127,6 @@ function ASRControls:check_asr_info()
   end
 end
 
-function ASRControls:init_logging()
-  local storage = Storage.ExtState.make {
-    section = 'ReaSpeech.Logging',
-    persist = true,
-  }
-
-  Logging.show_logs = storage:boolean('show_logs', false)
-  Logging.show_debug_logs = storage:boolean('show_debug_logs', false)
-
-  self.log_enable = ReaSpeechCheckbox.new {
-    state = Logging.show_logs,
-    label_long = 'Logging',
-    label_short = 'Log',
-    width_threshold = ReaSpeechControlsUI.NARROW_COLUMN_WIDTH
-  }
-
-  self.log_debug = ReaSpeechCheckbox.new {
-    state = Logging.show_debug_logs,
-    label_long = 'Debug',
-    label_short = 'Debug',
-  }
-end
-
 function ASRControls:init_layouts()
   self:init_simple_layout()
   self:init_advanced_layout()
@@ -228,13 +204,6 @@ end
 
 function ASRControls:render_options(column)
   ReaSpeechControlsUI:render_input_label('Options')
-
-  self.log_enable:render(column)
-
-  if self.log_enable:value() then
-    ImGui.SameLine(ctx)
-    self.log_debug:render()
-  end
 
   if self.asr_options.vad_filter then
     self.vad_filter:render(column)

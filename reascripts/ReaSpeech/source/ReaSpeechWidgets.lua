@@ -4,9 +4,7 @@
 
 ]]--
 
-ReaSpeechWidget = Polo {
-  HELP_ICON_SIZE = 15,
-}
+ReaSpeechWidget = Polo {}
 
 function ReaSpeechWidget:init()
   if not self.state then
@@ -29,7 +27,7 @@ end
 
 function ReaSpeechWidget:render_help_icon()
   local options = self.options
-  local size = self.HELP_ICON_SIZE
+  local size = Fonts.size:get()
   Widgets.icon(Icons.info, '##help-text', size, size, options.help_text, 0xffffffa0, 0xffffffff)
 end
 
@@ -149,6 +147,45 @@ ReaSpeechTextInput.renderer = function (self)
   local rv, value = ImGui.InputText(ctx, imgui_label, self:value())
 
   if rv then
+    self:set(value)
+  end
+end
+
+ReaSpeechNumberInput = {}
+ReaSpeechNumberInput.new = function (options)
+  options = options or {
+    label = nil,
+  }
+  options.default = options.default or 0
+
+  local o = ReaSpeechWidget.new({
+    state = options.state,
+    default = options.default,
+    widget_id = options.widget_id,
+    renderer = ReaSpeechNumberInput.renderer,
+    options = options,
+  })
+
+  return o
+end
+
+ReaSpeechNumberInput.simple = function(default_value, label)
+  return ReaSpeechNumberInput.new {
+    default = default_value,
+    label = label
+  }
+end
+
+ReaSpeechNumberInput.renderer = function (self)
+  local options = self.options
+
+  self:render_label()
+
+  local imgui_label = ("##%s"):format(options.label)
+
+  local rv, value = ImGui.InputInt(ctx, imgui_label, self:value())
+
+  if rv and ImGui.IsItemDeactivatedAfterEdit(ctx) then
     self:set(value)
   end
 end
