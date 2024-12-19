@@ -29,10 +29,36 @@ function Fonts:init(ctx)
     end
   }
 
-  self.main = ImGui.CreateFont('sans-serif', self.size:get())
+  self.last_font_size = self.size:get()
+
+  self:load_and_attach(ctx, self.last_font_size)
+end
+
+function Fonts:check(ctx)
+  local current_font_size = self.size:get()
+
+  if current_font_size == self.last_font_size then
+    return
+  end
+
+  self.last_font_size = current_font_size
+
+  self:load_and_attach(ctx, current_font_size)
+end
+
+function Fonts:load_and_attach(ctx, font_size)
+  if ImGui.ValidatePtr(self.main, 'ImGui_Font*') then
+    ImGui.Detach(ctx, self.main)
+  end
+
+  self.main = ImGui.CreateFont('sans-serif', font_size)
   ImGui.Attach(ctx, self.main)
 
-  self.bold = ImGui.CreateFont('sans-serif', self.size:get(), ImGui.FontFlags_Bold())
+  if ImGui.ValidatePtr(self.bold, 'ImGui_Font*') then
+    ImGui.Detach(ctx, self.bold)
+  end
+
+  self.bold = ImGui.CreateFont('sans-serif', font_size, ImGui.FontFlags_Bold())
   ImGui.Attach(ctx, self.bold)
 end
 

@@ -78,12 +78,6 @@ ReaSpeechUI.config_flags = function ()
   return ImGui.ConfigFlags_DockingEnable()
 end
 
-function ReaSpeechUI:refresh()
-  Ctx.ctx = nil
-  local tab_bar = self.controls_ui.tab_bar
-  tab_bar:set(tab_bar:value())
-end
-
 function ReaSpeechUI:react()
   for _, handler in pairs(self.react_handlers) do
     Trap(handler)

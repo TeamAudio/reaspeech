@@ -254,25 +254,15 @@ ReaSpeechTabBar.new = function (options)
     options = options,
   })
 
-  o._set = o.set
-  function o:set(key)
-    o._key_to_select = key
-  end
-
   return o
 end
 
 ReaSpeechTabBar.renderer = function (self)
   if ImGui.BeginTabBar(ctx, 'TabBar') then
     for _, tab in pairs(self.options.tabs) do
-      local item_flags = 0
-      if self._key_to_select and tab.key == self._key_to_select then
-        item_flags = ImGui.TabItemFlags_SetSelected()
-        self._key_to_select = nil
-      end
-      if ImGui.BeginTabItem(ctx, tab.label, false, item_flags) then
+      if ImGui.BeginTabItem(ctx, tab.label) then
         Trap(function()
-          self:_set(tab.key)
+          self:set(tab.key)
         end)
         ImGui.EndTabItem(ctx)
       end

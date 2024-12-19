@@ -22,10 +22,6 @@ function SettingsControls:init()
     label = 'Font Size',
   }
 
-  self.font_size.on_set = function (_value)
-    self.plugin.app:refresh()
-  end
-
   self:init_logging()
   self:init_layout()
 end
