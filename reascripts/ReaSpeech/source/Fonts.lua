@@ -11,6 +11,8 @@ Fonts = {
 }
 
 function Fonts:init(ctx)
+  self._attached_ctx = {}
+
   local storage = Storage.ExtState.make {
     section = 'ReaSpeech.General',
     persist = true,
@@ -47,19 +49,28 @@ function Fonts:check(ctx)
 end
 
 function Fonts:load_and_attach(ctx, font_size)
-  if ImGui.ValidatePtr(self.main, 'ImGui_Font*') then
-    ImGui.Detach(ctx, self.main)
-  end
-
+  self:_detach(self.main)
   self.main = ImGui.CreateFont('sans-serif', font_size)
-  ImGui.Attach(ctx, self.main)
+  self:_attach(ctx, self.main)
 
-  if ImGui.ValidatePtr(self.bold, 'ImGui_Font*') then
-    ImGui.Detach(ctx, self.bold)
-  end
-
+  self:_detach(self.bold)
   self.bold = ImGui.CreateFont('sans-serif', font_size, ImGui.FontFlags_Bold())
-  ImGui.Attach(ctx, self.bold)
+  self:_attach(ctx, self.bold)
+end
+
+function Fonts:_attach(ctx, font)
+  ImGui.Attach(ctx, font)
+  self._attached_ctx[font] = ctx
+end
+
+function Fonts:_detach(font)
+  if not ImGui.ValidatePtr(font, 'ImGui_Font*') then return end
+
+  local attached_ctx = self._attached_ctx[font]
+  self._attached_ctx[font] = nil
+  if not ImGui.ValidatePtr(attached_ctx, 'ImGui_Context*') then return end
+
+  ImGui.Detach(attached_ctx, font)
 end
 
 function Fonts.wrap(ctx, font, f, trap_f)
