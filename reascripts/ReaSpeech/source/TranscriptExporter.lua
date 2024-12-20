@@ -119,10 +119,7 @@ function TranscriptExporter:update_target_filename_ui()
   if is_full_path then
     self.target_filename_display:set(full_path)
   else
-    local display = table.concat({
-      '<Project Resources>',
-      full_path:sub(#reaper.GetProjectPath() + 2)
-    }, PathUtil._path_separator())
+    local display = PathUtil.join('<Project Resources>', full_path:sub(#reaper.GetProjectPath() + 2))
     self.target_filename_display:set(display)
   end
 

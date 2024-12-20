@@ -76,6 +76,16 @@ PathUtil.is_full_path = function(path)
   return found and true or false
 end
 
+-- Joins an arbitrary list of path components into a single path
+-- using the appropriate path separator for the current OS
+-- (as reported by REAPER, anyway).
+PathUtil.join = function(...)
+  local args = {...}
+  local separator = PathUtil._path_separator()
+
+  return table.concat(args, separator)
+end
+
 PathUtil._path_separator = function()
   if EnvUtil.is_windows() then
     return "\\"

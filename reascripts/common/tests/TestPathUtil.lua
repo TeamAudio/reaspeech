@@ -202,4 +202,22 @@ function TestPathUtil:testGetFilename()
   lu.assertEquals(PathUtil.get_filename(""), "")
 end
 
+function TestPathUtil:testJoin()
+  reaper.GetOS = function() return "Win64" end
+
+  lu.assertEquals(PathUtil.join("path", "to", "some-file.json"), "path\\to\\some-file.json")
+
+  reaper.GetOS = function() return "OSX64" end
+
+  lu.assertEquals(PathUtil.join("path", "to", "some-file.json"), "path/to/some-file.json")
+
+  reaper.GetOS = function() return "Other" end
+
+  lu.assertEquals(PathUtil.join("path", "to", "some-file.json"), "path/to/some-file.json")
+
+  lu.assertEquals(PathUtil.join(), "")
+  lu.assertEquals(PathUtil.join("one-arg"), "one-arg")
+
+end
+
 os.exit(lu.LuaUnit.run())
