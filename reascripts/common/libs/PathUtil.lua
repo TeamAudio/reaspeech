@@ -6,6 +6,11 @@
 
 PathUtil = {}
 
+-- Returns true if the given file path has an extension, false otherwise.
+PathUtil.has_extension = function(filepath)
+  return filepath:find("%.[^%.\\/%s]*$") and true or false
+end
+
 -- Apply an extension to a file path, if it doesn't already have one.
 -- Empty or nil path returns the empty string.
 PathUtil.apply_extension = function(filepath, extension)
@@ -33,7 +38,7 @@ end
 -- Returns the given path if a full path, otherwise returns given path
 -- relative to the REAPER project resource directory.
 PathUtil.get_real_path = function(path_arg)
-  if PathUtil._is_full_path(path_arg) then
+  if PathUtil.is_full_path(path_arg) then
     return path_arg
   end
 
@@ -53,7 +58,8 @@ PathUtil.get_reveal_command = function(path_arg)
   end
 end
 
-PathUtil._is_full_path = function(path)
+-- Returns true if the given path is a full path, false otherwise.
+PathUtil.is_full_path = function(path)
   local found
 
   if EnvUtil.is_windows() then

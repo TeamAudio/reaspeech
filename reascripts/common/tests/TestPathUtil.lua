@@ -14,6 +14,24 @@ reaper = {
   GetProjectPath = function() return TestPathUtil.PROJECT_PATH end,
 }
 
+function TestPathUtil:testHasExtension()
+  lu.assertTrue(PathUtil.has_extension("some-file.json"))
+  lu.assertTrue(PathUtil.has_extension("path\\to\\some-file.json"))
+  lu.assertTrue(PathUtil.has_extension("path/to/some-file.json"))
+  lu.assertTrue(PathUtil.has_extension("C:\\path\\to\\some-file.json"))
+  lu.assertTrue(PathUtil.has_extension("/path/to/some-file.json"))
+
+  lu.assertFalse(PathUtil.has_extension("some-file"))
+  lu.assertFalse(PathUtil.has_extension("path\\to\\some-file"))
+  lu.assertFalse(PathUtil.has_extension("path/to/some-file"))
+  lu.assertFalse(PathUtil.has_extension("C:\\path\\to\\some-file"))
+  lu.assertFalse(PathUtil.has_extension("/path/to/some-file"))
+
+  lu.assertTrue(PathUtil.has_extension(".json"))
+  lu.assertFalse(PathUtil.has_extension(""))
+
+end
+
 function TestPathUtil:testApplyExtension()
   local extension = "json"
 
@@ -125,7 +143,7 @@ function TestPathUtil:testIsFullPath()
 
   for expected, path in pairs(assertions) do
     for _, p in ipairs(path) do
-      lu.assertEquals(PathUtil._is_full_path(p), expected)
+      lu.assertEquals(PathUtil.is_full_path(p), expected)
     end
   end
 
@@ -143,7 +161,7 @@ function TestPathUtil:testIsFullPath()
 
     for expected, path in pairs(assertions) do
       for _, p in ipairs(path) do
-        lu.assertEquals(PathUtil._is_full_path(p), expected)
+        lu.assertEquals(PathUtil.is_full_path(p), expected)
       end
     end
   end

@@ -29,20 +29,75 @@ function TranscriptExporter:init()
       | ImGui.WindowFlags_NoDocking()
   })
 
-  self.export_formats = TranscriptExporterFormats.new {
+  local export_formats = TranscriptExporterFormats.new {
     TranscriptExportFormat.exporter_json(),
     TranscriptExportFormat.exporter_srt(),
     TranscriptExportFormat.exporter_csv(),
   }
+  function export_formats.on_change()
+    self:update_target_filename_ui()
+  end
+
+  self.export_formats = export_formats
   self.export_options = {}
+
+  local _self = self
+
   self.file_selector = ReaSpeechFileSelector.new({
     label = 'File',
     save = true,
     button_width = self.BUTTON_WIDTH,
     input_width = self.FILE_WIDTH
   })
+  function self.file_selector:on_set()
+    _self:update_target_filename_ui()
+  end
+
+  -- invisible state to manage the UX around the target filename
+  self.is_full_path = Storage.memory(false)
+  self.target_filename_exists = Storage.memory(false)
+  self.has_extension = Storage.memory(false)
+  local has_extension = function() return self.has_extension:get() end
+
+  -- this is the value that will actually be used after the
+  -- file_selector contents are processed (relative vs full path,
+  -- auto extension, etc.)
+  self.target_filename = Storage.memory('')
+
+  self.apply_extension = ReaSpeechCheckbox.new {
+    default = true,
+    label_long = 'Apply Extension',
+    disabled_if = function() return has_extension() end,
+  }
+  self.apply_extension.options.changed_handler = function()
+    _self:update_target_filename_ui()
+  end
 
   self.alert_popup = AlertPopup.new {}
+end
+
+function TranscriptExporter:update_target_filename_ui()
+  local full_path = PathUtil.get_real_path(self.file_selector:value())
+
+  self.has_extension:set(PathUtil.has_extension(full_path))
+  self.is_full_path:set(PathUtil.is_full_path(full_path))
+
+  -- automatically turn off the auto-extension if user enters
+  -- in a filename with an extension
+  if self.has_extension:get() and self.apply_extension:value() then
+    self.apply_extension:set(false)
+  end
+
+  -- automatically apply default extension for format, if desired
+  if self.apply_extension:value() then
+    local extension = self.export_formats:selected_format().extension
+    local with_extension = PathUtil.apply_extension(full_path, extension)
+    self.target_filename:set(with_extension)
+  else
+    self.target_filename:set(full_path)
+  end
+
+  self.target_filename_exists:set(reaper.file_exists(self.target_filename:get()))
 end
 
 function TranscriptExporter:show_success()
@@ -50,7 +105,7 @@ function TranscriptExporter:show_success()
     self.alert_popup.onclose = nil
     self:close()
   end
-  self.alert_popup:show('Export Successful', 'Exported ' .. self.export_formats:selected_key() .. ' to: ' .. self.file_selector:value())
+  self.alert_popup:show('Export Successful', 'Exported ' .. self.export_formats:selected_key() .. ' to: ' .. self.target_filename:get())
 end
 
 function TranscriptExporter:show_error(msg)
@@ -77,6 +132,23 @@ end
 
 function TranscriptExporter:render_file_selector()
   self.file_selector:render()
+
+  ImGui.Spacing(ctx)
+
+  self.apply_extension:render()
+
+  ImGui.Spacing(ctx)
+
+  local show_target_filename = self.file_selector:value() == ''
+    or self.target_filename:get() ~= self.file_selector:value()
+
+  if show_target_filename then
+    ImGui.Text(ctx, 'Target File: ' .. self.target_filename:get())
+  end
+
+  if self.target_filename_exists:get() then
+    Widgets.warning('File exists and will be overwritten.')
+  end
 end
 
 function TranscriptExporter:render_buttons()
@@ -95,13 +167,14 @@ function TranscriptExporter:render_buttons()
 end
 
 function TranscriptExporter:handle_export()
-  if self.file_selector:value() == '' then
+  local target_filename = self.target_filename:get()
+  if target_filename == '' then
     self:show_error('Please specify a file name.')
     return false
   end
-  local file = io.open(self.file_selector:value(), 'w')
+  local file = io.open(target_filename, 'w')
   if not file then
-    self:show_error('Could not open file: ' .. self.file_selector:value())
+    self:show_error('Could not open file: ' .. target_filename)
     return false
   end
   self.export_formats:write(self.transcript, file, self.export_options)
@@ -133,6 +206,10 @@ function TranscriptExporterFormats:render_combo(width)
         local is_selected = self.selected_format_key == format.key
         if ImGui.Selectable(ctx, format.key, is_selected) then
           self.selected_format_key = format.key
+
+          if self.on_change then
+            self.on_change()
+          end
         end
         if is_selected then
           ImGui.SetItemDefaultFocus(ctx)

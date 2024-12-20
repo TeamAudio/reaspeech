@@ -67,6 +67,8 @@ ReaSpeechCheckbox.new = function (options)
   }
   options.default = options.default or false
 
+  options.disabled_if = options.disabled_if or function() return false end
+
   options.changed_handler = options.changed_handler or function(_) end
 
   local o = ReaSpeechWidget.new({
@@ -93,6 +95,7 @@ ReaSpeechCheckbox.simple = function(default_value, label, changed_handler)
 end
 
 ReaSpeechCheckbox.renderer = function (self, column)
+  local disable_if = ReaUtil.disabler(ctx)
   local options = self.options
   local label = options.label_long
 
@@ -100,18 +103,20 @@ ReaSpeechCheckbox.renderer = function (self, column)
     label = options.label_short
   end
 
-  local rv, value = ImGui.Checkbox(ctx, label, self:value())
+  disable_if(self.options.disabled_if(), function()
+    local rv, value = ImGui.Checkbox(ctx, label, self:value())
 
-  if options.help_text then
-    ImGui.SameLine(ctx)
-    ImGui.SetCursorPosY(ctx, ImGui.GetCursorPosY(ctx) + 7)
-    self:render_help_icon()
-  end
+    if options.help_text then
+      ImGui.SameLine(ctx)
+      ImGui.SetCursorPosY(ctx, ImGui.GetCursorPosY(ctx) + 7)
+      self:render_help_icon()
+    end
 
-  if rv then
-    self:set(value)
-    options.changed_handler(value)
-  end
+    if rv then
+      self:set(value)
+      options.changed_handler(value)
+    end
+  end)
 end
 
 ReaSpeechTextInput = {}

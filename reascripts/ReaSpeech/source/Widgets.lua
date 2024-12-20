@@ -86,3 +86,8 @@ function Widgets.tooltip(text)
 
   ImGui.EndTooltip(ctx)
 end
+
+function Widgets.warning(text)
+  local bold_red = 0xff0000ff
+  ImGui.TextColored(ctx, bold_red, text)
+end
