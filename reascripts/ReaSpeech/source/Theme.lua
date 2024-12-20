@@ -15,6 +15,7 @@ Theme = {
     medium_gray_opaque = 0x5C5C5CFF,
     pink_opaque = 0xE24097FF,
     very_dark_gray_semi_opaque = 0x1A1A1AFB,
+    bold_red = 0xff0000ff,
   }
 }
 
