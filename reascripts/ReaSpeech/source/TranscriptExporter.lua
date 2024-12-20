@@ -52,7 +52,6 @@ function TranscriptExporter:init()
   self.is_full_path = Storage.memory(false)
   self.target_filename_exists = Storage.memory(false)
   self.has_extension = Storage.memory(false)
-  local has_extension = function() return self.has_extension:get() end
 
   -- this is the value that will actually be used after the
   -- file_selector contents are processed (relative vs full path,
@@ -62,11 +61,12 @@ function TranscriptExporter:init()
   self.apply_extension = ReaSpeechCheckbox.new {
     default = true,
     label_long = 'Apply Extension',
-    disabled_if = function() return has_extension() end,
+    disabled_if = function() return self.has_extension:get() end,
+    changed_handler = function()
+      if not self.apply_extension then return end
+      self:update_target_filename_ui()
+    end
   }
-  self.apply_extension.options.changed_handler = function()
-    self:update_target_filename_ui()
-  end
 
   self.alert_popup = AlertPopup.new {}
 end
@@ -86,11 +86,10 @@ function TranscriptExporter:update_target_filename_ui()
   -- automatically apply default extension for format, if desired
   if self.apply_extension:value() then
     local extension = self.export_formats:selected_format().extension
-    local with_extension = PathUtil.apply_extension(full_path, extension)
-    self.target_filename:set(with_extension)
-  else
-    self.target_filename:set(full_path)
+    full_path = PathUtil.apply_extension(full_path, extension)
   end
+
+  self.target_filename:set(full_path)
 
   self.target_filename_exists:set(reaper.file_exists(self.target_filename:get()))
 end
