@@ -140,7 +140,7 @@ function TranscriptExporter:show_success()
     ImGui.SameLine(ctx)
 
     Widgets.link(filename, function()
-      ExecProcess.via_tempfile(PathUtil.get_reveal_command(file_path)):no_wait()
+      ExecProcess.new(PathUtil.get_reveal_command(file_path)):no_wait()
       self.alert_popup:close()
     end)
   end)
