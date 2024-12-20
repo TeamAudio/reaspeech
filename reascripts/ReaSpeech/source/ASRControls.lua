@@ -13,7 +13,7 @@ ASRControls = PluginControls {
   HELP_MODEL = 'Model to use for transcription. Larger models provide better accuracy but use more resources like disk space and memory.',
   HELP_LANGUAGE = 'Language spoken in source audio.\nSet this to "Detect" to auto-detect the language.',
   HELP_PRESERVED_WORDS = 'Comma-separated list of words to preserve in transcript.\nExample: Jane Doe, CyberCorp',
-  HELP_VAD = 'Enable Voice Activity Detection (VAD) to filter out silence.',
+  HELP_VAD = 'Enable Voice Activity Detection (VAD) to filter out non-speech portions.',
 
   tabs = function(self)
     return {
