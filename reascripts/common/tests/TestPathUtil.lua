@@ -184,4 +184,22 @@ function TestPathUtil:testPathSeparator()
   end
 end
 
+function TestPathUtil:testGetFilename()
+  local file_paths = {
+    "C:\\path\\to\\some-file.json",
+    "path\\to\\some-file.json",
+    "\\Server\\Volume\\some-file.json",
+    "/path/to/some-file.json",
+    "path/to/some-file.json",
+    "some-file.json",
+  }
+
+  for _, p in ipairs(file_paths) do
+    lu.assertEquals(PathUtil.get_filename(p), 'some-file.json')
+  end
+
+  -- blank is blank
+  lu.assertEquals(PathUtil.get_filename(""), "")
+end
+
 os.exit(lu.LuaUnit.run())

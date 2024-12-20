@@ -32,7 +32,12 @@ function AlertPopup:show(title, msg)
 end
 
 function AlertPopup:render_content()
-  ImGui.Text(ctx, self.msg)
+  if type(self.msg) == 'function' then
+    self.msg()
+    return
+  else
+    ImGui.Text(ctx, self.msg)
+  end
   self:render_separator()
   if ImGui.Button(ctx, 'OK', self.BUTTON_WIDTH, 0) then
     self:close()

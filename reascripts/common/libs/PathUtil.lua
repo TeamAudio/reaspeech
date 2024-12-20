@@ -35,6 +35,11 @@ PathUtil.apply_extension = function(filepath, extension)
   return filepath .. '.' .. extension
 end
 
+-- Returns the filename+extension portion of a full path.
+PathUtil.get_filename = function(filepath)
+  return filepath:match("[^\\/]*$")
+end
+
 -- Returns the given path if a full path, otherwise returns given path
 -- relative to the REAPER project resource directory.
 PathUtil.get_real_path = function(path_arg)

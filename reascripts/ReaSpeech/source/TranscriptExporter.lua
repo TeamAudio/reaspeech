@@ -105,7 +105,19 @@ function TranscriptExporter:show_success()
     self.alert_popup.onclose = nil
     self:close()
   end
-  self.alert_popup:show('Export Successful', 'Exported ' .. self.export_formats:selected_key() .. ' to: ' .. self.target_filename:get())
+
+  self.alert_popup:show('Export Successful', function()
+    local file_path = self.target_filename:get()
+    local filename = PathUtil.get_filename(self.target_filename:get())
+
+    ImGui.Text(ctx, 'Exported ' .. self.export_formats:selected_key() .. ' to: ')
+    ImGui.SameLine(ctx)
+
+    Widgets.link(filename, function()
+      ExecProcess.via_tempfile(PathUtil.get_reveal_command(file_path)):no_wait()
+      self.alert_popup:close()
+    end)
+  end)
 end
 
 function TranscriptExporter:show_error(msg)
