@@ -86,3 +86,7 @@ function Widgets.tooltip(text)
 
   ImGui.EndTooltip(ctx)
 end
+
+function Widgets.warning(text)
+  ImGui.TextColored(ctx, Theme.COLORS.bold_red, text)
+end
