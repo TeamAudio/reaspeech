@@ -71,8 +71,32 @@ function TranscriptExporter:init()
   self.alert_popup = AlertPopup.new {}
 end
 
+function TranscriptExporter:open()
+  self:reset_form()
+end
+
+function TranscriptExporter:reset_form()
+  self.file_selector:set('')
+  self.apply_extension:set(true)
+  self:update_target_filename_ui()
+end
+
+function TranscriptExporter:clear_target_filename()
+  self.target_filename:set('')
+  self.target_filename_exists:set(false)
+  self.has_extension:set(false)
+  self.is_full_path:set(false)
+end
+
 function TranscriptExporter:update_target_filename_ui()
-  local full_path = PathUtil.get_real_path(self.file_selector:value())
+  local specified_path = self.file_selector:value()
+
+  if specified_path == '' then
+    self:clear_target_filename()
+    return
+  end
+
+  local full_path = PathUtil.get_real_path(specified_path)
 
   self.has_extension:set(PathUtil.has_extension(full_path))
   self.is_full_path:set(PathUtil.is_full_path(full_path))
