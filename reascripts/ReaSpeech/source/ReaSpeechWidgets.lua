@@ -406,7 +406,8 @@ ReaSpeechFileSelector.renderer = function(self)
   end
 
   ImGui.SetNextItemWidth(ctx, w)
-  local file_changed, file = ImGui.InputText(ctx, '##file', self:value())
+  local hint = '...or type one here.'
+  local file_changed, file = ImGui.InputTextWithHint(ctx, '##file', hint, self:value())
   if file_changed then
     self:set(file)
   end

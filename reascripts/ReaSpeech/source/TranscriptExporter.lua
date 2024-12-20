@@ -49,7 +49,6 @@ function TranscriptExporter:init()
   })
 
   -- invisible state to manage the UX around the target filename
-  self.is_full_path = Storage.memory(false)
   self.target_filename_exists = Storage.memory(false)
   self.has_extension = Storage.memory(false)
 
@@ -57,6 +56,7 @@ function TranscriptExporter:init()
   -- file_selector contents are processed (relative vs full path,
   -- auto extension, etc.)
   self.target_filename = Storage.memory('')
+  self.target_filename_display = Storage.memory('')
 
   self.apply_extension = ReaSpeechCheckbox.new {
     default = true,
@@ -83,9 +83,9 @@ end
 
 function TranscriptExporter:clear_target_filename()
   self.target_filename:set('')
+  self.target_filename_display:set('')
   self.target_filename_exists:set(false)
   self.has_extension:set(false)
-  self.is_full_path:set(false)
 end
 
 function TranscriptExporter:update_target_filename_ui()
@@ -96,10 +96,11 @@ function TranscriptExporter:update_target_filename_ui()
     return
   end
 
+  local is_full_path = PathUtil.is_full_path(specified_path)
+
   local full_path = PathUtil.get_real_path(specified_path)
 
   self.has_extension:set(PathUtil.has_extension(full_path))
-  self.is_full_path:set(PathUtil.is_full_path(full_path))
 
   -- automatically turn off the auto-extension if user enters
   -- in a filename with an extension
@@ -114,6 +115,16 @@ function TranscriptExporter:update_target_filename_ui()
   end
 
   self.target_filename:set(full_path)
+
+  if is_full_path then
+    self.target_filename_display:set(full_path)
+  else
+    local display = table.concat({
+      '<Project Resources>',
+      full_path:sub(#reaper.GetProjectPath() + 2)
+    }, PathUtil._path_separator())
+    self.target_filename_display:set(display)
+  end
 
   self.target_filename_exists:set(reaper.file_exists(self.target_filename:get()))
 end
@@ -173,7 +184,7 @@ function TranscriptExporter:render_file_selector()
     or self.target_filename:get() ~= self.file_selector:value()
 
   if show_target_filename then
-    ImGui.Text(ctx, 'Target File: ' .. self.target_filename:get())
+    ImGui.Text(ctx, 'Target File: ' .. self.target_filename_display:get())
   end
 
   if self.target_filename_exists:get() then
