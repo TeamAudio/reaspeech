@@ -188,6 +188,7 @@ end
 function ASRControls:render_language(column)
   if self.asr_options.language then
     self.language:render()
+    ImGui.Spacing(ctx)
     self.translate:render(column)
   end
 end
@@ -203,8 +204,6 @@ function ASRControls:render_hotwords()
 end
 
 function ASRControls:render_options(column)
-  ReaSpeechControlsUI:render_input_label('Options')
-
   if self.asr_options.vad_filter then
     self.vad_filter:render(column)
   end
