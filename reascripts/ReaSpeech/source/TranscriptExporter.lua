@@ -29,29 +29,24 @@ function TranscriptExporter:init()
       | ImGui.WindowFlags_NoDocking()
   })
 
-  local export_formats = TranscriptExporterFormats.new {
+  self.export_formats = TranscriptExporterFormats.new {
     TranscriptExportFormat.exporter_json(),
     TranscriptExportFormat.exporter_srt(),
     TranscriptExportFormat.exporter_csv(),
   }
-  function export_formats.on_change()
+  function self.export_formats.on_change()
     self:update_target_filename_ui()
   end
 
-  self.export_formats = export_formats
   self.export_options = {}
-
-  local _self = self
 
   self.file_selector = ReaSpeechFileSelector.new({
     label = 'File',
     save = true,
     button_width = self.BUTTON_WIDTH,
-    input_width = self.FILE_WIDTH
+    input_width = self.FILE_WIDTH,
+    on_set = function() self:update_target_filename_ui() end,
   })
-  function self.file_selector:on_set()
-    _self:update_target_filename_ui()
-  end
 
   -- invisible state to manage the UX around the target filename
   self.is_full_path = Storage.memory(false)
@@ -70,7 +65,7 @@ function TranscriptExporter:init()
     disabled_if = function() return has_extension() end,
   }
   self.apply_extension.options.changed_handler = function()
-    _self:update_target_filename_ui()
+    self:update_target_filename_ui()
   end
 
   self.alert_popup = AlertPopup.new {}
