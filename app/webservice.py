@@ -62,6 +62,8 @@ ASR_OPTIONS = frozenset([
 
 if ASR_ENGINE == "faster_whisper":
     from .faster_whisper.constants import ASR_ENGINE_OPTIONS
+elif ASR_ENGINE == "whisper_cpp":
+    from .whisper_cpp.constants import ASR_ENGINE_OPTIONS
 else:
     from .openai_whisper.constants import ASR_ENGINE_OPTIONS
 

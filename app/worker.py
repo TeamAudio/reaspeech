@@ -41,6 +41,8 @@ tqdm.tqdm = _TQDM
 ASR_ENGINE = os.getenv("ASR_ENGINE", "faster_whisper")
 if ASR_ENGINE == "faster_whisper":
     from .faster_whisper import core as asr_engine
+elif ASR_ENGINE == "whisper_cpp":
+    from .whisper_cpp import core as asr_engine
 else:
     from .openai_whisper import core as asr_engine
 
