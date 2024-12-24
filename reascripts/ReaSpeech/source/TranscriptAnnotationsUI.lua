@@ -173,7 +173,7 @@ function TranscriptAnnotationTypes.take_markers()
     track_names[guid] = track_name
   end
 
-  local track_selector = ReaSpeechListBox.new {
+  local track_selector = Widgets.ListBox.new {
     state = Storage.memory({}),
     label = 'Track Filter',
     items = track_guids,

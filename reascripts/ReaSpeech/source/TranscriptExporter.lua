@@ -40,7 +40,7 @@ function TranscriptExporter:init()
 
   self.export_options = {}
 
-  self.file_selector = ReaSpeechFileSelector.new({
+  self.file_selector = Widgets.FileSelector.new({
     label = 'File',
     save = true,
     button_width = self.BUTTON_WIDTH,

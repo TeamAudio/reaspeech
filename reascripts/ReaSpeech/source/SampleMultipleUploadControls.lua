@@ -17,8 +17,8 @@ function SampleMultipleUploadControls:init()
   assert(self.plugin, 'SampleMultipleUploadControls: plugin is required')
   Logging.init(self, 'SampleMultipleUploadControls')
 
-  self.upload_file1 = ReaSpeechFileSelector.new({ label = 'Upload File 1' })
-  self.upload_file2 = ReaSpeechFileSelector.new({ label = 'Upload File 2' })
+  self.upload_file1 = Widgets.FileSelector.new({ label = 'Upload File 1' })
+  self.upload_file2 = Widgets.FileSelector.new({ label = 'Upload File 2' })
 
   self:init_layout()
 end

@@ -25,7 +25,7 @@ function TranscriptImporter:init()
       | ImGui.WindowFlags_NoDocking()
   })
 
-  self.file_selector = ReaSpeechFileSelector.new({
+  self.file_selector = Widgets.FileSelector.new({
     label = 'File - must be JSON previously exported from ReaSpeech.',
     save = false,
     button_width = self.BUTTON_WIDTH,
