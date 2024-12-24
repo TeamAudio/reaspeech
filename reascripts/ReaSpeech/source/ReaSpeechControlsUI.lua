@@ -23,7 +23,7 @@ function ReaSpeechControlsUI:init()
   for _, tab in ipairs(plugin_tabs) do
     table.insert(tabs, tab.tab)
   end
-  self.tab_bar = ReaSpeechTabBar.new {
+  self.tab_bar = Widgets.TabBar.new {
     default = tabs[1] and tabs[1].key or '',
     tabs = tabs,
   }

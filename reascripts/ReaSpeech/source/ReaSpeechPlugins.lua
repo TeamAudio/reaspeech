@@ -47,7 +47,7 @@ end
 
 function ReaSpeechPlugins.tab(key, label, renderer)
   return {
-    tab = ReaSpeechTabBar.tab(key, label),
+    tab = Widgets.TabBar.tab(key, label),
     render = renderer,
     is_selected = function(_, selected_key) return key == selected_key end
   }

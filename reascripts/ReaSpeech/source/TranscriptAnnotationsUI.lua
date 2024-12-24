@@ -105,7 +105,7 @@ function TranscriptAnnotationTypes:reset()
 end
 
 function TranscriptAnnotationTypes:init()
-  self.tab_bar = ReaSpeechTabBar.new {
+  self.tab_bar = Widgets.TabBar.new {
     default = self.types[1].key,
     tabs = self.types,
   }

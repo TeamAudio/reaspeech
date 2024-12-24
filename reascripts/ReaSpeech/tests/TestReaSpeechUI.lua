@@ -38,6 +38,7 @@ require('source/components/widgets/Checkbox')
 require('source/components/widgets/Combo')
 require('source/components/widgets/FileSelector')
 require('source/components/widgets/ListBox')
+require('source/components/widgets/TabBar')
 require('source/components/widgets/TextInput')
 
 --
