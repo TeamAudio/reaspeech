@@ -156,7 +156,7 @@ end
 function TranscriptAnnotationTypes.take_markers()
   local granularity_combo = TranscriptAnnotationsUI.granularity_combo()
 
-  local track_filter_mode = ReaSpeechButtonBar.new {
+  local track_filter_mode = Widgets.ButtonBar.new {
     state = Storage.memory('ignore'),
     label = 'Track Filter Mode',
     buttons = { { 'Include', 'include' }, { 'Ignore', 'ignore' } },
