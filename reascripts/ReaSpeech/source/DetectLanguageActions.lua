@@ -15,7 +15,7 @@ function DetectLanguageActions:init()
 end
 
 function DetectLanguageActions:init_button()
-  self._button = ReaSpeechButton.new({
+  self._button = Widgets.Button.new({
     label = "Label Track Languages",
     on_click = function()
       self:label_track_languages()

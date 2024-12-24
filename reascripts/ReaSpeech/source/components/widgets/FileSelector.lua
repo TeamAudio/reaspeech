@@ -39,7 +39,7 @@ FileSelector.new = function(options)
     options = options,
   })
 
-  options.button = ReaSpeechButton.new({
+  options.button = Widgets.Button.new({
     label = options.button_label or 'Choose File',
     disabled = not FileSelector.has_js_ReaScriptAPI(),
     width = options.button_width,

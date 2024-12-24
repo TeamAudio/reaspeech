@@ -16,7 +16,7 @@ function SampleMultipleUploadActions:init()
   assert(self.plugin, 'SampleMultipleUploadActions: plugin is required')
   Logging.init(self, 'SampleMultipleUploadActions')
 
-  self._button = ReaSpeechButton.new({
+  self._button = Widgets.Button.new({
     label = 'Upload files',
     on_click = function()
       self.plugin:upload_files()

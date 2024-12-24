@@ -31,7 +31,7 @@ function ASRActions:selected_tracks_button()
   self._selected_track_count = selected_track_count
 
   if selected_track_count == 0 then
-    self._selected_tracks_button = ReaSpeechButton.new({
+    self._selected_tracks_button = Widgets.Button.new({
       label = "Process Selected Tracks",
       disabled = true,
     })
@@ -41,7 +41,7 @@ function ASRActions:selected_tracks_button()
   local button_text = ("Process %sSelected Track%s")
     :format(self.pluralizer(selected_track_count, 's'))
 
-  self._selected_tracks_button = ReaSpeechButton.new({
+  self._selected_tracks_button = Widgets.Button.new({
     label = button_text,
     on_click = function ()
       self:process_jobs(self.jobs_for_selected_tracks)
@@ -61,7 +61,7 @@ function ASRActions:selected_items_button()
   self._selected_item_count = selected_item_count
 
   if selected_item_count == 0 then
-    self._selected_items_button = ReaSpeechButton.new({
+    self._selected_items_button = Widgets.Button.new({
       label = "Process Selected Items",
       disabled = true,
     })
@@ -71,7 +71,7 @@ function ASRActions:selected_items_button()
   local button_text = ("Process %sSelected Item%s")
     :format(self.pluralizer(selected_item_count, 's'))
 
-  self._selected_items_button = ReaSpeechButton.new({
+  self._selected_items_button = Widgets.Button.new({
     label = button_text,
     on_click = function ()
       self:process_jobs(self.jobs_for_selected_items)
@@ -86,7 +86,7 @@ function ASRActions:all_items_button()
     return self._all_items_button
   end
 
-  self._all_items_button = ReaSpeechButton.new({
+  self._all_items_button = Widgets.Button.new({
     label = "Process All Items",
     on_click = function ()
       self:process_jobs(self.jobs_for_all_items)
@@ -101,7 +101,7 @@ function ASRActions:import_button()
     return self._import_button
   end
 
-  self._import_button = ReaSpeechButton.new({
+  self._import_button = Widgets.Button.new({
     label = "Import Transcript",
     on_click = function () app.importer:present() end
   })
