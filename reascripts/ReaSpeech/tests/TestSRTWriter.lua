@@ -51,6 +51,7 @@ end
 function TestSRTWriter:testInit()
   local f = {}
   local writer = SRTWriter.new { file = f }
+  lu.assertEquals(writer.file, f)
 end
 
 function TestSRTWriter:testInitNoFile()

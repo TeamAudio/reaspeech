@@ -45,11 +45,11 @@ reaper.CountTakes = function () return 1 end
 reaper.GetTake = function (_, _) return {} end
 require('ReaIter')
 
-reaper.SetItemStateChunk = function (item, str, isundo)
+reaper.SetItemStateChunk = function (_item, str, _isundo)
   reaper_state.item_state_chunk = str
 end
 
-reaper.SetTakeMarker = function(take, index, name, pos, color)
+reaper.SetTakeMarker = function(take, _index, name, pos, color)
   reaper_state.take_markers[take] = reaper_state.take_markers[take] or {}
   table.insert(reaper_state.take_markers[take], {
     take = take,
@@ -77,7 +77,7 @@ reaper.SetMediaItemLength = function (_, _, _) end
 reaper.SetMediaItemPosition = function (_, _, _) end
 reaper.SetOnlyTrackSelected = function (_) end
 
-reaper.GetItemStateChunk = function (item, str, isundo)
+reaper.GetItemStateChunk = function (_item, _str, _isundo)
   return true, [[<ITEM
 POSITION 0
 SNAPOFFS 0
@@ -408,7 +408,7 @@ function TestTranscriptMarkers:testTakeMarkersTrackFilterInclude()
   ReaIter.each_media_item = ReaIter._make_iterator(reaper.CountMediaItems, reaper.GetMediaItem)
   ReaIter.each_take = ReaIter._make_iterator(reaper.CountTakes, reaper.GetTake)
 
-  ReaUtil.get_source_path = function (source)
+  ReaUtil.get_source_path = function (_source)
     return "some file"
   end
 
@@ -494,7 +494,7 @@ function TestTranscriptMarkers:testTakeMarkersTrackFilterIgnore()
   ReaIter.each_media_item = ReaIter._make_iterator(reaper.CountMediaItems, reaper.GetMediaItem)
   ReaIter.each_take = ReaIter._make_iterator(reaper.CountTakes, reaper.GetTake)
 
-  ReaUtil.get_source_path = function (source)
+  ReaUtil.get_source_path = function (_source)
     return "some file"
   end
 

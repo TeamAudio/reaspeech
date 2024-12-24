@@ -169,7 +169,7 @@ function TestLogging:testReactRespectsShowLogsOff()
 
   local yay_no_calls = true
 
-  reaper.ShowConsoleMsg = function(msg)
+  reaper.ShowConsoleMsg = function(_msg)
       yay_no_calls = false
   end
 
@@ -215,7 +215,7 @@ function TestLogging:testReactRespectsShowDebugLogsOn()
 
   local happy_calls = 0
 
-  reaper.ShowConsoleMsg = function(msg)
+  reaper.ShowConsoleMsg = function(_msg)
     happy_calls = happy_calls + 1
   end
 
@@ -235,7 +235,7 @@ function TestLogging:testReactIgnoresShowDebugLogsIfShowLogsOff()
 
   local sad_calls = 0
 
-  reaper.ShowConsoleMsg = function(msg)
+  reaper.ShowConsoleMsg = function(_msg)
     sad_calls = sad_calls + 1
   end
 

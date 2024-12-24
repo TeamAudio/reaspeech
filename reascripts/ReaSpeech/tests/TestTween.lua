@@ -64,6 +64,7 @@ end
 
 function TestTween:testDocumentation()
   local tween -- an instance of a Tween(...)
+  --luacheck: ignore
       , value -- calling tween() will return the current value
 
   -- use a predefined tween function

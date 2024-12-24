@@ -57,6 +57,7 @@ function TestCSVWriter:testFormatTime()
 function TestCSVWriter:testInit()
   local f = {}
   local writer = CSVWriter.new { file = f }
+  lu.assertEquals(writer.file, f)
 end
 
 function TestCSVWriter:testInitNoFile()

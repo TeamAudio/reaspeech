@@ -14,7 +14,7 @@ function TestFonts:testWrap()
 
   local push_called = false
   local pop_called = false
-  ImGui.PushFont = function(_, font)
+  ImGui.PushFont = function(_, _font)
     push_called = true
   end
   ImGui.PopFont = function(_)
@@ -22,10 +22,6 @@ function TestFonts:testWrap()
   end
 
   local old_reaper = reaper or {}
-  local error_function_called = false
-  reaper.ShowConsoleMsg = function(_)
-    error_function_called = true
-  end
 
   local function_called = false
   Fonts.wrap("context", "font", function()
@@ -46,7 +42,7 @@ function TestFonts:testWrapErrorHandler()
 
   local push_called = false
   local pop_called = false
-  ImGui.PushFont = function(_, font)
+  ImGui.PushFont = function(_, _font)
     push_called = true
   end
   ImGui.PopFont = function()
@@ -78,7 +74,7 @@ function TestFonts:testErrorHandlerDefault()
   local old_reaper = reaper
 
   local push_called = false
-  ImGui.PushFont = function(_, font)
+  ImGui.PushFont = function(_, _font)
     push_called = true
   end
 

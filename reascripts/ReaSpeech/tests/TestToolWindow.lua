@@ -252,8 +252,6 @@ function TestToolWindow:testRenderSeparator()
     end
   }
 
-  local o = test_class.new()
-
   lu.assertEquals(type(test_class.new().render_separator), 'function')
 end
 
