@@ -72,12 +72,14 @@ publish: build
 	cp build/ReaSpeech-5.4.luac $(dest)/
 
 .PHONY: tags
+tags : tagged_paths = $(SOURCE_ROOT) libs $(COMMON_ROOT)
 tags:
-	find source/ -type f -iname '*.lua' -print0 | xargs -0 etags
-	find libs/ -type f -iname '*.lua' -print0 | xargs -0 etags
-	find ../common/libs/ -type f -iname '*.lua' -print0 | xargs -0 etags --append
-	find ../common/vendor/ -type f -iname '*.lua' -print0 | xargs -0 etags --append
+	-rm -f TAGS
+	@for path in $(tagged_paths); do \
+		echo "Tagging $$path"; \
+		find $$path -type f -iname '*.lua' -print0 | xargs -0 etags --append; \
+	done
 
 .PHONY: clean
 clean:
-	rm -f build/ReaSpeech-5.3.luac build/ReaSpeech-5.4.luac build/ReaSpeechBundle.lua TAGS
+	rm -f build/ReaSpeech-5.3.luac build/ReaSpeech-5.4.luac $(BUNDLE_TARGET) TAGS
