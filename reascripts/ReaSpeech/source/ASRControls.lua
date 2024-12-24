@@ -56,7 +56,7 @@ function ASRControls:init()
     item_labels = WhisperLanguages.LANGUAGES
   }
 
-  self.translate = ReaSpeechCheckbox.new {
+  self.translate = Widgets.Checkbox.new {
     state = self.settings.translate,
     label_long = 'Translate to English',
     label_short = 'Translate',
@@ -75,7 +75,7 @@ function ASRControls:init()
     help_text = self.HELP_PRESERVED_WORDS
   }
 
-  self.vad_filter = ReaSpeechCheckbox.new {
+  self.vad_filter = Widgets.Checkbox.new {
     state = self.settings.vad_filter,
     label_long = 'Voice Activity Detection',
     label_short = 'VAD',

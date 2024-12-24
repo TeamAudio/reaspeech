@@ -58,7 +58,7 @@ function TranscriptExporter:init()
   self.target_filename = Storage.memory('')
   self.target_filename_display = Storage.memory('')
 
-  self.apply_extension = ReaSpeechCheckbox.new {
+  self.apply_extension = Widgets.Checkbox.new {
     default = true,
     label_long = 'Apply Extension',
     disabled_if = function() return self.has_extension:get() end,

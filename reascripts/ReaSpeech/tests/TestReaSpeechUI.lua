@@ -34,6 +34,7 @@ require('source/TranscriptImporter')
 require('source/TranscriptUI')
 require('source/WhisperLanguages')
 require('source/Widgets')
+require('source/components/widgets/Checkbox')
 require('source/components/widgets/FileSelector')
 require('source/components/widgets/ListBox')
 
