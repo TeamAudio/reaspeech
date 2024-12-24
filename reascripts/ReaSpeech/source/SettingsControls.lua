@@ -17,7 +17,7 @@ function SettingsControls:init()
   assert(self.plugin, 'SettingsControls: plugin is required')
   Logging.init(self, 'SettingsControls')
 
-  self.font_size = ReaSpeechNumberInput.new {
+  self.font_size = Widgets.NumberInput.new {
     state = Fonts.size,
     label = 'Font Size',
   }
