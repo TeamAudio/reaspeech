@@ -37,6 +37,7 @@ require('source/Widgets')
 require('source/components/widgets/Checkbox')
 require('source/components/widgets/FileSelector')
 require('source/components/widgets/ListBox')
+require('source/components/widgets/TextInput')
 
 --
 

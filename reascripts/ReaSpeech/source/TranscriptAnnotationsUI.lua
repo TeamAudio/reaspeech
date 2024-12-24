@@ -247,7 +247,7 @@ end
 
 function TranscriptAnnotationTypes.notes_track()
   local granularity_combo = TranscriptAnnotationsUI.granularity_combo()
-  local track_name = ReaSpeechTextInput.simple('Transcript', 'Track Name')
+  local track_name = Widgets.TextInput.simple('Transcript', 'Track Name')
 
   return {
     label = 'Notes Track',

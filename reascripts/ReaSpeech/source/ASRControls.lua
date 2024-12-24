@@ -63,13 +63,13 @@ function ASRControls:init()
     width_threshold = ReaSpeechControlsUI.NARROW_COLUMN_WIDTH
   }
 
-  self.hotwords = ReaSpeechTextInput.new {
+  self.hotwords = Widgets.TextInput.new {
     state = self.settings.hotwords,
     label = 'Preserved Words',
     help_text = self.HELP_PRESERVED_WORDS
   }
 
-  self.initial_prompt = ReaSpeechTextInput.new {
+  self.initial_prompt = Widgets.TextInput.new {
     state = self.settings.initial_prompt,
     label = 'Preserved Words',
     help_text = self.HELP_PRESERVED_WORDS
