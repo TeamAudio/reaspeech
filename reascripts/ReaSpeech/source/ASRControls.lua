@@ -48,7 +48,7 @@ function ASRControls:init()
 
   self:init_model_name()
 
-  self.language = ReaSpeechCombo.new {
+  self.language = Widgets.Combo.new {
     state = self.settings.language,
     label = 'Language',
     help_text = self.HELP_LANGUAGE,
@@ -87,7 +87,7 @@ function ASRControls:init()
 end
 
 function ASRControls:init_model_name()
-  self.model_name = ReaSpeechCombo.new {
+  self.model_name = Widgets.Combo.new {
     state = self.settings.model_name,
     label = 'Model',
     help_text = self.HELP_MODEL,

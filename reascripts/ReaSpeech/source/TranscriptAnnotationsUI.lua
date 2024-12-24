@@ -139,7 +139,7 @@ function TranscriptAnnotationTypes:render_type_options(options)
 end
 
 function TranscriptAnnotationsUI.granularity_combo()
-  local combo = ReaSpeechCombo.new {
+  local combo = Widgets.Combo.new {
     state = Storage.memory('segment'),
     label = 'Granularity',
     items = { 'word', 'segment' },
