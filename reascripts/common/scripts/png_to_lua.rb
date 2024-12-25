@@ -19,11 +19,11 @@ File.open(output_filename, 'w') do |f|
   f.write("  width = #{image.width},\n")
   f.write("  height = #{image.height},\n")
 
-  f.write("  bytes = table.concat({\n")
-  image.to_blob.bytes.each_slice(100) do |slice|
-    f.write("string.char(#{slice.join(",")}),\n")
-  end
-  f.write("  })\n")
+  bytes = image.to_blob.bytes.map { |b|
+    format("\\%d", b)
+  }.join
+
+  f.write("  bytes = '#{bytes}'\n")
 
   f.write("}\n")
 end
