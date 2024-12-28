@@ -36,13 +36,13 @@ def build_options(asr_options):
     options_dict = {
         'language': asr_options.get('language'),
         'translate': asr_options.get('task', '') == 'translate',
+        'token_timestamps': asr_options.get('split_on_word', False),
     }
     if asr_options.get('initial_prompt'):
         options_dict['initial_prompt'] = asr_options['initial_prompt']
     if asr_options.get('split_on_word'):
         options_dict['max_len'] = 1
         options_dict['split_on_word'] = True
-        options_dict['token_timestamps'] = True
     return options_dict
 
 
