@@ -61,7 +61,7 @@ def transcribe(audio, asr_options, output):
                 "text": segment.text,
             }
             segments.append(segment_dict)
-            text = text + segment.text
+            text = text + segment.text + " "
         result = {
             "language": options_dict.get("language"),
             "segments": segments,
