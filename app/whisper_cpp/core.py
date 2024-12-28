@@ -1,5 +1,4 @@
 import logging
-import logging.config
 import os
 from io import StringIO
 from threading import Lock
@@ -10,7 +9,7 @@ from pywhispercpp.model import Model
 import json
 from .constants import ASR_ENGINE_OPTIONS
 
-logging.config.fileConfig('app/logging.conf')
+logging.basicConfig(format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s', level=logging.INFO, force=True)
 logger = logging.getLogger(__name__)
 
 model_name = os.getenv("ASR_MODEL", "small")

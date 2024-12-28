@@ -24,7 +24,6 @@
 from typing import Union, Annotated
 import importlib.metadata
 import logging
-import logging.config
 import os
 import re
 import tempfile
@@ -41,7 +40,7 @@ import aiofiles
 from .util import apierror
 from .worker import transcribe, detect_language as detect_language_task
 
-logging.config.fileConfig('app/logging.conf')
+logging.basicConfig(format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s', level=logging.INFO, force=True)
 logger = logging.getLogger(__name__)
 
 APP_ENV = os.getenv("APP_ENV", "production")

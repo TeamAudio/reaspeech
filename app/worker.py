@@ -1,5 +1,4 @@
 import logging
-import logging.config
 import os
 
 from celery import Celery
@@ -9,7 +8,7 @@ import tqdm
 
 from .util.audio import load_audio
 
-logging.config.fileConfig('app/logging.conf')
+logging.basicConfig(format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s', level=logging.INFO, force=True)
 logger = logging.getLogger(__name__)
 
 # monkeypatch tqdm to fool whisper's `transcribe` function
