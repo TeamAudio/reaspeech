@@ -35,11 +35,14 @@ def load_model(next_model_name: str):
 def build_options(asr_options):
     options_dict = {
         'language': asr_options.get('language'),
-        'split_on_word': asr_options.get('word_timestamps', False),
         'translate': asr_options.get('task', '') == 'translate',
     }
     if asr_options.get('initial_prompt'):
         options_dict['initial_prompt'] = asr_options['initial_prompt']
+    if asr_options.get('split_on_word'):
+        options_dict['max_len'] = 1
+        options_dict['split_on_word'] = True
+        options_dict['token_timestamps'] = True
     return options_dict
 
 
@@ -57,12 +60,10 @@ def transcribe(audio, asr_options, output):
                 "end": float(segment.t1) / 100.0,
                 "text": segment.text,
             }
-            # if segment.words:
-                # segment_dict["words"] = [word._asdict() for word in segment.words]
             segments.append(segment_dict)
             text = text + segment.text
         result = {
-            # "language": options_dict.get("language", info.language),
+            "language": options_dict.get("language"),
             "segments": segments,
             "text": text
         }
