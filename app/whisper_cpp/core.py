@@ -25,6 +25,9 @@ def load_model(next_model_name: str):
         if model and next_model_name == model_name:
             return model
 
+        if not model:
+            logger.info(Model.system_info())
+
         model = Model(next_model_name, models_dir=model_path)
 
         model_name = next_model_name
