@@ -11,6 +11,9 @@ argmap = {
     '--redis-bin': {
         'default': 'redis-server',
         'help': 'Path to Redis server binary (default: %(default)s)' },
+    '--no-start-redis': {
+        'action': 'store_true',
+        'help': 'Do not start Redis server' },
     '--celery-broker-url': {
         'default': 'redis://localhost:6379/0',
         'help': 'Celery broker URL (default: %(default)s)' },
@@ -76,12 +79,13 @@ signal.signal(signal.SIGTERM, signal_handler)
 processes = {}
 
 # Start Redis
-print('Starting database...', file=sys.stderr)
-processes['redis'] = \
-    subprocess.Popen(
-        [args.redis_bin],
-        stdout=subprocess.DEVNULL,
-        start_new_session=True)
+if not args.no_start_redis:
+    print('Starting database...', file=sys.stderr)
+    processes['redis'] = \
+        subprocess.Popen(
+            [args.redis_bin],
+            stdout=subprocess.DEVNULL,
+            start_new_session=True)
 
 # Start Celery
 print('Starting worker...', file=sys.stderr)
