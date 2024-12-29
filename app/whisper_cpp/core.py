@@ -58,6 +58,8 @@ def transcribe(audio, asr_options, output):
         text = ""
         segment_generator = model.transcribe(audio, **options_dict)
         for segment in segment_generator:
+            if not segment.text:
+                continue
             segment_dict = {
                 "start": float(segment.t0) / 100.0,
                 "end": float(segment.t1) / 100.0,
