@@ -111,6 +111,7 @@ processes['gunicorn'] = \
     ], start_new_session=True)
 
 exitcode = 0
+process_name = '<unknown>'
 
 while not shutdown_requested:
     try:
@@ -122,22 +123,22 @@ while not shutdown_requested:
         continue
 
     exitcode = os.waitstatus_to_exitcode(waitstatus)
-    process_name = '<unknown>'
     for name, p in processes.items():
         if p.pid == pid:
             process_name = name
             break
 
-    if exitcode is not None:
-        if exitcode < 0:
-            print('Process', process_name, 'received signal', -exitcode, file=sys.stderr)
-        else:
-            print('Process', process_name, 'exited with status', exitcode, file=sys.stderr)
-        shutdown_requested = True
+    if exitcode < 0:
+        print('Process', process_name, 'received signal', -exitcode, file=sys.stderr)
+    else:
+        print('Process', process_name, 'exited with status', exitcode, file=sys.stderr)
+    shutdown_requested = True
 
 # Graceful shutdown sequence
 print('Initiating graceful shutdown...', file=sys.stderr)
 for name, p in reversed(list(processes.items())):
+    if name == process_name:
+        continue
     try:
         print(f'Terminating {name}...', file=sys.stderr)
         p.terminate()
