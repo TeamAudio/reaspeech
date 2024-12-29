@@ -115,26 +115,25 @@ exitcode = 0
 while not shutdown_requested:
     try:
         pid, waitstatus = os.waitpid(-1, os.WNOHANG)
-        if pid == 0:  # No process has exited
-            time.sleep(0.1)
-            continue
-
-        exitcode = os.waitstatus_to_exitcode(waitstatus)
-        process_name = '<unknown>'
-        for name, p in processes.items():
-            if p.pid == pid:
-                process_name = name
-                break
-
-        if exitcode is not None:
-            if exitcode < 0:
-                print('Process', process_name, 'received signal', -exitcode, file=sys.stderr)
-            else:
-                print('Process', process_name, 'exited with status', exitcode, file=sys.stderr)
-            shutdown_requested = True
-
     except ChildProcessError:
         break
+    if pid == 0:  # No process has exited
+        time.sleep(0.1)
+        continue
+
+    exitcode = os.waitstatus_to_exitcode(waitstatus)
+    process_name = '<unknown>'
+    for name, p in processes.items():
+        if p.pid == pid:
+            process_name = name
+            break
+
+    if exitcode is not None:
+        if exitcode < 0:
+            print('Process', process_name, 'received signal', -exitcode, file=sys.stderr)
+        else:
+            print('Process', process_name, 'exited with status', exitcode, file=sys.stderr)
+        shutdown_requested = True
 
 # Graceful shutdown sequence
 print('Initiating graceful shutdown...', file=sys.stderr)
