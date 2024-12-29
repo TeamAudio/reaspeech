@@ -96,6 +96,13 @@ function Transcript:get_segments()
   return self.data
 end
 
+function Transcript:has_words()
+  for _, segment in pairs(self.data) do
+    if segment.words then return true end
+  end
+  return false
+end
+
 function Transcript:iterator(use_words)
   local segments = self.data
   local segment_count = #segments
