@@ -18,6 +18,9 @@ You should now be able to start ReaSpeech's services by running:
 # Start all services
 poetry run python3.10 app/run.py
 
+# Start all services except for Redis
+poetry run python3.10 app/run.py --no-start-redis
+
 # For usage instructions
 poetry run python3.10 app/run.py --help
 ```
