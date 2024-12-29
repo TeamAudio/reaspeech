@@ -78,16 +78,8 @@ def transcribe(audio, asr_options, output):
     return output_file
 
 
-# def language_detection(audio):
-    # load audio and pad/trim it to fit 30 seconds
-    # audio = whisper.pad_or_trim(audio)
-
-    # detect the spoken language
-    # with model_lock:
-        # segments, info = model.transcribe(audio, beam_size=5)
-        # detected_lang_code = info.language
-
-    # return detected_lang_code
+def language_detection(_audio):
+    raise NotImplementedError("language detection not implemented for whisper.cpp")
 
 
 def write_result(
