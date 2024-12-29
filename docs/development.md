@@ -131,8 +131,8 @@ You can customize the behavior of the ReaSpeech Docker image by setting
 environment variables when running the container. Here are the available
 environment variables and their default values:
 
-- `ASR_ENGINE`: The ASR engine to use. Options are `faster_whisper` (default)
-  and `openai_whisper`.
+- `ASR_ENGINE`: The ASR engine to use. Options are `faster_whisper` (default),
+  `openai_whisper`, and `whisper_cpp`.
 
 To set an environment variable when running the Docker container, use the `-e`
 flag followed by the variable name and value. For example, to use the
