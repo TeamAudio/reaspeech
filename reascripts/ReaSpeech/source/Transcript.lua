@@ -97,7 +97,7 @@ function Transcript:get_segments()
 end
 
 function Transcript:has_words()
-  for _, segment in pairs(self.data) do
+  for _, segment in pairs(self.init_data) do
     if segment.words then return true end
   end
   return false
