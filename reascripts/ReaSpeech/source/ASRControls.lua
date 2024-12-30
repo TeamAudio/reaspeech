@@ -14,7 +14,6 @@ ASRControls = PluginControls {
   HELP_LANGUAGE = 'Language spoken in source audio.\nSet this to "Detect" to auto-detect the language.',
   HELP_PRESERVED_WORDS = 'Comma-separated list of words to preserve in transcript.\nExample: Jane Doe, CyberCorp',
   HELP_VAD = 'Enable Voice Activity Detection (VAD) to filter out non-speech portions.',
-  HELP_SPLIT_ON_WORDS = 'Split transcript into a separate segment per word.',
 
   tabs = function(self)
     return {
@@ -45,7 +44,6 @@ function ASRControls:init()
     initial_prompt = storage:string('initial_prompt', ''),
     model_name = storage:string('model_name', self.DEFAULT_MODEL_NAME),
     vad_filter = storage:boolean('vad_filter', true),
-    split_on_word = storage:boolean('split_on_word', false),
   }
 
   self:init_model_name()
@@ -82,14 +80,6 @@ function ASRControls:init()
     label_long = 'Voice Activity Detection',
     label_short = 'VAD',
     help_text = self.HELP_VAD,
-    width_threshold = ReaSpeechControlsUI.NARROW_COLUMN_WIDTH
-  }
-
-  self.split_on_word = ReaSpeechCheckbox.new {
-    state = self.settings.split_on_word,
-    label_long = 'Split on Words',
-    label_short = 'Words',
-    help_text = self.HELP_SPLIT_ON_WORDS,
     width_threshold = ReaSpeechControlsUI.NARROW_COLUMN_WIDTH
   }
 
@@ -217,9 +207,6 @@ function ASRControls:render_options(column)
   if self.asr_options.vad_filter then
     self.vad_filter:render(column)
   end
-  if self.asr_options.split_on_word then
-    self.split_on_word:render(column)
-  end
 end
 
 function ASRControls:render_initial_prompt()
@@ -234,7 +221,6 @@ function ASRControls:get_request_data()
     translate = self.translate:value(),
     model_name = self.model_name:value(),
     vad_filter = self.vad_filter:value(),
-    split_on_word = self.split_on_word:value(),
   }
   if self.asr_options.hotwords then
     request_data.hotwords = self.hotwords:value()

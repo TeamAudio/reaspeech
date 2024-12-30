@@ -23,7 +23,6 @@ function ASRPlugin:asr(jobs)
     output = 'json',
     use_async = 'true',
     vad_filter = controls_data.vad_filter and 'true' or 'false',
-    split_on_word = controls_data.split_on_word and 'true' or 'false',
     word_timestamps = 'true',
     model_name = controls_data.model_name,
   }

@@ -1,13 +1,12 @@
-import logging
-import os
 from io import StringIO
 from threading import Lock
 from typing import Union, BinaryIO
-
-from pywhispercpp.model import Model
-
 import json
+import logging
+import os
+
 from .constants import ASR_ENGINE_OPTIONS
+from .model import Model
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s', level=logging.INFO, force=True)
 logger = logging.getLogger(__name__)
@@ -39,13 +38,10 @@ def build_options(asr_options):
     options_dict = {
         'language': asr_options.get('language'),
         'translate': asr_options.get('task', '') == 'translate',
-        'token_timestamps': asr_options.get('split_on_word', False),
+        'token_timestamps': True,
     }
     if asr_options.get('initial_prompt'):
         options_dict['initial_prompt'] = asr_options['initial_prompt']
-    if asr_options.get('split_on_word'):
-        options_dict['max_len'] = 1
-        options_dict['split_on_word'] = True
     return options_dict
 
 
@@ -58,19 +54,26 @@ def transcribe(audio, asr_options, output):
         text = ""
         segment_generator = model.transcribe(audio, **options_dict)
         for segment in segment_generator:
-            if not segment.text:
-                continue
             segment_dict = {
                 "start": float(segment.t0) / 100.0,
                 "end": float(segment.t1) / 100.0,
                 "text": segment.text,
+                "words": []
             }
+            for word in segment.words:
+                word_dict = {
+                    "start": float(word.t0) / 100.0,
+                    "end": float(word.t1) / 100.0,
+                    "word": word.text,
+                    "probability": word.p
+                }
+                segment_dict["words"].append(word_dict)
             segments.append(segment_dict)
             text = text + segment.text + " "
         result = {
             "language": options_dict.get("language"),
             "segments": segments,
-            "text": text
+            "text": text.strip()
         }
 
     output_file = StringIO()

@@ -56,7 +56,6 @@ ASR_OPTIONS = frozenset([
     "encode",
     "output",
     "vad_filter",
-    "split_on_word",
     "word_timestamps",
     "model_name",
 ])
@@ -209,10 +208,6 @@ async def asr(
     vad_filter: Annotated[bool | None, Query(
         description="Enable the voice activity detection (VAD) to filter out parts of the audio without speech",
         include_in_schema=(True if ASR_ENGINE == "faster_whisper" else False)
-    )] = False,
-    split_on_word: Annotated[bool | None, Query(
-        description="Return one segment per word",
-        include_in_schema=(True if ASR_ENGINE == "whisper_cpp" else False)
     )] = False,
     word_timestamps: bool = Query(default=False, description="Word level timestamps"),
     model_name: Union[str, None] = Query(default=None, description="Model name to use for transcription"),
