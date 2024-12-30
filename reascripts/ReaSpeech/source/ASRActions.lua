@@ -19,8 +19,6 @@ function ASRActions:init()
   assert(self.plugin, 'ASRActions: plugin is required')
 
   Logging.init(self, 'ASRActions')
-
-  self.disabler = ReaUtil.disabler(ctx)
 end
 
 function ASRActions:selected_tracks_button()

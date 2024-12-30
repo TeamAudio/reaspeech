@@ -4,9 +4,7 @@
 
 ]]--
 
-ReaSpeechWidget = Polo {
-  HELP_ICON_SIZE = 15,
-}
+ReaSpeechWidget = Polo {}
 
 function ReaSpeechWidget:init()
   if not self.state then
@@ -14,23 +12,22 @@ function ReaSpeechWidget:init()
     self.state = Storage.memory(self.default)
   end
   assert(self.renderer, "renderer not provided")
-  self.ctx = self.ctx or ctx
   self.widget_id = self.widget_id or reaper.genGuid()
-  self.on_set = nil
+  self.on_set = self.options and self.options.on_set or function() end
 end
 
 function ReaSpeechWidget:render(...)
-  ImGui.PushID(self.ctx, self.widget_id)
+  ImGui.PushID(ctx, self.widget_id)
   local args = ...
   Trap(function()
     self.renderer(self, args)
   end)
-  ImGui.PopID(self.ctx)
+  ImGui.PopID(ctx)
 end
 
 function ReaSpeechWidget:render_help_icon()
   local options = self.options
-  local size = self.HELP_ICON_SIZE
+  local size = Fonts.size:get()
   Widgets.icon(Icons.info, '##help-text', size, size, options.help_text, 0xffffffa0, 0xffffffff)
 end
 
@@ -38,14 +35,14 @@ function ReaSpeechWidget:render_label(label)
   local options = self.options
   label = label or options.label
 
-  ImGui.Text(self.ctx, label)
+  ImGui.Text(ctx, label)
 
   if label ~= '' and options.help_text then
-    ImGui.SameLine(self.ctx)
+    ImGui.SameLine(ctx)
     self:render_help_icon()
   end
 
-  ImGui.Dummy(self.ctx, 0, 0)
+  ImGui.Dummy(ctx, 0, 0)
 end
 
 function ReaSpeechWidget:value()
@@ -67,6 +64,8 @@ ReaSpeechCheckbox.new = function (options)
     width_threshold = nil,
   }
   options.default = options.default or false
+
+  options.disabled_if = options.disabled_if or function() return false end
 
   options.changed_handler = options.changed_handler or function(_) end
 
@@ -94,6 +93,7 @@ ReaSpeechCheckbox.simple = function(default_value, label, changed_handler)
 end
 
 ReaSpeechCheckbox.renderer = function (self, column)
+  local disable_if = ReaUtil.disabler(ctx)
   local options = self.options
   local label = options.label_long
 
@@ -101,18 +101,20 @@ ReaSpeechCheckbox.renderer = function (self, column)
     label = options.label_short
   end
 
-  local rv, value = ImGui.Checkbox(self.ctx, label, self:value())
+  disable_if(self.options.disabled_if(), function()
+    local rv, value = ImGui.Checkbox(ctx, label, self:value())
 
-  if options.help_text then
-    ImGui.SameLine(self.ctx)
-    ImGui.SetCursorPosY(self.ctx, ImGui.GetCursorPosY(self.ctx) + 7)
-    self:render_help_icon()
-  end
+    if options.help_text then
+      ImGui.SameLine(ctx)
+      ImGui.SetCursorPosY(ctx, ImGui.GetCursorPosY(ctx) + 7)
+      self:render_help_icon()
+    end
 
-  if rv then
-    self:set(value)
-    options.changed_handler(value)
-  end
+    if rv then
+      self:set(value)
+      options.changed_handler(value)
+    end
+  end)
 end
 
 ReaSpeechTextInput = {}
@@ -147,9 +149,48 @@ ReaSpeechTextInput.renderer = function (self)
 
   local imgui_label = ("##%s"):format(options.label)
 
-  local rv, value = ImGui.InputText(self.ctx, imgui_label, self:value())
+  local rv, value = ImGui.InputText(ctx, imgui_label, self:value())
 
   if rv then
+    self:set(value)
+  end
+end
+
+ReaSpeechNumberInput = {}
+ReaSpeechNumberInput.new = function (options)
+  options = options or {
+    label = nil,
+  }
+  options.default = options.default or 0
+
+  local o = ReaSpeechWidget.new({
+    state = options.state,
+    default = options.default,
+    widget_id = options.widget_id,
+    renderer = ReaSpeechNumberInput.renderer,
+    options = options,
+  })
+
+  return o
+end
+
+ReaSpeechNumberInput.simple = function(default_value, label)
+  return ReaSpeechNumberInput.new {
+    default = default_value,
+    label = label
+  }
+end
+
+ReaSpeechNumberInput.renderer = function (self)
+  local options = self.options
+
+  self:render_label()
+
+  local imgui_label = ("##%s"):format(options.label)
+
+  local rv, value = ImGui.InputInt(ctx, imgui_label, self:value())
+
+  if rv and ImGui.IsItemDeactivatedAfterEdit(ctx) then
     self:set(value)
   end
 end
@@ -188,16 +229,16 @@ ReaSpeechCombo.renderer = function (self)
   local item_label = options.item_labels[self:value()] or ""
   local combo_flags = ImGui.ComboFlags_HeightLarge()
 
-  if ImGui.BeginCombo(self.ctx, imgui_label, item_label, combo_flags) then
+  if ImGui.BeginCombo(ctx, imgui_label, item_label, combo_flags) then
     Trap(function()
       for _, item in pairs(options.items) do
         local is_selected = (item == self:value())
-        if ImGui.Selectable(self.ctx, options.item_labels[item], is_selected) then
+        if ImGui.Selectable(ctx, options.item_labels[item], is_selected) then
           self:set(item)
         end
       end
     end)
-    ImGui.EndCombo(self.ctx)
+    ImGui.EndCombo(ctx)
   end
 end
 
@@ -222,16 +263,16 @@ ReaSpeechTabBar.new = function (options)
 end
 
 ReaSpeechTabBar.renderer = function (self)
-  if ImGui.BeginTabBar(self.ctx, 'TabBar') then
+  if ImGui.BeginTabBar(ctx, 'TabBar') then
     for _, tab in pairs(self.options.tabs) do
-      if ImGui.BeginTabItem(self.ctx, tab.label) then
+      if ImGui.BeginTabItem(ctx, tab.label) then
         Trap(function()
           self:set(tab.key)
         end)
-        ImGui.EndTabItem(self.ctx)
+        ImGui.EndTabItem(ctx)
       end
     end
-    ImGui.EndTabBar(self.ctx)
+    ImGui.EndTabBar(ctx)
   end
 end
 
@@ -267,10 +308,10 @@ ReaSpeechButtonBar.new = function (options)
   local with_button_color = function (selected, f)
     local color = Theme.COLORS.dark_gray_translucent
     if selected then color = Theme.COLORS.medium_gray_opaque end
-    ImGui.PushStyleColor(o.ctx, ImGui.Col_Button(), color)
-    ImGui.PushStyleColor(o.ctx, ImGui.Col_ButtonHovered(), color)
+    ImGui.PushStyleColor(ctx, ImGui.Col_Button(), color)
+    ImGui.PushStyleColor(ctx, ImGui.Col_ButtonHovered(), color)
     Trap(f)
-    ImGui.PopStyleColor(o.ctx, 2)
+    ImGui.PopStyleColor(ctx, 2)
   end
 
   o.layout = ColumnLayout.new {
@@ -287,7 +328,7 @@ ReaSpeechButtonBar.new = function (options)
 
       local button_label, model_name = table.unpack(options.buttons[column.num])
       with_button_color(o:value() == model_name, function ()
-        if ImGui.Button(o.ctx, button_label, column.width) then
+        if ImGui.Button(ctx, button_label, column.width) then
           o:set(model_name)
         end
       end)
@@ -323,11 +364,11 @@ ReaSpeechButton.new = function(options)
 end
 
 ReaSpeechButton.renderer = function(self)
-  local disable_if = ReaUtil.disabler(self.ctx)
+  local disable_if = ReaUtil.disabler(ctx)
   local options = self.options
 
   disable_if(options.disabled, function()
-    if ImGui.Button(self.ctx, options.label, options.width) then
+    if ImGui.Button(ctx, options.label, options.width) then
       Trap(options.on_click)
     end
   end)
@@ -387,22 +428,23 @@ end
 ReaSpeechFileSelector.renderer = function(self)
   local options = self.options
 
-  ImGui.Text(self.ctx, options.label)
+  ImGui.Text(ctx, options.label)
 
   ReaSpeechFileSelector.render_jsapi_notice(self)
 
   options.button:render()
-  ImGui.SameLine(self.ctx)
+  ImGui.SameLine(ctx)
 
   local w, _
   if not options.input_width then
-    w, _ = ImGui.GetContentRegionAvail(self.ctx)
+    w, _ = ImGui.GetContentRegionAvail(ctx)
   else
     w = options.input_width
   end
 
-  ImGui.SetNextItemWidth(self.ctx, w)
-  local file_changed, file = ImGui.InputText(self.ctx, '##file', self:value())
+  ImGui.SetNextItemWidth(ctx, w)
+  local hint = '...or type one here.'
+  local file_changed, file = ImGui.InputTextWithHint(ctx, '##file', hint, self:value())
   if file_changed then
     self:set(file)
   end
@@ -413,14 +455,14 @@ ReaSpeechFileSelector.render_jsapi_notice = function(self)
     return
   end
 
-  local _, spacing_v = ImGui.GetStyleVar(self.ctx, ImGui.StyleVar_ItemSpacing())
-  ImGui.PushStyleVar(self.ctx, ImGui.StyleVar_ItemSpacing(), 0, spacing_v)
-  ImGui.Text(self.ctx, "To enable file selector, ")
-  ImGui.SameLine(self.ctx)
+  local _, spacing_v = ImGui.GetStyleVar(ctx, ImGui.StyleVar_ItemSpacing())
+  ImGui.PushStyleVar(ctx, ImGui.StyleVar_ItemSpacing(), 0, spacing_v)
+  ImGui.Text(ctx, "To enable file selector, ")
+  ImGui.SameLine(ctx)
   Widgets.link('install js_ReaScriptAPI', ReaUtil.url_opener(ReaSpeechFileSelector.JSREASCRIPT_URL))
-  ImGui.SameLine(self.ctx)
-  ImGui.Text(self.ctx, ".")
-  ImGui.PopStyleVar(self.ctx)
+  ImGui.SameLine(ctx)
+  ImGui.Text(ctx, ".")
+  ImGui.PopStyleVar(ctx)
 end
 
 ReaSpeechListBox = {}
@@ -457,7 +499,7 @@ ReaSpeechListBox.renderer = function(self)
   local imgui_label = ("##%s"):format(options.label)
 
   local needs_update = false
-  if ImGui.BeginListBox(self.ctx, imgui_label) then
+  if ImGui.BeginListBox(ctx, imgui_label) then
     Trap(function()
       local current = self:value()
       local new_value = {}
@@ -465,22 +507,22 @@ ReaSpeechListBox.renderer = function(self)
         new_value[item] = current[item] or false
         local is_selected = current[item]
         local label = options.item_labels[item]
-        ImGui.PushID(self.ctx, 'item' .. i)
+        ImGui.PushID(ctx, 'item' .. i)
         Trap(function()
-          local result, now_selected = ImGui.Selectable(self.ctx, label, is_selected)
+          local result, now_selected = ImGui.Selectable(ctx, label, is_selected)
 
           if result and is_selected ~= now_selected then
             needs_update = true
             new_value[item] = now_selected
           end
         end)
-        ImGui.PopID(self.ctx)
+        ImGui.PopID(ctx)
       end
 
       if needs_update then
         self:set(new_value)
       end
     end)
-    ImGui.EndListBox(self.ctx)
+    ImGui.EndListBox(ctx)
   end
 end

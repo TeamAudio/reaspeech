@@ -14,6 +14,24 @@ reaper = {
   GetProjectPath = function() return TestPathUtil.PROJECT_PATH end,
 }
 
+function TestPathUtil:testHasExtension()
+  lu.assertTrue(PathUtil.has_extension("some-file.json"))
+  lu.assertTrue(PathUtil.has_extension("path\\to\\some-file.json"))
+  lu.assertTrue(PathUtil.has_extension("path/to/some-file.json"))
+  lu.assertTrue(PathUtil.has_extension("C:\\path\\to\\some-file.json"))
+  lu.assertTrue(PathUtil.has_extension("/path/to/some-file.json"))
+
+  lu.assertFalse(PathUtil.has_extension("some-file"))
+  lu.assertFalse(PathUtil.has_extension("path\\to\\some-file"))
+  lu.assertFalse(PathUtil.has_extension("path/to/some-file"))
+  lu.assertFalse(PathUtil.has_extension("C:\\path\\to\\some-file"))
+  lu.assertFalse(PathUtil.has_extension("/path/to/some-file"))
+
+  lu.assertTrue(PathUtil.has_extension(".json"))
+  lu.assertFalse(PathUtil.has_extension(""))
+
+end
+
 function TestPathUtil:testApplyExtension()
   local extension = "json"
 
@@ -125,7 +143,7 @@ function TestPathUtil:testIsFullPath()
 
   for expected, path in pairs(assertions) do
     for _, p in ipairs(path) do
-      lu.assertEquals(PathUtil._is_full_path(p), expected)
+      lu.assertEquals(PathUtil.is_full_path(p), expected)
     end
   end
 
@@ -143,7 +161,7 @@ function TestPathUtil:testIsFullPath()
 
     for expected, path in pairs(assertions) do
       for _, p in ipairs(path) do
-        lu.assertEquals(PathUtil._is_full_path(p), expected)
+        lu.assertEquals(PathUtil.is_full_path(p), expected)
       end
     end
   end
@@ -164,6 +182,42 @@ function TestPathUtil:testPathSeparator()
       lu.assertEquals(PathUtil._path_separator(), separator)
     end
   end
+end
+
+function TestPathUtil:testGetFilename()
+  local file_paths = {
+    "C:\\path\\to\\some-file.json",
+    "path\\to\\some-file.json",
+    "\\Server\\Volume\\some-file.json",
+    "/path/to/some-file.json",
+    "path/to/some-file.json",
+    "some-file.json",
+  }
+
+  for _, p in ipairs(file_paths) do
+    lu.assertEquals(PathUtil.get_filename(p), 'some-file.json')
+  end
+
+  -- blank is blank
+  lu.assertEquals(PathUtil.get_filename(""), "")
+end
+
+function TestPathUtil:testJoin()
+  reaper.GetOS = function() return "Win64" end
+
+  lu.assertEquals(PathUtil.join("path", "to", "some-file.json"), "path\\to\\some-file.json")
+
+  reaper.GetOS = function() return "OSX64" end
+
+  lu.assertEquals(PathUtil.join("path", "to", "some-file.json"), "path/to/some-file.json")
+
+  reaper.GetOS = function() return "Other" end
+
+  lu.assertEquals(PathUtil.join("path", "to", "some-file.json"), "path/to/some-file.json")
+
+  lu.assertEquals(PathUtil.join(), "")
+  lu.assertEquals(PathUtil.join("one-arg"), "one-arg")
+
 end
 
 os.exit(lu.LuaUnit.run())
