@@ -4,8 +4,9 @@
 
 ]]--
 
+Widgets.Combo = (function()
+
 local Combo = {}
-Widgets.Combo = Combo
 
 Combo.new = function (options)
   options = options or {}
@@ -52,3 +53,6 @@ Combo.renderer = function (self)
   end
 end
 
+return Combo
+
+end)()

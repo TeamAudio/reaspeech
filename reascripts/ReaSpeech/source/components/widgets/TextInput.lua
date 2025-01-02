@@ -4,8 +4,9 @@
 
 ]]--
 
+Widgets.TextInput = (function()
+
 local TextInput = {}
-Widgets.TextInput = TextInput
 
 TextInput.new = function (options)
   options = options or {
@@ -44,3 +45,7 @@ TextInput.renderer = function (self)
     self:set(value)
   end
 end
+
+return TextInput
+
+end)()

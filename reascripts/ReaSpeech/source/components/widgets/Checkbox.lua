@@ -4,8 +4,9 @@
 
 ]]--
 
+Widgets.Checkbox = (function()
+
 local Checkbox = {}
-Widgets.Checkbox = Checkbox
 
 Checkbox.new = function (options)
   options = options or {
@@ -67,3 +68,6 @@ Checkbox.renderer = function (self, column)
   end)
 end
 
+return Checkbox
+
+end)()

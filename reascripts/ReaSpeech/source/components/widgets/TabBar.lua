@@ -4,8 +4,9 @@
 
 ]]--
 
+Widgets.TabBar = (function()
+
 local TabBar = {}
-Widgets.TabBar = TabBar
 
 TabBar.new = function (options)
   options = options or {}
@@ -45,3 +46,7 @@ TabBar.tab = function(key, label)
     label = label
   }
 end
+
+return TabBar
+
+end)()

@@ -4,8 +4,9 @@
 
 ]]--
 
+Widgets.NumberInput = (function()
+
 local NumberInput = {}
-Widgets.NumberInput = NumberInput
 
 NumberInput.new = function (options)
   options = options or {
@@ -45,3 +46,6 @@ NumberInput.renderer = function (self)
   end
 end
 
+return NumberInput
+
+end)()

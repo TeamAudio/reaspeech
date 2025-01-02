@@ -4,8 +4,9 @@
 
 ]]--
 
+Widgets.ListBox = (function()
+
 local ListBox = {}
-Widgets.ListBox = ListBox
 
 ListBox.new = function(options)
   options = options or {}
@@ -67,4 +68,6 @@ ListBox.renderer = function(self)
   end
 end
 
-Widgets.ListBox = ListBox
+return ListBox
+
+end)()

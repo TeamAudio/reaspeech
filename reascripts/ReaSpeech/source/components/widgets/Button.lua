@@ -4,8 +4,9 @@
 
 ]]--
 
+Widgets.Button = (function()
+
 local Button = {}
-Widgets.Button = Button
 
 Button.new = function(options)
   options = options or {}
@@ -38,3 +39,7 @@ Button.renderer = function(self)
     end
   end)
 end
+
+return Button
+
+end)()

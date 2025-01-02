@@ -4,8 +4,9 @@
 
 ]]--
 
+Widgets.ButtonBar = (function()
+
 local ButtonBar = {}
-Widgets.ButtonBar = ButtonBar
 
 ButtonBar.new = function (options)
   options = options or {}
@@ -63,3 +64,6 @@ ButtonBar.renderer = function (self)
   self.layout:render()
 end
 
+return ButtonBar
+
+end)()

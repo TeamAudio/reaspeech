@@ -4,13 +4,14 @@
 
 ]]--
 
+Widgets.FileSelector = (function()
+
 local FileSelector = {
   JSREASCRIPT_URL = 'https://forum.cockos.com/showthread.php?t=212174',
   has_js_ReaScriptAPI = function()
     return reaper.JS_Dialog_BrowseForSaveFile
   end
 }
-Widgets.FileSelector = FileSelector
 
 FileSelector.new = function(options)
   options = options or {}
@@ -95,3 +96,7 @@ FileSelector.render_jsapi_notice = function(self)
   ImGui.Text(ctx, ".")
   ImGui.PopStyleVar(ctx)
 end
+
+return FileSelector
+
+end)()
