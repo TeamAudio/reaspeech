@@ -1,14 +1,19 @@
 #!/usr/bin/env python
 
+import argparse
 import os
+import signal
 import subprocess
 import sys
-import argparse
+import time
 
 argmap = {
     '--redis-bin': {
         'default': 'redis-server',
         'help': 'Path to Redis server binary (default: %(default)s)' },
+    '--no-start-redis': {
+        'action': 'store_true',
+        'help': 'Do not start Redis server' },
     '--celery-broker-url': {
         'default': 'redis://localhost:6379/0',
         'help': 'Celery broker URL (default: %(default)s)' },
@@ -60,46 +65,90 @@ if args.build_reascripts:
 if args.enable_swagger_ui:
     os.environ['ENABLE_SWAGGER_UI'] = '/docs'
 
+shutdown_requested = False
+
+def signal_handler(signum, frame):
+    global shutdown_requested
+    print('\nShutdown requested...', file=sys.stderr)
+    shutdown_requested = True
+
+# Set up signal handlers before starting processes
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+
 processes = {}
 
 # Start Redis
-print('Starting database...', file=sys.stderr)
-processes['redis'] = subprocess.Popen([args.redis_bin], stdout=subprocess.DEVNULL)
+if not args.no_start_redis:
+    print('Starting database...', file=sys.stderr)
+    processes['redis'] = \
+        subprocess.Popen(
+            [args.redis_bin],
+            stdout=subprocess.DEVNULL,
+            start_new_session=True)
 
 # Start Celery
 print('Starting worker...', file=sys.stderr)
-processes['celery'] = subprocess.Popen(['celery', '-A', 'app.worker.celery', 'worker', '--pool=solo', '--loglevel=info'])
+processes['celery'] = \
+    subprocess.Popen([
+        'celery',
+        '-A', 'app.worker.celery',
+        'worker',
+        '--pool=solo',
+        '--loglevel=info'
+    ], start_new_session=True)
 
 # Start Gunicorn
 print('Starting application...', file=sys.stderr)
-processes['gunicorn'] = subprocess.Popen(['gunicorn', '--bind', '0.0.0.0:9000', '--workers', '1', '--timeout', '0', 'app.webservice:app', '-k', 'uvicorn.workers.UvicornWorker'])
+processes['gunicorn'] = \
+    subprocess.Popen([
+        'gunicorn',
+        '--bind', '0.0.0.0:9000',
+        '--workers', '1',
+        '--timeout', '0',
+        'app.webservice:app',
+        '-k', 'uvicorn.workers.UvicornWorker'
+    ], start_new_session=True)
 
-# Wait for any process to exit
-pid, waitstatus = os.wait()
-exitcode = os.waitstatus_to_exitcode(waitstatus)
+exitcode = 0
 process_name = '<unknown>'
-for name, p in processes.items():
-    if p.pid == pid:
-        process_name = name
-        break
-if exitcode < 0:
-    print('Process', process_name, 'received signal', -exitcode, file=sys.stderr)
-else:
-    print('Process', process_name, 'exited with status', exitcode, file=sys.stderr)
 
-# Terminate any child processes
-print('Terminating child processes...', file=sys.stderr)
-for name, p in processes.items():
+while not shutdown_requested:
     try:
-        print('Terminating', name, file=sys.stderr)
+        pid, waitstatus = os.waitpid(-1, os.WNOHANG)
+    except ChildProcessError:
+        break
+    if pid == 0:  # No process has exited
+        time.sleep(0.1)
+        continue
 
-        # kinda bass-ackwards, but poll() returns None if process is still running
-        if not p.poll():
-            p.terminate()
-        else:
-            print(name, "already exited", file=sys.stderr)
+    exitcode = os.waitstatus_to_exitcode(waitstatus)
+    for name, p in processes.items():
+        if p.pid == pid:
+            process_name = name
+            break
+
+    if exitcode < 0:
+        print('Process', process_name, 'received signal', -exitcode, file=sys.stderr)
+    else:
+        print('Process', process_name, 'exited with status', exitcode, file=sys.stderr)
+    shutdown_requested = True
+
+# Graceful shutdown sequence
+print('Initiating graceful shutdown...', file=sys.stderr)
+for name, p in reversed(list(processes.items())):
+    if name == process_name:
+        continue
+    try:
+        print(f'Terminating {name}...', file=sys.stderr)
+        p.terminate()
+        try:
+            p.wait(timeout=5)  # Give each process 5 seconds to shut down
+        except subprocess.TimeoutExpired:
+            print(f'Force killing {name}...', file=sys.stderr)
+            p.kill()
     except Exception as e:
-        print(e, file=sys.stderr)
+        print(f'Error shutting down {name}: {e}', file=sys.stderr)
 
 # Exit with status of process that exited
 status = 1 if exitcode < 0 else exitcode

@@ -67,10 +67,8 @@ end
 
 function TranscriptUI:init_layouts()
   local renderers = {
-    self.render_annotations_button,
-    self.render_word_options,
     self.render_result_actions,
-    self.render_auto_play,
+    self.render_options,
     self.render_search
   }
 
@@ -81,12 +79,6 @@ function TranscriptUI:init_layouts()
       renderers[column.num](self, column)
     end
   }
-end
-
-function TranscriptUI:render_annotations_button(column)
-  if ImGui.Button(ctx, "Create Markers", column.width) then
-    self.annotations:present()
-  end
 end
 
 function TranscriptUI:render()
@@ -101,25 +93,18 @@ function TranscriptUI:render()
   self.annotations:render()
 end
 
-function TranscriptUI:render_word_options()
-  local rv, value = ImGui.Checkbox(ctx, "Words", self.words)
-  if rv then
-    self.words = value
-  end
-
-  if self.words then
-    ImGui.SameLine(ctx)
-    rv, value = ImGui.Checkbox(ctx, "Colorize", self.colorize_words)
-    if rv then
-      self.colorize_words = value
-    end
-  end
-end
-
 function TranscriptUI:render_result_actions()
+  self:render_annotations_button()
+  ImGui.SameLine(ctx)
   self:render_export()
   ImGui.SameLine(ctx)
   self:render_clear()
+end
+
+function TranscriptUI:render_annotations_button()
+  if ImGui.Button(ctx, "Create Markers") then
+    self.annotations:present()
+  end
 end
 
 function TranscriptUI:render_export()
@@ -134,10 +119,29 @@ function TranscriptUI:render_clear()
   end
 end
 
-function TranscriptUI:render_auto_play()
-  local rv, value = ImGui.Checkbox(ctx, "Auto Play", self.autoplay)
+function TranscriptUI:render_options()
+  local rv, value
+
+  rv, value = ImGui.Checkbox(ctx, "Auto Play", self.autoplay)
   if rv then
     self.autoplay = value
+  end
+
+  if self.transcript:has_words() then
+    ImGui.SameLine(ctx)
+
+    rv, value = ImGui.Checkbox(ctx, "Words", self.words)
+    if rv then
+      self.words = value
+    end
+
+    if self.words then
+      ImGui.SameLine(ctx)
+      rv, value = ImGui.Checkbox(ctx, "Colorize", self.colorize_words)
+      if rv then
+        self.colorize_words = value
+      end
+    end
   end
 end
 
@@ -176,15 +180,19 @@ function TranscriptUI:render_table()
 
       for _, column in pairs(columns) do
         local column_flags = 0
-        if TranscriptSegment.default_hide(column) then
-          -- reaper.ShowConsoleMsg(string.format('column %s: %s\n', column, TranscriptSegment.default_hide(column)))
+        local default_hide = TranscriptSegment.default_hide(column)
+        if column == "score" and not self.transcript:has_words() then
+          default_hide = true
+        end
+        if default_hide then
+          -- reaper.ShowConsoleMsg(string.format('column %s: %s\n', column, default_hide))
           column_flags = column_flags | ImGui.TableColumnFlags_DefaultHide()
         end
         local init_width = self.COLUMN_WIDTH
         if column == "text" or column == "file" then
           init_width = self.LARGE_COLUMN_WIDTH
         end
-        -- reaper.ShowConsoleMsg(string.format('column %s: %s / flags: %s\n', column, TranscriptSegment.default_hide(column), column_flags))
+        -- reaper.ShowConsoleMsg(string.format('column %s: %s / flags: %s\n', column, default_hide, column_flags))
         ImGui.TableSetupColumn(ctx, column, column_flags, init_width)
       end
 
@@ -221,10 +229,13 @@ function TranscriptUI:render_table()
 end
 
 function TranscriptUI:render_segment_actions(segment, index)
+  if not segment.words then return end
+
   local icon_size = Fonts.size:get() - 1
   if Widgets.icon(Icons.pencil, "##edit" .. index, icon_size, icon_size, "Edit") then
     self.transcript_editor:edit_segment(segment, index)
   end
+
   if ImGui.IsItemHovered(ctx) then
     ImGui.SetMouseCursor(ctx, ImGui.MouseCursor_Hand())
   end

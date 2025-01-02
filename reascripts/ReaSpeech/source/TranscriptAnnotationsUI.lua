@@ -28,14 +28,20 @@ function TranscriptAnnotationsUI:init()
       | ImGui.WindowFlags_NoDocking()
   })
 
-  self.annotation_types = TranscriptAnnotationTypes.new {
-    TranscriptAnnotationTypes.project_markers(),
-    TranscriptAnnotationTypes.project_regions(),
-    TranscriptAnnotationTypes.take_markers(),
-    TranscriptAnnotationTypes.notes_track()
-  }
+  self:init_annotation_types()
 
   self.annotations = TranscriptAnnotations.new { transcript = self.transcript }
+end
+
+function TranscriptAnnotationsUI:init_annotation_types()
+  local has_words = self.transcript:has_words()
+
+  self.annotation_types = TranscriptAnnotationTypes.new {
+    TranscriptAnnotationTypes.project_markers(has_words),
+    TranscriptAnnotationTypes.project_regions(has_words),
+    TranscriptAnnotationTypes.take_markers(has_words),
+    TranscriptAnnotationTypes.notes_track(has_words)
+  }
 end
 
 function TranscriptAnnotationsUI:render_content()
@@ -73,7 +79,7 @@ function TranscriptAnnotationsUI:render_buttons(is_disabled)
 end
 
 function TranscriptAnnotationsUI:open()
-  self.annotation_types:reset()
+  self:init_annotation_types()
 end
 
 function TranscriptAnnotationsUI:handle_create()
@@ -138,12 +144,19 @@ function TranscriptAnnotationTypes:render_type_options(options)
   end)
 end
 
-function TranscriptAnnotationsUI.granularity_combo()
+function TranscriptAnnotationsUI.granularity_combo(has_words)
+  local items = { 'segment' }
+  local item_labels = { segment = 'Segment' }
+  if has_words then
+    table.insert(items, 'word')
+    item_labels.word = 'Word'
+  end
+
   local combo = ReaSpeechCombo.new {
     state = Storage.memory('segment'),
     label = 'Granularity',
-    items = { 'word', 'segment' },
-    item_labels = { word = 'Word', segment = 'Segment' },
+    items = items,
+    item_labels = item_labels,
   }
 
   function combo:use_words()
@@ -153,8 +166,8 @@ function TranscriptAnnotationsUI.granularity_combo()
   return combo
 end
 
-function TranscriptAnnotationTypes.take_markers()
-  local granularity_combo = TranscriptAnnotationsUI.granularity_combo()
+function TranscriptAnnotationTypes.take_markers(has_words)
+  local granularity_combo = TranscriptAnnotationsUI.granularity_combo(has_words)
 
   local track_filter_mode = ReaSpeechButtonBar.new {
     state = Storage.memory('ignore'),
@@ -205,8 +218,8 @@ function TranscriptAnnotationTypes.take_markers()
   }
 end
 
-function TranscriptAnnotationTypes.project_markers()
-  local granularity_combo = TranscriptAnnotationsUI.granularity_combo()
+function TranscriptAnnotationTypes.project_markers(has_words)
+  local granularity_combo = TranscriptAnnotationsUI.granularity_combo(has_words)
 
   return {
     label = 'Project Markers',
@@ -224,8 +237,8 @@ function TranscriptAnnotationTypes.project_markers()
   }
 end
 
-function TranscriptAnnotationTypes.project_regions()
-  local granularity_combo = TranscriptAnnotationsUI.granularity_combo()
+function TranscriptAnnotationTypes.project_regions(has_words)
+  local granularity_combo = TranscriptAnnotationsUI.granularity_combo(has_words)
 
   return {
     label = 'Project Regions',
@@ -245,8 +258,8 @@ function TranscriptAnnotationTypes.project_regions()
   }
 end
 
-function TranscriptAnnotationTypes.notes_track()
-  local granularity_combo = TranscriptAnnotationsUI.granularity_combo()
+function TranscriptAnnotationTypes.notes_track(has_words)
+  local granularity_combo = TranscriptAnnotationsUI.granularity_combo(has_words)
   local track_name = ReaSpeechTextInput.simple('Transcript', 'Track Name')
 
   return {
