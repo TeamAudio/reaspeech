@@ -7,26 +7,29 @@ LUA=lua
 
 VENDOR=json.lua url.lua
 SOURCE_ROOT=source
+TEST_ROOT=tests
 
 # Miscellaneous directly-referenced bundle components
 BUNDLE_INCLUDE=$(SOURCE_ROOT)/include
 BUNDLE_TARGET=build/ReaSpeechBundle.lua
 
-find_lua_sources=$(foreach p, $(1), $(wildcard $(1)/*.lua) $(foreach d, $(wildcard $(1)/*/.), $(call find_lua_sources, $(d))))
+# usage: $(call lua_sources,<directory>,<file_prefix>)
+# e.g. $(call lua_sources,tests,Test) -> tests/Test*.lua tests/**/Test*.lua
+lua_sources=$(wildcard $(1)/$(2)*.lua) $(foreach d, $(wildcard $(1)/*), $(call lua_sources, $(d),$(2)))
 
 dest=../../app/static/reascripts/ReaSpeech
 
 SOURCES=libs ui main
 
 # All the luas!
-source:=$(call find_lua_sources, $(SOURCE_ROOT))
-tests:=$(wildcard tests/Test*.lua tests/*/Test*.lua)
+source:=$(call lua_sources, $(SOURCE_ROOT))
+tests:=$(call lua_sources, $(TEST_ROOT),Test)
 
 # Bundle contents, in order
 headers:=$(foreach h, header globals, $(BUNDLE_INCLUDE)/$(h).lua)
 vendor:=$(foreach lib, $(VENDOR), vendor/$(lib))
 images:=$(wildcard resources/images/*.lua)
-sources:=$(foreach s, $(SOURCES), $(call find_lua_sources, $(SOURCE_ROOT)/$(s)))
+sources:=$(foreach s, $(SOURCES), $(call lua_sources, $(SOURCE_ROOT)/$(s)))
 version:=version.lua
 main:=$(BUNDLE_INCLUDE)/main.lua
 
@@ -37,17 +40,17 @@ all: lint test publish
 lint: $(source)
 	$(LUACHECK) $?
 
-test: $(source) $(libs) $(tests)
+test: $(source) $(tests)
 	true $(foreach test, $(tests), && $(LUA53) $(test) -v)
 	true $(foreach test, $(tests), && $(LUA54) $(test) -v)
 
-test-noversion: $(source) $(libs) $(tests)
+test-noversion: $(source) $(tests)
 	true $(foreach test, $(tests), && $(LUA) $(test) -v)
 
 .PHONY: build
 build: build/ReaSpeech-5.3.luac build/ReaSpeech-5.4.luac
 
-$(BUNDLE_TARGET): $(source) $(libs) $(vendor) $(version)
+$(BUNDLE_TARGET): $(bundle_contents)
 	cat $(bundle_contents) > $(BUNDLE_TARGET)
 
 build/ReaSpeech-5.3.luac: $(BUNDLE_TARGET)
@@ -62,7 +65,7 @@ publish: build
 	cp build/ReaSpeech-5.4.luac $(dest)/
 
 .PHONY: tags
-tags : tagged_paths = $(SOURCE_ROOT) libs
+tags : tagged_paths = $(SOURCE_ROOT)
 tags:
 	-rm -f TAGS
 	@for path in $(tagged_paths); do \
