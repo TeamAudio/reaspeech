@@ -1,9 +1,9 @@
-package.path = '../common/libs/?.lua;../common/vendor/?.lua;' .. package.path
+package.path = 'source/?.lua;' .. package.path
 
-local lu = require('luaunit')
+local lu = require('vendor/luaunit')
 
-require('Polo')
-require('Storage')
+require('libs/Polo')
+require('libs/Storage')
 
 reaper = {
   time_precise = function()
@@ -11,7 +11,7 @@ reaper = {
   end
 }
 
-require('source/Tween')
+require('ui/Tween')
 
 --
 

@@ -1,9 +1,10 @@
-package.path = '../common/libs/?.lua;../common/vendor/?.lua;' .. package.path
+package.path = 'source/?.lua;' .. package.path
 
-local lu = require('luaunit')
+local lu = require('vendor/luaunit')
 
-require('mock_reaper')
-require('source/Fonts')
+require('tests/mock_reaper')
+
+require('ui/Fonts')
 
 --
 

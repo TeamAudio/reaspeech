@@ -4,50 +4,36 @@ LUA54=lua5.4
 LUAC54=luac5.4
 LUACHECK=luacheck
 
-LIBS=Ctx.lua EnvUtil.lua ExecProcess.lua ImGuiTheme.lua PathUtil.lua Polo.lua ReaIter.lua ReaUtil.lua Storage.lua TableUtils.lua Tempfile.lua Trap.lua
 VENDOR=json.lua url.lua
-COMMON_ROOT=../common
 SOURCE_ROOT=source
-
-# Directory to scan for split-out components (like big stateful widgets)
-COMPONENTS_ROOT=$(SOURCE_ROOT)/components
-
-# If a component has a _module.lua file, it will be included before the rest of the lua files found alongside it.
-MODULE_HEADER=_module.lua
 
 # Miscellaneous directly-referenced bundle components
 BUNDLE_INCLUDE=$(SOURCE_ROOT)/include
 BUNDLE_TARGET=build/ReaSpeechBundle.lua
 
-find_lua_sources = $(foreach p, $(1), $(shell find $(p) -type f -name '*.lua'))
+find_lua_sources=$(foreach p, $(1), $(wildcard $(1)/*.lua) $(foreach d, $(wildcard $(1)/*/.), $(call find_lua_sources, $(d))))
 
 dest=../../app/static/reascripts/ReaSpeech
 
-# All the luas!
-source:=$(call find_lua_sources, .)
-tests:=$(wildcard tests/Test*.lua)
+SOURCES=libs ui main
 
-# Find all components under $(COMPONENTS_ROOT) and separate headers from sources.
-# With these two lists we can ensure that module initializers are included before sources.
-component_source:= $(call find_lua_sources, $(COMPONENTS_ROOT))
-component_initializers:=$(filter %/$(MODULE_HEADER), $(component_source))
-component_sources:=$(filter-out %/$(MODULE_HEADER), $(component_source))
+# All the luas!
+source:=$(call find_lua_sources, $(SOURCE_ROOT))
+tests:=$(wildcard tests/Test*.lua tests/*/Test*.lua)
 
 # Bundle contents, in order
 headers:=$(foreach h, header globals, $(BUNDLE_INCLUDE)/$(h).lua)
-libs:=$(foreach lib, $(LIBS), $(COMMON_ROOT)/libs/$(lib))
-vendor:=$(foreach lib, $(VENDOR), $(COMMON_ROOT)/vendor/$(lib))
+vendor:=$(foreach lib, $(VENDOR), vendor/$(lib))
 images:=$(wildcard resources/images/*.lua)
-components:=$(component_initializers) $(component_sources)
-sources:=libs/*.lua $(SOURCE_ROOT)/*.lua $(components)
+sources:=$(foreach s, $(SOURCES), $(call find_lua_sources, $(SOURCE_ROOT)/$(s)))
 version:=version.lua
 main:=$(BUNDLE_INCLUDE)/main.lua
 
-bundle_contents:=$(headers) $(libs) $(vendor) $(images) $(sources) $(version) $(main)
+bundle_contents:=$(headers) $(vendor) $(images) $(sources) $(version) $(main)
 
 all: lint test publish
 
-lint: $(source) $(libs)
+lint: $(source)
 	$(LUACHECK) $?
 
 test: $(source) $(libs) $(tests)
@@ -72,7 +58,7 @@ publish: build
 	cp build/ReaSpeech-5.4.luac $(dest)/
 
 .PHONY: tags
-tags : tagged_paths = $(SOURCE_ROOT) libs $(COMMON_ROOT)
+tags : tagged_paths = $(SOURCE_ROOT) libs
 tags:
 	-rm -f TAGS
 	@for path in $(tagged_paths); do \
