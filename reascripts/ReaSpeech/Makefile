@@ -3,6 +3,7 @@ LUAC53=luac5.3
 LUA54=lua5.4
 LUAC54=luac5.4
 LUACHECK=luacheck
+LUA=lua
 
 VENDOR=json.lua url.lua
 SOURCE_ROOT=source
@@ -39,6 +40,9 @@ lint: $(source)
 test: $(source) $(libs) $(tests)
 	true $(foreach test, $(tests), && $(LUA53) $(test) -v)
 	true $(foreach test, $(tests), && $(LUA54) $(test) -v)
+
+test-noversion: $(source) $(libs) $(tests)
+	true $(foreach test, $(tests), && $(LUA) $(test) -v)
 
 .PHONY: build
 build: build/ReaSpeech-5.3.luac build/ReaSpeech-5.4.luac

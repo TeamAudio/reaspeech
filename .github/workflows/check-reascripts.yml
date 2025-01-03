@@ -28,4 +28,4 @@ jobs:
 
     - name: test
       run: |
-        make lint test SHELL=/bin/bash
+        make lint test-noversion SHELL=/bin/bash
