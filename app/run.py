@@ -8,17 +8,11 @@ import sys
 import time
 
 argmap = {
-    '--redis-bin': {
-        'default': 'redis-server',
-        'help': 'Path to Redis server binary (default: %(default)s)' },
-    '--no-start-redis': {
-        'action': 'store_true',
-        'help': 'Do not start Redis server' },
     '--celery-broker-url': {
-        'default': 'redis://localhost:6379/0',
+        'default': 'sqla+sqlite:///celery.sqlite',
         'help': 'Celery broker URL (default: %(default)s)' },
     '--celery-result-backend-url': {
-        'default': 'redis://localhost:6379/0',
+        'default': 'db+sqlite:///results.sqlite',
         'help': 'Celery result backend URL (default: %(default)s)' },
     '--output-directory': {
         'default': 'app/output',
@@ -77,15 +71,6 @@ signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
 processes = {}
-
-# Start Redis
-if not args.no_start_redis:
-    print('Starting database...', file=sys.stderr)
-    processes['redis'] = \
-        subprocess.Popen(
-            [args.redis_bin],
-            stdout=subprocess.DEVNULL,
-            start_new_session=True)
 
 # Start Celery
 print('Starting worker...', file=sys.stderr)
