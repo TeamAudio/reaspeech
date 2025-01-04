@@ -27,7 +27,10 @@ TabBar.new = function (options)
 end
 
 TabBar.renderer = function (self)
-  if ImGui.BeginTabBar(ctx, 'TabBar') then
+  local tabbar_flags = ImGui.TabBarFlags_None()
+                     | ImGui.TabBarFlags_AutoSelectNewTabs()
+
+  if ImGui.BeginTabBar(ctx, 'TabBar', tabbar_flags) then
     local tabs = self.options.tabs
 
     if type(tabs) == 'function' then

@@ -42,8 +42,10 @@ end
 function ReaSpeechControlsUI:render()
   self:render_heading()
 
+  local tab_bar_value = self.tab_bar:value()
+
   for _, tab in ipairs(self.plugins:tabs()) do
-    if tab:is_selected(self.tab_bar:value()) then
+    if tab.tab.key == tab_bar_value then
       tab:render()
     end
   end
