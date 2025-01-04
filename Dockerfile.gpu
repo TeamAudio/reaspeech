@@ -20,7 +20,6 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     fswatch \
     make \
     ffmpeg \
-    redis \
     && rm -rf /var/lib/apt/lists/*
 
 RUN ln -s -f /usr/bin/python${PYTHON_VERSION} /usr/bin/python3 && \

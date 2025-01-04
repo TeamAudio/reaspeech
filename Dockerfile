@@ -18,7 +18,6 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     build-essential \
     cargo \
     ffmpeg \
-    redis \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -g $SERVICE_GID $SERVICE_USER \
