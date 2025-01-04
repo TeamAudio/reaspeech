@@ -59,11 +59,6 @@ function ReaSpeechUI:init()
     plugins = self.plugins,
   })
 
-  self.actions_ui = ReaSpeechActionsUI.new({
-    plugins = self.plugins,
-    worker = self.worker
-  })
-
   self.transcript = Transcript.new()
   self.transcript_ui = TranscriptUI.new { transcript = self.transcript }
 
@@ -118,20 +113,14 @@ function ReaSpeechUI:render_content()
     ImGui.ShowMetricsWindow(ctx)
   end
 
-  ImGui.PushItemWidth(ctx, self.ITEM_WIDTH)
-
   Trap(function ()
     if self.welcome_ui then
       self.welcome_ui:render()
     end
     self.importer:render()
     self.controls_ui:render()
-    self.actions_ui:render()
-    self.transcript_ui:render()
     self.alert_popup:render()
   end)
-
-  ImGui.PopItemWidth(ctx)
 end
 
 function ReaSpeechUI:load_transcript(transcript)

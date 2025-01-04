@@ -83,6 +83,8 @@ function ASRControls:init()
     width_threshold = ReaSpeechControlsUI.NARROW_COLUMN_WIDTH
   }
 
+  self.actions = ASRActions.new(self.plugin)
+
   self:init_layouts()
 end
 
@@ -130,6 +132,7 @@ end
 function ASRControls:init_layouts()
   self:init_simple_layout()
   self:init_advanced_layout()
+  self:init_actions_layout()
 end
 
 function ASRControls:init_simple_layout()
@@ -175,14 +178,62 @@ function ASRControls:init_advanced_layout()
   }
 end
 
+function ASRControls:render_actions()
+  local disable_if = ReaUtil.disabler(ctx)
+
+  local worker = self.plugin.app.worker
+
+  local progress
+  Trap(function ()
+    progress = worker:progress()
+  end)
+
+  disable_if(progress, function()
+    local plugin_actions = self.actions:actions()
+    for i, action in ipairs(plugin_actions) do
+      if i > 1 then ImGui.SameLine(ctx) end
+      action:render()
+    end
+  end)
+
+  if progress then
+    ImGui.SameLine(ctx)
+
+    if ImGui.Button(ctx, "Cancel") then
+      worker:cancel()
+    end
+
+    ImGui.SameLine(ctx)
+    local overlay = string.format("%.0f%%", progress * 100)
+    local status = worker:status()
+    if status then
+      overlay = overlay .. ' - ' .. status
+    end
+    ImGui.ProgressBar(ctx, progress, nil, nil, overlay)
+  end
+end
+
+function ASRControls:init_actions_layout()
+  self.actions_layout = ColumnLayout.new {
+    column_padding = 10,
+    margin_left = ReaSpeechControlsUI.MARGIN_LEFT,
+    num_columns = 1,
+    render_column = function(column)
+      self:render_actions()
+    end
+  }
+end
+
 function ASRControls:render_simple()
   self:check_asr_info()
   self.simple_layout:render()
+  self.actions_layout:render()
 end
 
 function ASRControls:render_advanced()
   self:check_asr_info()
   self.advanced_layout:render()
+  self.actions_layout:render()
 end
 
 function ASRControls:render_language(column)

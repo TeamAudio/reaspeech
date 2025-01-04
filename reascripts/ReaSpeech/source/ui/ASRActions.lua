@@ -73,6 +73,9 @@ function ASRActions:selected_items_button()
 
   self._selected_items_button = Widgets.Button.new({
     label = button_text,
+    disabled = function()
+      return self.plugin.app.worker:progress()
+    end,
     on_click = function ()
       self:process_jobs(self.jobs_for_selected_items)
     end,

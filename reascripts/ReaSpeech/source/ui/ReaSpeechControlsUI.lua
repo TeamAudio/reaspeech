@@ -17,6 +17,10 @@ function ReaSpeechControlsUI:init()
 
   assert(self.plugins, 'ReaSpeechControlsUI: plugins is required')
 
+  self:init_tabs()
+end
+
+function ReaSpeechControlsUI:init_tabs()
   local plugin_tabs = self.plugins:tabs()
 
   local tabs = {}
@@ -31,17 +35,23 @@ end
 
 function ReaSpeechControlsUI:render()
   self:render_heading()
+
+  if self.plugins._refresh_tabs then
+    self:init_tabs()
+    self.plugins._refresh_tabs = false
+  end
+
   for _, tab in ipairs(self.plugins:tabs()) do
     if tab:is_selected(self.tab_bar:value()) then
       tab:render()
     end
   end
-  ImGui.Separator(ctx)
-  ImGui.Dummy(ctx, 0, 5)
 end
 
 function ReaSpeechControlsUI:render_heading()
   local init_x, init_y = ImGui.GetCursorPos(ctx)
+
+  local avail_w, _ = ImGui.GetContentRegionAvail(ctx)
 
   ImGui.SetCursorPosX(ctx, init_x - 20)
   Widgets.png('reaspeech-logo-small')
@@ -49,7 +59,7 @@ function ReaSpeechControlsUI:render_heading()
   ImGui.SetCursorPos(ctx, init_x + self.MARGIN_LEFT + 2, init_y)
   self.tab_bar:render()
 
-  ImGui.SetCursorPos(ctx, ImGui.GetWindowWidth(ctx) - 55, init_y)
+  ImGui.SetCursorPos(ctx, avail_w - 55, init_y)
   Widgets.png('heading-logo-tech-audio')
 
   ImGui.SetCursorPos(ctx, init_x, init_y + 40)

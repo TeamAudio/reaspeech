@@ -57,6 +57,30 @@ function TranscriptUI:init()
   self:init_layouts()
 end
 
+function TranscriptUI:tabs()
+  return {
+    ReaSpeechPlugins.tab(
+      self:transcript_id(),
+      self:transcript_name(),
+      function()
+        self.tab_layout:render()
+      end
+    )
+  }
+end
+
+function TranscriptUI:transcript_id()
+  if not self._transcript_id then
+    self._transcript_id = ("transcript-%s"):format(os.date())
+  end
+
+  return self._transcript_id
+end
+
+function TranscriptUI:transcript_name()
+  return TranscriptUI.TITLE
+end
+
 function TranscriptUI:clipper()
   if not ImGui.ValidatePtr(self._clipper, 'ImGui_ListClipper*') then
     self._clipper = ImGui.CreateListClipper(ctx)
@@ -79,11 +103,22 @@ function TranscriptUI:init_layouts()
       renderers[column.num](self, column)
     end
   }
+
+  self.tab_layout = ColumnLayout.new {
+    column_padding = self.ACTIONS_PADDING,
+    margin_bottom = ReaSpeechControlsUI.MARGIN_BOTTOM,
+    margin_left = ReaSpeechControlsUI.MARGIN_LEFT,
+    margin_right = 0,
+    num_columns = 1,
+
+    render_column = function (_column)
+      self:render()
+    end
+  }
 end
 
 function TranscriptUI:render()
   if self.transcript:has_segments() then
-    ImGui.SeparatorText(ctx, "Transcript")
     self.actions_layout:render()
     self:render_table()
   end
@@ -174,7 +209,7 @@ function TranscriptUI:render_table()
   local columns = self.transcript:get_columns()
   local num_columns = #columns + 1
 
-  if ImGui.BeginTable(ctx, "results", num_columns, self.table_flags(true)) then
+  if ImGui.BeginTable(ctx, "results", num_columns, self.table_flags(true), 0, -10) then
     Trap(function ()
       ImGui.TableSetupColumn(ctx, "##actions", ImGui.TableColumnFlags_NoSort(), 20)
 

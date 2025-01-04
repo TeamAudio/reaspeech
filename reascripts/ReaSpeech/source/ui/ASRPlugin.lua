@@ -63,16 +63,19 @@ function ASRPlugin:handle_response()
     local segments = response[1].segments
     local job = response._job
 
+    local transcript = Transcript.new()
     for _, segment in pairs(segments) do
       for _, s in pairs(
         TranscriptSegment.from_whisper(segment, job.item, job.take)
       ) do
         if s:get('text') then
           self.app.transcript:add_segment(s)
+          transcript:add_segment(s)
         end
       end
     end
 
     self.app.transcript:update()
+    self.app.plugins:add_plugin(TranscriptUI.new { transcript = transcript })
   end
 end

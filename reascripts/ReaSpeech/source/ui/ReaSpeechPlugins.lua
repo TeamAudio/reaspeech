@@ -31,6 +31,18 @@ function ReaSpeechPlugins:init_plugins()
   end
 end
 
+function ReaSpeechPlugins:add_plugin(plugin)
+  local new_plugin
+  if type(plugin) == 'function' then
+    new_plugin = plugin(self.app)
+  else
+    new_plugin = plugin
+  end
+  table.insert(self._plugins, new_plugin)
+  self:init_tabs()
+  self._refresh_tabs = true
+end
+
 function ReaSpeechPlugins:tabs()
   return self._tabs
 end
