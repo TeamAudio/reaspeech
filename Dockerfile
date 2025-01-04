@@ -15,6 +15,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     lua-check \
     fswatch \
     make \
+    build-essential \
     cargo \
     ffmpeg \
     redis \

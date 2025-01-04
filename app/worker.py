@@ -41,6 +41,8 @@ tqdm.tqdm = _TQDM
 ASR_ENGINE = os.getenv("ASR_ENGINE", "faster_whisper")
 if ASR_ENGINE == "faster_whisper":
     from .faster_whisper import core as asr_engine
+elif ASR_ENGINE == "whisper_cpp":
+    from .whisper_cpp import core as asr_engine
 else:
     from .openai_whisper import core as asr_engine
 
@@ -150,7 +152,7 @@ def get_output_url_path(job_id: str):
 
 def update_progress(context):
     def do_update(units, total, current):
-        logger.info(f"Updating progress with units={units}, total={total}, current={current}")
+        logger.debug(f"Updating progress with units={units}, total={total}, current={current}")
         context.update_state(
             state=STATES["transcribing"],
             meta={"progress": {"units": units, "total": total, "current": current}}
