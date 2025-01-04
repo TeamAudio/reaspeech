@@ -43,3 +43,4 @@ poetry/core/*
 
 .env
 app/output/*/
+dump.rdb

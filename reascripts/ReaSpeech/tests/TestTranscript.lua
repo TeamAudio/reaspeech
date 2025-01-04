@@ -250,6 +250,33 @@ function TestTranscript:testSegmentScore()
   lu.assertAlmostEquals(s:get('score'), 0.75, 0.01)
 end
 
+function TestTranscript:testHasWords()
+  local t = Transcript.new()
+  t:add_segment(self.segment {
+    id = 1,
+    start = 1.0,
+    end_ = 2.0,
+    text = "test 1",
+    words = {
+      self.word { word = "test", start = 1.0, end_ = 1.5, probability = 1.0 },
+      self.word { word = "1", start = 1.5, end_ = 2.0, probability = 0.5 }
+    },
+  })
+  lu.assertEquals(t:has_words(), true)
+  t.search = 'zzzzz'
+  t:update()
+  lu.assertEquals(t:has_words(), true)
+
+  t = Transcript.new()
+  t:add_segment(self.segment {
+    id = 1,
+    start = 1.0,
+    end_ = 2.0,
+    text = "test 1",
+  })
+  lu.assertEquals(t:has_words(), false)
+end
+
 function TestTranscript:testSetWords()
   local s = self.segment {
     id = 1,
