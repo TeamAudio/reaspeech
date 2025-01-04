@@ -12,7 +12,7 @@ function ReaSpeechWidget:init()
     self.state = Storage.memory(self.default)
   end
   assert(self.renderer, "renderer not provided")
-  self.widget_id = self.widget_id or reaper.genGuid()
+  self.widget_id = self.widget_id or reaper.genGuid("")
   self.on_set = self.options and self.options.on_set or function() end
 end
 

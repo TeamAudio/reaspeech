@@ -21,25 +21,26 @@ function ReaSpeechControlsUI:init()
 end
 
 function ReaSpeechControlsUI:init_tabs()
-  local plugin_tabs = self.plugins:tabs()
+  local function _tabs()
+    local plugin_tabs = self.plugins:tabs()
 
-  local tabs = {}
-  for _, tab in ipairs(plugin_tabs) do
-    table.insert(tabs, tab.tab)
+    local tabs = {}
+    for _, tab in ipairs(plugin_tabs) do
+      table.insert(tabs, tab.tab)
+    end
+    return tabs
   end
+
+  local tabs = _tabs()
+
   self.tab_bar = Widgets.TabBar.new {
     default = tabs[1] and tabs[1].key or '',
-    tabs = tabs,
+    tabs = function() return _tabs() end,
   }
 end
 
 function ReaSpeechControlsUI:render()
   self:render_heading()
-
-  if self.plugins._refresh_tabs then
-    self:init_tabs()
-    self.plugins._refresh_tabs = false
-  end
 
   for _, tab in ipairs(self.plugins:tabs()) do
     if tab:is_selected(self.tab_bar:value()) then

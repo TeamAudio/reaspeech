@@ -39,8 +39,8 @@ function ReaSpeechPlugins:add_plugin(plugin)
     new_plugin = plugin
   end
   table.insert(self._plugins, new_plugin)
+
   self:init_tabs()
-  self._refresh_tabs = true
 end
 
 function ReaSpeechPlugins:tabs()
