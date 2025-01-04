@@ -10,17 +10,11 @@ With Poetry installed, you can run it to install the Python library dependencies
 poetry install
 ```
 
-You will also need to install the Redis database server. Instructions are available [here](https://redis.io/docs/latest/operate/oss_and_stack/install/install-stack/).
-
 You should now be able to start ReaSpeech's services by running:
 
 ```
 # Start all services
 poetry run python3.10 app/run.py
-
-# Start all services except for Redis
-# This avoids starting a second instance if Redis is managed by your OS
-poetry run python3.10 app/run.py --no-start-redis
 
 # For usage instructions
 poetry run python3.10 app/run.py --help
@@ -29,7 +23,6 @@ poetry run python3.10 app/run.py --help
 Alternatively, you can start the processes manually:
 
 ```
-redis-server &
 poetry run python3.10 celery -A app.worker.celery worker --pool=solo --loglevel=info &
 poetry run python3.10 gunicorn --bind 0.0.0.0:9000 --workers 1 --timeout 0 app.webservice:app -k uvicorn.workers.UvicornWorker &
 ```
