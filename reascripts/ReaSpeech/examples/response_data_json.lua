@@ -3,9 +3,8 @@ response = json.decode([[
 ]])
 
 for _, segment in pairs(response.segments) do
-    for _, s in pairs(TranscriptSegment.from_whisper(segment, {}, {})) do
-      app.transcript:add_segment(s)
-    end
+  for _, s in pairs(TranscriptSegment.from_whisper(segment, {}, {})) do
+    app.transcript:add_segment(s)
   end
-  app.transcript:update()
-  
+end
+app.transcript:update()

@@ -21,10 +21,22 @@ context) - both instantiated in `ReaSpeechMain.lua`.
 collection of Lua source files (everything in `source` and from a common
 library), so any code should be written to not assume that any symbols or
 objects (variables, tables or "classes") are available on the initial parse
-(see `source/Theme.lua` for an example of how ReaScript-aware code is written
-but deferred). By doing things this way, we avoid confusion as to the loading
-behavior of Lua modules within REAPER, at the expense of defining these
-symbols up-front and independently of any other code.
+(see `source/libs/IntervalFunction.lua` for an example of how ReaScript-aware
+code is written but deferred). By doing things this way, we avoid confusion
+as to the loading behavior of Lua modules within REAPER, at the expense of
+defining these symbols up-front and independently of any other code.
+
+Having said all this, there are a few guarantees of bundle order. The main
+directories under `source` (`libs`, `ui` & `main`) represent their own stages.
+This means that you can count on symbols from previous stages being bundled
+(and therefore present in the namespace) by the time later stages are
+processed. If you want to confidently use in top-level code any symbols
+within the same stage, it might be best to do the deferred loading described
+above.
+
+Further, directories that exist lower in a hierarchy will be bundled after
+any sibling `*.lua` files. An example here is `source/ui/widgets/*.lua` which
+will appear in the bundle after everything in `source/ui/*.lua`.
 
 ## Using Docker Compose
 

@@ -1,18 +1,21 @@
-package.path = '../common/libs/?.lua;../common/vendor/?.lua;' .. package.path
+package.path = 'source/?.lua;' .. package.path
 
 app = {}
 
-local lu = require('luaunit')
+local lu = require('vendor/luaunit')
 
-require('json')
-require('mock_reaper')
-require('Polo')
-require('ReaIter')
-require('ReaUtil')
-require('Trap')
-require('source/Transcript')
-require('source/TranscriptSegment')
-require('source/TranscriptWord')
+require('tests/mock_reaper')
+
+require('vendor/json')
+
+require('libs/Polo')
+require('libs/ReaIter')
+require('libs/ReaUtil')
+require('libs/Trap')
+
+require('main/Transcript')
+require('main/TranscriptSegment')
+require('main/TranscriptWord')
 
 --
 

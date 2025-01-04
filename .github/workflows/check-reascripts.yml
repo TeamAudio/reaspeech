@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: reascripts
+        working-directory: reascripts/ReaSpeech
 
     steps:
     - uses: actions/checkout@master
@@ -28,4 +28,4 @@ jobs:
 
     - name: test
       run: |
-        make SHELL=/bin/bash
+        make lint test-noversion SHELL=/bin/bash

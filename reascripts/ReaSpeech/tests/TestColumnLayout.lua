@@ -1,12 +1,10 @@
-package.path = '../common/libs/?.lua;../common/vendor/?.lua;' .. package.path
+package.path = 'source/?.lua;' .. package.path
 
-local lu = require('luaunit')
+local lu = require('vendor/luaunit')
 
-require('Polo')
+require('libs/Polo')
 
-require('source/ColumnLayout')
-
-
+require('ui/ColumnLayout')
 
 TestColumnLayout = {
   AVAIL_WIDTH = 100

@@ -1,11 +1,12 @@
-package.path = '../common/libs/?.lua;../common/vendor/?.lua;' .. package.path
+package.path = 'source/?.lua;' .. package.path
 
-local lu = require('luaunit')
+local lu = require('vendor/luaunit')
 
-require('mock_reaper')
-require('Polo')
-require('Storage')
-require('source/Logging')
+require('tests/mock_reaper')
+
+require('libs/Polo')
+require('libs/Storage')
+require('libs/Logging')
 
 --
 
@@ -18,15 +19,15 @@ function TestLogging:testLogMethod()
   local prefix = "TestLoggingClass prefix"
   local test_class = Polo {
     init = function(self)
-      Logging.init(self, prefix)
+      Logging().init(self, prefix)
     end
   }
 
-  Logging.log_time = function()
+  Logging().log_time = function()
     return "<time>"
   end
 
-  Logging.logs = {}
+  Logging().logs = {}
 
   local log_message1 = "This is a log message"
   local log_message2 = "This is another log message"
@@ -35,9 +36,9 @@ function TestLogging:testLogMethod()
   instance:log(log_message1)
   instance:log(log_message2)
 
-  lu.assertEquals(Logging.logs, {
-    { ("<time> [%s, LOG] %s"):format(prefix, log_message1), Logging.LOG_LEVEL_LOG },
-    { ("<time> [%s, LOG] %s"):format(prefix, log_message2), Logging.LOG_LEVEL_LOG },
+  lu.assertEquals(Logging().logs, {
+    { ("<time> [%s, LOG] %s"):format(prefix, log_message1), Logging().LOG_LEVEL_LOG },
+    { ("<time> [%s, LOG] %s"):format(prefix, log_message2), Logging().LOG_LEVEL_LOG },
   })
 end
 
@@ -45,15 +46,15 @@ function TestLogging:testDebugMethod()
   local prefix = "TestLoggingClass prefix"
   local test_class = Polo {
     init = function(self)
-      Logging.init(self, prefix)
+      Logging().init(self, prefix)
     end
   }
 
-  Logging.log_time = function()
+  Logging().log_time = function()
     return "<time>"
   end
 
-  Logging.logs = {}
+  Logging().logs = {}
 
   local log_message1 = "This is a log message"
   local log_message2 = "This is another log message"
@@ -62,9 +63,9 @@ function TestLogging:testDebugMethod()
   instance:debug(log_message1)
   instance:debug(log_message2)
 
-  lu.assertEquals(Logging.logs, {
-    { ("<time> [%s, DBG] %s"):format(prefix, log_message1), Logging.LOG_LEVEL_DEBUG },
-    { ("<time> [%s, DBG] %s"):format(prefix, log_message2), Logging.LOG_LEVEL_DEBUG },
+  lu.assertEquals(Logging().logs, {
+    { ("<time> [%s, DBG] %s"):format(prefix, log_message1), Logging().LOG_LEVEL_DEBUG },
+    { ("<time> [%s, DBG] %s"):format(prefix, log_message2), Logging().LOG_LEVEL_DEBUG },
   })
 end
 
@@ -72,15 +73,15 @@ function TestLogging:testMixedCalls()
   local prefix = "TestLoggingClass prefix"
   local test_class = Polo {
     init = function(self)
-      Logging.init(self, prefix)
+      Logging().init(self, prefix)
     end
   }
 
-  Logging.log_time = function()
+  Logging().log_time = function()
     return "<time>"
   end
 
-  Logging.logs = {}
+  Logging().logs = {}
 
   local log_message1 = "This is a log message"
   local log_message2 = "This is another log message"
@@ -91,45 +92,45 @@ function TestLogging:testMixedCalls()
   instance:debug(log_message2)
   instance:log(log_message3)
 
-  lu.assertEquals(Logging.logs, {
-    { ("<time> [%s, LOG] %s"):format(prefix, log_message1), Logging.LOG_LEVEL_LOG },
-    { ("<time> [%s, DBG] %s"):format(prefix, log_message2), Logging.LOG_LEVEL_DEBUG },
-    { ("<time> [%s, LOG] %s"):format(prefix, log_message3), Logging.LOG_LEVEL_LOG },
+  lu.assertEquals(Logging().logs, {
+    { ("<time> [%s, LOG] %s"):format(prefix, log_message1), Logging().LOG_LEVEL_LOG },
+    { ("<time> [%s, DBG] %s"):format(prefix, log_message2), Logging().LOG_LEVEL_DEBUG },
+    { ("<time> [%s, LOG] %s"):format(prefix, log_message3), Logging().LOG_LEVEL_LOG },
   })
 end
 
 function TestLogging:testReset()
-  Logging.logs = { "This is a log message", "This is another log message" }
+  Logging().logs = { "This is a log message", "This is another log message" }
 
-  Logging:reset()
+  Logging():reset()
 
-  lu.assertEquals(#Logging.logs, 0)
+  lu.assertEquals(#Logging().logs, 0)
 end
 
 function TestLogging:testResetReusesEmptyLogsTable()
-  local original_table = Logging.logs
+  local original_table = Logging().logs
 
-  Logging:reset()
+  Logging():reset()
 
-  lu.assertIs(Logging.logs, original_table)
+  lu.assertIs(Logging().logs, original_table)
 
-  Logging.logs = {{ "msg", Logging.LOG_LEVEL_LOG }}
+  Logging().logs = {{ "msg", Logging().LOG_LEVEL_LOG }}
 
-  Logging:reset()
+  Logging():reset()
 
-  lu.assertNotIs(Logging.logs, original_table)
+  lu.assertNotIs(Logging().logs, original_table)
 end
 
 function TestLogging:testPatchedLogMethod()
   local test_class = Polo {
     init = function(self)
-      Logging.init(self, "TestLoggingClass prefix")
+      Logging().init(self, "TestLoggingClass prefix")
     end
   }
 
   local log_message = "This is a log message"
 
-  Logging._loggers = {
+  Logging()._loggers = {
     log = function(prefix, msg)
       lu.assertEquals(prefix, "TestLoggingClass prefix")
       lu.assertEquals(msg, log_message)
@@ -143,13 +144,13 @@ end
 function TestLogging:testPatchedDebugMethod()
   local test_class = Polo {
     init = function(self)
-      Logging.init(self, "TestLoggingClass prefix")
+      Logging().init(self, "TestLoggingClass prefix")
     end
   }
 
   local debug_message = "This is a debug message"
 
-  Logging._loggers = {
+  Logging()._loggers = {
     debug = function(prefix, msg)
       lu.assertEquals(prefix, "TestLoggingClass prefix")
       lu.assertEquals(msg, debug_message)
@@ -161,31 +162,31 @@ function TestLogging:testPatchedDebugMethod()
 end
 
 function TestLogging:testReactRespectsShowLogsOff()
-  Logging.show_logs:set(false)
-  Logging.logs = {
-    { "This is a log message", Logging.LOG_LEVEL_LOG },
-    { "This is a debug message", Logging.LOG_LEVEL_DEBUG },
+  Logging().show_logs:set(false)
+  Logging().logs = {
+    { "This is a log message", Logging().LOG_LEVEL_LOG },
+    { "This is a debug message", Logging().LOG_LEVEL_DEBUG },
   }
 
   local yay_no_calls = true
 
-  reaper.ShowConsoleMsg = function(msg)
+  reaper.ShowConsoleMsg = function(_msg)
       yay_no_calls = false
   end
 
-  Logging:react()
+  Logging():react()
 
   lu.assertEquals(yay_no_calls, true)
-  lu.assertEquals(Logging.logs, {})
+  lu.assertEquals(Logging().logs, {})
 end
 
 function TestLogging:testReactRespectsShowLogsOn()
-  Logging.show_logs:set(true)
-  Logging.show_debug_logs:set(false)
+  Logging().show_logs:set(true)
+  Logging().show_debug_logs:set(false)
 
-  Logging.logs = {
-    { "This is a log message", Logging.LOG_LEVEL_LOG },
-    { "This is a debug message", Logging.LOG_LEVEL_DEBUG },
+  Logging().logs = {
+    { "This is a log message", Logging().LOG_LEVEL_LOG },
+    { "This is a debug message", Logging().LOG_LEVEL_DEBUG },
   }
 
   local happy_call = false
@@ -199,50 +200,50 @@ function TestLogging:testReactRespectsShowLogsOn()
     end
   end
 
-  Logging:react()
+  Logging():react()
 
   lu.assertEquals(happy_call, true)
-  lu.assertEquals(Logging.logs, {})
+  lu.assertEquals(Logging().logs, {})
 end
 
 function TestLogging:testReactRespectsShowDebugLogsOn()
-  Logging.show_logs:set(true)
-  Logging.show_debug_logs:set(true)
-  Logging.logs = {
-    { "This is a log message", Logging.LOG_LEVEL_LOG },
-    { "This is a debug message", Logging.LOG_LEVEL_DEBUG },
+  Logging().show_logs:set(true)
+  Logging().show_debug_logs:set(true)
+  Logging().logs = {
+    { "This is a log message", Logging().LOG_LEVEL_LOG },
+    { "This is a debug message", Logging().LOG_LEVEL_DEBUG },
   }
 
   local happy_calls = 0
 
-  reaper.ShowConsoleMsg = function(msg)
+  reaper.ShowConsoleMsg = function(_msg)
     happy_calls = happy_calls + 1
   end
 
-  Logging:react()
+  Logging():react()
 
   lu.assertEquals(happy_calls, 2)
-  lu.assertEquals(Logging.logs, {})
+  lu.assertEquals(Logging().logs, {})
 end
 
 function TestLogging:testReactIgnoresShowDebugLogsIfShowLogsOff()
-  Logging.show_logs:set(false)
-  Logging.show_debug_logs:set(true)
-  Logging.logs = {
-    { "This is a log message", Logging.LOG_LEVEL_LOG },
-    { "This is a debug message", Logging.LOG_LEVEL_DEBUG },
+  Logging().show_logs:set(false)
+  Logging().show_debug_logs:set(true)
+  Logging().logs = {
+    { "This is a log message", Logging().LOG_LEVEL_LOG },
+    { "This is a debug message", Logging().LOG_LEVEL_DEBUG },
   }
 
   local sad_calls = 0
 
-  reaper.ShowConsoleMsg = function(msg)
+  reaper.ShowConsoleMsg = function(_msg)
     sad_calls = sad_calls + 1
   end
 
-  Logging:react()
+  Logging():react()
 
   lu.assertEquals(sad_calls, 0)
-  lu.assertEquals(Logging.logs, {})
+  lu.assertEquals(Logging().logs, {})
 end
 
 --

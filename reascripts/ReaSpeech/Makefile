@@ -3,36 +3,61 @@ LUAC53=luac5.3
 LUA54=lua5.4
 LUAC54=luac5.4
 LUACHECK=luacheck
+LUA=lua
 
-LIBS=Ctx.lua EnvUtil.lua ExecProcess.lua ImGuiTheme.lua PathUtil.lua Polo.lua ReaIter.lua ReaUtil.lua Storage.lua TableUtils.lua Tempfile.lua Trap.lua
 VENDOR=json.lua url.lua
+SOURCE_ROOT=source
+TEST_ROOT=tests
 
-source:=$(wildcard libs/*.lua source/*.lua source/include/*.lua)
-libs:=$(foreach lib, $(LIBS), ../common/libs/$(lib))
-vendor:=$(foreach lib, $(VENDOR), ../common/vendor/$(lib))
-tests:=$(wildcard tests/Test*.lua)
+# Miscellaneous directly-referenced bundle components
+BUNDLE_INCLUDE=$(SOURCE_ROOT)/include
+BUNDLE_TARGET=build/ReaSpeechBundle.lua
+
+# usage: $(call lua_sources,<directory>,<file_prefix>)
+# e.g. $(call lua_sources,tests,Test) -> tests/Test*.lua tests/**/Test*.lua
+lua_sources=$(wildcard $(1)/$(2)*.lua) $(foreach d, $(wildcard $(1)/*), $(call lua_sources, $(d),$(2)))
+
 dest=../../app/static/reascripts/ReaSpeech
+
+SOURCES=libs ui main
+
+# All the luas!
+source:=$(call lua_sources, $(SOURCE_ROOT))
+tests:=$(call lua_sources, $(TEST_ROOT),Test)
+
+# Bundle contents, in order
+headers:=$(foreach h, header globals, $(BUNDLE_INCLUDE)/$(h).lua)
+vendor:=$(foreach lib, $(VENDOR), vendor/$(lib))
+images:=$(wildcard resources/images/*.lua)
+sources:=$(foreach s, $(SOURCES), $(call lua_sources, $(SOURCE_ROOT)/$(s)))
+version:=version.lua
+main:=$(BUNDLE_INCLUDE)/main.lua
+
+bundle_contents:=$(headers) $(vendor) $(images) $(sources) $(version) $(main)
 
 all: lint test publish
 
-lint: $(source) $(libs)
+lint: $(source)
 	$(LUACHECK) $?
 
-test: $(source) $(libs) $(tests)
+test: $(source) $(tests)
 	true $(foreach test, $(tests), && $(LUA53) $(test) -v)
 	true $(foreach test, $(tests), && $(LUA54) $(test) -v)
+
+test-noversion: $(source) $(tests)
+	true $(foreach test, $(tests), && $(LUA) $(test) -v)
 
 .PHONY: build
 build: build/ReaSpeech-5.3.luac build/ReaSpeech-5.4.luac
 
-build/ReaSpeechBundle.lua: $(source) $(libs) $(vendor) version.lua
-	cat source/include/header.lua source/include/globals.lua $(libs) $(vendor) resources/images/*.lua libs/*.lua source/*.lua version.lua source/include/main.lua > build/ReaSpeechBundle.lua
+$(BUNDLE_TARGET): $(bundle_contents)
+	cat $(bundle_contents) > $(BUNDLE_TARGET)
 
-build/ReaSpeech-5.3.luac: build/ReaSpeechBundle.lua
-	$(LUAC53) -o build/ReaSpeech-5.3.luac -s build/ReaSpeechBundle.lua
+build/ReaSpeech-5.3.luac: $(BUNDLE_TARGET)
+	$(LUAC53) -o build/ReaSpeech-5.3.luac -s $(BUNDLE_TARGET)
 
-build/ReaSpeech-5.4.luac: build/ReaSpeechBundle.lua
-	$(LUAC54) -o build/ReaSpeech-5.4.luac -s build/ReaSpeechBundle.lua
+build/ReaSpeech-5.4.luac: $(BUNDLE_TARGET)
+	$(LUAC54) -o build/ReaSpeech-5.4.luac -s $(BUNDLE_TARGET)
 
 .PHONY: publish
 publish: build
@@ -40,12 +65,14 @@ publish: build
 	cp build/ReaSpeech-5.4.luac $(dest)/
 
 .PHONY: tags
+tags : tagged_paths = $(SOURCE_ROOT)
 tags:
-	find source/ -type f -iname '*.lua' -print0 | xargs -0 etags
-	find libs/ -type f -iname '*.lua' -print0 | xargs -0 etags
-	find ../common/libs/ -type f -iname '*.lua' -print0 | xargs -0 etags --append
-	find ../common/vendor/ -type f -iname '*.lua' -print0 | xargs -0 etags --append
+	-rm -f TAGS
+	@for path in $(tagged_paths); do \
+		echo "Tagging $$path"; \
+		find $$path -type f -iname '*.lua' -print0 | xargs -0 etags --append; \
+	done
 
 .PHONY: clean
 clean:
-	rm -f build/ReaSpeech-5.3.luac build/ReaSpeech-5.4.luac build/ReaSpeechBundle.lua TAGS
+	rm -f build/ReaSpeech-5.3.luac build/ReaSpeech-5.4.luac $(BUNDLE_TARGET) TAGS

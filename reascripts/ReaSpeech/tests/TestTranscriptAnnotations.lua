@@ -1,22 +1,27 @@
-package.path = '../common/libs/?.lua;../common/vendor/?.lua;' .. package.path
+package.path = 'source/?.lua;' .. package.path
 
-local lu = require('luaunit')
+local lu = require('vendor/luaunit')
 
-require('json')
-require('mock_reaper')
-require('Polo')
-require('ReaUtil')
-require('Storage')
-require('Trap')
-require('source/ColumnLayout')
-require('source/Logging')
-require('source/ReaSpeechUI')
-require('source/ReaSpeechWidgets')
-require('source/Transcript')
-require('source/TranscriptAnnotations')
-require('source/TranscriptSegment')
-require('source/TranscriptWord')
-require('source/include/globals')
+require('tests/mock_reaper')
+
+require('vendor/json')
+
+require('include/globals')
+
+require('libs/Logging')
+require('libs/Polo')
+require('libs/ReaUtil')
+require('libs/Storage')
+require('libs/Trap')
+
+require('ui/ColumnLayout')
+require('ui/ReaSpeechUI')
+require('ui/ReaSpeechWidgets')
+require('ui/TranscriptAnnotations')
+
+require('main/Transcript')
+require('main/TranscriptSegment')
+require('main/TranscriptWord')
 
 --
 
@@ -43,13 +48,13 @@ reaper.CountMediaItems = function () return 1 end
 reaper.GetMediaItem = function (_, _) return {} end
 reaper.CountTakes = function () return 1 end
 reaper.GetTake = function (_, _) return {} end
-require('ReaIter')
+require('libs/ReaIter')
 
-reaper.SetItemStateChunk = function (item, str, isundo)
+reaper.SetItemStateChunk = function (_item, str, _isundo)
   reaper_state.item_state_chunk = str
 end
 
-reaper.SetTakeMarker = function(take, index, name, pos, color)
+reaper.SetTakeMarker = function(take, _index, name, pos, color)
   reaper_state.take_markers[take] = reaper_state.take_markers[take] or {}
   table.insert(reaper_state.take_markers[take], {
     take = take,
@@ -77,7 +82,7 @@ reaper.SetMediaItemLength = function (_, _, _) end
 reaper.SetMediaItemPosition = function (_, _, _) end
 reaper.SetOnlyTrackSelected = function (_) end
 
-reaper.GetItemStateChunk = function (item, str, isundo)
+reaper.GetItemStateChunk = function (_item, _str, _isundo)
   return true, [[<ITEM
 POSITION 0
 SNAPOFFS 0
@@ -408,7 +413,7 @@ function TestTranscriptMarkers:testTakeMarkersTrackFilterInclude()
   ReaIter.each_media_item = ReaIter._make_iterator(reaper.CountMediaItems, reaper.GetMediaItem)
   ReaIter.each_take = ReaIter._make_iterator(reaper.CountTakes, reaper.GetTake)
 
-  ReaUtil.get_source_path = function (source)
+  ReaUtil.get_source_path = function (_source)
     return "some file"
   end
 
@@ -494,7 +499,7 @@ function TestTranscriptMarkers:testTakeMarkersTrackFilterIgnore()
   ReaIter.each_media_item = ReaIter._make_iterator(reaper.CountMediaItems, reaper.GetMediaItem)
   ReaIter.each_take = ReaIter._make_iterator(reaper.CountTakes, reaper.GetTake)
 
-  ReaUtil.get_source_path = function (source)
+  ReaUtil.get_source_path = function (_source)
     return "some file"
   end
 
