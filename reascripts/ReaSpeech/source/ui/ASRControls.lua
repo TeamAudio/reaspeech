@@ -218,7 +218,7 @@ function ASRControls:init_actions_layout()
     column_padding = 10,
     margin_left = ReaSpeechControlsUI.MARGIN_LEFT,
     num_columns = 1,
-    render_column = function(column)
+    render_column = function(_column)
       self:render_actions()
     end
   }

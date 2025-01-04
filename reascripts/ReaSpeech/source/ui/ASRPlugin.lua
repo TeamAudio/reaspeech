@@ -49,8 +49,6 @@ function ASRPlugin:asr(jobs)
     callback = self:handle_response()
   }
 
-  self.app.transcript:clear()
-
   self.app:submit_request(request)
 end
 
@@ -63,13 +61,15 @@ function ASRPlugin:handle_response()
     local segments = response[1].segments
     local job = response._job
 
-    local transcript = Transcript.new()
+    local transcript = Transcript.new {
+      name = os.date()
+    }
+
     for _, segment in pairs(segments) do
       for _, s in pairs(
         TranscriptSegment.from_whisper(segment, job.item, job.take)
       ) do
         if s:get('text') then
-          self.app.transcript:add_segment(s)
           transcript:add_segment(s)
         end
       end
