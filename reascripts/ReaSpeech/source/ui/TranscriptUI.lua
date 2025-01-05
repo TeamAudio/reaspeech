@@ -81,7 +81,7 @@ function TranscriptUI:init()
   }
   self.annotations = TranscriptAnnotationsUI.new { transcript = self.transcript }
 
-  self._transcript_saved = false
+  self._transcript_saved = self._transcript_saved or false
 
   self:init_layouts()
 end
