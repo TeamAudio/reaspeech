@@ -17,10 +17,8 @@ ASRControls = PluginControls {
 
   tabs = function(self)
     return {
-      ReaSpeechPlugins.tab('asr-simple', 'Simple',
-        function() self:render_simple() end),
-      ReaSpeechPlugins.tab('asr-advanced', 'Advanced',
-        function() self:render_advanced() end),
+      ReaSpeechPlugins.tab('asr', 'Speech Recognition',
+        function() self:render() end),
     }
   end
 }
@@ -157,7 +155,7 @@ end
 
 function ASRControls:init_advanced_layout()
   local renderers = {
-    {self.render_model, self.render_options},
+    {self.render_options},
     {self.asr_options.hotwords and self.render_hotwords or self.render_initial_prompt},
     {self.render_language},
   }
@@ -233,9 +231,18 @@ function ASRControls:render_simple()
   self.importer:render()
 end
 
-function ASRControls:render_advanced()
+function ASRControls:render()
   self:check_asr_info()
-  self.advanced_layout:render()
+  self.simple_layout:render()
+  ImGui.Unindent(ctx)
+  ImGui.Dummy(ctx, ReaSpeechControlsUI.MARGIN_LEFT, 0)
+  ImGui.SameLine(ctx)
+  if ImGui.TreeNode(ctx, "Advanced Options") then
+    self.advanced_layout:render()
+    ImGui.TreePop(ctx)
+  end
+  ImGui.Indent(ctx)
+  ImGui.Spacing(ctx)
   self.actions_layout:render()
   self.importer:render()
 end
@@ -259,9 +266,11 @@ function ASRControls:render_hotwords()
 end
 
 function ASRControls:render_options(column)
-  if self.asr_options.vad_filter then
+  local disabled_if = ReaUtil.disabler(ctx)
+
+  disabled_if(not self.asr_options.vad_filter, function()
     self.vad_filter:render(column)
-  end
+  end, "VAD is not available with this engine")
 end
 
 function ASRControls:render_initial_prompt()
