@@ -37,7 +37,7 @@ function ReaUtil.disabler(context, error_handler)
     reaper.ShowConsoleMsg(msg .. '\n')
   end
 
-  return function(predicate, f)
+  return function(predicate, f, tooltip)
     local safe_f = function()
       xpcall(f, error_handler)
     end
@@ -47,9 +47,27 @@ function ReaUtil.disabler(context, error_handler)
       return
     end
 
+    local imgui_id = 'disabled##' .. (tooltip or '')
     reaper.ImGui_BeginDisabled(context, true)
+
+    if tooltip then
+      local flags = ImGui.ChildFlags_None()
+                  | ImGui.ChildFlags_AutoResizeX()
+                  | ImGui.ChildFlags_AutoResizeY()
+      ImGui.BeginChild(context, imgui_id, 0, 0, flags)
+    end
+
     safe_f()
+
+    if tooltip then
+      ImGui.EndChild(context)
+    end
+
     reaper.ImGui_EndDisabled(context)
+
+    if tooltip then
+      reaper.ImGui_SetItemTooltip(context, tooltip)
+    end
   end
 end
 
