@@ -216,7 +216,12 @@ function TranscriptUI:render_name()
       ImGui.Dummy(ctx, 1, 2)
       ImGui.Dummy(ctx, 2, 0)
       ImGui.SameLine(ctx)
-      ImGui.Text(ctx, self.transcript.name)
+
+      if #self.transcript.name < 1 then
+        ImGui.Text(ctx, "(Untitled)")
+      else
+        ImGui.Text(ctx, self.transcript.name)
+      end
       ImGui.SameLine(ctx)
       local icon_size = Fonts.size:get() - 1
       if Widgets.icon(Icons.pencil, "##edit_name", icon_size, icon_size, "Edit") then
@@ -312,8 +317,8 @@ function TranscriptUI:render_table()
 
   local imgui_id = self.transcript.name
 
-  if #self.transcript.name < 1 then
-    imgui_id = ("transcript-" .. tostring(reaper.time_precise()))
+  if not imgui_id or #imgui_id < 1 then
+    imgui_id = "transcript-untitled"
   end
 
   ImGui.PushID(ctx, imgui_id)
