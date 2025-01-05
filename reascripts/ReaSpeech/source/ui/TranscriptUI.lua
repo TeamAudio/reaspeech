@@ -125,6 +125,9 @@ function TranscriptUI:confirm_close()
     ImGui.SameLine(ctx)
     if ImGui.Button(ctx, 'Save') then
       self.confirmation_popup:close()
+      self.transcript_exporter.on_export = function()
+        app.plugins:remove_plugin(self)
+      end
       self.transcript_exporter:present()
     end
   end)
