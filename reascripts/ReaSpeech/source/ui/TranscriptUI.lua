@@ -54,13 +54,18 @@ function TranscriptUI:init()
   self.editing_name = false
   self.name_editor = Widgets.TextInput.new {
     default = self.transcript.name,
+    on_cancel = function()
+      self.editing_name = false
+      self.transcript.name = self._original_transcript_name
+      self._original_transcript_name = nil
+    end,
+    on_change = function(value)
+      self.transcript.name = value
+    end,
     on_enter = function()
       self.transcript.name = self.name_editor:value()
       self.editing_name = false
     end,
-    on_change = function(value)
-      self.transcript.name = value
-    end
   }
 
   self.transcript_editor = TranscriptEditor.new { transcript = self.transcript }
@@ -160,6 +165,7 @@ function TranscriptUI:render_name()
       ImGui.SameLine(ctx)
       local icon_size = Fonts.size:get() - 1
       if Widgets.icon(Icons.pencil, "##edit_name", icon_size, icon_size, "Edit") then
+        self._original_transcript_name = self.transcript.name
         self.editing_name = true
       end
       ImGui.Dummy(ctx, 1, 2)
