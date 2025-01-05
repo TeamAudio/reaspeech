@@ -209,6 +209,7 @@ function TranscriptUI:render_table()
   local columns = self.transcript:get_columns()
   local num_columns = #columns + 1
 
+  ImGui.PushID(ctx, self.transcript.name)
   if ImGui.BeginTable(ctx, "results", num_columns, self.table_flags(true), 0, -10) then
     Trap(function ()
       ImGui.TableSetupColumn(ctx, "##actions", ImGui.TableColumnFlags_NoSort(), 20)
@@ -261,6 +262,7 @@ function TranscriptUI:render_table()
     end)
     ImGui.EndTable(ctx)
   end
+  ImGui.PopID(ctx)
 end
 
 function TranscriptUI:render_segment_actions(segment, index)

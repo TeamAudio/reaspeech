@@ -106,7 +106,9 @@ function ASRActions:import_button()
 
   self._import_button = Widgets.Button.new({
     label = "Import Transcript",
-    on_click = function () app.importer:present() end
+    on_click = function ()
+      self.plugin._controls.importer:present()
+    end
   })
 
   return self._import_button

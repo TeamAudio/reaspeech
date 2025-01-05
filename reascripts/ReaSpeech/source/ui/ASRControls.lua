@@ -37,6 +37,8 @@ function ASRControls:init()
     persist = true,
   }
 
+  self.importer = TranscriptImporter.new()
+
   self.settings = {
     language = storage:string('language', self.DEFAULT_LANGUAGE),
     translate = storage:boolean('translate', false),
@@ -228,12 +230,14 @@ function ASRControls:render_simple()
   self:check_asr_info()
   self.simple_layout:render()
   self.actions_layout:render()
+  self.importer:render()
 end
 
 function ASRControls:render_advanced()
   self:check_asr_info()
   self.advanced_layout:render()
   self.actions_layout:render()
+  self.importer:render()
 end
 
 function ASRControls:render_language(column)

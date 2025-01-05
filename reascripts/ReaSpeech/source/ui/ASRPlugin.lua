@@ -75,7 +75,9 @@ function ASRPlugin:handle_response()
       end
     end
 
-    self.app.transcript:update()
-    self.app.plugins:add_plugin(TranscriptUI.new { transcript = transcript })
+    transcript:update()
+
+    local plugin = TranscriptUI.new { transcript = transcript }
+    self.app.plugins:add_plugin(plugin)
   end
 end
