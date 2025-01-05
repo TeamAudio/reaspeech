@@ -51,6 +51,18 @@ function TranscriptUI:init()
   self.colorize_words = false
   self.autoplay = true
 
+  self.editing_name = false
+  self.name_editor = Widgets.TextInput.new {
+    default = self.transcript.name,
+    on_enter = function()
+      self.transcript.name = self.name_editor:value()
+      self.editing_name = false
+    end,
+    on_change = function(value)
+      self.transcript.name = value
+    end
+  }
+
   self.transcript_editor = TranscriptEditor.new { transcript = self.transcript }
   self.transcript_exporter = TranscriptExporter.new { transcript = self.transcript }
   self.annotations = TranscriptAnnotationsUI.new { transcript = self.transcript }
@@ -62,7 +74,7 @@ function TranscriptUI:tabs()
   return {
     ReaSpeechPlugins.tab(
       self:transcript_id(),
-      self:transcript_name(),
+      function() return self:transcript_name() end,
       function()
         self.tab_layout:render()
       end
@@ -123,6 +135,8 @@ function TranscriptUI:init_layouts()
 end
 
 function TranscriptUI:render()
+  self:render_name()
+
   if self.transcript:has_segments() then
     self.actions_layout:render()
     self:render_table()
@@ -131,6 +145,27 @@ function TranscriptUI:render()
   self.transcript_editor:render()
   self.transcript_exporter:render()
   self.annotations:render()
+end
+
+function TranscriptUI:render_name()
+  ImGui.PushFont(ctx, Fonts.big)
+  Trap(function()
+    if self.editing_name then
+      self.name_editor:render()
+    else
+      ImGui.Dummy(ctx, 1, 2)
+      ImGui.Dummy(ctx, 2, 0)
+      ImGui.SameLine(ctx)
+      ImGui.Text(ctx, self.transcript.name)
+      ImGui.SameLine(ctx)
+      local icon_size = Fonts.size:get() - 1
+      if Widgets.icon(Icons.pencil, "##edit_name", icon_size, icon_size, "Edit") then
+        self.editing_name = true
+      end
+      ImGui.Dummy(ctx, 1, 2)
+    end
+  end)
+  ImGui.PopFont(ctx)
 end
 
 function TranscriptUI:render_result_actions()

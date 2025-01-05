@@ -38,7 +38,13 @@ TabBar.renderer = function (self)
     end
 
     for _, tab in pairs(tabs) do
-      if ImGui.BeginTabItem(ctx, tab.label) then
+      local label = tab.label
+
+      if type(label) == 'function' then
+        label = label()
+      end
+
+      if ImGui.BeginTabItem(ctx, label) then
         Trap(function()
           self:set(tab.key)
         end)
