@@ -79,6 +79,10 @@ function TranscriptUI:transcript_id()
 end
 
 function TranscriptUI:transcript_name()
+  if not self.transcript.name or #self.transcript.name < 1 then
+    return 'Untitled Transcript'
+  end
+
   return TranscriptUI.TAB_TITLE_FORMAT:format(self.transcript.name)
 end
 
@@ -210,7 +214,13 @@ function TranscriptUI:render_table()
   local columns = self.transcript:get_columns()
   local num_columns = #columns + 1
 
-  ImGui.PushID(ctx, self.transcript.name)
+  local imgui_id = self.transcript.name
+
+  if #self.transcript.name < 1 then
+    imgui_id = ("transcript-" .. tostring(reaper.time_precise()))
+  end
+
+  ImGui.PushID(ctx, imgui_id)
   if ImGui.BeginTable(ctx, "results", num_columns, self.table_flags(true), 0, -10) then
     Trap(function ()
       ImGui.TableSetupColumn(ctx, "##actions", ImGui.TableColumnFlags_NoSort(), 20)
