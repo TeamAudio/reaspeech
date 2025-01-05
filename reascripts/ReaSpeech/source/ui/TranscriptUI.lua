@@ -6,6 +6,7 @@
 
 TranscriptUI = Polo {
   TITLE = 'Transcript',
+  TAB_TITLE_FORMAT = "Transcript: %s",
 
   FLOAT_FORMAT = '%.4f',
 
@@ -78,7 +79,7 @@ function TranscriptUI:transcript_id()
 end
 
 function TranscriptUI:transcript_name()
-  return TranscriptUI.TITLE
+  return TranscriptUI.TAB_TITLE_FORMAT:format(self.transcript.name)
 end
 
 function TranscriptUI:clipper()
