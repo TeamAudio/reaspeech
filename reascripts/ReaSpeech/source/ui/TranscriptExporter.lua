@@ -29,6 +29,8 @@ function TranscriptExporter:init()
       | ImGui.WindowFlags_NoDocking()
   })
 
+  self.on_export = self.on_export or function() end
+
   self.export_formats = TranscriptExporterFormats.new {
     TranscriptExportFormat.exporter_json(),
     TranscriptExportFormat.exporter_srt(),
@@ -193,6 +195,7 @@ function TranscriptExporter:render_buttons()
   ReaUtil.disabler(ctx)(self.file_selector:value() == '', function()
     if ImGui.Button(ctx, 'Export', self.BUTTON_WIDTH, 0) then
       if self:handle_export() then
+        self.on_export()
         self:show_success()
       end
     end

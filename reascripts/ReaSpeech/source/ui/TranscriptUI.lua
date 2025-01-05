@@ -68,9 +68,20 @@ function TranscriptUI:init()
     end,
   }
 
+  self.confirmation_popup = AlertPopup.new {
+    title = "Transcript not saved!",
+  }
+
   self.transcript_editor = TranscriptEditor.new { transcript = self.transcript }
-  self.transcript_exporter = TranscriptExporter.new { transcript = self.transcript }
+  self.transcript_exporter = TranscriptExporter.new {
+    transcript = self.transcript,
+    on_export = function()
+      self._transcript_saved = true
+    end
+  }
   self.annotations = TranscriptAnnotationsUI.new { transcript = self.transcript }
+
+  self._transcript_saved = false
 
   self:init_layouts()
 end
@@ -80,11 +91,45 @@ function TranscriptUI:tabs()
     ReaSpeechPlugins.tab(
       self:transcript_id(),
       function() return self:transcript_name() end,
-      function()
-        self.tab_layout:render()
-      end
+      function() self.tab_layout:render() end,
+      {
+        will_close = function()
+          return self:confirm_close()
+        end,
+        on_close = function()
+          app.plugins:remove_plugin(self)
+        end
+      }
     )
   }
+end
+
+function TranscriptUI:confirm_close()
+  if self._transcript_saved then
+    return true
+  end
+
+  self.confirmation_popup:show('Transcript not saved!', function()
+    ImGui.Text(ctx, "This transcript hasn't been saved/exported. Are you sure you want to close it?")
+    ImGui.Separator(ctx)
+    if ImGui.Button(ctx, 'Cancel') then
+      self.confirmation_popup:close()
+    end
+
+    ImGui.SameLine(ctx)
+    if ImGui.Button(ctx, 'Close without Saving') then
+      self.confirmation_popup:close()
+      app.plugins:remove_plugin(self)
+    end
+
+    ImGui.SameLine(ctx)
+    if ImGui.Button(ctx, 'Save') then
+      self.confirmation_popup:close()
+      self.transcript_exporter:present()
+    end
+  end)
+
+  return false
 end
 
 function TranscriptUI:transcript_id()
@@ -147,6 +192,7 @@ function TranscriptUI:render()
     self:render_table()
   end
 
+  self.confirmation_popup:render()
   self.transcript_editor:render()
   self.transcript_exporter:render()
   self.annotations:render()

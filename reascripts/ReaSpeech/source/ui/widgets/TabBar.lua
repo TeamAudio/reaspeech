@@ -32,6 +32,7 @@ TabBar.renderer = function (self)
 
   if ImGui.BeginTabBar(ctx, 'TabBar', tabbar_flags) then
     local tabs = self.options.tabs
+    local current_value = self:value()
 
     if type(tabs) == 'function' then
       tabs = tabs()
@@ -44,9 +45,25 @@ TabBar.renderer = function (self)
         label = label()
       end
 
-      if ImGui.BeginTabItem(ctx, label) then
+      local item_flags = ImGui.TabItemFlags_None()
+
+      local closeable = tab.will_close and true or false
+
+      if closeable then
+        item_flags = item_flags | ImGui.TabItemFlags_NoAssumedClosure()
+      end
+
+      local tab_selected, tab_open = ImGui.BeginTabItem(ctx, label, closeable, item_flags)
+
+      if (closeable and not tab_open) and tab.will_close() then
+        tab.on_close()
+      end
+
+      if tab_selected then
         Trap(function()
-          self:set(tab.key)
+          if current_value ~= tab.key then
+            self:set(tab.key)
+          end
         end)
         ImGui.EndTabItem(ctx)
       end

@@ -43,6 +43,17 @@ function ReaSpeechPlugins:add_plugin(plugin)
   self:init_tabs()
 end
 
+function ReaSpeechPlugins:remove_plugin(plugin)
+  for i, p in ipairs(self._plugins) do
+    if p == plugin then
+      table.remove(self._plugins, i)
+      break
+    end
+  end
+
+  self:init_tabs()
+end
+
 function ReaSpeechPlugins:tabs()
   return self._tabs
 end
@@ -57,9 +68,15 @@ function ReaSpeechPlugins:init_tabs()
   end
 end
 
-function ReaSpeechPlugins.tab(key, label, renderer)
+function ReaSpeechPlugins.tab(key, label, renderer, tab_config)
+  local tab = Widgets.TabBar.tab(key, label)
+
+  for k, v in pairs(tab_config or {}) do
+    tab[k] = v
+  end
+
   return {
-    tab = Widgets.TabBar.tab(key, label),
+    tab = tab,
     render = renderer,
   }
 end

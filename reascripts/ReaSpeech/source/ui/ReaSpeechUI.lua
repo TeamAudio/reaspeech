@@ -118,7 +118,10 @@ function ReaSpeechUI:render_content()
 end
 
 function ReaSpeechUI:load_transcript(transcript)
-  local plugin = TranscriptUI.new { transcript = transcript }
+  local plugin = TranscriptUI.new {
+    transcript = transcript,
+    _transcript_saved = true
+  }
   self.plugins:add_plugin(plugin)
 end
 
