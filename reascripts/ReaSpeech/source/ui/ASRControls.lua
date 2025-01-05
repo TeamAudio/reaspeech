@@ -5,7 +5,7 @@ ASRControls.lua - Controls/configuration for ASR plugin
 ]]--
 
 ASRControls = PluginControls {
-  DEFAULT_TAB = 'asr-simple',
+  DEFAULT_TAB = 'asr',
 
   DEFAULT_LANGUAGE = '',
   DEFAULT_MODEL_NAME = 'small',
@@ -222,13 +222,6 @@ function ASRControls:init_actions_layout()
       self:render_actions()
     end
   }
-end
-
-function ASRControls:render_simple()
-  self:check_asr_info()
-  self.simple_layout:render()
-  self.actions_layout:render()
-  self.importer:render()
 end
 
 function ASRControls:render()
