@@ -61,10 +61,12 @@ function TranscriptUI:init()
     end,
     on_change = function(value)
       self.transcript.name = value
+      self._transcript_saved = false
     end,
     on_enter = function()
       self.transcript.name = self.name_editor:value()
       self.editing_name = false
+      self._transcript_saved = false
     end,
   }
 
