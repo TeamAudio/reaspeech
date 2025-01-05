@@ -23,6 +23,8 @@ function TranscriptEditor:init()
   assert(self.transcript, 'missing transcript')
   self.editing = nil
 
+  self.on_save = self.on_save or function() end
+
   Logging().init(self, 'TranscriptEditor')
 
   ToolWindow.modal(self, {
@@ -333,6 +335,7 @@ function TranscriptEditor:handle_save()
     local segment = self.editing.segment
     segment:set_words(self.editing.words)
     self.transcript:update()
+    self.on_save()
   end
 end
 

@@ -72,7 +72,13 @@ function TranscriptUI:init()
     title = "Transcript not saved!",
   }
 
-  self.transcript_editor = TranscriptEditor.new { transcript = self.transcript }
+  self.transcript_editor = TranscriptEditor.new {
+    transcript = self.transcript,
+    on_save = function()
+      self._transcript_saved = false
+    end
+  }
+
   self.transcript_exporter = TranscriptExporter.new {
     transcript = self.transcript,
     on_export = function()
