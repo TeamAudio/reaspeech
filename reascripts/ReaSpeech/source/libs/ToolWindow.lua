@@ -146,6 +146,9 @@ ToolWindow.init = function(o, config)
     elseif state.closing then
       return false
     elseif state.closing == false then
+      state.presenting = false
+      state.focusing = false
+      state.is_open = false
       state.closing = nil
       state.closed = true
       return true
@@ -155,11 +158,8 @@ ToolWindow.init = function(o, config)
 
     local final_alpha = theme:get_style(ImGui.StyleVar_Alpha) or 1.0
 
-    local tween = Tween.linear(final_alpha, 0.0, 0.2, function()
+    local tween = Tween.linear(1.0, 0.0, 0.2, function()
       theme:set_style(ImGui.StyleVar_Alpha, final_alpha)
-      state.presenting = false
-      state.focusing = false
-      state.is_open = false
       state.closing = false
     end)
 
