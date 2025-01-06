@@ -130,6 +130,18 @@ function TranscriptUI:tabs()
   }
 end
 
+function TranscriptUI:new_tab_menu()
+  if not self._plugin_only then return {} end
+
+  return {
+    { label = "Load Transcript",
+      on_click = function()
+        self.app.plugins(ASRPlugin:key()):importer():open()
+      end
+    },
+  }
+end
+
 function TranscriptUI:confirm_close()
   if self._transcript_saved then
     return true

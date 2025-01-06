@@ -28,6 +28,24 @@ function ReaSpeechControlsUI:init_tabs()
     for _, tab in ipairs(plugin_tabs) do
       table.insert(tabs, tab.tab)
     end
+
+    table.insert(tabs, {
+      key = 'new-tab',
+      label = '+',
+      on_click = function()
+        ImGui.OpenPopup(ctx, 'new-tab-popup')
+      end,
+      render = function()
+        if ImGui.BeginPopup(ctx, 'new-tab-popup') then
+          for _, menu_item in ipairs(self.plugins:new_tab_menu()) do
+            if ImGui.Selectable(ctx, menu_item.label) then
+              menu_item.on_click()
+            end
+          end
+          ImGui.EndPopup(ctx)
+        end
+      end
+    })
     return tabs
   end
 
@@ -48,6 +66,8 @@ function ReaSpeechControlsUI:render()
     if tab.tab.key == tab_bar_value then
       tab:render()
     end
+
+    if tab.render_bg then tab:render_bg() end
   end
 end
 

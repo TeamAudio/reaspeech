@@ -24,6 +24,14 @@ function Plugin(definition)
     return self._controls:tabs()
   end
 
+  function plugin:new_tab_menu()
+    if not self._controls then return {} end
+
+    if not self._controls.new_tab_menu then return {} end
+
+    return self._controls:new_tab_menu()
+  end
+
   function plugin:actions()
     if not self._actions then return {} end
 

@@ -39,33 +39,10 @@ TabBar.renderer = function (self)
     end
 
     for _, tab in pairs(tabs) do
-      local label = tab.label
-
-      if type(label) == 'function' then
-        label = label()
-      end
-
-      local item_flags = ImGui.TabItemFlags_None()
-
-      local closeable = tab.will_close and true or false
-
-      if closeable then
-        item_flags = item_flags | ImGui.TabItemFlags_NoAssumedClosure()
-      end
-
-      local tab_selected, tab_open = ImGui.BeginTabItem(ctx, label, closeable, item_flags)
-
-      if (closeable and not tab_open) and tab.will_close() then
-        tab.on_close()
-      end
-
-      if tab_selected then
-        Trap(function()
-          if current_value ~= tab.key then
-            self:set(tab.key)
-          end
-        end)
-        ImGui.EndTabItem(ctx)
+      if tab.on_click then
+        TabBar.render_tab_button(self, tab)
+      else
+        TabBar.render_tab_item(self, tab, current_value)
       end
     end
     ImGui.EndTabBar(ctx)
@@ -77,6 +54,44 @@ TabBar.tab = function(key, label)
     key = key,
     label = label
   }
+end
+
+TabBar.render_tab_button = function(self, tab)
+  if ImGui.TabItemButton(ctx, tab.label, ImGui.TabItemFlags_None()) then
+    tab.on_click()
+  end
+  tab.render()
+end
+
+TabBar.render_tab_item = function(self, tab, current_value)
+  local label = tab.label
+
+  if type(label) == 'function' then
+    label = label()
+  end
+
+  local item_flags = ImGui.TabItemFlags_None()
+
+  local closeable = tab.will_close and true or false
+
+  if closeable then
+    item_flags = item_flags | ImGui.TabItemFlags_NoAssumedClosure()
+  end
+
+  local tab_selected, tab_open = ImGui.BeginTabItem(ctx, label, closeable, item_flags)
+
+  if (closeable and not tab_open) and tab.will_close() then
+    tab.on_close()
+  end
+
+  if tab_selected then
+    Trap(function()
+      if current_value ~= tab.key then
+        self:set(tab.key)
+      end
+    end)
+    ImGui.EndTabItem(ctx)
+  end
 end
 
 return TabBar

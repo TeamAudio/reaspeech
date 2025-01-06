@@ -18,7 +18,9 @@ ASRControls = PluginControls {
   tabs = function(self)
     return {
       ReaSpeechPlugins.tab('asr', 'Speech Recognition',
-        function() self:render() end),
+        { render_bg = function() self:render_bg() end,
+          render = function() self:render() end
+        }),
     }
   end
 }
@@ -224,6 +226,10 @@ function ASRControls:init_actions_layout()
   }
 end
 
+function ASRControls:render_bg()
+  self.importer:render()
+end
+
 function ASRControls:render()
   self:check_asr_info()
   self.simple_layout:render()
@@ -237,7 +243,6 @@ function ASRControls:render()
   ImGui.Indent(ctx)
   ImGui.Spacing(ctx)
   self.actions_layout:render()
-  self.importer:render()
 end
 
 function ASRControls:render_language(column)

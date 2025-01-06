@@ -69,6 +69,18 @@ function ReaSpeechPlugins:tabs()
   return self._tabs
 end
 
+function ReaSpeechPlugins:new_tab_menu()
+  local menu = {}
+
+  for _, plugin in ipairs(self._plugins) do
+    for _, menu_item in ipairs(plugin:new_tab_menu()) do
+      table.insert(menu, menu_item)
+    end
+  end
+
+  return menu
+end
+
 function ReaSpeechPlugins:init_tabs()
   self._tabs = {}
 
@@ -86,9 +98,16 @@ function ReaSpeechPlugins.tab(key, label, renderer, tab_config)
     tab[k] = v
   end
 
+  local render_bg
+  if type(renderer) ~= 'function' then
+    render_bg = renderer.render_bg
+    renderer = renderer.render
+  end
+
   return {
     tab = tab,
     render = renderer,
+    render_bg = render_bg,
   }
 end
 
