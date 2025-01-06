@@ -40,10 +40,11 @@ function AlertPopup:render_content()
 
   self:render_separator()
   if ImGui.Button(ctx, 'OK', self.BUTTON_WIDTH, 0) then
+    if self.onclose then self.onclose() end
     self:close()
   end
 end
 
 function AlertPopup:close()
-  if self.onclose then self.onclose() end
+  -- if self.onclose then self.onclose() end
 end

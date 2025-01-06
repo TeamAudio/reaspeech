@@ -32,7 +32,7 @@ function TranscriptEditor:init()
     width = self.WIDTH,
     height = self.HEIGHT,
     window_flags = ImGui.WindowFlags_AlwaysAutoResize(),
-    guard = function() return self.editing and true or false end
+    guard = function() return self:closing() or self.editing and true or false end
   })
 
   self.sync_time_selection = false

@@ -43,6 +43,7 @@ function Theme:init()
     },
 
     styles = {
+      { ImGui.StyleVar_Alpha, 1.0 },
       { ImGui.StyleVar_FrameBorderSize, 1.0 },
       { ImGui.StyleVar_FramePadding, 10.0, 6.0 },
       { ImGui.StyleVar_FrameRounding, 12.0 },
