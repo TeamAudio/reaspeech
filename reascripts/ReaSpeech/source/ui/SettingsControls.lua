@@ -7,7 +7,7 @@
 SettingsControls = PluginControls {
   tabs = function(self)
     return {
-      ReaSpeechPlugins.tab('settings-general', 'Settings',
+      ReaSpeechPlugins.tab(SettingsPlugin.PLUGIN_KEY .. '-general', 'Settings',
         function() self.layout:render() end),
     }
   end

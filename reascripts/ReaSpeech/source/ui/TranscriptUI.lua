@@ -94,7 +94,25 @@ function TranscriptUI:init()
   self:init_layouts()
 end
 
+TranscriptUI.plugin = function()
+  return {
+    new = function(app)
+      return TranscriptUI.new {
+        transcript = Transcript.new {},
+        app = app,
+        _plugin_only = true,
+      }
+    end
+  }
+end
+
+function TranscriptUI:key()
+  return 'transcript-' .. self:transcript_id()
+end
+
 function TranscriptUI:tabs()
+  if self._plugin_only then return {} end
+
   return {
     ReaSpeechPlugins.tab(
       self:transcript_id(),
@@ -145,7 +163,7 @@ end
 
 function TranscriptUI:transcript_id()
   if not self._transcript_id then
-    self._transcript_id = ("transcript-%s"):format(os.date())
+    self._transcript_id = ("transcript-%s"):format(reaper.genGuid(''))
   end
 
   return self._transcript_id

@@ -11,7 +11,10 @@ ReaSpeechPlugins = Polo {
       app = app,
       plugins = plugins,
     }
-  end
+  end,
+  __call = function(self, key)
+    return self:get_plugin(key)
+  end,
 }
 
 function ReaSpeechPlugins:init()
@@ -28,6 +31,14 @@ function ReaSpeechPlugins:init_plugins()
   self._plugins = {}
   for _, plugin in ipairs(self.plugins) do
     table.insert(self._plugins, plugin.new(self.app))
+  end
+end
+
+function ReaSpeechPlugins:get_plugin(key)
+  for _, plugin in ipairs(self._plugins) do
+    if plugin:key() == key then
+      return plugin
+    end
   end
 end
 

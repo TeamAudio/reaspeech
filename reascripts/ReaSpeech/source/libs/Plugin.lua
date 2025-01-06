@@ -13,6 +13,11 @@ function Plugin(definition)
 
   local plugin = Polo(definition)
 
+  function plugin:key()
+    -- no default key
+    return nil
+  end
+
   function plugin:tabs()
     if not self._controls then return {} end
 

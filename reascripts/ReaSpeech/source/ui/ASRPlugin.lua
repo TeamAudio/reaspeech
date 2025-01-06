@@ -5,7 +5,8 @@
 ]]--
 
 ASRPlugin = Plugin {
-  ENDPOINT = '/asr'
+  ENDPOINT = '/asr',
+  PLUGIN_KEY = 'asr',
 }
 
 function ASRPlugin:init()
@@ -13,6 +14,15 @@ function ASRPlugin:init()
   Logging().init(self, 'ASRPlugin')
   self._controls = ASRControls.new(self)
   self._actions = ASRActions.new(self)
+end
+
+---@diagnostic disable-next-line: duplicate-set-field
+function ASRPlugin:key()
+  return self.PLUGIN_KEY
+end
+
+function ASRPlugin:importer()
+  return self._controls.importer
 end
 
 function ASRPlugin:asr(jobs)
