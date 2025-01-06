@@ -141,7 +141,6 @@ ToolWindow.init = function(o, config)
   end)
 
   ToolWindow._wrap_method_0_args(o, 'close', function()
-    state.logger:debug('close called, state.closing: ' .. dump(state.closing))
     if state.closed then
       return true
     elseif state.closing then
@@ -187,8 +186,6 @@ end
 
 function ToolWindow._make_config(o, config)
   config = config or {}
-  local logger = {}
-  Logging().init(logger, 'ToolWindow')
   return {
     begin_f = config.is_modal and ImGui.BeginPopupModal or ImGui.Begin,
     end_f = config.is_modal and ImGui.EndPopup or ImGui.End,
@@ -197,7 +194,6 @@ function ToolWindow._make_config(o, config)
     height = config.height or ToolWindow.DEFAULT_HEIGHT,
     is_modal = config.is_modal and true,
     is_open = false,
-    logger = logger,
     position = config.position or ToolWindow.POSITION_CENTER,
     presenting = false,
     focusing = false,
@@ -311,7 +307,6 @@ function ToolWindow._render_window(o)
   end
 
   if not open or (o:closing() ~= nil) then
-    state.logger:debug('not open, state.closing: ' .. dump(state.closing))
     o:close()
   end
 end
