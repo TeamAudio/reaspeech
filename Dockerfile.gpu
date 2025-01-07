@@ -1,18 +1,21 @@
 FROM swaggerapi/swagger-ui:v4.18.2 AS swagger-ui
-FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
 
 ARG SERVICE_USER=service
-ARG SERVICE_UID=1001
-ARG SERVICE_GID=1001
+ARG SERVICE_UID=1000
+ARG SERVICE_GID=1000
 
 ENV PYTHON_VERSION=3.10
 ENV POETRY_VENV=/app/.venv
+ENV GGML_CUDA=1
+ENV WHISPER_COREML=0
 
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get -qq update \
     && apt-get -qq install --no-install-recommends \
     python${PYTHON_VERSION} \
     python${PYTHON_VERSION}-venv \
+    python${PYTHON_VERSION}-dev \
     python3-pip \
     lua5.3 \
     lua5.4 \
@@ -21,6 +24,11 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     make \
     ffmpeg \
     redis \
+    git \
+    cmake \
+    g++ \
+    gcc \
+    nvidia-cuda-toolkit \
     && rm -rf /var/lib/apt/lists/*
 
 RUN ln -s -f /usr/bin/python${PYTHON_VERSION} /usr/bin/python3 && \

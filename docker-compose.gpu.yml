@@ -15,7 +15,7 @@ services:
               count: 1
               capabilities: [gpu]
     environment:
-      - ASR_ENGINE=faster_whisper
+      - ASR_ENGINE=whisper_cpp
     ports:
       - "9000:9000"
     volumes:
