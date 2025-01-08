@@ -56,13 +56,17 @@ function ASRPlugin:asr(jobs)
     },
     jobs = jobs,
     endpoint = self.ENDPOINT,
-    callback = self:handle_response()
+    callback = self:handle_response(#jobs)
   }
 
   self.app:submit_request(request)
 end
 
-function ASRPlugin:handle_response()
+function ASRPlugin:handle_response(job_count)
+  local transcript = Transcript.new {
+    name = self.new_transcript_name(),
+  }
+
   return function(response)
     if not response[1] or not response[1].segments then
       return
@@ -70,10 +74,6 @@ function ASRPlugin:handle_response()
 
     local segments = response[1].segments
     local job = response._job
-
-    local transcript = Transcript.new {
-      name = os.date()
-    }
 
     for _, segment in pairs(segments) do
       for _, s in pairs(
@@ -87,7 +87,20 @@ function ASRPlugin:handle_response()
 
     transcript:update()
 
-    local plugin = TranscriptUI.new { transcript = transcript }
-    self.app.plugins:add_plugin(plugin)
+    job_count = job_count - 1
+
+    if job_count == 0 then
+      local plugin = TranscriptUI.new { transcript = transcript }
+      self.app.plugins:add_plugin(plugin)
+    end
   end
+end
+
+ASRPlugin.new_transcript_name = function()
+  local time = os.time()
+  local date_start = os.date('%b %d, %Y @ %I:%M', time)
+  ---@diagnostic disable-next-line: param-type-mismatch
+  local am_pm = string.lower(os.date('%p', time))
+
+  return date_start .. am_pm
 end
