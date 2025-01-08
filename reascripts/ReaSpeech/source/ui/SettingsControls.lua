@@ -56,13 +56,13 @@ function SettingsControls:init_logging()
   Logging().show_debug_logs = storage:boolean('show_debug_logs', false)
 
   self.log_enable = Widgets.Checkbox.new {
-    state = Logging.show_logs,
+    state = Logging().show_logs,
     label_long = 'Enable',
     label_short = 'Enable',
   }
 
   self.log_debug = Widgets.Checkbox.new {
-    state = Logging.show_debug_logs,
+    state = Logging().show_debug_logs,
     label_long = 'Debug',
     label_short = 'Debug',
   }
