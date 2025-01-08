@@ -58,6 +58,10 @@ function Widgets.link(text, onclick, text_color, underline_color)
 end
 
 function Widgets.png(image_key)
+  if type(image_key) == 'table' then
+    image_key = image_key.name
+  end
+
   if not IMAGES[image_key] or not IMAGES[image_key].bytes then
     return
   end
