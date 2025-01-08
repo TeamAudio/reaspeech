@@ -32,6 +32,9 @@ argmap = {
     '--build-reascripts': {
         'action': 'store_true',
         'help': 'Build ReaScripts before starting' },
+    '--build-reascripts-target': {
+        'default': 'publish5.4',
+        'help': 'ReaScripts build target (default: %(default)s)' },
     '--enable-swagger-ui': {
         'action': 'store_true',
         'help': 'Enable automatic Swagger UI for API' },
@@ -52,7 +55,8 @@ os.environ['ASR_ENGINE'] = args.asr_engine
 os.environ['ASR_MODEL'] = args.asr_model
 
 if args.build_reascripts:
-    if os.system('cd reascripts/ReaSpeech && make') != 0:
+    print('Building ReaScripts...', file=sys.stderr)
+    if os.system(f'cd reascripts/ReaSpeech && make {args.build_reascripts_target}') != 0:
         print('ReaScript build failed', file=sys.stderr)
         sys.exit(1)
 
