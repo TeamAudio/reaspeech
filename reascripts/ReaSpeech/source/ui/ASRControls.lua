@@ -128,6 +128,7 @@ function ASRControls:check_asr_info()
     end
 
     self:init_model_name()
+    self:init_advanced_layout()
   end
 end
 
@@ -155,12 +156,33 @@ function ASRControls:init_simple_layout()
   }
 end
 
+function ASRControls:_get_renderers()
+  local renderers = {}
+  if self.asr_options.vad_filter then
+    table.insert(renderers, {
+      self.render_vad_filter
+    })
+  end
+
+  if self.asr_options.hotwords then
+    table.insert(renderers, {
+      self.render_hotwords
+    })
+  else
+    table.insert(renderers, {
+      self.render_initial_prompt
+    })
+  end
+
+  table.insert(renderers, {
+    self.render_language
+  })
+
+  return renderers
+end
+
 function ASRControls:init_advanced_layout()
-  local renderers = {
-    {self.render_options},
-    {self.asr_options.hotwords and self.render_hotwords or self.render_initial_prompt},
-    {self.render_language},
-  }
+  local renderers = self:_get_renderers()
 
   self.advanced_layout = ColumnLayout.new {
     column_padding = ReaSpeechControlsUI.COLUMN_PADDING,
@@ -263,12 +285,10 @@ function ASRControls:render_hotwords()
   end
 end
 
-function ASRControls:render_options(column)
-  local disabled_if = ReaUtil.disabler(ctx)
-
-  disabled_if(not self.asr_options.vad_filter, function()
+function ASRControls:render_vad_filter(column)
+  if self.asr_options.vad_filter then
     self.vad_filter:render(column)
-  end, "VAD is not available with this engine")
+  end
 end
 
 function ASRControls:render_initial_prompt()
