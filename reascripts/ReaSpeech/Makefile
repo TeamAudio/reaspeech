@@ -59,10 +59,16 @@ build/ReaSpeech-5.3.luac: $(BUNDLE_TARGET)
 build/ReaSpeech-5.4.luac: $(BUNDLE_TARGET)
 	$(LUAC54) -o build/ReaSpeech-5.4.luac -s $(BUNDLE_TARGET)
 
-.PHONY: publish
-publish: build
+.PHONY: publish5.3
+publish5.3: build/ReaSpeech-5.3.luac
 	cp build/ReaSpeech-5.3.luac $(dest)/
+
+.PHONY: publish5.4
+publish5.4: build/ReaSpeech-5.4.luac
 	cp build/ReaSpeech-5.4.luac $(dest)/
+
+.PHONY: publish
+publish: publish5.3 publish5.4
 
 .PHONY: tags
 tags : tagged_paths = $(SOURCE_ROOT)

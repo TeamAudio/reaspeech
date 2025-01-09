@@ -6,7 +6,7 @@ services:
       args:
         - SERVICE_UID
         - SERVICE_GID
-    entrypoint: ["python3", "app/run.py", "--build-reascripts"]
+    entrypoint: ["python3", "app/run.py", "--build-reascripts", "--build-reascripts-target=all"]
     environment:
       - ASR_ENGINE=faster_whisper
     ports:
