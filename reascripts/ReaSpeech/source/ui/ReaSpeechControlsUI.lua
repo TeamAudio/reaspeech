@@ -7,7 +7,7 @@ ReaSpeechControlsUI.lua - UI elements for configuring ASR services
 ReaSpeechControlsUI = Polo {
   COLUMN_PADDING = 15,
   MARGIN_BOTTOM = 5,
-  MARGIN_LEFT = 115,
+  MARGIN_LEFT = 5,
   MARGIN_RIGHT = 0,
   NARROW_COLUMN_WIDTH = 150,
 }
@@ -58,8 +58,53 @@ function ReaSpeechControlsUI:init_tabs()
 end
 
 function ReaSpeechControlsUI:render()
-  self:render_heading()
+  ImGui.BeginGroup(ctx)
+  Trap(function()
+    Widgets.png('reaspeech-logo-small')
 
+    -- Nice big column under the logo to render into, ie
+    -- if ImGui.Button(ctx, 'Metrics') then
+    --   ReaSpeechUI.METRICS = not ReaSpeechUI.METRICS
+    -- end
+  end)
+  ImGui.EndGroup(ctx)
+
+  ImGui.SameLine(ctx)
+
+  ImGui.BeginGroup(ctx)
+  Trap(function()
+    self:render_heading()
+    self:render_tab_content()
+  end)
+  ImGui.EndGroup(ctx)
+
+end
+
+function ReaSpeechControlsUI:render_heading()
+  local avail_w, _ = ImGui.GetContentRegionAvail(ctx)
+
+  local logo = IMAGES['heading-logo-tech-audio']
+
+  local tab_bar_width = avail_w - logo.width - self.COLUMN_PADDING
+
+  ImGui.BeginChild(ctx, 'tab-bar', tab_bar_width, logo.height)
+  Trap(function ()
+    self.tab_bar:render()
+  end)
+  ImGui.EndChild(ctx)
+
+  ImGui.SameLine(ctx)
+
+  Widgets.png(logo)
+  ImGui.SetCursorPosY(ctx, logo.height)
+end
+
+function ReaSpeechControlsUI:render_input_label(text)
+  ImGui.Text(ctx, text)
+  ImGui.Dummy(ctx, 0, 0)
+end
+
+function ReaSpeechControlsUI:render_tab_content()
   local tab_bar_value = self.tab_bar:value()
 
   for _, tab in ipairs(self.plugins:tabs()) do
@@ -69,26 +114,4 @@ function ReaSpeechControlsUI:render()
 
     if tab.render_bg then tab:render_bg() end
   end
-end
-
-function ReaSpeechControlsUI:render_heading()
-  local init_x, init_y = ImGui.GetCursorPos(ctx)
-
-  local avail_w, _ = ImGui.GetContentRegionAvail(ctx)
-
-  ImGui.SetCursorPosX(ctx, init_x - 20)
-  Widgets.png('reaspeech-logo-small')
-
-  ImGui.SetCursorPos(ctx, init_x + self.MARGIN_LEFT + 2, init_y)
-  self.tab_bar:render()
-
-  ImGui.SetCursorPos(ctx, avail_w - 55, init_y)
-  Widgets.png('heading-logo-tech-audio')
-
-  ImGui.SetCursorPos(ctx, init_x, init_y + 40)
-end
-
-function ReaSpeechControlsUI:render_input_label(text)
-  ImGui.Text(ctx, text)
-  ImGui.Dummy(ctx, 0, 0)
 end
