@@ -96,7 +96,6 @@ function ReaSpeechControlsUI:render_heading()
   ImGui.SameLine(ctx)
 
   Widgets.png(logo)
-  ImGui.SetCursorPosY(ctx, logo.height)
 end
 
 function ReaSpeechControlsUI:render_input_label(text)
