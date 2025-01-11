@@ -203,8 +203,6 @@ function ASRControls:init_advanced_layout()
 end
 
 function ASRControls:render_actions()
-  local disable_if = ReaUtil.disabler(ctx)
-
   local worker = self.plugin.app.worker
 
   local progress
@@ -212,7 +210,7 @@ function ASRControls:render_actions()
     progress = worker:progress()
   end)
 
-  disable_if(progress, function()
+  Widgets.disable_if(progress, function()
     local plugin_actions = self.actions:actions()
     for i, action in ipairs(plugin_actions) do
       if i > 1 then ImGui.SameLine(ctx) end

@@ -63,7 +63,7 @@ function TranscriptAnnotationsUI:render_content()
 end
 
 function TranscriptAnnotationsUI:render_buttons(is_disabled)
-  local disable_if = ReaUtil.disabler(ctx)
+  local disable_if = Widgets.disabler(ctx)
 
   disable_if(is_disabled, function()
     if ImGui.Button(ctx, 'Create', self.BUTTON_WIDTH, 0) then

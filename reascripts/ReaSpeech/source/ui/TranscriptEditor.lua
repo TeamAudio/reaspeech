@@ -115,7 +115,6 @@ function TranscriptEditor:render_word_navigation()
   local word_index = self.editing.word_index
   local num_words = #words
   local spacing = ImGui.GetStyleVar(ctx, ImGui.StyleVar_ItemInnerSpacing())
-  local disable_if = ReaUtil.disabler(ctx, app.onerror)
 
   ImGui.PushButtonRepeat(ctx, true)
   Trap(function ()
@@ -141,7 +140,7 @@ function TranscriptEditor:render_word_navigation()
 
   ImGui.SameLine(ctx, 0, spacing)
 
-  disable_if(num_words <= 1, function()
+  Widgets.disable_if(num_words <= 1, function()
     if ImGui.Button(ctx, 'Delete') then
       self:handle_word_delete()
     end
@@ -155,7 +154,7 @@ function TranscriptEditor:render_word_navigation()
   Widgets.tooltip('Split current word into two words')
 
   ImGui.SameLine(ctx, 0, spacing)
-  disable_if(word_index >= num_words, function()
+  Widgets.disable_if(word_index >= num_words, function()
     if ImGui.Button(ctx, 'Merge') then
       self:handle_word_merge()
     end
@@ -277,14 +276,12 @@ function TranscriptEditor:render_word_actions()
 end
 
 function TranscriptEditor:render_zoom_combo()
-  local disable_if = ReaUtil.disabler(ctx, app.onerror)
-
   ImGui.SameLine(ctx)
   ImGui.Text(ctx, "zoom to")
   ImGui.SameLine(ctx)
   ImGui.PushItemWidth(ctx, self.BUTTON_WIDTH)
   Trap(function()
-    disable_if(not self.sync_time_selection, function()
+    Widgets.disable_if(not self.sync_time_selection, function()
       if ImGui.BeginCombo(ctx, "##zoom_level", self.zoom_level) then
         Trap(function()
           for _, zoom in pairs(self.ZOOM_LEVEL) do
