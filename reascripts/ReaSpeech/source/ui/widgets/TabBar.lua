@@ -29,6 +29,8 @@ end
 TabBar.renderer = function (self)
   local tabbar_flags = ImGui.TabBarFlags_None()
                      | ImGui.TabBarFlags_AutoSelectNewTabs()
+                     | ImGui.TabBarFlags_FittingPolicyScroll()
+                     | ImGui.TabBarFlags_NoTabListScrollingButtons()
 
   if ImGui.BeginTabBar(ctx, 'TabBar', tabbar_flags) then
     local tabs = self.options.tabs
