@@ -6,7 +6,7 @@
 
 TranscriptUI = Polo {
   TITLE = 'Transcript',
-  TAB_TITLE_FORMAT = "Transcript: %s",
+  TAB_TITLE_FORMAT = "%s",
 
   FLOAT_FORMAT = '%.4f',
 
