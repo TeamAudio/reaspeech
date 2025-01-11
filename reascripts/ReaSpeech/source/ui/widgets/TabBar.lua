@@ -94,9 +94,11 @@ TabBar.render_tab_item = function(self, tab, current_value)
 
   local tab_selected, tab_open = ImGui.BeginTabItem(ctx, label, closeable, flags)
 
-  if (closeable and not tab_open) and tab.will_close() then
-    tab.on_close()
-  end
+  Trap(function()
+    if (closeable and not tab_open) and tab.will_close() then
+      tab.on_close()
+    end
+  end)
 
   if tab_selected then
     Trap(function()
