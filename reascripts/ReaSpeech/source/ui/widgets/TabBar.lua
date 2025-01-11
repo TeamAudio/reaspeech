@@ -57,10 +57,22 @@ TabBar.tab = function(key, label)
 end
 
 TabBar.render_tab_button = function(self, tab)
-  if ImGui.TabItemButton(ctx, tab.label, ImGui.TabItemFlags_None()) then
+  if ImGui.TabItemButton(ctx, tab.label, TabBar.tab_flags(tab)) then
     tab.on_click()
   end
   tab.render()
+end
+
+TabBar.tab_flags = function(tab)
+  local flags = ImGui.TabItemFlags_None()
+
+  if tab.position == 'leading' then
+    flags = flags | ImGui.TabItemFlags_Leading()
+  elseif tab.position == 'trailing' then
+    flags = flags | ImGui.TabItemFlags_Trailing()
+  end
+
+  return flags
 end
 
 TabBar.render_tab_item = function(self, tab, current_value)
@@ -70,15 +82,15 @@ TabBar.render_tab_item = function(self, tab, current_value)
     label = label()
   end
 
-  local item_flags = ImGui.TabItemFlags_None()
+  local flags =  TabBar.tab_flags(tab)
 
   local closeable = tab.will_close and true or false
 
   if closeable then
-    item_flags = item_flags | ImGui.TabItemFlags_NoAssumedClosure()
+    flags = flags | ImGui.TabItemFlags_NoAssumedClosure()
   end
 
-  local tab_selected, tab_open = ImGui.BeginTabItem(ctx, label, closeable, item_flags)
+  local tab_selected, tab_open = ImGui.BeginTabItem(ctx, label, closeable, flags)
 
   if (closeable and not tab_open) and tab.will_close() then
     tab.on_close()

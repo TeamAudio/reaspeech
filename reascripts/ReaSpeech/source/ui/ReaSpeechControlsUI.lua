@@ -32,6 +32,7 @@ function ReaSpeechControlsUI:init_tabs()
     table.insert(tabs, {
       key = 'new-tab',
       label = '+',
+      position = 'trailing',
       on_click = function()
         ImGui.OpenPopup(ctx, 'new-tab-popup')
       end,
