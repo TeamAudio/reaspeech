@@ -5,6 +5,7 @@ local lu = require('vendor/luaunit')
 require('tests/mock_reaper')
 
 require('libs/ReaUtil')
+require('libs/Trap')
 
 reaper.CountTracks = function(_proj)
   return 1
