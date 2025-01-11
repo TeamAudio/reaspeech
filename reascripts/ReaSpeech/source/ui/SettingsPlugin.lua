@@ -15,7 +15,6 @@ function SettingsPlugin:init()
   self._actions = SettingsActions.new(self)
 end
 
----@diagnostic disable-next-line: duplicate-set-field
 function SettingsPlugin:key()
   return self.PLUGIN_KEY
 end

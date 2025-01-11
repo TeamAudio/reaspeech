@@ -16,7 +16,6 @@ function ASRPlugin:init()
   self._actions = ASRActions.new(self)
 end
 
----@diagnostic disable-next-line: duplicate-set-field
 function ASRPlugin:key()
   return self.PLUGIN_KEY
 end
