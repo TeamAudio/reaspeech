@@ -50,18 +50,20 @@ function ReaUtil.disabler(context, error_handler)
     local imgui_id = 'disabled##' .. (tooltip or '')
     reaper.ImGui_BeginDisabled(context, true)
 
-    if tooltip then
-      local flags = ImGui.ChildFlags_None()
-                  | ImGui.ChildFlags_AutoResizeX()
-                  | ImGui.ChildFlags_AutoResizeY()
-      ImGui.BeginChild(context, imgui_id, 0, 0, flags)
-    end
+    Trap(function()
+      if tooltip then
+        local flags = ImGui.ChildFlags_None()
+                    | ImGui.ChildFlags_AutoResizeX()
+                    | ImGui.ChildFlags_AutoResizeY()
+        ImGui.BeginChild(context, imgui_id, 0, 0, flags)
+      end
 
-    safe_f()
+      safe_f()
 
-    if tooltip then
-      ImGui.EndChild(context)
-    end
+      if tooltip then
+        ImGui.EndChild(context)
+      end
+    end)
 
     reaper.ImGui_EndDisabled(context)
 
