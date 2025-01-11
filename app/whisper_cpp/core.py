@@ -5,6 +5,9 @@ import json
 import logging
 import os
 
+import tqdm
+
+from ..util.audio import SAMPLE_RATE
 from .constants import ASR_ENGINE_OPTIONS
 from .model import Model
 
@@ -49,27 +52,35 @@ def transcribe(audio, asr_options, output):
     options_dict = build_options(asr_options)
     logger.info(f"whisper.cpp options: {options_dict}")
 
+    audio_duration = len(audio) / SAMPLE_RATE
+
     with model_lock:
         segments = []
         text = ""
-        segment_generator = model.transcribe(audio, **options_dict)
-        for segment in segment_generator:
-            segment_dict = {
-                "start": float(segment.t0) / 100.0,
-                "end": float(segment.t1) / 100.0,
-                "text": segment.text,
-                "words": []
-            }
-            for word in segment.words:
-                word_dict = {
-                    "start": float(word.t0) / 100.0,
-                    "end": float(word.t1) / 100.0,
-                    "word": word.text,
-                    "probability": word.p
+        with tqdm.tqdm(total=audio_duration, unit='sec') as tqdm_pbar:
+            def new_segment_callback(segment):
+                segment_start = float(segment.t0) / 100.0
+                segment_end = float(segment.t1) / 100.0
+                tqdm_pbar.update(segment_end - segment_start)
+            options_dict['new_segment_callback'] = new_segment_callback
+
+            for segment in model.transcribe(audio, **options_dict):
+                segment_dict = {
+                    "start": float(segment.t0) / 100.0,
+                    "end": float(segment.t1) / 100.0,
+                    "text": segment.text,
+                    "words": []
                 }
-                segment_dict["words"].append(word_dict)
-            segments.append(segment_dict)
-            text = text + segment.text + " "
+                for word in segment.words:
+                    word_dict = {
+                        "start": float(word.t0) / 100.0,
+                        "end": float(word.t1) / 100.0,
+                        "word": word.text,
+                        "probability": word.p
+                    }
+                    segment_dict["words"].append(word_dict)
+                segments.append(segment_dict)
+                text = text + segment.text + " "
         result = {
             "language": options_dict.get("language"),
             "segments": segments,
