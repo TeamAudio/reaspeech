@@ -30,7 +30,6 @@ Button.new = function(options)
 end
 
 Button.renderer = function(self)
-  local disable_if = ReaUtil.disabler(ctx)
   local options = self.options
 
   local disabled = options.disabled
@@ -38,7 +37,7 @@ Button.renderer = function(self)
     disabled = disabled()
   end
 
-  disable_if(disabled, function()
+  Widgets.disable_if(disabled, function()
     if ImGui.Button(ctx, options.label, options.width) then
       Trap(options.on_click)
     end

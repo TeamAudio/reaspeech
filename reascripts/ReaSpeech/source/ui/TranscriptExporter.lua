@@ -193,7 +193,7 @@ function TranscriptExporter:render_file_selector()
 end
 
 function TranscriptExporter:render_buttons()
-  ReaUtil.disabler(ctx)(self.file_selector:value() == '', function()
+  Widgets.disable_if(self.file_selector:value() == '', function()
     if ImGui.Button(ctx, 'Export', self.BUTTON_WIDTH, 0) then
       if self:handle_export() then
         self:show_success()

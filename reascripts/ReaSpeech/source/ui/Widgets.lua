@@ -8,6 +8,36 @@ Widgets = {
   TOOLTIP_WRAP_CHARS = 30,
 }
 
+function Widgets.disable_if(predicate, f, tooltip)
+  if not predicate then
+    Trap(f)
+    return
+  end
+
+  local imgui_id = 'disabled##' .. (tooltip or '')
+
+  ImGui.BeginDisabled(ctx, true)
+  Trap(function ()
+    if tooltip then
+      local flags = ImGui.ChildFlags_None()
+                  | ImGui.ChildFlags_AutoResizeX()
+                  | ImGui.ChildFlags_AutoResizeY()
+      ImGui.BeginChild(ctx, imgui_id, 0, 0, flags)
+    end
+
+    Trap(f)
+
+    if tooltip then
+      ImGui.EndChild(ctx)
+    end
+  end)
+  ImGui.EndDisabled(ctx)
+
+  if tooltip then
+    ImGui.SetItemTooltip(ctx, tooltip)
+  end
+end
+
 function Widgets.icon(icon, id, w, h, tooltip, color, hover_color)
   assert(tooltip, 'missing tooltip for icon')
   color = color or 0xffffffff

@@ -73,14 +73,12 @@ function SettingsControls:render_font_size()
 end
 
 function SettingsControls:render_logging()
-  local disable_if = ReaUtil.disabler(ctx)
-
   ReaSpeechControlsUI:render_input_label('Logging')
 
   self.log_enable:render()
   ImGui.SameLine(ctx)
 
-  disable_if(not self.log_enable:value(), function ()
+  Widgets.disable_if(not self.log_enable:value(), function ()
     self.log_debug:render()
   end)
 end

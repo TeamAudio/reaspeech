@@ -32,47 +32,6 @@ function ReaUtil.open_url(url)
   (ExecProcess.new(url_opener_cmd:format(url))):wait()
 end
 
-function ReaUtil.disabler(context, error_handler)
-  error_handler = error_handler or function(msg)
-    reaper.ShowConsoleMsg(msg .. '\n')
-  end
-
-  return function(predicate, f, tooltip)
-    local safe_f = function()
-      xpcall(f, error_handler)
-    end
-
-    if not predicate then
-      safe_f()
-      return
-    end
-
-    local imgui_id = 'disabled##' .. (tooltip or '')
-    reaper.ImGui_BeginDisabled(context, true)
-
-    Trap(function()
-      if tooltip then
-        local flags = ImGui.ChildFlags_None()
-                    | ImGui.ChildFlags_AutoResizeX()
-                    | ImGui.ChildFlags_AutoResizeY()
-        ImGui.BeginChild(context, imgui_id, 0, 0, flags)
-      end
-
-      safe_f()
-
-      if tooltip then
-        ImGui.EndChild(context)
-      end
-    end)
-
-    reaper.ImGui_EndDisabled(context)
-
-    if tooltip then
-      reaper.ImGui_SetItemTooltip(context, tooltip)
-    end
-  end
-end
-
 function ReaUtil.track_guids()
   local guids = {}
 
