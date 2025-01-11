@@ -14,8 +14,7 @@ function Plugin(definition)
   local plugin = Polo(definition)
 
   function plugin:key()
-    -- no default key
-    return nil
+    assert('Plugin:key() must be overridden and return a string')
   end
 
   function plugin:tabs()
