@@ -83,6 +83,8 @@ function ASRControls:init()
     width_threshold = ReaSpeechControlsUI.NARROW_COLUMN_WIDTH
   }
 
+  self.alert_popup = AlertPopup.new {}
+
   self:init_layouts()
 end
 
@@ -109,9 +111,20 @@ function ASRControls:init_asr_info()
 end
 
 function ASRControls:check_asr_info()
-  if self.asr_engine then return end
+  if self.asr_engine or not self.asr_info_request then return end
 
-  if self.asr_info_request and self.asr_info_request:ready() then
+  if self.asr_info_request:error() then
+    self.alert_popup.onclose = function()
+      self:init_asr_info()
+      self.alert_popup.onclose = nil
+    end
+
+    self.alert_popup:show('Whoops!', self.asr_info_request:error())
+    self.asr_info_request = nil
+    return
+  end
+
+  if self.asr_info_request:ready() then
     local asr_info = self.asr_info_request:result()
     self:debug(dump(asr_info))
 
@@ -178,11 +191,13 @@ end
 function ASRControls:render_simple()
   self:check_asr_info()
   self.simple_layout:render()
+  self.alert_popup:render()
 end
 
 function ASRControls:render_advanced()
   self:check_asr_info()
   self.advanced_layout:render()
+  self.alert_popup:render()
 end
 
 function ASRControls:render_language(column)
