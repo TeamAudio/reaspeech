@@ -1,6 +1,6 @@
 --[[
 
-    Strings.en.lua - English localization strings
+    Strings.pt.lua - Portuguese localization strings (via Google Translate)
 
 ]] --
 
