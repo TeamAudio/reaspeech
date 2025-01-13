@@ -10,53 +10,53 @@ Strings.en = {
   _name = "English",
   _fallback = nil,
 
-  AU = {
-    _name = "Australian English",
-    _fallback = "en",
-  },
+  -- AU = {
+  --   _name = "Australian English",
+  --   _fallback = "en",
+  -- },
 
-  CA = {
-    _name = "Canadian English",
-    _fallback = "en",
-  },
+  -- CA = {
+  --   _name = "Canadian English",
+  --   _fallback = "en",
+  -- },
 
-  GB = {
-    _name = "British English",
-    _fallback = "en",
-    _strings = {
-      color_or_colour = "colour",
-    },
-  },
+  -- GB = {
+  --   _name = "British English",
+  --   _fallback = "en",
+  --   _strings = {
+  --     color_or_colour = "colour",
+  --   },
+  -- },
 
-  IE = {
-    _name = "Irish English",
-    _fallback = "en",
-  },
+  -- IE = {
+  --   _name = "Irish English",
+  --   _fallback = "en",
+  -- },
 
-  IN = {
-    _name = "Indian English",
-    _fallback = "en",
-  },
+  -- IN = {
+  --   _name = "Indian English",
+  --   _fallback = "en",
+  -- },
 
-  NZ = {
-    _name = "New Zealand English",
-    _fallback = "en",
-  },
+  -- NZ = {
+  --   _name = "New Zealand English",
+  --   _fallback = "en",
+  -- },
 
-  SG = {
-    _name = "Singaporean English",
-    _fallback = "en",
-  },
+  -- SG = {
+  --   _name = "Singaporean English",
+  --   _fallback = "en",
+  -- },
 
-  US = {
-    _name = "American English",
-    _fallback = "en",
-  },
+  -- US = {
+  --   _name = "American English",
+  --   _fallback = "en",
+  -- },
 
-  ZA = {
-    _name = "South African English",
-    _fallback = "en",
-  },
+  -- ZA = {
+  --   _name = "South African English",
+  --   _fallback = "en",
+  -- },
 
   _strings = {
     color_or_colour = "color",

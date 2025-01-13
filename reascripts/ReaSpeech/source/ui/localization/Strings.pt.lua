@@ -8,7 +8,7 @@ Strings = Strings or {}
 
 Strings.pt = {
   _name = "Portuguese",
-  _fallback = nil,
+  _fallback = 'en',
 
   _strings = {
     plugins = {
