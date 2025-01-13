@@ -52,6 +52,10 @@ Checkbox.renderer = function (self, column)
     label = options.label_short
   end
 
+  if type(label) == 'function' then
+    label = label()
+  end
+
   disable_if(self.options.disabled_if(), function()
     local rv, value = ImGui.Checkbox(ctx, label, self:value())
 

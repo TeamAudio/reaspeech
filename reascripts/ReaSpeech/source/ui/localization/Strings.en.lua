@@ -373,6 +373,7 @@ Strings.en = {
           logging_basic_short = "Enable",
           logging_debug_long = "Debug",
           logging_debug_short = "Debug",
+          locale_label = "Locale",
         },
       },
     },
