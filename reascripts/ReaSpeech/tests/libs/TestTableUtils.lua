@@ -25,4 +25,12 @@ function TestTableUtils:testFlatten()
   lu.assertEquals(result, {1, 2, 3, 4, 5, 6, 7, 8, 9})
 end
 
+function TestTableUtils:testShallowClone()
+  local original = {1, 2, 3}
+  local clone = table.shallow_clone(original)
+
+  lu.assertNotIs(original, clone)
+  lu.assertEquals(original, clone)
+end
+
 os.exit(lu.LuaUnit.run())

@@ -17,3 +17,13 @@ table.flatten = table.flatten or function(tables)
 
   return result
 end
+
+table.shallow_clone = table.shallow_clone or function(t)
+  local clone = {}
+
+  for k, v in pairs(t) do
+    clone[k] = v
+  end
+
+  return clone
+end
