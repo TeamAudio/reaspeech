@@ -4,9 +4,37 @@
 
 ]]--
 
-Strings = {}
+Strings = {
+  DEFAULT_LANGUAGE = 'en',
+  DEFAULT_REGION = 'US',
+}
 
 Strings.localize = function(tag)
+  local strings = Strings._get_language_and_region_strings(tag)
+
+  if strings._fallback then
+    local f = Strings.localize(strings._fallback) or {}
+    strings._strings = Strings._overlay_strings(f, strings._strings)
+  end
+
+  return strings._strings
+end
+
+Strings._overlay_strings = function(base, strings)
+  local result = table.shallow_clone(base or {})
+
+  for key, value in pairs(strings) do
+    if type(value) == 'table' then
+      result[key] = Strings._overlay_strings(result[key], value)
+    else
+      result[key] = value
+    end
+  end
+
+  return result
+end
+
+Strings._decompose_tag = function(tag)
   local language, region = tag:match('^(%a%a)-(%a%a)$')
 
   if not language then
@@ -14,52 +42,27 @@ Strings.localize = function(tag)
   end
 
   if not language then
-    language = 'en'
-    region = 'US'
+    language = Strings.DEFAULT_LANGUAGE
+    region = Strings.DEFAULT_REGION
   end
 
   if not Strings[language] then
     assert('invalid language: ' .. dump(language))
   end
 
-  strings = Strings[language]
+  return language, region
+end
 
-  if region then
-    if not strings[region] then
-      assert('invalid region: ' .. dump(region))
-    end
+Strings._get_language_and_region_strings = function(tag)
+  local language, region = Strings._decompose_tag(tag)
 
+  local strings = Strings[language]
+
+  if region and strings[region] then
     strings = strings[region]
   end
 
-  local fallback = function(_) return nil end
-  if strings._fallback then
-    fallback = function(key)
-      return Strings.localize(strings._fallback)[key]
-    end
-  end
-
-  return setmetatable({}, {
-    __index = function(_, key)
-      return Strings.indexer(strings._strings or {}, key, fallback)
-    end
-  })
-end
-
-Strings.indexer = function(strs, key, fallback)
-  if strs[key] then
-    if type(strs[key]) == 'table' then
-      return setmetatable({}, {
-        __index = function(_, key1)
-          return Strings.indexer(strs[key] or {}, key1)
-        end
-      })
-    end
-
-    return strs[key]
-  else
-    return fallback(key)
-  end
+  return strings
 end
 
 Strings.available_languages = function()

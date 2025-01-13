@@ -3,6 +3,7 @@ package.path = 'source/?.lua;' .. package.path
 local lu = require('vendor/luaunit')
 
 require('tests/mock_reaper')
+require('libs/TableUtils')
 require('include/globals')
 require('ui/Strings')
 

@@ -23,9 +23,6 @@ Strings.en = {
   -- GB = {
   --   _name = "British English",
   --   _fallback = "en",
-  --   _strings = {
-  --     color_or_colour = "colour",
-  --   },
   -- },
 
   -- IE = {
@@ -59,7 +56,6 @@ Strings.en = {
   -- },
 
   _strings = {
-    color_or_colour = "color",
     libs = {
       ctx = { -- Ctx
         label = "Application",
