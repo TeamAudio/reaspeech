@@ -23,11 +23,39 @@ function SettingsControls:init()
   }
 
   self:init_logging()
+
+  local storage = Storage.ExtState.make {
+    section = 'ReaSpeech.General',
+    persist = true,
+  }
+
+  local languages = Strings.available_languages()
+  local language_list = {}
+  local language_map = {}
+
+  for tag, name in pairs(languages) do
+    table.insert(language_list, tag)
+    language_map[tag] = name
+  end
+
+  self.locale = Widgets.Combo.new {
+    state = storage:string('locale', 'en'),
+    label = function()
+      return Locale().plugins.settings.controls.locale_label
+    end,
+    items = language_list,
+    item_labels = language_map,
+  }
+
   self:init_layout()
 end
 
 function SettingsControls:init_layout()
-  local renderers = { self.render_font_size, self.render_logging }
+  local renderers = {
+    self.render_font_size,
+    self.render_logging,
+    self.render_locale
+  }
 
   self.layout = ColumnLayout.new {
     column_padding = ReaSpeechControlsUI.COLUMN_PADDING,
@@ -83,4 +111,8 @@ function SettingsControls:render_logging()
   disable_if(not self.log_enable:value(), function ()
     self.log_debug:render()
   end)
+end
+
+function SettingsControls:render_locale()
+  self.locale:render()
 end
