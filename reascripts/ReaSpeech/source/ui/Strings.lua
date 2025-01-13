@@ -63,13 +63,15 @@ Strings.indexer = function(strs, key, fallback)
 end
 
 Strings.available_languages = function()
+  if Strings._available_languages then return Strings._available_languages end
+
   local languages = {}
 
   for language, definition in pairs(Strings) do
     if language:match('^%a%a$') then
       -- look for base level definition
       if definition._name then
-        table.insert(languages, { language, definition._name })
+        languages[language] = definition._name
       end
 
       -- look for regional definitions
@@ -77,12 +79,13 @@ Strings.available_languages = function()
         if region:match('^%a%a$') then
           if region_definition._name then
             local tag = ('%s-%s'):format(language, region)
-            table.insert(languages, { tag, region_definition._name })
+            languages[tag] = region_definition._name
           end
         end
       end
     end
   end
 
+  Strings._available_languages = languages
   return languages
 end

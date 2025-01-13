@@ -139,11 +139,11 @@ end
 
 function TestStrings:testAvailableLanguages()
   lu.assertItemsEquals(Strings.available_languages(), {
-    { 'en', 'English' },
-    { 'en-GB', 'British English' },
-    { 'en-US', 'American English' },
-    { 'pt', 'Portuguese' },
-    { 'pt-BR', 'Brazilian Portuguese' },
+    en = "English",
+    ['en-GB'] = "British English",
+    ['en-US'] = "American English",
+    pt = "Portuguese",
+    ['pt-BR'] = "Brazilian Portuguese",
   })
 end
 
