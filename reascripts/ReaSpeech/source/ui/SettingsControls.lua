@@ -14,20 +14,50 @@ SettingsControls = PluginControls {
 }
 
 function SettingsControls:init()
-  assert(self.plugin, 'SettingsControls: plugin is required')
+  assert(self.plugin, 'SettingsControls: ' .. Locale().plugins.settings.controls.assert_plugin)
   Logging().init(self, 'SettingsControls')
 
   self.font_size = Widgets.NumberInput.new {
     state = Fonts.size,
-    label = 'Font Size',
+    label = function()
+      return Locale().plugins.settings.controls.font_size_label
+    end,
   }
 
   self:init_logging()
+
+  local storage = Storage.ExtState.make {
+    section = 'ReaSpeech.General',
+    persist = true,
+  }
+
+  local languages = Strings.available_languages()
+  local language_list = {}
+  local language_map = {}
+
+  for tag, name in pairs(languages) do
+    table.insert(language_list, tag)
+    language_map[tag] = name
+  end
+
+  self.locale = Widgets.Combo.new {
+    state = storage:string('locale', 'en'),
+    label = function()
+      return Locale().plugins.settings.controls.locale_label
+    end,
+    items = language_list,
+    item_labels = language_map,
+  }
+
   self:init_layout()
 end
 
 function SettingsControls:init_layout()
-  local renderers = { self.render_font_size, self.render_logging }
+  local renderers = {
+    self.render_font_size,
+    self.render_logging,
+    self.render_locale
+  }
 
   self.layout = ColumnLayout.new {
     column_padding = ReaSpeechControlsUI.COLUMN_PADDING,
@@ -57,14 +87,22 @@ function SettingsControls:init_logging()
 
   self.log_enable = Widgets.Checkbox.new {
     state = Logging().show_logs,
-    label_long = 'Enable',
-    label_short = 'Enable',
+    label_long = function()
+      return Locale().plugins.settings.controls.logging_basic_long
+    end,
+    label_short = function()
+      return Locale().plugins.settings.controls.logging_basic_short
+    end,
   }
 
   self.log_debug = Widgets.Checkbox.new {
     state = Logging().show_debug_logs,
-    label_long = 'Debug',
-    label_short = 'Debug',
+    label_long = function()
+      return Locale().plugins.settings.controls.logging_debug_long
+    end,
+    label_short = function()
+      return Locale().plugins.settings.controls.logging_debug_short
+    end,
   }
 end
 
@@ -75,7 +113,9 @@ end
 function SettingsControls:render_logging()
   local disable_if = ReaUtil.disabler(ctx)
 
-  ReaSpeechControlsUI:render_input_label('Logging')
+  ReaSpeechControlsUI:render_input_label(
+    Locale().plugins.settings.controls.logging_label
+  )
 
   self.log_enable:render()
   ImGui.SameLine(ctx)
@@ -83,4 +123,8 @@ function SettingsControls:render_logging()
   disable_if(not self.log_enable:value(), function ()
     self.log_debug:render()
   end)
+end
+
+function SettingsControls:render_locale()
+  self.locale:render()
 end

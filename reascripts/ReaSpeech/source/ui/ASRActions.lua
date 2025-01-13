@@ -16,9 +16,12 @@ ASRActions = PluginActions {
 }
 
 function ASRActions:init()
-  assert(self.plugin, 'ASRActions: plugin is required')
+  self.strings = function() return Locale().plugins.asr.actions end
+
+  assert(self.plugin, 'ASRActions: ' .. self.strings().assert_plugin)
 
   Logging().init(self, 'ASRActions')
+
 end
 
 function ASRActions:selected_tracks_button()
@@ -32,17 +35,20 @@ function ASRActions:selected_tracks_button()
 
   if selected_track_count == 0 then
     self._selected_tracks_button = Widgets.Button.new({
-      label = "Process Selected Tracks",
+      label = function()
+        return self.strings().selected_tracks_label
+      end,
       disabled = true,
     })
     return self._selected_tracks_button
   end
 
-  local button_text = ("Process %sSelected Track%s")
-    :format(self.pluralizer(selected_track_count, 's'))
-
   self._selected_tracks_button = Widgets.Button.new({
-    label = button_text,
+    label = function()
+      -- almost certainly wrong for many languages
+      return self.strings().selected_tracks_format
+        :format(self.pluralizer(selected_track_count, 's'))
+    end,
     on_click = function ()
       self:process_jobs(self.jobs_for_selected_tracks)
     end,
@@ -62,17 +68,20 @@ function ASRActions:selected_items_button()
 
   if selected_item_count == 0 then
     self._selected_items_button = Widgets.Button.new({
-      label = "Process Selected Items",
+      label = function()
+        return self.strings().selected_items_label
+      end,
       disabled = true,
     })
     return self._selected_items_button
   end
 
-  local button_text = ("Process %sSelected Item%s")
-    :format(self.pluralizer(selected_item_count, 's'))
-
   self._selected_items_button = Widgets.Button.new({
-    label = button_text,
+    label = function()
+      -- almost certainly wrong for many languages
+      return self.strings().selected_items_format
+        :format(self.pluralizer(selected_item_count, 's'))
+    end,
     on_click = function ()
       self:process_jobs(self.jobs_for_selected_items)
     end,
@@ -87,7 +96,9 @@ function ASRActions:all_items_button()
   end
 
   self._all_items_button = Widgets.Button.new({
-    label = "Process All Items",
+    label = function()
+      return self.strings().all_items_label
+    end,
     on_click = function ()
       self:process_jobs(self.jobs_for_all_items)
     end,
@@ -102,7 +113,9 @@ function ASRActions:import_button()
   end
 
   self._import_button = Widgets.Button.new({
-    label = "Import Transcript",
+    label = function()
+      return self.strings().import_label
+    end,
     on_click = function () app.importer:present() end
   })
 
@@ -123,7 +136,7 @@ function ASRActions:process_jobs(job_generator)
   local jobs = job_generator()
 
   if #jobs == 0 then
-    reaper.MB("No media found to process.", "No media", 0)
+    reaper.MB(self.strings().no_media_text, self.strings().no_media_title, 0)
     return
   end
 

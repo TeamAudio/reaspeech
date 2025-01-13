@@ -28,6 +28,7 @@ function ReaSpeechMain:loop()
     if app:presenting() or app:is_open() then
       ctx = Ctx()
       Fonts:check(ctx)
+      Locale:check()
       Trap(function() app:react() end)
       reaper.defer(self:loop())
     end

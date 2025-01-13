@@ -33,8 +33,14 @@ Button.renderer = function(self)
   local disable_if = ReaUtil.disabler(ctx)
   local options = self.options
 
+  local label = options.label
+
+  if type(label) == 'function' then
+    label = label()
+  end
+
   disable_if(options.disabled, function()
-    if ImGui.Button(ctx, options.label, options.width) then
+    if ImGui.Button(ctx, label, options.width) then
       Trap(options.on_click)
     end
   end)

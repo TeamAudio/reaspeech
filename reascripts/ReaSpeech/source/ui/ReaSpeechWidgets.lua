@@ -35,6 +35,10 @@ function ReaSpeechWidget:render_label(label)
   local options = self.options
   label = label or options.label
 
+  if type(label) == 'function' then
+    label = label()
+  end
+
   ImGui.Text(ctx, label)
 
   if label ~= '' and options.help_text then
