@@ -55,6 +55,36 @@ FileSelector.new = function(options)
   return o
 end
 
+FileSelector.simple_open = function(title, extension_table, extra_config)
+  if not FileSelector.has_js_ReaScriptAPI() then
+    return {}
+  end
+
+  extra_config = extra_config or {}
+
+  title = title or 'Open file(s)'
+  local initial_folder = extra_config.initial_folder or ''
+  local initial_file = extra_config.initial_file or ''
+  local allow_multiple = extra_config.allow_multiple or false
+
+  local extension_pairs = {}
+  for ext, pretty in pairs(extension_table) do
+    local extensions = ("*.%s"):format(table.concat(ext:split(','), ';*.'))
+
+    table.insert(extension_pairs, ("%s\0%s"):format(pretty, extensions))
+  end
+  local extension_string = table.concat(extension_pairs, '\0') .. '\0'
+
+  local selection_made, files = reaper.JS_Dialog_BrowseForOpenFiles(
+    title, initial_folder, initial_file, extension_string, allow_multiple)
+
+  if selection_made < 1 then
+    return {}
+  end
+
+  return files:split('\0')
+end
+
 -- Display a text input for the output filename, with a Browse button if
 -- the js_ReaScriptAPI extension is available.
 FileSelector.renderer = function(self)

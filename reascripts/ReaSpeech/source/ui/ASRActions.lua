@@ -103,10 +103,31 @@ function ASRActions:import_button()
 
   self._import_button = Widgets.Button.new({
     label = "Import Transcript",
-    on_click = function () app.importer:present() end
+    on_click = self._import_click
   })
 
   return self._import_button
+end
+
+ASRActions._import_click = function()
+  local filenames = Widgets.FileSelector.simple_open(
+    'Import Transcript',
+    { json = 'JSON Files' }
+  )
+
+  if #filenames < 1 then
+    app.importer:present()
+    return
+  end
+
+  -- only considering one selection for the moment
+  local selection = filenames[1]
+
+  local _, err = app.importer:import(selection)
+
+  if err then
+    app.importer:present()
+  end
 end
 
 function ASRActions.pluralizer(count, suffix)
