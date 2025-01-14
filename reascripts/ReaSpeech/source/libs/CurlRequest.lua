@@ -33,7 +33,7 @@ function CurlRequest._init()
     SENTINEL = '-=-DONE-=-',
 
     CURL_ERRORS = {
-      [7] = "Couldn't connect to host. Is your ReaSpeech backend running?"
+      [7] = "Couldn't connect to ReaSpeech. Is it running?"
     },
   }
 
