@@ -220,19 +220,12 @@ function CurlRequest._init()
   end
 
   function API:execute_async(command)
-    local executor = ExecProcess.new(command)
-
-    local result = executor:background()
-    local result_code = tonumber(result:match("(-?%d+)\n"))
+    local result = ExecProcess.new(command):background()
 
     if not result then
       local err = "Unable to run curl"
       self:log(err)
       self.error_handler(err)
-    elseif result_code > 0 then
-      self.error_msg = self.curl_message(result_code)
-      self:log(self.error_msg)
-      self.error_handler(self.error_msg)
     end
 
     return self
