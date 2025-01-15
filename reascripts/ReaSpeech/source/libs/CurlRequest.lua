@@ -327,7 +327,7 @@ function CurlRequest._init()
   end
 
   function API:check_curl_error(progress_contents)
-    local err = progress_contents:match("^curl: %((-?%d+)%).*")
+    local err = progress_contents:match("curl: %((-?%d+)%).*")
 
     if err then
       self:debug("Curl Error #" .. err)
