@@ -1,6 +1,18 @@
 Changelog
 =========
 
+[0.5.0] (2025-01-16)
+--------------------
+
+### Changed
+
+- Configurable font size
+- Improved export interface
+- Added support for whisper.cpp ASR engine
+- Better process handling when running outside of Docker
+- Removed dependency on Redis
+- Usability and reliability improvements
+
 [0.4.2] (2024-12-05)
 --------------------
 
