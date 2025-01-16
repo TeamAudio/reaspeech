@@ -1,53 +1,45 @@
-[tool.poetry]
+[project]
 name = "reaspeech"
 version = "1.0.0"
 description = "Speech recognition for REAPER"
-homepage  = "https://github.com/TeamAudio/reaspeech/"
-license = "https://github.com/TeamAudio/reaspeech/blob/main/LICENSE"
 authors = [
-    "Dave Benjamin",
-    "Mike DeFreitas",
-    "Roel Sanchez",
+    { name = "Dave Benjamin" },
+    { name = "Mike DeFreitas" },
+    { name = "Roel Sanchez" },
 ]
+requires-python = "~=3.10"
 readme = "README.md"
-packages = [{ include = "app" }]
-
-[[tool.poetry.source]]
-name = "pytorch"
-url = "https://download.pytorch.org/whl/cpu"
-priority = "explicit"
-
-[tool.poetry.dependencies]
-python = "^3.10"
-unidecode = "^1.3.8"
-uvicorn = { extras = ["standard"], version = "^0.32.1" }
-gunicorn = "^23.0.0"
-tqdm = "^4.67.0"
-python-multipart = "^0.0.17"
-ffmpeg-python = "^0.2.0"
-fastapi = "^0.115.5"
-llvmlite = "^0.39.1"
-numba = "^0.56.4"
-openai-whisper = "20240930"
-faster-whisper = "^1.1.0"
-torch = [
-  {markers = "sys_platform == 'darwin' and platform_machine == 'arm64'", url = "https://download.pytorch.org/whl/cpu/torch-1.13.1-cp310-none-macosx_11_0_arm64.whl"},
-  {markers = "sys_platform == 'linux' and platform_machine == 'arm64'", url="https://download.pytorch.org/whl/cpu/torch-1.13.1-cp310-none-macosx_11_0_arm64.whl"},
-  {markers = "sys_platform == 'darwin' and platform_machine == 'x86_64'", url = "https://download.pytorch.org/whl/cpu/torch-1.13.1-cp310-none-macosx_10_9_x86_64.whl"},
-  {markers = "sys_platform == 'linux' and platform_machine == 'aarch64'", url="https://download.pytorch.org/whl/torch-1.13.1-cp310-cp310-manylinux2014_aarch64.whl"},
-  {markers = "sys_platform == 'linux' and platform_machine == 'x86_64'", url="https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp310-cp310-linux_x86_64.whl"},
-  {markers = "sys_platform == 'win' and platform_machine == 'amd64'", url="https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp310-cp310-win_amd64.whl"},
+license = "GPL-3.0-or-later"
+dependencies = [
+    "aiofiles>=24.1.0,<25",
+    "celery>=5.4.0,<6",
+    "ctranslate2==4.3.1",
+    "fastapi>=0.115.5,<0.116",
+    "faster-whisper>=1.1.0,<2",
+    "ffmpeg-python>=0.2.0,<0.3",
+    "gunicorn>=23.0.0,<24",
+    "jinja2>=3.1.4,<4",
+    "llvmlite>=0.39.1,<0.40",
+    "numba>=0.56.4,<0.57",
+    "openai-whisper==20240930",
+    "python-multipart>=0.0.17,<0.0.18",
+    "pywhispercpp>=1.3.0,<2",
+    "sqlalchemy>=2.0.36,<3",
+    "torch>=2.5.1",
+    "tqdm>=4.67.0,<5",
+    "unidecode>=1.3.8,<2",
+    "uvicorn[standard]>=0.32.1,<0.33",
 ]
-jinja2 = "^3.1.4"
-celery = "^5.4.0"
-ctranslate2 = "4.3.1"
-aiofiles = "^24.1.0"
-pywhispercpp = "^1.3.0"
-sqlalchemy = "^2.0.36"
 
-[tool.poetry.dev-dependencies]
-pytest = "^8.3.3"
+[project.urls]
+Homepage = "https://github.com/TeamAudio/reaspeech/"
+
+[tool.hatch.build.targets.sdist]
+include = ["app"]
+
+[tool.hatch.build.targets.wheel]
+include = ["app"]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
