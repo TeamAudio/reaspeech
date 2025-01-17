@@ -129,8 +129,7 @@ Transcription is much faster using a GPU, but support is limited to NVIDIA GPUs 
 1. [Yes](#your-prize-is-our-docker-with-gpu-guide)
 2. [No](#your-prize-is-our-docker-guide)
 3. [What's a CUDA? What are you talking about? Where am I?](#whats-a-cuda)
-
-[Start Over, or "did I say Windows? I meant uhhh...Mac...or Linux"](#getting-started-with-reaspeech-again)
+4. [Start Over.](#getting-started-with-reaspeech-again)
 
 ---
 
@@ -191,8 +190,7 @@ What was the question? Oh...yeah, what kind of Mac are you on?
 
 1. [Intel Mac](#intel-mac)
 2. [Apple Silicon](#one-more-note-about-apple-silicon)
-
-[Start Over, or "did I say Mac? I meant uhhh...Windows...or Linux"](#getting-started-with-reaspeech-again)
+3. [Start Over.](#getting-started-with-reaspeech-again)
 
 ---
 
@@ -248,8 +246,7 @@ It's up to you whether or not to use Docker. Are you comfortable managing your o
 1. [Use Docker - "This is all new to me!" or "I'm mostly transcribing anyway."](#your-prize-is-our-docker-guide)
 2. [No Docker - "I enjoy command lines" or "I'm interested in extending ReaSpeech"](#one-more-note-about-no-docker-mac)
 3. [I lied, I'm actually on Apple Silicon but had a nostalgic hankering for a simpler time](#one-more-note-about-apple-silicon)
-
-[Start Over, or "I thought I was ready to think different, but I was wrong"](#getting-started-with-reaspeech-again)
+4. [Start Over.](#getting-started-with-reaspeech-again) I thought I was ready to think different, but I was wrong.
 
 ---
 
@@ -307,8 +304,7 @@ Transcription is much faster using a GPU, but support is limited to NVIDIA GPUs 
 1. [Yes](#linux-with-gpu-support)
 2. [No](#linux-without-gpu-support)
 3. [What's a CUDA? What are you talking about? Where am I?](#whats-a-cuda)
-
-[Start Over, or "did I say Linux? I meant uhhh...Windows...or Mac"](#getting-started-with-reaspeech-again)
+4. [Start over.](#getting-started-with-reaspeech-again)
 
 ---
 
@@ -363,8 +359,7 @@ To run ReaSpeech on Linux with a CUDA-capable NVIDIA GPU, Docker is optional.
 
 1. [Use Docker - "This is all new to me!" or "I'm mostly transcribing anyway."](#your-prize-is-our-docker-with-gpu-guide)
 2. [No Docker - "I enjoy command lines" or "I'm interested in extending ReaSpeech"](#your-prize-is-our-no-docker-guide)
-
-[Start Over, or "I was just curious what all this 'Linux' business was all about"](#getting-started-with-reaspeech-again)
+3. [Start Over.](#getting-started-with-reaspeech-again) I was just curious what all this "Linux" business was all about.
 
 ---
 
@@ -419,8 +414,7 @@ The choice here is mostly about your comfort level with the command-line.
 
 1. [Use Docker - "This is all new to me!" or "I'm mostly transcribing anyway."](#your-prize-is-our-docker-guide)
 2. [No Docker - "I enjoy command lines" or "I'm interested in extending ReaSpeech"](#your-prize-is-our-no-docker-guide)
-
-[Start Over, or "I was just curious what all this 'Linux' business was all about"](#getting-started-with-reaspeech-again)
+3. [Start Over.](#getting-started-with-reaspeech-again) I was just curious what all this "Linux" business was all about.
 
 ---
 
@@ -479,8 +473,7 @@ CUDA is a development layer provided by NVIDIA that works on top of their GPU de
 2. Dang, I don't see my device on that list, and I'm...
     - [...on Windows](#your-prize-is-our-docker-guide)
     - [...on Linux](#linux-without-gpu-support)
-
-[Start Over, or "That was scary, I think I need to click around a few more times before I'm ready"](#getting-started-with-reaspeech-again)
+3. [Start Over.](#getting-started-with-reaspeech-again) That was scary, I think I need to click around a few more times before I'm ready.
 
 ---
 
@@ -533,9 +526,8 @@ CUDA is a development layer provided by NVIDIA that works on top of their GPU de
 
 You'll probably want to use the `openai-whisper` engine. There are some as-of-yet unresolved library conflicts that cause the `faster-whisper` engine to crash in some environments.
 
-[Click here to claim your prize!](#your-prize-is-our-no-docker-guide)
-
-[Start Over, or "I thought I was ready to think different, but I was wrong"](#getting-started-with-reaspeech-again)
+1. [Claim your prize!](#your-prize-is-our-no-docker-guide)
+2. [Start Over.](#getting-started-with-reaspeech-again) I thought I was ready to think different, but I was wrong.
 
 ---
 
@@ -590,10 +582,9 @@ There are some technical details that currently prevent dockerized services from
 
 When you're getting set up, be sure to choose the `whisper_cpp` engine. It's the one that provides GPU support. Don't worry, we'll mention it again when this comes up.
 
-1. [I still think I'd prefer to use Docker, but acknowledge that means CPU-only.](#your-prize-is-our-docker-guide)
-2. [I'm ready to claim my prize!](#your-prize-is-our-no-docker-guide)
-
-[Start Over, or "I thought I was ready to think different, but I was wrong"](#getting-started-with-reaspeech-again)
+1. [Claim your prize!](#your-prize-is-our-no-docker-guide)
+2. [I still think I'd prefer to use Docker, but acknowledge that means CPU-only.](#your-prize-is-our-docker-guide)
+3. [Start Over.](#getting-started-with-reaspeech-again) I thought I was ready to think different, but I was wrong.
 
 ---
 
