@@ -36,25 +36,6 @@ function ReaSpeechControlsUI:render()
       tab:render()
     end
   end
-  local fmin, fmax = ImGui.NumericLimits_Float()
-  if ImGui.BeginChild(ctx, '##droptarget', -fmin, 200) then
-    ImGui.Text(ctx, 'Drop files here')
-    ImGui.EndChild(ctx)
-  end
-  if ImGui.BeginDragDropTarget(ctx) then
-    local payload, count = ImGui.AcceptDragDropPayloadFiles(ctx)
-    if payload then
-      self.dropped_files = {}
-      for i = 0, count do
-        local file_result, file = ImGui.GetDragDropPayloadFile(ctx, i)
-        if file_result then
-          table.insert(self.dropped_files, file)
-        end
-      end
-      self:debug('file(s) dropped: ' .. dump(self.dropped_files))
-    end
-    ImGui.EndDragDropTarget(ctx)
-  end
 
   ImGui.Separator(ctx)
   ImGui.Dummy(ctx, 0, 5)
