@@ -32,6 +32,29 @@ function TestPathUtil:testHasExtension()
 
 end
 
+function TestPathUtil:testHasExtensionExtensionArgument()
+  lu.assertTrue(PathUtil.has_extension("some-file.json", 'json'))
+  lu.assertTrue(PathUtil.has_extension("path\\to\\some-file.json", 'json'))
+  lu.assertTrue(PathUtil.has_extension("path/to/some-file.json", 'json'))
+  lu.assertTrue(PathUtil.has_extension("C:\\path\\to\\some-file.json", 'json'))
+  lu.assertTrue(PathUtil.has_extension("/path/to/some-file.json", 'json'))
+
+  lu.assertFalse(PathUtil.has_extension("some-file.csv", 'json'))
+  lu.assertFalse(PathUtil.has_extension("path\\to\\some-file.csv", 'json'))
+  lu.assertFalse(PathUtil.has_extension("path/to/some-file.csv", 'json'))
+  lu.assertFalse(PathUtil.has_extension("C:\\path\\to\\some-file.csv", 'json'))
+  lu.assertFalse(PathUtil.has_extension("/path/to/some-file.csv", 'json'))
+
+  lu.assertFalse(PathUtil.has_extension("some-file", 'json'))
+  lu.assertFalse(PathUtil.has_extension("path\\to\\some-file", 'json'))
+  lu.assertFalse(PathUtil.has_extension("path/to/some-file", 'json'))
+  lu.assertFalse(PathUtil.has_extension("C:\\path\\to\\some-file", 'json'))
+  lu.assertFalse(PathUtil.has_extension("/path/to/some-file", 'json'))
+
+  lu.assertTrue(PathUtil.has_extension(".json", 'json'))
+  lu.assertFalse(PathUtil.has_extension("", 'json'))
+end
+
 function TestPathUtil:testApplyExtension()
   local extension = "json"
 
