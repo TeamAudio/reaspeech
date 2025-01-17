@@ -111,7 +111,7 @@ Then, pull the latest version of the image and run it in a new container:
 
 ```sh
 docker pull techaudiodoc/reaspeech:latest
-docker run -d -p 9000:9000 --name techaudiodoc/reaspeech:latest
+docker run -d -p 9000:9000 --name reaspeech techaudiodoc/reaspeech:latest
 ```
 
 This will download the latest version of the `reaspeech` image from Docker Hub
