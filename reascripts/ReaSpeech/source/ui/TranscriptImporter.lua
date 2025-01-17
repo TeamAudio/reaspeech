@@ -81,6 +81,38 @@ function TranscriptImporter:render_buttons()
   end
 end
 
+function TranscriptImporter:can_import(filepath)
+  if not PathUtil.has_extension(filepath, 'json') then
+    return false, 'File must be a JSON file'
+  end
+
+  local file = io.open(filepath, 'r')
+  if not file then
+    return false, "Can't open file"
+  end
+
+  -- check json
+  local content = file:read('*a')
+  file:close()
+  if not content or not Trap(function()
+    if #content < 1 then
+      return false
+    end
+
+    content = json.decode(content)
+    return true
+  end) then
+    return false, 'Invalid JSON'
+  end
+
+  -- very basic json content check
+  if not content.segments then
+    return false, 'No segments field'
+  end
+
+  return true
+end
+
 function TranscriptImporter:import(filepath)
   local file = io.open(filepath, 'r')
   if not file then

@@ -121,14 +121,18 @@ function TranscriptUI:render_drop_target()
         self._dropped_files = nil
         self._dragdrop_flags = nil
       elseif not self._dropped_files and payload then
-        self._dropped_files = {}
+        local files = {}
         for i = 0, count do
           local file_result, file = ImGui.GetDragDropPayloadFile(ctx, i)
-          if file_result then
-            table.insert(self._dropped_files, file)
+          if file_result and TranscriptImporter:can_import(file) then
+            table.insert(files, file)
           end
         end
-        self._dragdrop_flags = ImGui.DragDropFlags_AcceptNoPreviewTooltip()
+
+        if #files > 0 then
+          self._dropped_files = files
+          self._dragdrop_flags = ImGui.DragDropFlags_AcceptNoPreviewTooltip()
+        end
       end
     end)
     ImGui.EndDragDropTarget(ctx)
