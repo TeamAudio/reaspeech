@@ -304,7 +304,7 @@ Transcription is much faster using a GPU, but support is limited to NVIDIA GPUs 
 1. [Yes](#linux-with-gpu-support)
 2. [No](#linux-without-gpu-support)
 3. [What's a CUDA? What are you talking about? Where am I?](#whats-a-cuda)
-4. [Start over.](#getting-started-with-reaspeech-again)
+4. [Start Over.](#getting-started-with-reaspeech-again)
 
 ---
 
