@@ -16,6 +16,51 @@ REAPER is great, right? Windows, Mac, Linux, it doesn't matter! What's your flav
 
 ---
 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  THIS SPACE INTENTIONALLY LEFT BLANK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
 ## Windows
 
 ### Do you have a CUDA-capable NVIDIA GPU?
@@ -28,6 +73,51 @@ Transcription is much faster using a GPU, but support is limited to NVIDIA GPUs 
 
 ---
 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  THIS SPACE INTENTIONALLY LEFT BLANK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
 ## Mac
 
 ### What type of Mac do you have?
@@ -43,6 +133,51 @@ What was the question? Oh...yeah, what kind of Mac are you on?
 
 ---
 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  THIS SPACE INTENTIONALLY LEFT BLANK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
 #### Intel Mac
 
 It's up to you whether or not to use Docker. Are you comfortable managing your own development environment and tools? You might appreciate running ReaSpeech directly - especially if you want to contribute some code yourself! Unfortunately, GPU support is off the table for the foreseeable future.
@@ -52,6 +187,51 @@ It's up to you whether or not to use Docker. Are you comfortable managing your o
 
 ---
 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  THIS SPACE INTENTIONALLY LEFT BLANK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
 ## Linux
 
 ### Do you have a CUDA-capable NVIDIA GPU?
@@ -64,6 +244,51 @@ Transcription is much faster using a GPU, but support is limited to NVIDIA GPUs 
 
 ---
 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  THIS SPACE INTENTIONALLY LEFT BLANK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
 #### Linux with GPU Support
 
 To run ReaSpeech on Linux with a CUDA-capable NVIDIA GPU, Docker is optional.
@@ -73,6 +298,51 @@ To run ReaSpeech on Linux with a CUDA-capable NVIDIA GPU, Docker is optional.
 
 ---
 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  THIS SPACE INTENTIONALLY LEFT BLANK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
 #### Linux without GPU Support
 
 The choice here is mostly about your comfort level with the command-line.
@@ -86,6 +356,51 @@ Thank you for playing!
 
 ---
 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  THIS SPACE INTENTIONALLY LEFT BLANK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
 ### What's a CUDA?
 
 CUDA is a development layer provided by NVIDIA that works on top of their GPU devices. It's a requirement to enjoy GPU-accelerated transcription. [See if your device is listed here](https://developer.nvidia.com/cuda-gpus).
@@ -99,6 +414,51 @@ CUDA is a development layer provided by NVIDIA that works on top of their GPU de
 
 ---
 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  THIS SPACE INTENTIONALLY LEFT BLANK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
 ### One more note about no-Docker Mac...
 
 You'll probably want to use the `openai-whisper` engine. There are some as-of-yet unresolved library conflicts that cause the `faster-whisper` engine to crash in some environments.
@@ -107,6 +467,51 @@ You'll probably want to use the `openai-whisper` engine. There are some as-of-ye
 
 ---
 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  THIS SPACE INTENTIONALLY LEFT BLANK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
 ### One more note about Apple Silicon...
 
 There are some technical details that currently prevent dockerized services from using your GPU. That means the buy-in for GPU-accelerated transcription is a bit more command-line effort. It's super worth it though, we promise!
@@ -117,6 +522,51 @@ When you're getting set up, be sure to choose the `whisper_cpp` engine. It's the
 
 ---
 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  THIS SPACE INTENTIONALLY LEFT BLANK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
 ## Your prize is our Docker (with GPU) guide!
 
 You'll want to check out the [Docker-based installation guide](docker.md). When you're following along, you'll be choosing the options that deal with the image `reaspeech-gpu`. Safe bet that you're going to need to install the [CUDA Toolkit](https://developer.nvidia.com/cuda-downloads) if you haven't already, but you can sit and quietly panic about that in the background for the moment.
@@ -126,6 +576,51 @@ Thanks for playing! Excelsior!
 
 ---
 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  THIS SPACE INTENTIONALLY LEFT BLANK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
 ## Your prize is our Docker guide!
 
 You'll want to check out the [Docker-based installation guide](docker.md). When you're following along, you'll be choosing the options that deal with the image `reaspeech`.
@@ -135,6 +630,51 @@ Thank you for playing! Excelsior!
 
 ---
 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  THIS SPACE INTENTIONALLY LEFT BLANK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
 ## Your prize is our No-Docker guide!
 
 Check out the [No-Docker installation guide](no-docker.md). There's a bit more to do to set things up, but in the end it's pretty simple too.
