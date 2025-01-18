@@ -8,6 +8,9 @@ import sys
 import time
 
 argmap = {
+    '--port': {
+        'default': os.getenv('PORT', '9000'),
+        'help': 'Port to listen on (default: %(default)s)' },
     '--celery-broker-url': {
         'default': 'sqla+sqlite:///celery.sqlite',
         'help': 'Celery broker URL (default: %(default)s)' },
@@ -90,7 +93,7 @@ print('Starting application...', file=sys.stderr)
 processes['gunicorn'] = \
     subprocess.Popen([
         'gunicorn',
-        '--bind', '0.0.0.0:9000',
+        '--bind', f"0.0.0.0:{args.port}",
         '--workers', '1',
         '--timeout', '0',
         'app.webservice:app',
