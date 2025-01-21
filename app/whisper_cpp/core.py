@@ -5,6 +5,7 @@ import json
 import logging
 import os
 
+from pywhispercpp.utils import download_model
 import tqdm
 
 from ..util.audio import SAMPLE_RATE
@@ -30,7 +31,8 @@ def load_model(next_model_name: str):
         if not model:
             logger.info(Model.system_info())
 
-        model = Model(next_model_name, models_dir=model_path)
+        downloaded_model = download_model(next_model_name, model_path, 1024*1024)
+        model = Model(downloaded_model, models_dir=model_path)
 
         model_name = next_model_name
 
