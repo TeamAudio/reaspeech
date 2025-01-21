@@ -15,6 +15,8 @@ from .model import Model
 logging.basicConfig(format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s', level=logging.INFO, force=True)
 logger = logging.getLogger(__name__)
 
+DOWNLOAD_CHUNK_SIZE = 1024 * 1024
+
 model_name = os.getenv("ASR_MODEL", "small")
 model_path = os.getenv("ASR_MODEL_PATH", os.path.join(os.path.expanduser("~"), ".cache", "whisper"))
 
@@ -31,7 +33,7 @@ def load_model(next_model_name: str):
         if not model:
             logger.info(Model.system_info())
 
-        downloaded_model = download_model(next_model_name, model_path, 1024*1024)
+        downloaded_model = download_model(next_model_name, model_path, DOWNLOAD_CHUNK_SIZE)
         model = Model(downloaded_model)
 
         model_name = next_model_name
