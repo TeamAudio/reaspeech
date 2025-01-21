@@ -32,7 +32,7 @@ def load_model(next_model_name: str):
             logger.info(Model.system_info())
 
         downloaded_model = download_model(next_model_name, model_path, 1024*1024)
-        model = Model(downloaded_model, models_dir=model_path)
+        model = Model(downloaded_model)
 
         model_name = next_model_name
 
