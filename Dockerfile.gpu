@@ -1,5 +1,5 @@
 FROM swaggerapi/swagger-ui:v4.18.2 AS swagger-ui
-FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
 
 ARG SERVICE_USER=service
 ARG SERVICE_UID=1001
@@ -19,6 +19,9 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     lua-check \
     fswatch \
     make \
+    build-essential \
+    python3.10-dev \
+    git \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
@@ -44,14 +47,16 @@ RUN python3 -m venv $POETRY_VENV \
     && $POETRY_VENV/bin/pip install poetry==1.6.1
 
 ENV PATH="${PATH}:${POETRY_VENV}/bin"
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${POETRY_VENV}/lib/python${PYTHON_VERSION}/site-packages"
 
 COPY --chown=$SERVICE_UID:$SERVICE_GID poetry.lock pyproject.toml ./
 
 RUN poetry config virtualenvs.in-project true
-RUN poetry install --no-root
-
 RUN poetry install && rm -rf /app/.cache/pypoetry
+
 RUN $POETRY_VENV/bin/pip install --no-cache-dir torch==1.13.1+cu117 -f https://download.pytorch.org/whl/torch
+
+RUN GGML_CUDA=1 $POETRY_VENV/bin/pip install --no-cache-dir git+https://github.com/absadiki/pywhispercpp@v1.3.0
 
 WORKDIR /app/reascripts/ReaSpeech
 RUN make publish
