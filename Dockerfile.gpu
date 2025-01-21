@@ -54,9 +54,17 @@ COPY --chown=$SERVICE_UID:$SERVICE_GID poetry.lock pyproject.toml ./
 RUN poetry config virtualenvs.in-project true
 RUN poetry install && rm -rf /app/.cache/pypoetry
 
-RUN $POETRY_VENV/bin/pip install --no-cache-dir torch==1.13.1+cu117 -f https://download.pytorch.org/whl/torch
+RUN git clone https://github.com/absadiki/pywhispercpp \
+    && cd pywhispercpp \
+    && git checkout v1.3.0 \
+    && git submodule update --init \
+    && sed -i '/suppress_non_speech_tokens/d' src/main.cpp \
+    && cd whisper.cpp \
+    && git checkout master \
+    && cd .. \
+    && GGML_CUDA=1 $POETRY_VENV/bin/pip install -e .
 
-RUN GGML_CUDA=1 $POETRY_VENV/bin/pip install --no-cache-dir git+https://github.com/absadiki/pywhispercpp@v1.3.0
+RUN $POETRY_VENV/bin/pip install --no-cache-dir torch==1.13.1+cu117 -f https://download.pytorch.org/whl/torch
 
 WORKDIR /app/reascripts/ReaSpeech
 RUN make publish
