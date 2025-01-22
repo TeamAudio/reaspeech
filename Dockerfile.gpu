@@ -1,9 +1,5 @@
 FROM swaggerapi/swagger-ui:v4.18.2 AS swagger-ui
-FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
-
-ARG SERVICE_USER=service
-ARG SERVICE_UID=1001
-ARG SERVICE_GID=1001
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04 AS builder
 
 ENV PYTHON_VERSION=3.10
 ENV POETRY_VENV=/app/.venv
@@ -15,41 +11,18 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     python${PYTHON_VERSION}-dev \
     python${PYTHON_VERSION}-venv \
     python3-pip \
-    lua5.3 \
-    lua5.4 \
-    lua-check \
-    fswatch \
-    make \
     build-essential \
     git \
-    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-RUN ln -s -f /usr/bin/python${PYTHON_VERSION} /usr/bin/python3 && \
-    ln -s -f /usr/bin/python${PYTHON_VERSION} /usr/bin/python && \
-    ln -s -f /usr/bin/pip3 /usr/bin/pip
-
-RUN groupadd -g $SERVICE_GID $SERVICE_USER \
-    && useradd -u $SERVICE_UID -g $SERVICE_GID -d /app -s /usr/sbin/nologin $SERVICE_USER \
-    || echo "Error creating service account: $?"
-
-COPY --chown=$SERVICE_UID:$SERVICE_GID . /app
-COPY --chown=$SERVICE_UID:$SERVICE_GID --from=swagger-ui /usr/share/nginx/html/swagger-ui.css /app/swagger-ui-assets/swagger-ui.css
-COPY --chown=$SERVICE_UID:$SERVICE_GID --from=swagger-ui /usr/share/nginx/html/swagger-ui-bundle.js /app/swagger-ui-assets/swagger-ui-bundle.js
-RUN chown $SERVICE_UID:$SERVICE_GID /app
-
-USER $SERVICE_UID:$SERVICE_GID
-
+COPY . /app
 WORKDIR /app
 
-RUN python3 -m venv $POETRY_VENV \
+RUN /usr/bin/python${PYTHON_VERSION} -m venv $POETRY_VENV \
     && $POETRY_VENV/bin/pip install -U pip setuptools \
     && $POETRY_VENV/bin/pip install poetry==1.6.1
 
 ENV PATH="${PATH}:${POETRY_VENV}/bin"
-ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${POETRY_VENV}/lib/python${PYTHON_VERSION}/site-packages"
-
-COPY --chown=$SERVICE_UID:$SERVICE_GID poetry.lock pyproject.toml ./
 
 RUN poetry config virtualenvs.in-project true
 RUN poetry install && rm -rf /app/.cache/pypoetry
@@ -63,6 +36,49 @@ RUN git clone https://github.com/absadiki/pywhispercpp \
     && git checkout v1.7.4 \
     && cd .. \
     && GGML_CUDA=1 $POETRY_VENV/bin/pip install -e .
+
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+
+ARG SERVICE_USER=service
+ARG SERVICE_UID=1001
+ARG SERVICE_GID=1001
+
+ENV PYTHON_VERSION=3.10
+ENV POETRY_VENV=/app/.venv
+
+RUN export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -qq update \
+    && apt-get -qq install --no-install-recommends \
+    python${PYTHON_VERSION} \
+    python${PYTHON_VERSION}-venv \
+    python3-pip \
+    lua5.3 \
+    lua5.4 \
+    lua-check \
+    fswatch \
+    make \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN ln -s -f /usr/bin/python${PYTHON_VERSION} /usr/bin/python3 && \
+    ln -s -f /usr/bin/python${PYTHON_VERSION} /usr/bin/python && \
+    ln -s -f /usr/bin/pip3 /usr/bin/pip
+
+RUN groupadd -g $SERVICE_GID $SERVICE_USER \
+    && useradd -u $SERVICE_UID -g $SERVICE_GID -d /app -s /usr/sbin/nologin $SERVICE_USER \
+    || echo "Error creating service account: $?"
+
+COPY --chown=$SERVICE_UID:$SERVICE_GID --from=builder /app /app
+COPY --chown=$SERVICE_UID:$SERVICE_GID --from=swagger-ui /usr/share/nginx/html/swagger-ui.css /app/swagger-ui-assets/swagger-ui.css
+COPY --chown=$SERVICE_UID:$SERVICE_GID --from=swagger-ui /usr/share/nginx/html/swagger-ui-bundle.js /app/swagger-ui-assets/swagger-ui-bundle.js
+RUN chown $SERVICE_UID:$SERVICE_GID /app
+
+USER $SERVICE_UID:$SERVICE_GID
+
+ENV PATH="${PATH}:${POETRY_VENV}/bin"
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${POETRY_VENV}/lib/python${PYTHON_VERSION}/site-packages"
+
+WORKDIR /app
 
 RUN $POETRY_VENV/bin/pip install --no-cache-dir torch==1.13.1+cu117 -f https://download.pytorch.org/whl/torch
 
