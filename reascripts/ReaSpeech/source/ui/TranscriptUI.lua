@@ -260,7 +260,7 @@ function TranscriptUI:render_drop_target()
 
       if payload and dragdrop_flags == ImGui.DragDropFlags_AcceptNoPreviewTooltip() then
         for i = 1, #self._dropped_files do
-          local transcript, err = TranscriptImporter:import(self._dropped_files[i])
+          local transcript, _ = TranscriptImporter:import(self._dropped_files[i])
 
           if transcript then
             local plugin = TranscriptUI.new {
