@@ -12,6 +12,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get -qq update \
     && apt-get -qq install --no-install-recommends \
     python${PYTHON_VERSION} \
+    python${PYTHON_VERSION}-dev \
     python${PYTHON_VERSION}-venv \
     python3-pip \
     lua5.3 \
@@ -20,7 +21,6 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     fswatch \
     make \
     build-essential \
-    python3.10-dev \
     git \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
