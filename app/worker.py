@@ -74,20 +74,23 @@ def transcribe(
     output_format = asr_options["output"]
 
     with open(audio_file_path, "rb") as audio_file:
-        _TQDM.set_progress_function(update_progress(self))
-
+        model_name = asr_options.get("model_name") or DEFAULT_MODEL_NAME
+        logger.info(f"Loading model {model_name}")
+        self.update_state(state=STATES["loading_model"], meta={"progress": {"units": "models", "total": 1, "current": 0}})
+        _TQDM.set_progress_function(update_progress(self, STATES["loading_model"]))
         try:
-            model_name = asr_options.get("model_name") or DEFAULT_MODEL_NAME
-            logger.info(f"Loading model {model_name}")
-            self.update_state(state=STATES["loading_model"], meta={"progress": {"units": "models", "total": 1, "current": 0}})
             asr_engine.load_model(model_name)
+        finally:
+            _TQDM.set_progress_function(None)
 
-            logger.info(f"Loading audio from {audio_file_path}")
-            self.update_state(state=STATES["encoding"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
-            audio_data = load_audio(audio_file, asr_options.get("encode", False))
+        logger.info(f"Loading audio from {audio_file_path}")
+        self.update_state(state=STATES["encoding"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
+        audio_data = load_audio(audio_file, asr_options.get("encode", False))
 
-            logger.info(f"Transcribing audio")
-            self.update_state(state=STATES["transcribing"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
+        logger.info(f"Transcribing audio")
+        self.update_state(state=STATES["transcribing"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
+        _TQDM.set_progress_function(update_progress(self, STATES["transcribing"]))
+        try:
             result = asr_engine.transcribe(audio_data, asr_options, output_format)
         finally:
             _TQDM.set_progress_function(None)
@@ -150,11 +153,11 @@ def get_output_path(job_id: str):
 def get_output_url_path(job_id: str):
     return os.environ.get("OUTPUT_URL_PREFIX", "/output") + "/" + job_id
 
-def update_progress(context):
+def update_progress(context, state):
     def do_update(units, total, current):
         logger.debug(f"Updating progress with units={units}, total={total}, current={current}")
         context.update_state(
-            state=STATES["transcribing"],
+            state=state,
             meta={"progress": {"units": units, "total": total, "current": current}}
         )
     return do_update

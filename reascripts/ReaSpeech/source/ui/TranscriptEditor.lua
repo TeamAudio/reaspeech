@@ -79,7 +79,10 @@ function TranscriptEditor:edit_word(index)
 end
 
 function TranscriptEditor:render_content()
-  self.key_bindings:react()
+  if not ImGui.IsAnyItemActive(ctx) then
+    self.key_bindings:react()
+  end
+
   if self.editing.word then
     self:render_word_navigation()
     self:render_separator()

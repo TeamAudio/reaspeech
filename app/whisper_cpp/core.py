@@ -5,11 +5,17 @@ import json
 import logging
 import os
 
+from pywhispercpp.utils import download_model
+import tqdm
+
+from ..util.audio import SAMPLE_RATE
 from .constants import ASR_ENGINE_OPTIONS
 from .model import Model
 
 logging.basicConfig(format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s', level=logging.INFO, force=True)
 logger = logging.getLogger(__name__)
+
+DOWNLOAD_CHUNK_SIZE = 1024 * 1024
 
 model_name = os.getenv("ASR_MODEL", "small")
 model_path = os.getenv("ASR_MODEL_PATH", os.path.join(os.path.expanduser("~"), ".cache", "whisper"))
@@ -27,7 +33,8 @@ def load_model(next_model_name: str):
         if not model:
             logger.info(Model.system_info())
 
-        model = Model(next_model_name, models_dir=model_path)
+        downloaded_model = download_model(next_model_name, model_path, DOWNLOAD_CHUNK_SIZE)
+        model = Model(downloaded_model)
 
         model_name = next_model_name
 
@@ -49,27 +56,35 @@ def transcribe(audio, asr_options, output):
     options_dict = build_options(asr_options)
     logger.info(f"whisper.cpp options: {options_dict}")
 
+    audio_duration = len(audio) / SAMPLE_RATE
+
     with model_lock:
         segments = []
         text = ""
-        segment_generator = model.transcribe(audio, **options_dict)
-        for segment in segment_generator:
-            segment_dict = {
-                "start": float(segment.t0) / 100.0,
-                "end": float(segment.t1) / 100.0,
-                "text": segment.text,
-                "words": []
-            }
-            for word in segment.words:
-                word_dict = {
-                    "start": float(word.t0) / 100.0,
-                    "end": float(word.t1) / 100.0,
-                    "word": word.text,
-                    "probability": word.p
+        with tqdm.tqdm(total=audio_duration, unit='sec') as tqdm_pbar:
+            def new_segment_callback(segment):
+                segment_start = float(segment.t0) / 100.0
+                segment_end = float(segment.t1) / 100.0
+                tqdm_pbar.update(segment_end - segment_start)
+            options_dict['new_segment_callback'] = new_segment_callback
+
+            for segment in model.transcribe(audio, **options_dict):
+                segment_dict = {
+                    "start": float(segment.t0) / 100.0,
+                    "end": float(segment.t1) / 100.0,
+                    "text": segment.text,
+                    "words": []
                 }
-                segment_dict["words"].append(word_dict)
-            segments.append(segment_dict)
-            text = text + segment.text + " "
+                for word in segment.words:
+                    word_dict = {
+                        "start": float(word.t0) / 100.0,
+                        "end": float(word.t1) / 100.0,
+                        "word": word.text,
+                        "probability": word.p
+                    }
+                    segment_dict["words"].append(word_dict)
+                segments.append(segment_dict)
+                text = text + segment.text + " "
         result = {
             "language": options_dict.get("language"),
             "segments": segments,

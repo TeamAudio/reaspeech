@@ -8,6 +8,9 @@ import sys
 import time
 
 argmap = {
+    '--port': {
+        'default': os.getenv('PORT', '9000'),
+        'help': 'Port to listen on (default: %(default)s)' },
     '--celery-broker-url': {
         'default': 'sqla+sqlite:///celery.sqlite',
         'help': 'Celery broker URL (default: %(default)s)' },
@@ -30,8 +33,9 @@ argmap = {
         'default': os.getenv('ASR_MODEL', 'small'),
         'help': 'ASR model to use (default: %(default)s)' },
     '--build-reascripts': {
-        'action': 'store_true',
-        'help': 'Build ReaScripts before starting' },
+        'const': 'publish5.4',
+        'nargs': '?',
+        'help': 'Build ReaScripts before starting. Optional value specifies target (default: %(const)s)' },
     '--enable-swagger-ui': {
         'action': 'store_true',
         'help': 'Enable automatic Swagger UI for API' },
@@ -52,7 +56,8 @@ os.environ['ASR_ENGINE'] = args.asr_engine
 os.environ['ASR_MODEL'] = args.asr_model
 
 if args.build_reascripts:
-    if os.system('cd reascripts/ReaSpeech && make') != 0:
+    print('Building ReaScripts...', file=sys.stderr)
+    if os.system(f'cd reascripts/ReaSpeech && make {args.build_reascripts}') != 0:
         print('ReaScript build failed', file=sys.stderr)
         sys.exit(1)
 
@@ -88,7 +93,7 @@ print('Starting application...', file=sys.stderr)
 processes['gunicorn'] = \
     subprocess.Popen([
         'gunicorn',
-        '--bind', '0.0.0.0:9000',
+        '--bind', f"0.0.0.0:{args.port}",
         '--workers', '1',
         '--timeout', '0',
         'app.webservice:app',

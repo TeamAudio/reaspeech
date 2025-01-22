@@ -31,6 +31,10 @@ function CurlRequest._init()
     DEFAULT_ERROR_HANDLER = function(_msg) end,
     DEFAULT_TIMEOUT_HANDLER = function() end,
     SENTINEL = '-=-DONE-=-',
+
+    CURL_ERRORS = {
+      [7] = "Couldn't connect to ReaSpeech. Is it running?"
+    },
   }
 
   function API.async(options)
@@ -216,9 +220,9 @@ function CurlRequest._init()
   end
 
   function API:execute_async(command)
-    local executor = ExecProcess.new(command)
+    local result = ExecProcess.new(command):background()
 
-    if not executor:background() then
+    if not result then
       local err = "Unable to run curl"
       self:log(err)
       self.error_handler(err)
@@ -322,6 +326,25 @@ function CurlRequest._init()
     return { '-m', self.curl_timeout }
   end
 
+  function API:check_curl_error(progress_contents)
+    local err = progress_contents:match("curl: %((-?%d+)%).*")
+
+    if err then
+      self:debug("Curl Error #" .. err)
+      return tonumber(err)
+    end
+
+    return false
+  end
+
+  API.curl_message = function(err_num)
+    if API.CURL_ERRORS[err_num] then
+      return API.CURL_ERRORS[err_num]
+    end
+
+    return "Curl Error #" .. err_num
+  end
+
   function API:check_sentinel()
     local sentinel = io.open(self.progress_file, 'r')
 
@@ -331,6 +354,12 @@ function CurlRequest._init()
 
     local contents = sentinel:read("*all")
     sentinel:close()
+
+    local curl_err = self:check_curl_error(contents)
+    if curl_err then
+      self.error_msg = self.curl_message(curl_err)
+      return false
+    end
 
     -- Workaround for https://github.com/curl/curl/issues/10491
     local version = API.curl_version()

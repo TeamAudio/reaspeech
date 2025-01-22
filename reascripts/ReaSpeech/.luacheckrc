@@ -9,6 +9,7 @@ globals = {
   "reaper",
   "ReaUtil",
   "Script",
+  "string",
   "table",
   "ToolWindow",
   "url",
