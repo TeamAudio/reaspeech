@@ -103,7 +103,7 @@ function TranscriptUI:render_drop_zone()
           ImGui.Text(ctx, text)
         end, Trap)
       end
-      end)
+    end)
     ImGui.EndChild(ctx)
   end
 end
