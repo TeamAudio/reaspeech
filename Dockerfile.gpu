@@ -58,7 +58,7 @@ RUN git clone https://github.com/absadiki/pywhispercpp \
     && cd pywhispercpp \
     && git checkout v1.3.0 \
     && git submodule update --init \
-    && sed -i '/suppress_non_speech_tokens/d' src/main.cpp \
+    && sed -i 's/suppress_non_speech_tokens/suppress_nst/g' src/main.cpp pywhispercpp/constants.py \
     && cd whisper.cpp \
     && git checkout v1.7.4 \
     && cd .. \
