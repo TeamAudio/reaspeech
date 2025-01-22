@@ -11,7 +11,10 @@ ReaSpeechPlugins = Polo {
       app = app,
       plugins = plugins,
     }
-  end
+  end,
+  __call = function(self, key)
+    return self:get_plugin(key)
+  end,
 }
 
 function ReaSpeechPlugins:init()
@@ -31,8 +34,51 @@ function ReaSpeechPlugins:init_plugins()
   end
 end
 
+function ReaSpeechPlugins:get_plugin(key)
+  for _, plugin in ipairs(self._plugins) do
+    if plugin:key() == key then
+      return plugin
+    end
+  end
+end
+
+function ReaSpeechPlugins:add_plugin(plugin)
+  local new_plugin
+  if type(plugin) == 'function' then
+    new_plugin = plugin(self.app)
+  else
+    new_plugin = plugin
+  end
+  table.insert(self._plugins, new_plugin)
+
+  self:init_tabs()
+end
+
+function ReaSpeechPlugins:remove_plugin(plugin)
+  for i, p in ipairs(self._plugins) do
+    if p == plugin then
+      table.remove(self._plugins, i)
+      break
+    end
+  end
+
+  self:init_tabs()
+end
+
 function ReaSpeechPlugins:tabs()
   return self._tabs
+end
+
+function ReaSpeechPlugins:new_tab_menu()
+  local menu = {}
+
+  for _, plugin in ipairs(self._plugins) do
+    for _, menu_item in ipairs(plugin:new_tab_menu()) do
+      table.insert(menu, menu_item)
+    end
+  end
+
+  return menu
 end
 
 function ReaSpeechPlugins:init_tabs()
@@ -45,11 +91,23 @@ function ReaSpeechPlugins:init_tabs()
   end
 end
 
-function ReaSpeechPlugins.tab(key, label, renderer)
+function ReaSpeechPlugins.tab(key, label, renderer, tab_config)
+  local tab = Widgets.TabBar.tab(key, label)
+
+  for k, v in pairs(tab_config or {}) do
+    tab[k] = v
+  end
+
+  local render_bg
+  if type(renderer) ~= 'function' then
+    render_bg = renderer.render_bg
+    renderer = renderer.render
+  end
+
   return {
-    tab = Widgets.TabBar.tab(key, label),
+    tab = tab,
     render = renderer,
-    is_selected = function(_, selected_key) return key == selected_key end
+    render_bg = render_bg,
   }
 end
 

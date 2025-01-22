@@ -32,27 +32,6 @@ function ReaUtil.open_url(url)
   (ExecProcess.new(url_opener_cmd:format(url))):wait()
 end
 
-function ReaUtil.disabler(context, error_handler)
-  error_handler = error_handler or function(msg)
-    reaper.ShowConsoleMsg(msg .. '\n')
-  end
-
-  return function(predicate, f)
-    local safe_f = function()
-      xpcall(f, error_handler)
-    end
-
-    if not predicate then
-      safe_f()
-      return
-    end
-
-    reaper.ImGui_BeginDisabled(context, true)
-    safe_f()
-    reaper.ImGui_EndDisabled(context)
-  end
-end
-
 function ReaUtil.track_guids()
   local guids = {}
 

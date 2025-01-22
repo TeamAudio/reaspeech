@@ -16,6 +16,7 @@ image_name = File.basename(input_filename, File.extname(input_filename))
 File.open(output_filename, 'w') do |f|
   f.write("IMAGES = IMAGES or {}\n")
   f.write("IMAGES['#{image_name}'] = {\n")
+  f.write("  name = '#{image_name}',\n")
   f.write("  width = #{image.width},\n")
   f.write("  height = #{image.height},\n")
 

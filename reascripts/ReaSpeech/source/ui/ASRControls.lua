@@ -5,7 +5,7 @@ ASRControls.lua - Controls/configuration for ASR plugin
 ]]--
 
 ASRControls = PluginControls {
-  DEFAULT_TAB = 'asr-simple',
+  DEFAULT_TAB = 'asr',
 
   DEFAULT_LANGUAGE = '',
   DEFAULT_MODEL_NAME = 'small',
@@ -17,10 +17,10 @@ ASRControls = PluginControls {
 
   tabs = function(self)
     return {
-      ReaSpeechPlugins.tab('asr-simple', 'Simple',
-        function() self:render_simple() end),
-      ReaSpeechPlugins.tab('asr-advanced', 'Advanced',
-        function() self:render_advanced() end),
+      ReaSpeechPlugins.tab('asr', 'Speech Recognition',
+        { render_bg = function() self:render_bg() end,
+          render = function() self:render() end
+        }),
     }
   end
 }
@@ -36,6 +36,8 @@ function ASRControls:init()
     section = 'ReaSpeech.ASR',
     persist = true,
   }
+
+  self.importer = TranscriptImporter.new()
 
   self.settings = {
     language = storage:string('language', self.DEFAULT_LANGUAGE),
@@ -83,6 +85,7 @@ function ASRControls:init()
     width_threshold = ReaSpeechControlsUI.NARROW_COLUMN_WIDTH
   }
 
+  self.actions = ASRActions.new(self.plugin)
   self.alert_popup = AlertPopup.new {}
 
   self:init_layouts()
@@ -137,12 +140,14 @@ function ASRControls:check_asr_info()
     end
 
     self:init_model_name()
+    self:init_advanced_layout()
   end
 end
 
 function ASRControls:init_layouts()
   self:init_simple_layout()
   self:init_advanced_layout()
+  self:init_actions_layout()
 end
 
 function ASRControls:init_simple_layout()
@@ -163,12 +168,33 @@ function ASRControls:init_simple_layout()
   }
 end
 
+function ASRControls:_get_renderers()
+  local renderers = {}
+  if self.asr_options.vad_filter then
+    table.insert(renderers, {
+      self.render_vad_filter
+    })
+  end
+
+  if self.asr_options.hotwords then
+    table.insert(renderers, {
+      self.render_hotwords
+    })
+  else
+    table.insert(renderers, {
+      self.render_initial_prompt
+    })
+  end
+
+  table.insert(renderers, {
+    self.render_language
+  })
+
+  return renderers
+end
+
 function ASRControls:init_advanced_layout()
-  local renderers = {
-    {self.render_model, self.render_options},
-    {self.asr_options.hotwords and self.render_hotwords or self.render_initial_prompt},
-    {self.render_language},
-  }
+  local renderers = self:_get_renderers()
 
   self.advanced_layout = ColumnLayout.new {
     column_padding = ReaSpeechControlsUI.COLUMN_PADDING,
@@ -188,16 +214,68 @@ function ASRControls:init_advanced_layout()
   }
 end
 
-function ASRControls:render_simple()
-  self:check_asr_info()
-  self.simple_layout:render()
-  self.alert_popup:render()
+function ASRControls:render_actions()
+  local worker = self.plugin.app.worker
+
+  local progress
+  Trap(function ()
+    progress = worker:progress()
+  end)
+
+  Widgets.disable_if(progress, function()
+    local plugin_actions = self.actions:actions()
+    for i, action in ipairs(plugin_actions) do
+      if i > 1 then ImGui.SameLine(ctx) end
+      action:render()
+    end
+  end)
+
+  if progress then
+    ImGui.SameLine(ctx)
+
+    if ImGui.Button(ctx, "Cancel") then
+      worker:cancel()
+    end
+
+    ImGui.SameLine(ctx)
+    local overlay = string.format("%.0f%%", progress * 100)
+    local status = worker:status()
+    if status then
+      overlay = overlay .. ' - ' .. status
+    end
+    ImGui.ProgressBar(ctx, progress, nil, nil, overlay)
+  end
 end
 
-function ASRControls:render_advanced()
+function ASRControls:init_actions_layout()
+  self.actions_layout = ColumnLayout.new {
+    column_padding = 10,
+    margin_left = ReaSpeechControlsUI.MARGIN_LEFT,
+    num_columns = 1,
+    render_column = function(_column)
+      self:render_actions()
+    end
+  }
+end
+
+function ASRControls:render_bg()
+  self.importer:render()
+end
+
+function ASRControls:render()
   self:check_asr_info()
-  self.advanced_layout:render()
-  self.alert_popup:render()
+  self.simple_layout:render()
+  ImGui.Unindent(ctx)
+  ImGui.Dummy(ctx, ReaSpeechControlsUI.MARGIN_LEFT, 0)
+  ImGui.SameLine(ctx)
+  if ImGui.TreeNode(ctx, "Advanced Options") then
+    self.advanced_layout:render()
+    ImGui.TreePop(ctx)
+  end
+  ImGui.Indent(ctx)
+  ImGui.Spacing(ctx)
+  self.actions_layout:render()
+self.alert_popup:render()
 end
 
 function ASRControls:render_language(column)
@@ -218,7 +296,7 @@ function ASRControls:render_hotwords()
   end
 end
 
-function ASRControls:render_options(column)
+function ASRControls:render_vad_filter(column)
   if self.asr_options.vad_filter then
     self.vad_filter:render(column)
   end

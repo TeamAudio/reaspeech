@@ -6,6 +6,7 @@
 
 TranscriptUI = Polo {
   TITLE = 'Transcript',
+  TAB_TITLE_FORMAT = "%s",
 
   FLOAT_FORMAT = '%.4f',
 
@@ -50,11 +51,142 @@ function TranscriptUI:init()
   self.colorize_words = false
   self.autoplay = true
 
-  self.transcript_editor = TranscriptEditor.new { transcript = self.transcript }
-  self.transcript_exporter = TranscriptExporter.new { transcript = self.transcript }
+  self.editing_name = false
+  self.name_editor = Widgets.TextInput.new {
+    default = self.transcript.name,
+    on_cancel = function()
+      self.editing_name = false
+      self.transcript.name = self._original_transcript_name
+      self._original_transcript_name = nil
+    end,
+    on_change = function(value)
+      self.transcript.name = value
+      self._transcript_saved = false
+    end,
+    on_enter = function()
+      self.transcript.name = self.name_editor:value()
+      self.editing_name = false
+      self._transcript_saved = false
+    end,
+  }
+
+  self.confirmation_popup = AlertPopup.new {
+    title = "Transcript not saved!",
+  }
+
+  self.transcript_editor = TranscriptEditor.new {
+    transcript = self.transcript,
+    on_save = function()
+      self._transcript_saved = false
+    end
+  }
+
+  self.transcript_exporter = TranscriptExporter.new {
+    transcript = self.transcript,
+    on_export = function()
+      self._transcript_saved = true
+    end
+  }
   self.annotations = TranscriptAnnotationsUI.new { transcript = self.transcript }
 
+  self._transcript_saved = self._transcript_saved or false
+
   self:init_layouts()
+end
+
+TranscriptUI.plugin = function()
+  return {
+    new = function(app)
+      return TranscriptUI.new {
+        transcript = Transcript.new {},
+        app = app,
+        _plugin_only = true,
+      }
+    end
+  }
+end
+
+function TranscriptUI:key()
+  return 'transcript-' .. self:transcript_id()
+end
+
+function TranscriptUI:tabs()
+  if self._plugin_only then return {} end
+
+  return {
+    ReaSpeechPlugins.tab(
+      self:transcript_id(),
+      function() return self:transcript_name() end,
+      function() self.tab_layout:render() end,
+      {
+        will_close = function()
+          return self:confirm_close()
+        end,
+        on_close = function()
+          app.plugins:remove_plugin(self)
+        end
+      }
+    )
+  }
+end
+
+function TranscriptUI:new_tab_menu()
+  if not self._plugin_only then return {} end
+
+  return {
+    { label = "Load Transcript",
+      on_click = function()
+        self.app.plugins(ASRPlugin:key()):importer():open()
+      end
+    },
+  }
+end
+
+function TranscriptUI:confirm_close()
+  if self._transcript_saved then
+    return true
+  end
+
+  self.confirmation_popup:show('Transcript not saved!', function()
+    ImGui.Text(ctx, "This transcript hasn't been saved/exported. Are you sure you want to close it?")
+    ImGui.Separator(ctx)
+    if ImGui.Button(ctx, 'Cancel') then
+      self.confirmation_popup:close()
+    end
+
+    ImGui.SameLine(ctx)
+    if ImGui.Button(ctx, 'Close without Saving') then
+      self.confirmation_popup:close()
+      app.plugins:remove_plugin(self)
+    end
+
+    ImGui.SameLine(ctx)
+    if ImGui.Button(ctx, 'Save') then
+      self.confirmation_popup:close()
+      self.transcript_exporter.on_export = function()
+        app.plugins:remove_plugin(self)
+      end
+      self.transcript_exporter:present()
+    end
+  end)
+
+  return false
+end
+
+function TranscriptUI:transcript_id()
+  if not self._transcript_id then
+    self._transcript_id = ("transcript-%s"):format(reaper.genGuid(''))
+  end
+
+  return self._transcript_id
+end
+
+function TranscriptUI:transcript_name()
+  if not self.transcript.name or #self.transcript.name < 1 then
+    return 'Untitled Transcript'
+  end
+
+  return TranscriptUI.TAB_TITLE_FORMAT:format(self.transcript.name)
 end
 
 function TranscriptUI:clipper()
@@ -77,6 +209,18 @@ function TranscriptUI:init_layouts()
     num_columns = #renderers,
     render_column = function (column)
       renderers[column.num](self, column)
+    end
+  }
+
+  self.tab_layout = ColumnLayout.new {
+    column_padding = self.ACTIONS_PADDING,
+    margin_bottom = ReaSpeechControlsUI.MARGIN_BOTTOM,
+    margin_left = ReaSpeechControlsUI.MARGIN_LEFT,
+    margin_right = 0,
+    num_columns = 1,
+
+    render_column = function (_column)
+      self:render()
     end
   }
 end
@@ -116,7 +260,15 @@ function TranscriptUI:render_drop_target()
 
       if payload and dragdrop_flags == ImGui.DragDropFlags_AcceptNoPreviewTooltip() then
         for i = 1, #self._dropped_files do
-          TranscriptImporter:import(self._dropped_files[i])
+          local transcript, err = TranscriptImporter:import(self._dropped_files[i])
+
+          if transcript then
+            local plugin = TranscriptUI.new {
+              transcript = transcript,
+              _transcript_saved = true
+            }
+            app.plugins:add_plugin(plugin)
+          end
         end
         self._dropped_files = nil
         self._dragdrop_flags = nil
@@ -144,7 +296,7 @@ end
 
 function TranscriptUI:render()
   if self.transcript:has_segments() and not self._dropped_files then
-    ImGui.SeparatorText(ctx, "Transcript")
+    self:render_name()
     self.actions_layout:render()
     self:render_table()
   else
@@ -157,9 +309,37 @@ function TranscriptUI:render()
   -- loaded.
   self:render_drop_target()
 
+  self.confirmation_popup:render()
   self.transcript_editor:render()
   self.transcript_exporter:render()
   self.annotations:render()
+end
+
+function TranscriptUI:render_name()
+  ImGui.PushFont(ctx, Fonts.big)
+  Trap(function()
+    if self.editing_name then
+      self.name_editor:render()
+    else
+      ImGui.Dummy(ctx, 1, 2)
+      ImGui.Dummy(ctx, 2, 0)
+      ImGui.SameLine(ctx)
+
+      if #self.transcript.name < 1 then
+        ImGui.Text(ctx, "(Untitled)")
+      else
+        ImGui.Text(ctx, self.transcript.name)
+      end
+      ImGui.SameLine(ctx)
+      local icon_size = Fonts.size:get() - 1
+      if Widgets.icon(Icons.pencil, "##edit_name", icon_size, icon_size, "Edit") then
+        self._original_transcript_name = self.transcript.name
+        self.editing_name = true
+      end
+      ImGui.Dummy(ctx, 1, 2)
+    end
+  end)
+  ImGui.PopFont(ctx)
 end
 
 function TranscriptUI:render_result_actions()
@@ -243,7 +423,14 @@ function TranscriptUI:render_table()
   local columns = self.transcript:get_columns()
   local num_columns = #columns + 1
 
-  if ImGui.BeginTable(ctx, "results", num_columns, self.table_flags(true)) then
+  local imgui_id = self.transcript.name
+
+  if not imgui_id or #imgui_id < 1 then
+    imgui_id = "transcript-untitled"
+  end
+
+  ImGui.PushID(ctx, imgui_id)
+  if ImGui.BeginTable(ctx, "results", num_columns, self.table_flags(true), 0, -10) then
     Trap(function ()
       ImGui.TableSetupColumn(ctx, "##actions", ImGui.TableColumnFlags_NoSort(), 20)
 
@@ -295,6 +482,7 @@ function TranscriptUI:render_table()
     end)
     ImGui.EndTable(ctx)
   end
+  ImGui.PopID(ctx)
 end
 
 function TranscriptUI:render_segment_actions(segment, index)

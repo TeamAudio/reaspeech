@@ -29,6 +29,8 @@ function TranscriptExporter:init()
       | ImGui.WindowFlags_NoDocking()
   })
 
+  self.on_export = self.on_export or function() end
+
   self.export_formats = TranscriptExporterFormats.new {
     TranscriptExportFormat.exporter_json(),
     TranscriptExportFormat.exporter_srt(),
@@ -76,7 +78,7 @@ function TranscriptExporter:open()
 end
 
 function TranscriptExporter:reset_form()
-  self.file_selector:set('')
+  self.file_selector:set(self.transcript.name or '')
   self.apply_extension:set(true)
   self:update_target_filename_ui()
 end
@@ -129,6 +131,7 @@ end
 function TranscriptExporter:show_success()
   self.alert_popup.onclose = function ()
     self.alert_popup.onclose = nil
+    self.on_export()
     self:close()
   end
 
@@ -190,7 +193,7 @@ function TranscriptExporter:render_file_selector()
 end
 
 function TranscriptExporter:render_buttons()
-  ReaUtil.disabler(ctx)(self.file_selector:value() == '', function()
+  Widgets.disable_if(self.file_selector:value() == '', function()
     if ImGui.Button(ctx, 'Export', self.BUTTON_WIDTH, 0) then
       if self:handle_export() then
         self:show_success()

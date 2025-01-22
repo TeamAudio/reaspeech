@@ -92,6 +92,9 @@ function TestToolWindow:testPresentAndPresenting()
   o:present()
   lu.assertEquals(o:presenting(), true)
   o:close()
+  lu.assertEquals(o:closing(), true)
+  o._tool_window.closing = false
+  o:close()
   lu.assertEquals(o:presenting(), false)
 end
 
@@ -107,6 +110,9 @@ function TestToolWindow:testIsOpen()
   lu.assertEquals(o:is_open(), false)
   o:open()
   lu.assertEquals(o:is_open(), true)
+  o:close()
+  lu.assertEquals(o:closing(), true)
+  o._tool_window.closing = false
   o:close()
   lu.assertEquals(o:is_open(), false)
 end
@@ -163,6 +169,9 @@ function TestToolWindow:testWrapClose()
   local o = test_class.new()
   o:open()
   o:close()
+  lu.assertEquals(o:closing(), true)
+  o._tool_window.closing = false
+  o:close()
   lu.assertEquals(o:is_open(), false)
   lu.assertEquals(wrapped_close_called, true)
 end
@@ -184,6 +193,9 @@ function TestToolWindow:testClose()
   lu.assertEquals(o:is_open(), false)
   o:open()
   lu.assertEquals(o:is_open(), true)
+  o:close()
+  lu.assertEquals(o:closing(), true)
+  o._tool_window.closing = false
   o:close()
   lu.assertEquals(o:is_open(), false)
 end
@@ -234,6 +246,9 @@ function TestToolWindow:testRender()
   lu.assertEquals(render_content_called, true)
 
   render_content_called = false
+  o:close()
+  lu.assertEquals(o:closing(), true)
+  o._tool_window.closing = false
   o:close()
   o:render()
   lu.assertEquals(o:is_open(), false)

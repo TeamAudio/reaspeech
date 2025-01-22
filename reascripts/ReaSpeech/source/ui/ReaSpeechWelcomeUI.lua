@@ -35,6 +35,7 @@ function ReaSpeechWelcomeUI:init()
     window_flags = ImGui.WindowFlags_AlwaysAutoResize(),
     theme = ImGuiTheme.new({
       styles = {
+        {ImGui.StyleVar_Alpha, 1.0 },
         {ImGui.StyleVar_WindowPadding, 0, 0 },
       }
     }),

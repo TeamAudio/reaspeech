@@ -100,10 +100,12 @@ ToolWindow.modal = function(o, config)
 
   ToolWindow._wrap_method_0_args(o, 'open', function()
     ImGui.OpenPopup(ctx, o._tool_window.title)
+    return true
   end)
 
   ToolWindow._wrap_method_0_args(o, 'close', function()
     ImGui.CloseCurrentPopup(ctx)
+    return true
   end)
 
    ToolWindow.init(o, config)
@@ -131,16 +133,47 @@ ToolWindow.init = function(o, config)
       return { tween() }
     end)
 
+    state.closed = nil
+    state.closing = nil
     state.is_open = true
+
+    return true
   end)
 
   ToolWindow._wrap_method_0_args(o, 'close', function()
-    state.presenting = false
-    state.focusing = false
-    state.is_open = false
+    if state.closed then
+      return true
+    elseif state.closing then
+      return false
+    elseif state.closing == false then
+      state.presenting = false
+      state.focusing = false
+      state.is_open = false
+      state.closing = nil
+      state.closed = true
+      return true
+    end
+
+    local theme = o._tool_window.theme
+
+    local final_alpha = theme:get_style(ImGui.StyleVar_Alpha) or 1.0
+
+    local tween = Tween.linear(1.0, 0.0, 0.2, function()
+      theme:set_style(ImGui.StyleVar_Alpha, final_alpha)
+      state.closing = false
+    end)
+
+    theme:set_style(ImGui.StyleVar_Alpha, function()
+      return { tween() }
+    end)
+
+    state.closing = true
+
+    return false
   end)
 
   o.is_open = ToolWindow.is_open
+  o.closing = ToolWindow.closing
 
   o.present = ToolWindow.present
   o.presenting = ToolWindow.presenting
@@ -174,8 +207,7 @@ end
 function ToolWindow._wrap_method_0_args(o, method_name, f)
   local original = o[method_name]
   o[method_name] = function()
-    f()
-    if original then
+    if f() and original then
       original(o)
     end
   end
@@ -183,7 +215,7 @@ end
 
 function ToolWindow.default_guard(o)
   return function()
-    return o:presenting() or o:is_open()
+    return o:presenting() or o:is_open() or o:closing()
   end
 end
 
@@ -205,6 +237,10 @@ end
 
 function ToolWindow.is_open(o)
   return o._tool_window.is_open
+end
+
+function ToolWindow.closing(o)
+  return o._tool_window.closing
 end
 
 function ToolWindow.render(o)
@@ -270,7 +306,7 @@ function ToolWindow._render_window(o)
     end
   end
 
-  if not open then
+  if not open or (o:closing() ~= nil) then
     o:close()
   end
 end

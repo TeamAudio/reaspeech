@@ -44,7 +44,6 @@ Checkbox.simple = function(default_value, label, changed_handler)
 end
 
 Checkbox.renderer = function (self, column)
-  local disable_if = ReaUtil.disabler(ctx)
   local options = self.options
   local label = options.label_long
 
@@ -52,7 +51,7 @@ Checkbox.renderer = function (self, column)
     label = options.label_short
   end
 
-  disable_if(self.options.disabled_if(), function()
+  Widgets.disable_if(self.options.disabled_if(), function()
     local rv, value = ImGui.Checkbox(ctx, label, self:value())
 
     if options.help_text then
