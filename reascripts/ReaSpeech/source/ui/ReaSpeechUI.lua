@@ -52,22 +52,13 @@ function ReaSpeechUI:init()
     ASRPlugin,
     -- DetectLanguagePlugin,
     SettingsPlugin,
-    -- SampleMultipleUploadPlugin
+    -- SampleMultipleUploadPlugin,
+    TranscriptUI.plugin(),
    })
 
   self.controls_ui = ReaSpeechControlsUI.new({
     plugins = self.plugins,
   })
-
-  self.actions_ui = ReaSpeechActionsUI.new({
-    plugins = self.plugins,
-    worker = self.worker
-  })
-
-  self.transcript = Transcript.new()
-  self.transcript_ui = TranscriptUI.new { transcript = self.transcript }
-
-  self.importer = TranscriptImporter.new()
 
   self.alert_popup = AlertPopup.new {}
 
@@ -118,25 +109,21 @@ function ReaSpeechUI:render_content()
     ImGui.ShowMetricsWindow(ctx)
   end
 
-  ImGui.PushItemWidth(ctx, self.ITEM_WIDTH)
-
   Trap(function ()
     if self.welcome_ui then
       self.welcome_ui:render()
     end
-    self.importer:render()
     self.controls_ui:render()
-    self.actions_ui:render()
-    self.transcript_ui:render()
     self.alert_popup:render()
   end)
-
-  ImGui.PopItemWidth(ctx)
 end
 
 function ReaSpeechUI:load_transcript(transcript)
-  self.transcript = transcript
-  self.transcript_ui = TranscriptUI.new { transcript = self.transcript }
+  local plugin = TranscriptUI.new {
+    transcript = transcript,
+    _transcript_saved = true
+  }
+  self.plugins:add_plugin(plugin)
 end
 
 function ReaSpeechUI:submit_request(request)

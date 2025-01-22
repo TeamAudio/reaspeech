@@ -199,6 +199,14 @@ function TestTranscript:testSearch()
   lu.assertEquals(segments[1]:get('id'), 2)
 end
 
+function TestTranscript:testSetName()
+  local t = Transcript.new { name = "test" }
+  lu.assertEquals(t.name, "test")
+
+  t = Transcript.new()
+  t:set_name("test")
+end
+
 function TestTranscript:testSort()
   local t = Transcript.new()
   t:add_segment(self.segment {
@@ -348,8 +356,10 @@ function TestTranscript:testToJson()
   reaper.GetSetMediaItemTakeInfo_String = fake_getset
 
   local t = TestTranscript:make_transcript()
+  t:set_name("test")
   local result = t:to_json()
   local parsed = json.decode(result)
+  lu.assertEquals(parsed.name, "test")
   lu.assertEquals(parsed.segments[1].id, 1)
   lu.assertEquals(parsed.segments[1].start, 1.0)
   lu.assertEquals(parsed.segments[1]['end'], 2.0)
@@ -477,6 +487,7 @@ function TestTranscript:TestFromJson()
 
   local json_str = [[
     {
+      "name": "test",
       "segments": [
         {
           "id": 1,
@@ -530,6 +541,7 @@ function TestTranscript:TestFromJson()
   lu.assertEquals(#t.init_data, 2)
   lu.assertEquals(#t.filtered_data, 2)
   lu.assertEquals(#t.data, 2)
+  lu.assertEquals(t.name, "test")
   lu.assertEquals(t.init_data[1].data.id, 1)
   lu.assertEquals(t.init_data[1].data.start, 1.0)
   lu.assertEquals(t.init_data[1].words[1].word, "test")

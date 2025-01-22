@@ -13,10 +13,22 @@ function Plugin(definition)
 
   local plugin = Polo(definition)
 
+  function plugin:key()
+    assert('Plugin:key() must be overridden and return a string')
+  end
+
   function plugin:tabs()
     if not self._controls then return {} end
 
     return self._controls:tabs()
+  end
+
+  function plugin:new_tab_menu()
+    if not self._controls then return {} end
+
+    if not self._controls.new_tab_menu then return {} end
+
+    return self._controls:new_tab_menu()
   end
 
   function plugin:actions()

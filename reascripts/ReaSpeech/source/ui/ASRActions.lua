@@ -73,6 +73,9 @@ function ASRActions:selected_items_button()
 
   self._selected_items_button = Widgets.Button.new({
     label = button_text,
+    disabled = function()
+      return self.plugin.app.worker:progress()
+    end,
     on_click = function ()
       self:process_jobs(self.jobs_for_selected_items)
     end,
@@ -115,18 +118,27 @@ ASRActions._import_click = function()
     { json = 'JSON Files' }
   )
 
+  local importer = app.plugins(ASRPlugin:key()):importer()
+
   if #filenames < 1 then
-    app.importer:present()
+    importer:present()
     return
   end
 
   -- only considering one selection for the moment
   local selection = filenames[1]
 
-  local _, err = app.importer:import(selection)
+  local transcript, err = importer:import(selection)
 
-  if err then
-    app.importer:present()
+  if not transcript or err then
+    importer:present()
+  else
+    local plugin = TranscriptUI.new {
+      app = app,
+      transcript = transcript,
+      _transcript_saved = true
+    }
+    app.plugins:add_plugin(plugin)
   end
 end
 

@@ -5,7 +5,8 @@
 ]]--
 
 ASRPlugin = Plugin {
-  ENDPOINT = '/asr'
+  ENDPOINT = '/asr',
+  PLUGIN_KEY = 'asr',
 }
 
 function ASRPlugin:init()
@@ -13,6 +14,14 @@ function ASRPlugin:init()
   Logging().init(self, 'ASRPlugin')
   self._controls = ASRControls.new(self)
   self._actions = ASRActions.new(self)
+end
+
+function ASRPlugin:key()
+  return self.PLUGIN_KEY
+end
+
+function ASRPlugin:importer()
+  return self._controls.importer
 end
 
 function ASRPlugin:asr(jobs)
@@ -46,15 +55,17 @@ function ASRPlugin:asr(jobs)
     },
     jobs = jobs,
     endpoint = self.ENDPOINT,
-    callback = self:handle_response()
+    callback = self:handle_response(#jobs)
   }
-
-  self.app.transcript:clear()
 
   self.app:submit_request(request)
 end
 
-function ASRPlugin:handle_response()
+function ASRPlugin:handle_response(job_count)
+  local transcript = Transcript.new {
+    name = self.new_transcript_name(),
+  }
+
   return function(response)
     if not response[1] or not response[1].segments then
       return
@@ -68,11 +79,27 @@ function ASRPlugin:handle_response()
         TranscriptSegment.from_whisper(segment, job.item, job.take)
       ) do
         if s:get('text') then
-          self.app.transcript:add_segment(s)
+          transcript:add_segment(s)
         end
       end
     end
 
-    self.app.transcript:update()
+    transcript:update()
+
+    job_count = job_count - 1
+
+    if job_count == 0 then
+      local plugin = TranscriptUI.new { transcript = transcript }
+      self.app.plugins:add_plugin(plugin)
+    end
   end
+end
+
+ASRPlugin.new_transcript_name = function()
+  local time = os.time()
+  local date_start = os.date('%b %d, %Y @ %I:%M', time)
+  ---@diagnostic disable-next-line: param-type-mismatch
+  local am_pm = string.lower(os.date('%p', time))
+
+  return date_start .. am_pm
 end

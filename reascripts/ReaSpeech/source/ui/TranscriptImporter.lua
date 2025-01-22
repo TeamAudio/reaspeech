@@ -35,9 +35,11 @@ function TranscriptImporter:init()
   self.alert_popup = AlertPopup.new {}
 end
 
-function TranscriptImporter:show_success()
+function TranscriptImporter:show_success(on_close)
+  on_close = on_close or function() end
   self.alert_popup.onclose = function ()
     self.alert_popup.onclose = nil
+    on_close()
     self:close()
   end
   self.alert_popup:show('Import Successful', 'Imported ' .. self.file_selector:value())
@@ -66,9 +68,11 @@ function TranscriptImporter:render_buttons()
       return
     end
 
-    local success, msg = self:import(filepath)
-    if success then
-      self:show_success()
+    local transcript, msg = self:import(filepath)
+    if transcript then
+      self:show_success(function()
+        app:load_transcript(transcript)
+      end)
     else
       self:show_error(msg)
     end
@@ -84,13 +88,13 @@ end
 function TranscriptImporter:import(filepath)
   local file = io.open(filepath, 'r')
   if not file then
-    return false, 'File not found'
+    return nil, 'File not found'
   end
 
   local content = file:read('*a')
   file:close()
 
-  app:load_transcript(Transcript.from_json(content))
+  local transcript = Transcript.from_json(content)
 
-  return true
+  return transcript
 end

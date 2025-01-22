@@ -152,6 +152,10 @@ function Transcript:iterator(use_words)
   end
 end
 
+function Transcript:set_name(name)
+  self.name = name
+end
+
 function Transcript:sort(column, ascending)
   self.data = {table.unpack(self.filtered_data)}
   table.sort(self.data, function (a, b)
@@ -172,7 +176,11 @@ function Transcript:to_table()
   for _, segment in pairs(self.data) do
     table.insert(segments, segment:to_table())
   end
-  return {segments = segments}
+
+  return {
+    name = self.name,
+    segments = segments
+  }
 end
 
 function Transcript:to_json()
@@ -181,7 +189,11 @@ end
 
 function Transcript.from_json(json_str)
   local data = json.decode(json_str)
-  local t = Transcript.new()
+
+  local t = Transcript.new {
+    name = data.name or ''
+  }
+
   for _, segment_data in pairs(data.segments) do
     local segment = TranscriptSegment.from_table(segment_data)
     t:add_segment(segment)
