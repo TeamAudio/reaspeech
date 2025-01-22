@@ -7,8 +7,16 @@
 PathUtil = {}
 
 -- Returns true if the given file path has an extension, false otherwise.
-PathUtil.has_extension = function(filepath)
-  return filepath:find("%.[^%.\\/%s]*$") and true or false
+PathUtil.has_extension = function(filepath, extension)
+  local pattern
+
+  if extension then
+    pattern = "%." .. extension .. "$"
+  else
+    pattern = "%.[^%.\\/%s]*$"
+  end
+
+  return filepath:find(pattern) and true or false
 end
 
 -- Apply an extension to a file path, if it doesn't already have one.

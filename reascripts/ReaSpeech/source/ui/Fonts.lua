@@ -57,6 +57,10 @@ function Fonts:load_and_attach(ctx, font_size)
   self.big = ImGui.CreateFont('sans-serif', font_size + 4)
   self:_attach(ctx, self.big)
 
+  self:_detach(self.bigboi)
+  self.bigboi = ImGui.CreateFont('sans-serif', font_size + 8)
+  self:_attach(ctx, self.bigboi)
+
   self:_detach(self.bold)
   self.bold = ImGui.CreateFont('sans-serif', font_size, ImGui.FontFlags_Bold())
   self:_attach(ctx, self.bold)
