@@ -31,6 +31,14 @@ function Plugin(definition)
     return self._controls:new_tab_menu()
   end
 
+  function plugin:drop_zones(files)
+    if not self._controls then return {} end
+
+    if not self._controls.drop_zones then return {} end
+
+    return self._controls:drop_zones(files)
+  end
+
   function plugin:actions()
     if not self._actions then return {} end
 

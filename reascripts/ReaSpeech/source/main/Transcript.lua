@@ -103,6 +103,20 @@ function Transcript:has_words()
   return false
 end
 
+function Transcript:segment_iterator()
+  local segments = self.data
+  local segment_count = #segments
+  local segment_i = 1
+
+  return function ()
+    if segment_i <= segment_count then
+      local segment = segments[segment_i]
+      segment_i = segment_i + 1
+      return segment
+    end
+  end
+end
+
 function Transcript:iterator(use_words)
   local segments = self.data
   local segment_count = #segments
@@ -124,6 +138,7 @@ function Transcript:iterator(use_words)
           text = segment:get('text'),
           item = segment.item,
           take = segment.take,
+          words = segment.words,
         }
       end
 

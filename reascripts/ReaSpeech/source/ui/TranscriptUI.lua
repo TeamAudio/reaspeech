@@ -225,89 +225,118 @@ function TranscriptUI:init_layouts()
   }
 end
 
-function TranscriptUI:render_drop_zone()
-  if ImGui.BeginChild(ctx, '##empty', 0, 0) then
-    Trap(function()
-      if self._dropped_files then
-        Fonts.wrap(ctx, Fonts.bigboi, function()
-          local text = "Load Transcript:"
-          local text_width, _ = ImGui.CalcTextSize(ctx, text)
-          local _, y = ImGui.GetContentRegionMax(ctx)
+function TranscriptUI:drop_zones(files)
+  if not self._plugin_only then return {} end
 
-          ImGui.SetCursorPosX(ctx, (ImGui.GetWindowWidth(ctx) - text_width) / 2)
-          ImGui.SetCursorPosY(ctx, y / 3)
-          ImGui.Text(ctx, text)
-        end, Trap)
+  local filtered_files = {}
+  for _, file in ipairs(files) do
+    if TranscriptImporter:can_import(file) then
+      table.insert(filtered_files, file)
+    end
+  end
 
-        Fonts.wrap(ctx, Fonts.big, function()
-          local text = PathUtil.get_filename(self._dropped_files[1])
-          local text_width, _ = ImGui.CalcTextSize(ctx, text)
+  if #filtered_files < 1 then return {} end
 
-          ImGui.SetCursorPosX(ctx, (ImGui.GetWindowWidth(ctx) - text_width) / 2)
-          ImGui.Text(ctx, text)
-        end, Trap)
+  local drop_zones = {}
+
+  local load_drop_zone  = self:_load_drop_zone(filtered_files)
+  if load_drop_zone then
+    table.insert(drop_zones, load_drop_zone)
+  end
+
+  local combine_drop_zone = self:_combine_drop_zone(filtered_files)
+
+  if combine_drop_zone then
+    table.insert(drop_zones, combine_drop_zone)
+  end
+
+  return drop_zones
+end
+
+function TranscriptUI:_load_drop_zone(files)
+  local text
+  if #files == 1 then text = "Load Transcript"
+  else text = "Load " .. #files .. " Transcripts" end
+
+  return {
+    render = self:_drop_zone_renderer(text, files),
+    on_drop = function()
+      for _, file in ipairs(files) do
+        local transcript, _ = TranscriptImporter:import(file)
+
+        if transcript then
+          local plugin = TranscriptUI.new {
+            transcript = transcript,
+            _transcript_saved = true
+          }
+          app.plugins:add_plugin(plugin)
+        end
       end
-    end)
-    ImGui.EndChild(ctx)
+    end
+  }
+end
+
+function TranscriptUI:_combine_drop_zone(files)
+  if #files < 2 then return nil end
+
+  local text = "Combine " .. #files .. " Transcripts"
+
+  return {
+    render = self:_drop_zone_renderer(text, files),
+    on_drop = function()
+      local transcript = Transcript.new { name = "Combined Transcript" }
+
+      for _, file in ipairs(files) do
+        local t, _ = TranscriptImporter:import(file)
+
+        if t then
+          for segment in t:segment_iterator() do
+            transcript:add_segment(segment)
+          end
+        end
+      end
+
+      transcript:update()
+
+      local plugin = TranscriptUI.new {
+        transcript = transcript
+      }
+      app.plugins:add_plugin(plugin)
+    end
+  }
+end
+
+function TranscriptUI:_drop_zone_renderer(text, files)
+  return function(_)
+    Fonts.wrap(ctx, Fonts.bigboi, function()
+      local text_width, _ = ImGui.CalcTextSize(ctx, text)
+      local _, y = ImGui.GetContentRegionMax(ctx)
+
+      ImGui.SetCursorPosX(ctx, (ImGui.GetWindowWidth(ctx) - text_width) / 2)
+      ImGui.SetCursorPosY(ctx, y / 3)
+      ImGui.Text(ctx, text)
+    end, Trap)
+
+    self:_render_drop_zone_files(files)
   end
 end
 
-function TranscriptUI:render_drop_target()
-  if ImGui.BeginDragDropTarget(ctx) then
-    Trap(function()
-      local dragdrop_flags = ImGui.DragDropFlags_AcceptNoPreviewTooltip() | (self._dragdrop_flags or ImGui.DragDropFlags_AcceptPeekOnly())
-      local payload, count = ImGui.AcceptDragDropPayloadFiles(ctx, nil, dragdrop_flags)
+function TranscriptUI:_render_drop_zone_files(files)
+  Fonts.wrap(ctx, Fonts.big, function()
+    for _, file in ipairs(files) do
+      local text = PathUtil.get_filename(file)
+      local text_width, _ = ImGui.CalcTextSize(ctx, text)
 
-      if payload and dragdrop_flags == ImGui.DragDropFlags_AcceptNoPreviewTooltip() then
-        for i = 1, #self._dropped_files do
-          local transcript, _ = TranscriptImporter:import(self._dropped_files[i])
-
-          if transcript then
-            local plugin = TranscriptUI.new {
-              transcript = transcript,
-              _transcript_saved = true
-            }
-            app.plugins:add_plugin(plugin)
-          end
-        end
-        self._dropped_files = nil
-        self._dragdrop_flags = nil
-      elseif not self._dropped_files and payload then
-        local files = {}
-        for i = 0, count do
-          local file_result, file = ImGui.GetDragDropPayloadFile(ctx, i)
-          if file_result and TranscriptImporter:can_import(file) then
-            table.insert(files, file)
-          end
-        end
-
-        if #files > 0 then
-          self._dropped_files = files
-          self._dragdrop_flags = ImGui.DragDropFlags_AcceptNoPreviewTooltip()
-        end
-      end
-    end)
-    ImGui.EndDragDropTarget(ctx)
-  elseif self._dropped_files then
-    self._dropped_files = nil
-    self._dragdrop_flags = nil
-  end
+      ImGui.SetCursorPosX(ctx, (ImGui.GetWindowWidth(ctx) - text_width) / 2)
+      ImGui.Text(ctx, text)
+    end
+  end, Trap)
 end
 
 function TranscriptUI:render()
-  if self.transcript:has_segments() and not self._dropped_files then
-    self:render_name()
-    self.actions_layout:render()
-    self:render_table()
-  else
-    self:render_drop_zone()
-  end
-
-  -- Drop target applies to last appended item
-  -- rendering it in all cases means you can
-  -- drop a new transcript in even if one is already
-  -- loaded.
-  self:render_drop_target()
+  self:render_name()
+  self.actions_layout:render()
+  self:render_table()
 
   self.confirmation_popup:render()
   self.transcript_editor:render()
