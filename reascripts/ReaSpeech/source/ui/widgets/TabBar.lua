@@ -40,12 +40,16 @@ TabBar.renderer = function (self)
       tabs = tabs()
     end
 
-    for _, tab in pairs(tabs) do
-      if tab.on_click then
-        TabBar.render_tab_button(self, tab)
-      else
-        TabBar.render_tab_item(self, tab, current_value)
-      end
+    for i, tab in ipairs(tabs) do
+      ImGui.PushID(ctx, 'tab- ' .. i)
+      Trap(function()
+        if tab.on_click then
+          TabBar.render_tab_button(self, tab)
+        else
+          TabBar.render_tab_item(self, tab, current_value)
+        end
+        end)
+      ImGui.PopID(ctx)
     end
     ImGui.EndTabBar(ctx)
   end
