@@ -130,3 +130,33 @@ function TranscriptImporter:import(filepath)
 
   return transcript
 end
+
+TranscriptImporter.quick_import = function()
+  local filenames = Widgets.FileSelector.simple_open(
+    'Import Transcript',
+    { json = 'JSON Files' }
+  )
+
+  local importer = app.plugins(ASRPlugin:key()):importer()
+
+  if #filenames < 1 then
+    importer:present()
+    return
+  end
+
+  -- only considering one selection for the moment
+  local selection = filenames[1]
+
+  local transcript, err = importer:import(selection)
+
+  if not transcript or err then
+    importer:present()
+  else
+    local plugin = TranscriptUI.new {
+      app = app,
+      transcript = transcript,
+      _transcript_saved = true
+    }
+    app.plugins:add_plugin(plugin)
+  end
+end

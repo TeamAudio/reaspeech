@@ -106,40 +106,10 @@ function ASRActions:import_button()
 
   self._import_button = Widgets.Button.new({
     label = "Import Transcript",
-    on_click = self._import_click
+    on_click = TranscriptImporter.quick_import
   })
 
   return self._import_button
-end
-
-ASRActions._import_click = function()
-  local filenames = Widgets.FileSelector.simple_open(
-    'Import Transcript',
-    { json = 'JSON Files' }
-  )
-
-  local importer = app.plugins(ASRPlugin:key()):importer()
-
-  if #filenames < 1 then
-    importer:present()
-    return
-  end
-
-  -- only considering one selection for the moment
-  local selection = filenames[1]
-
-  local transcript, err = importer:import(selection)
-
-  if not transcript or err then
-    importer:present()
-  else
-    local plugin = TranscriptUI.new {
-      app = app,
-      transcript = transcript,
-      _transcript_saved = true
-    }
-    app.plugins:add_plugin(plugin)
-  end
 end
 
 function ASRActions.pluralizer(count, suffix)
