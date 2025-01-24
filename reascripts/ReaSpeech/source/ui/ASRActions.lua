@@ -106,7 +106,7 @@ function ASRActions:import_button()
 
   self._import_button = Widgets.Button.new({
     label = "Import Transcript",
-    on_click = TranscriptImporter.quick_import
+    on_click = TranscriptImporter:quick_import()
   })
 
   return self._import_button

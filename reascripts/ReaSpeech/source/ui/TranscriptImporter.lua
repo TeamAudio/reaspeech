@@ -131,32 +131,63 @@ function TranscriptImporter:import(filepath)
   return transcript
 end
 
-TranscriptImporter.quick_import = function()
-  local filenames = Widgets.FileSelector.simple_open(
-    'Import Transcript',
-    { json = 'JSON Files' }
-  )
+function TranscriptImporter:quick_import()
+  return function()
+    local filenames = Widgets.FileSelector.simple_open(
+      'Import Transcript',
+      { json = 'JSON Files' },
+      { allow_multiple = true }
+    )
 
-  local importer = app.plugins(ASRPlugin:key()):importer()
+    if #filenames < 1 then
+      local importer = app.plugins(ASRPlugin:key()):importer()
+      importer:present()
+      return
+    end
 
-  if #filenames < 1 then
-    importer:present()
-    return
-  end
+    local valid_filenames = {}
+    for _, filename in ipairs(filenames) do
+      if filename and filename ~= '' then
+        table.insert(valid_filenames, filename)
+      end
+    end
 
-  -- only considering one selection for the moment
-  local selection = filenames[1]
+    local load_errors = {}
 
-  local transcript, err = importer:import(selection)
+    for _, filename in ipairs(valid_filenames) do
+      local can_import, msg = self:can_import(filename)
 
-  if not transcript or err then
-    importer:present()
-  else
-    local plugin = TranscriptUI.new {
-      app = app,
-      transcript = transcript,
-      _transcript_saved = true
-    }
-    app.plugins:add_plugin(plugin)
+      if not can_import then
+        table.insert(load_errors, {filename, msg})
+      else
+        local transcript, err = self:import(filename)
+
+        if not transcript or err then
+          table.insert(load_errors, {filename, err})
+        else
+          local plugin = TranscriptUI.new {
+            app = app,
+            transcript = transcript,
+            _transcript_saved = true
+          }
+          app.plugins:add_plugin(plugin)
+        end
+      end
+    end
+
+    if #load_errors > 0 then
+      local title = 'Import complete, but...'
+      local msg = 'Some selected files were not loaded:\n\n%s'
+
+      local messages = {}
+
+      for _, err in ipairs(load_errors) do
+        table.insert(messages, PathUtil.get_filename(err[1]) .. ': ' .. err[2])
+      end
+
+      local file_messages = table.concat(messages, '\n')
+
+      app.alert_popup:show(title, msg:format(file_messages))
+    end
   end
 end

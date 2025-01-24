@@ -135,7 +135,7 @@ function TranscriptUI:new_tab_menu()
 
   return {
     { label = "Load Transcript",
-      on_click = TranscriptImporter.quick_import
+      on_click = TranscriptImporter:quick_import()
     },
   }
 end
