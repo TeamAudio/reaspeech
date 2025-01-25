@@ -503,8 +503,10 @@ function TranscriptUI:render_table_cell(segment, column)
     self:render_text(segment, column)
   elseif column == "score" then
     self:render_score(segment:get(column, 0.0))
-  elseif column == "start" or column == "end" then
-    ImGui.Text(ctx, reaper.format_timestr(segment:get(column, 0.0), ''))
+  elseif column == 'start' then
+    ImGui.Text(ctx, reaper.format_timestr(segment:timeline_start_time(), ''))
+  elseif column == 'end' then
+    ImGui.Text(ctx, reaper.format_timestr(segment:timeline_end_time(), ''))
   else
     local value = segment:get(column)
     if type(value) == 'table' then
