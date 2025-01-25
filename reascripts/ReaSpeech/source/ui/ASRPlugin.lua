@@ -48,14 +48,35 @@ function ASRPlugin:asr(jobs)
     data.initial_prompt = controls_data.initial_prompt
   end
 
+  -- consolidate jobs by path, retaining a collection of
+  -- { item: MediaItem, take: MediaItem_Take } objects
+  -- so that we can process a single file but reflect its
+  -- possibly multi-presence in the timeline
+
+  local consolidated_jobs = {}
+  local seen_path_index = {}
+  for _, job in pairs(jobs) do
+    local path = job.path
+
+    if not seen_path_index[path] then
+      table.insert(consolidated_jobs, {path = path, project_entries = {}})
+      seen_path_index[path] = #consolidated_jobs
+    end
+
+    local index = seen_path_index[path]
+    local project_entries = consolidated_jobs[index].project_entries
+
+    table.insert(project_entries, { item = job.item, take = job.take })
+  end
+
   local request = {
     data = data,
     file_uploads = {
       audio_file = function(job) return job.path end
     },
-    jobs = jobs,
+    jobs = consolidated_jobs,
     endpoint = self.ENDPOINT,
-    callback = self:handle_response(#jobs)
+    callback = self:handle_response(#consolidated_jobs)
   }
 
   self.app:submit_request(request)
@@ -74,12 +95,18 @@ function ASRPlugin:handle_response(job_count)
     local segments = response[1].segments
     local job = response._job
 
-    for _, segment in pairs(segments) do
-      for _, s in pairs(
-        TranscriptSegment.from_whisper(segment, job.item, job.take)
-      ) do
-        if s:get('text') then
-          transcript:add_segment(s)
+    for _, project_entry in pairs(job.project_entries) do
+      local item = project_entry.item
+      local take = project_entry.take
+
+      for _, segment in pairs(segments) do
+        local from_whisper = TranscriptSegment.from_whisper(segment, item, take)
+
+        for _, s in pairs(from_whisper) do
+          -- do we get a lot of textless segments? thinking emoji
+          if s:get('text') then
+            transcript:add_segment(s)
+          end
         end
       end
     end
