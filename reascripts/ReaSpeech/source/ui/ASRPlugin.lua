@@ -48,6 +48,15 @@ function ASRPlugin:asr(jobs)
     data.initial_prompt = controls_data.initial_prompt
   end
 
+  local job_count = 0
+  local seen = {}
+  for _, job in pairs(jobs) do
+    if not seen[job.path] then
+      seen[job.path] = true
+      job_count = job_count + 1
+    end
+  end
+
   local request = {
     data = data,
     file_uploads = {
@@ -55,7 +64,7 @@ function ASRPlugin:asr(jobs)
     },
     jobs = jobs,
     endpoint = self.ENDPOINT,
-    callback = self:handle_response(#jobs)
+    callback = self:handle_response(job_count)
   }
 
   self.app:submit_request(request)
