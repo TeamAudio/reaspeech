@@ -81,6 +81,53 @@ function Icons.stop(dl, x, y, w, h, color)
     color)
 end
 
+function Icons.gear(dl, x, y, w, h, color)
+  local center_x = x + (w - 1) * 0.5
+  local center_y = y + (h - 1) * 0.5
+  local circle_radius = w * 0.15
+  local inner_radius = w * 0.3
+  local outer_radius = w * 0.4
+  local num_teeth = 6
+
+  local points = Icons._gear_points(center_x, center_y, inner_radius, outer_radius, num_teeth)
+
+  ImGui.DrawList_AddCircleFilled(dl, x + w * 0.5, y + h * 0.5, circle_radius, color, 20)
+  for i = 1, #points - 2, 2 do
+    ImGui.DrawList_AddLine(dl, points[i], points[i + 1], points[i + 2], points[i + 3], color, 1)
+  end
+end
+
+Icons._gear_points_cache = {}
+
+function Icons._gear_points(center_x, center_y, inner_radius, outer_radius, num_teeth)
+  local cache_key = table.concat({center_x, center_y, inner_radius, outer_radius, num_teeth}, ",")
+  if Icons._gear_points_cache[cache_key] then
+    return Icons._gear_points_cache[cache_key]
+  end
+
+  local angle_step = 2 * math.pi / num_teeth
+  local angle_start = angle_step * 0.6
+  local points = {}
+
+  for i = 0, num_teeth - 1 do
+    local angle = angle_start + i * angle_step
+    table.insert(points, center_x + inner_radius * math.cos(angle))
+    table.insert(points, center_y + inner_radius * math.sin(angle))
+    table.insert(points, center_x + outer_radius * math.cos(angle + angle_step * 0.25))
+    table.insert(points, center_y + outer_radius * math.sin(angle + angle_step * 0.25))
+    table.insert(points, center_x + outer_radius * math.cos(angle + angle_step * 0.5))
+    table.insert(points, center_y + outer_radius * math.sin(angle + angle_step * 0.5))
+    table.insert(points, center_x + inner_radius * math.cos(angle + angle_step * 0.75))
+    table.insert(points, center_y + inner_radius * math.sin(angle + angle_step * 0.75))
+  end
+
+  table.insert(points, points[1])
+  table.insert(points, points[2])
+
+  Icons._gear_points_cache[cache_key] = points
+  return points
+end
+
 function Icons.info(dl, x, y, w, h, color)
   ImGui.DrawList_AddCircle(
     dl,
