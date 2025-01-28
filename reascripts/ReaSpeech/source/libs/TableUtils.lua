@@ -4,7 +4,7 @@
 
 ]]--
 
-table.flatten = table.flatten or function(tables)
+table.flatten = function(tables)
   local result = {}
 
   for _, t in ipairs(tables or {}) do
@@ -18,7 +18,7 @@ table.flatten = table.flatten or function(tables)
   return result
 end
 
-table.shallow_clone = table.shallow_clone or function(t)
+table.shallow_clone = function(t)
   local clone = {}
 
   for k, v in pairs(t) do
