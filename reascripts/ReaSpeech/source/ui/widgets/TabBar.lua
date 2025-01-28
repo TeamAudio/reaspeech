@@ -48,7 +48,7 @@ TabBar.renderer = function (self)
         else
           TabBar.render_tab_item(self, tab, current_value)
         end
-        end)
+      end)
       ImGui.PopID(ctx)
     end
     ImGui.EndTabBar(ctx)
