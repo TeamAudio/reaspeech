@@ -18,9 +18,13 @@ ReaSpeech is a ReaScript frontend that will take your project's media items and 
 
     docker run -d -p 9000:9000 --name reaspeech techaudiodoc/reaspeech:latest
 
-### GPU (currently Windows/NVIDIA only)
+### GPU: Windows/NVIDIA
 
     docker run -d --gpus all -p 9000:9000 --name reaspeech-gpu techaudiodoc/reaspeech:latest-gpu
+
+### GPU: Apple Silicon
+
+Please see our [Apple Silicon GPU instructions](docs/no-docker.md#apple-silicon-gpu)
 
 For more detailed instructions, see [Docker Usage](docs/docker.md)
 
