@@ -221,6 +221,18 @@ function TranscriptSegment:navigate(word_index, autoplay)
   end
 end
 
+function TranscriptSegment:timeline_start_time()
+  return reaper.GetMediaItemInfo_Value(self.item, 'D_POSITION')
+    + self.start
+    - reaper.GetMediaItemTakeInfo_Value(self.take, 'D_STARTOFFS')
+end
+
+function TranscriptSegment:timeline_end_time()
+  return reaper.GetMediaItemInfo_Value(self.item, 'D_POSITION')
+    + self.end_
+    - reaper.GetMediaItemTakeInfo_Value(self.take, 'D_STARTOFFS')
+end
+
 function TranscriptSegment:_navigate_to_media_item(item)
   reaper.SelectAllMediaItems(0, false)
   reaper.SetMediaItemSelected(item, true)
