@@ -75,10 +75,109 @@ function ReaSpeechControlsUI:render()
   ImGui.BeginGroup(ctx)
   Trap(function()
     self:render_heading()
-    self:render_tab_content()
+
+    if self._dropped_files then
+      self:_render_drop_zone()
+    else
+      self:render_tab_content()
+    end
+
   end)
   ImGui.EndGroup(ctx)
 
+  -- Drop target applies to last appended item
+  -- rendering it in all cases means you can
+  -- drop a new transcript in even if one is already
+  -- loaded.
+  self:_render_drop_target()
+end
+
+function ReaSpeechControlsUI:_render_drop_zone()
+  local avail_w, avail_h = ImGui.GetContentRegionAvail(ctx)
+
+  local drop_zone_height = (avail_h - 10) / #self._drop_zones
+
+  local theme = ImGuiTheme.new {
+    colors = {
+      { ImGui.Col_Border, 0xffffff00 },
+    },
+  }
+
+  local theme_selected = ImGuiTheme.new {
+    colors = {
+      { ImGui.Col_Border, 0xffffffff },
+    },
+  }
+
+  for i, drop_zone in ipairs(self._drop_zones) do
+    local child_flags = ImGui.WindowFlags_None() | ImGui.ChildFlags_Border()
+
+    local which_theme = drop_zone.hovered and theme_selected or theme
+
+    which_theme:wrap(ctx, function()
+      ImGui.BeginChild(ctx, 'drop-zone-' .. i, avail_w, drop_zone_height, child_flags)
+      Trap(function()
+        drop_zone:render()
+      end)
+      ImGui.EndChild(ctx)
+      drop_zone.hovered = ImGui.IsItemHovered(ctx, ImGui.HoveredFlags_AllowWhenBlockedByActiveItem())
+    end, Trap)
+  end
+end
+
+function ReaSpeechControlsUI:_render_drop_target()
+  if ImGui.BeginDragDropTarget(ctx) then
+    Trap(function()
+      local dragdrop_flags = ImGui.DragDropFlags_AcceptNoPreviewTooltip()
+        | (self._dragdrop_flags or ImGui.DragDropFlags_AcceptPeekOnly())
+
+      local payload, count = ImGui.AcceptDragDropPayloadFiles(ctx, nil,
+        dragdrop_flags | ImGui.DragDropFlags_AcceptNoDrawDefaultRect())
+
+      if not payload then return end
+
+      if dragdrop_flags == ImGui.DragDropFlags_AcceptNoPreviewTooltip() then
+        self:_do_drag_drop()
+      elseif not self._dropped_files then
+        self:_init_drag_drop(count)
+      end
+    end)
+    ImGui.EndDragDropTarget(ctx)
+  elseif self._dropped_files then
+    self:_reset_drag_drop()
+  end
+end
+
+function ReaSpeechControlsUI:_init_drag_drop(file_count)
+  local files = {}
+  for i = 0, file_count do
+    local file_result, file = ImGui.GetDragDropPayloadFile(ctx, i)
+    if file_result then
+      table.insert(files, file)
+    end
+  end
+
+  if #files > 0 then
+    self._drop_zones = self.plugins:drop_zones(files)
+    self._dropped_files = files
+    self._dragdrop_flags = ImGui.DragDropFlags_AcceptNoPreviewTooltip()
+  end
+end
+
+function ReaSpeechControlsUI:_do_drag_drop()
+  for _, drop_zone in ipairs(self._drop_zones) do
+    if drop_zone.hovered then
+      drop_zone:on_drop(self._dropped_files)
+    end
+  end
+
+  self:_reset_drag_drop()
+end
+
+function ReaSpeechControlsUI:_reset_drag_drop()
+  self._drop_zones = nil
+  self._dropped_files = nil
+  self._dragdrop_flags = nil
 end
 
 function ReaSpeechControlsUI:render_heading()
@@ -109,7 +208,11 @@ function ReaSpeechControlsUI:render_tab_content()
 
   for _, tab in ipairs(self.plugins:tabs()) do
     if tab.tab.key == tab_bar_value then
-      tab:render()
+      ImGui.BeginChild(ctx, 'tab-content', 0, 0)
+      Trap(function()
+        tab:render()
+      end)
+      ImGui.EndChild(ctx)
     end
 
     if tab.render_bg then tab:render_bg() end

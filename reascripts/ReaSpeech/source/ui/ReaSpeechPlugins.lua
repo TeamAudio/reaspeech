@@ -42,6 +42,18 @@ function ReaSpeechPlugins:get_plugin(key)
   end
 end
 
+function ReaSpeechPlugins:drop_zones(files)
+  local drop_zones = {}
+
+  for _, plugin in ipairs(self._plugins) do
+    for _, drop_zone in ipairs(plugin:drop_zones(files)) do
+      table.insert(drop_zones, drop_zone)
+    end
+  end
+
+  return drop_zones
+end
+
 function ReaSpeechPlugins:add_plugin(plugin)
   local new_plugin
   if type(plugin) == 'function' then
