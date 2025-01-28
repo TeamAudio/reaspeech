@@ -135,9 +135,7 @@ function TranscriptUI:new_tab_menu()
 
   return {
     { label = "Load Transcript",
-      on_click = function()
-        self.app.plugins(ASRPlugin:key()):importer():open()
-      end
+      on_click = TranscriptImporter:quick_import()
     },
   }
 end
