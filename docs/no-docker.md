@@ -51,17 +51,17 @@ Install Xcode Command Line Tools. This will install commands like git and make. 
 xcode-select --install
 ```
 
-Install Homebrew. This will help you install Lua, Python, and other dependencies. You can skip this step if you already have Homebrew, or if you prefer to install these dependencies manually.
+Install [Homebrew](https://brew.sh). This will help you install Lua, Python, and other dependencies. You can skip this step if you already have Homebrew, or if you prefer to install these dependencies manually.
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-Install Lua and Python. Please note the specific versions of Lua and Python that ReaSpeech requires.
+Install Lua, Python, and FFmpeg. Please note the specific versions of Lua and Python that ReaSpeech requires.
 ```bash
 brew install lua@5.4 python@3.10 ffmpeg
 ```
 
-Install Poetry. This will help you manage the Python dependencies that ReaSpeech requires.
+Install [Poetry](https://python-poetry.org). This will help you manage the Python dependencies that ReaSpeech requires.
 ```bash
 curl -sSL https://install.python-poetry.org | python3.10 -
 ```
