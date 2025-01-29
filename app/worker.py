@@ -73,27 +73,26 @@ def transcribe(
     logger.info(f"Transcribing {audio_file_path} with {asr_options}")
     output_format = asr_options["output"]
 
-    with open(audio_file_path, "rb") as audio_file:
-        model_name = asr_options.get("model_name") or DEFAULT_MODEL_NAME
-        logger.info(f"Loading model {model_name}")
-        self.update_state(state=STATES["loading_model"], meta={"progress": {"units": "models", "total": 1, "current": 0}})
-        _TQDM.set_progress_function(update_progress(self, STATES["loading_model"]))
-        try:
-            asr_engine.load_model(model_name)
-        finally:
-            _TQDM.set_progress_function(None)
+    model_name = asr_options.get("model_name") or DEFAULT_MODEL_NAME
+    logger.info(f"Loading model {model_name}")
+    self.update_state(state=STATES["loading_model"], meta={"progress": {"units": "models", "total": 1, "current": 0}})
+    _TQDM.set_progress_function(update_progress(self, STATES["loading_model"]))
+    try:
+        asr_engine.load_model(model_name)
+    finally:
+        _TQDM.set_progress_function(None)
 
-        logger.info(f"Loading audio from {audio_file_path}")
-        self.update_state(state=STATES["encoding"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
-        audio_data = load_audio(audio_file, asr_options.get("encode", False))
+    logger.info(f"Loading audio from {audio_file_path}")
+    self.update_state(state=STATES["encoding"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
+    audio_data = load_audio(audio_file_path, asr_options.get("encode", False))
 
-        logger.info(f"Transcribing audio")
-        self.update_state(state=STATES["transcribing"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
-        _TQDM.set_progress_function(update_progress(self, STATES["transcribing"]))
-        try:
-            result = asr_engine.transcribe(audio_data, asr_options, output_format)
-        finally:
-            _TQDM.set_progress_function(None)
+    logger.info(f"Transcribing audio")
+    self.update_state(state=STATES["transcribing"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
+    _TQDM.set_progress_function(update_progress(self, STATES["transcribing"]))
+    try:
+        result = asr_engine.transcribe(audio_data, asr_options, output_format)
+    finally:
+        _TQDM.set_progress_function(None)
 
     logger.info(f"Transcription complete")
 
@@ -123,19 +122,18 @@ def transcribe(
 def detect_language(self, audio_file_path: str, encode: bool):
     logger.info(f"Detecting language of {audio_file_path}")
 
-    with open(audio_file_path, "rb") as audio_file:
-        model_name = DEFAULT_MODEL_NAME
-        logger.info(f"Loading model {model_name}")
-        self.update_state(state=STATES["loading_model"], meta={"progress": {"units": "models", "total": 1, "current": 0}})
-        asr_engine.load_model(model_name)
+    model_name = DEFAULT_MODEL_NAME
+    logger.info(f"Loading model {model_name}")
+    self.update_state(state=STATES["loading_model"], meta={"progress": {"units": "models", "total": 1, "current": 0}})
+    asr_engine.load_model(model_name)
 
-        logger.info(f"Loading audio from {audio_file_path}")
-        self.update_state(state=STATES["encoding"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
-        audio_data = load_audio(audio_file, encode)
+    logger.info(f"Loading audio from {audio_file_path}")
+    self.update_state(state=STATES["encoding"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
+    audio_data = load_audio(audio_file_path, encode)
 
-        logger.info(f"Detecting audio language")
-        self.update_state(state=STATES["detecting_language"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
-        result = asr_engine.language_detection(audio_data)
+    logger.info(f"Detecting audio language")
+    self.update_state(state=STATES["detecting_language"], meta={"progress": {"units": "files", "total": 1, "current": 0}})
+    result = asr_engine.language_detection(audio_data)
 
     os.remove(audio_file_path)
 
