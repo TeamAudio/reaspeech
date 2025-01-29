@@ -31,7 +31,7 @@ See the source code to app/run.py for details. This is the same script that the 
 
 ## Apple Silicon GPU
 
-The whisper.cpp engine can do GPU-accelerated transcription on Apple Silicon (M1-M4, etc.) processors, which can significantly speed up transcriptions times. GPU support for these processors requires running ReaSpeech outside of Docker.
+The whisper.cpp engine can do GPU-accelerated transcription on Apple Silicon (M1-M4, etc.) processors, which can significantly speed up transcription time. GPU support for these processors requires running ReaSpeech outside of Docker.
 
 Please note that there are a few limitations to running the whisper.cpp ASR engine:
 
