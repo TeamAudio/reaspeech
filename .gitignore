@@ -43,3 +43,5 @@ poetry/core/*
 .env
 app/output/*/
 *.sqlite
+
+/pywhispercpp
