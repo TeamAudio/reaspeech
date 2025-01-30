@@ -47,30 +47,25 @@ def load_audio(file: Union[BinaryIO, str], encode=True, sr: int = SAMPLE_RATE):
     -------
     A NumPy array containing the audio waveform, in float32 dtype.
     """
+    is_path = isinstance(file, str)
     if encode:
+        input_source = file if is_path else "pipe:"
+        pipe_input = None if is_path else file.read()
         try:
-            if isinstance(file, str):
-                # If file is a file path, pass it directly to ffmpeg
-                input_source = file
-            else:
-                # If file is a file-like object, use "pipe:" input method
-                input_source = "pipe:"
-
             # This launches a subprocess to decode audio while down-mixing and resampling as necessary.
             # Requires the ffmpeg CLI and `ffmpeg-python` package to be installed.
             out, _ = (
                 ffmpeg.input(input_source, threads=0)
                 .output("-", format="s16le", acodec="pcm_s16le", ac=1, ar=sr)
-                .run(cmd=FFMPEG_BIN, capture_stdout=True, capture_stderr=True, input=None if isinstance(file, str) else file.read())
+                .run(cmd=FFMPEG_BIN, capture_stdout=True, capture_stderr=True, input=pipe_input)
             )
         except ffmpeg.Error as e:
             raise RuntimeError(f"Failed to load audio: {e.stderr.decode()}") from e
+    elif is_path:
+        with open(file, 'rb') as f:
+            out = f.read()
     else:
-        if isinstance(file, str):
-            with open(file, 'rb') as f:
-                out = f.read()
-        else:
-            out = file.read()
+        out = file.read()
 
     try:
         return np.frombuffer(out, np.int16).flatten().astype(np.float32) / 32768.0
