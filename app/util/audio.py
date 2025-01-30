@@ -21,8 +21,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from typing import BinaryIO, Union
 import os
-from typing import BinaryIO
 
 import ffmpeg
 import numpy as np
@@ -31,14 +31,14 @@ SAMPLE_RATE = 16000
 
 FFMPEG_BIN = os.getenv("FFMPEG_BIN", "ffmpeg")
 
-def load_audio(file: BinaryIO, encode=True, sr: int = SAMPLE_RATE):
+def load_audio(file: Union[BinaryIO, str], encode=True, sr: int = SAMPLE_RATE):
     """
-    Open an audio file object and read as mono waveform, resampling as necessary.
-    Modified from https://github.com/openai/whisper/blob/main/whisper/audio.py to accept a file object
+    Open an audio file object or file path and read as mono waveform, resampling as necessary.
+    Modified from https://github.com/openai/whisper/blob/main/whisper/audio.py to accept a file object or file path.
     Parameters
     ----------
-    file: BinaryIO
-        The audio file like object
+    file: Union[BinaryIO, str]
+        The audio file like object or file path
     encode: Boolean
         If true, encode audio stream to WAV before sending to whisper
     sr: int
@@ -47,17 +47,23 @@ def load_audio(file: BinaryIO, encode=True, sr: int = SAMPLE_RATE):
     -------
     A NumPy array containing the audio waveform, in float32 dtype.
     """
+    is_path = isinstance(file, str)
     if encode:
+        input_source = file if is_path else "pipe:"
+        pipe_input = None if is_path else file.read()
         try:
             # This launches a subprocess to decode audio while down-mixing and resampling as necessary.
             # Requires the ffmpeg CLI and `ffmpeg-python` package to be installed.
             out, _ = (
-                ffmpeg.input("pipe:", threads=0)
+                ffmpeg.input(input_source, threads=0)
                 .output("-", format="s16le", acodec="pcm_s16le", ac=1, ar=sr)
-                .run(cmd=FFMPEG_BIN, capture_stdout=True, capture_stderr=True, input=file.read())
+                .run(cmd=FFMPEG_BIN, capture_stdout=True, capture_stderr=True, input=pipe_input)
             )
         except ffmpeg.Error as e:
             raise RuntimeError(f"Failed to load audio: {e.stderr.decode()}") from e
+    elif is_path:
+        with open(file, 'rb') as f:
+            out = f.read()
     else:
         out = file.read()
 
