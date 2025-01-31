@@ -181,6 +181,22 @@ function ReaSpeechControlsUI:_reset_drag_drop()
 end
 
 function ReaSpeechControlsUI:render_heading()
+  local button_size = Fonts.size:get() * 1.7
+  ImGui.PushStyleVar(ctx, ImGui.StyleVar_FrameRounding(), 4)
+  Trap(function ()
+    if Widgets.icon_button(Icons.gear, '##settings', button_size, button_size, 'Settings') then
+      local settings_plugin = self.plugins:get_plugin(SettingsPlugin.PLUGIN_KEY)
+      if settings_plugin then
+        self.plugins:remove_plugin(settings_plugin)
+      else
+        local app = self.plugins.app
+        self.plugins:add_plugin(SettingsPlugin.new { app = app })
+      end
+    end
+  end)
+  ImGui.PopStyleVar(ctx)
+  ImGui.SameLine(ctx)
+
   local avail_w, _ = ImGui.GetContentRegionAvail(ctx)
 
   local logo = IMAGES['heading-logo-tech-audio']
