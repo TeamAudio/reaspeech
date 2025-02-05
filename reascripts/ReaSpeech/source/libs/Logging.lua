@@ -17,18 +17,13 @@ Logging = setmetatable({}, {
 })
 
 Logging._init = function()
-  local storage = Storage.ExtState.make {
-    section = 'ReaSpeech.Logging',
-    persist = true,
-  }
-
   local API = {}
   API = {
     LOG_LEVEL_LOG = false,
     LOG_LEVEL_DEBUG = true,
 
-    show_logs = storage:boolean('show_logs', false),
-    show_debug_logs = storage:boolean('show_debug_logs', false),
+    show_logs = Storage.memory(false),
+    show_debug_logs = Storage.memory(false),
 
     logs = {},
 

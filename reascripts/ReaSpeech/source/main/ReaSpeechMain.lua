@@ -13,6 +13,8 @@ function ReaSpeechMain:main()
   if not self:check_imgui() then return end
   reaper.atexit(function () self:on_exit() end)
 
+  self:init_logging()
+
   self:init_ctx()
   ctx = Ctx()
 
@@ -54,6 +56,16 @@ function ReaSpeechMain:init_ctx()
   Ctx.on_create = function (ctx)
     Fonts:init(ctx)
   end
+end
+
+function ReaSpeechMain:init_logging()
+  local storage = Storage.ExtState.make {
+    section = 'ReaSpeech.Logging',
+    persist = true,
+  }
+
+  Logging().show_logs = storage:boolean('show_logs', false)
+  Logging().show_debug_logs = storage:boolean('show_debug_logs', false)
 end
 
 function ReaSpeechMain:on_exit()
