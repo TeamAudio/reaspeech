@@ -58,14 +58,6 @@ function SettingsControls:init_layout()
 end
 
 function SettingsControls:init_logging()
-  local storage = Storage.ExtState.make {
-    section = 'ReaSpeech.Logging',
-    persist = true,
-  }
-
-  Logging().show_logs = storage:boolean('show_logs', false)
-  Logging().show_debug_logs = storage:boolean('show_debug_logs', false)
-
   self.log_enable = Widgets.Checkbox.new {
     state = Logging().show_logs,
     label_long = 'Enable',
