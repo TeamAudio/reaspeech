@@ -53,7 +53,7 @@ function ReaSpeechUI:init()
     -- DetectLanguagePlugin,
     -- SampleMultipleUploadPlugin,
     TranscriptUI.plugin(),
-   })
+  })
 
   self.controls_ui = ReaSpeechControlsUI.new({
     plugins = self.plugins,
