@@ -1,0 +1,37 @@
+name: Publish GitHub Release Notes to WordPress
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish_release-notes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Publish Release Notes to WordPress
+        env:
+          WP_API_URL: ${{ secrets.WP_API_URL }}      
+          WP_USERNAME: ${{ secrets.WP_USERNAME }}          
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}  
+        run: |
+          TITLE=$(echo "${{ github.event.release.name }}" | jq -Rs .)
+          CONTENT=$(echo "${{ github.event.release.body }}" | jq -Rs .)
+
+          echo "Title: $TITLE"
+          echo "Content: $CONTENT"
+
+          curl -X POST "$WP_API_URL" \
+            -H "Content-Type: application/json" \
+            -u "$WP_USERNAME:$WP_APP_PASSWORD" \
+            --data-binary @- <<EOF
+          {
+            "title": $TITLE,
+            "content": $CONTENT,
+            "status": "publish"
+          }
+          EOF
+       
