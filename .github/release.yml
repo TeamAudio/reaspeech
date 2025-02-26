@@ -5,6 +5,7 @@ changelog:
       labels:
         - wontfix
         - duplicate
+
   categories:
     - title: "🚀 Features"
       labels:
@@ -15,12 +16,10 @@ changelog:
       labels:
         - bug
         - fix
-        - bugfix
 
     - title: "🛠 Maintenance & Refactoring"
       labels:
         - refactor
-        - chore
         - cleanup
 
     - title: "📖 Documentation"
@@ -31,4 +30,6 @@ changelog:
     - title: "🔧 Dependency Updates"
       labels:
         - dependencies
-        - upgrade
+
+    - title: "Other Changes"
+      labels: ["*"]
