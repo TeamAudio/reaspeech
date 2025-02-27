@@ -31,5 +31,5 @@ changelog:
       labels:
         - dependencies
 
-    - title: "😊Other Changes"
+    - title: "😊 Other Changes"
       labels: ["*"]
