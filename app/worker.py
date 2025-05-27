@@ -43,6 +43,8 @@ if ASR_ENGINE == "faster_whisper":
     from .faster_whisper import core as asr_engine
 elif ASR_ENGINE == "whisper_cpp":
     from .whisper_cpp import core as asr_engine
+elif ASR_ENGINE == "mlx_whisper":
+    from .mlx_whisper import core as asr_engine
 else:
     from .openai_whisper import core as asr_engine
 
