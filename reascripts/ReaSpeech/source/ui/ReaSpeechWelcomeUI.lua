@@ -65,42 +65,42 @@ function ReaSpeechWelcomeUI:render_demo_text()
   self:render_heading("Demo Version")
   self:render_text("Please note that this version is a demo and may not be available at all times.")
   self:render_text("For a more reliable experience, you can run ReaSpeech locally using the ")
-  ImGui.SameLine(ctx, 0, 0)
+  ImGui.SameLine(Ctx(), 0, 0)
   Widgets.link("Docker image", ReaUtil.url_opener(self.DOCKER_DOC_URL), self.LINK_COLOR, self.LINK_COLOR)
-  ImGui.SameLine(ctx, 0, 0)
-  ImGui.Text(ctx, ".")
+  ImGui.SameLine(Ctx(), 0, 0)
+  ImGui.Text(Ctx(), ".")
 end
 
 function ReaSpeechWelcomeUI:render_close_button()
-  ImGui.Dummy(ctx, self.WIDTH, self.PADDING - 2)
-  ImGui.SetCursorPosX(ctx, self.PADDING - 2)
-  if ImGui.Button(ctx, "Let's Go!") then
+  ImGui.Dummy(Ctx(), self.WIDTH, self.PADDING - 2)
+  ImGui.SetCursorPosX(Ctx(), self.PADDING - 2)
+  if ImGui.Button(Ctx(), "Let's Go!") then
     self:close()
   end
 end
 
 function ReaSpeechWelcomeUI:render_heading(text)
-  ImGui.PushFont(ctx, Fonts.bold)
+  ImGui.PushFont(Ctx(), Fonts.bold)
   Trap(function ()
-    ImGui.Dummy(ctx, self.WIDTH, self.HEADING_MARGIN)
-    ImGui.SetCursorPosX(ctx, self.PADDING)
-    ImGui.Text(ctx, text)
+    ImGui.Dummy(Ctx(), self.WIDTH, self.HEADING_MARGIN)
+    ImGui.SetCursorPosX(Ctx(), self.PADDING)
+    ImGui.Text(Ctx(), text)
   end)
-  ImGui.PopFont(ctx)
+  ImGui.PopFont(Ctx())
 end
 
 function ReaSpeechWelcomeUI:render_text(text)
-  ImGui.Dummy(ctx, self.WIDTH, self.PARA_MARGIN)
-  ImGui.SetCursorPosX(ctx, self.PADDING)
-  ImGui.Text(ctx, text)
+  ImGui.Dummy(Ctx(), self.WIDTH, self.PARA_MARGIN)
+  ImGui.SetCursorPosX(Ctx(), self.PADDING)
+  ImGui.Text(Ctx(), text)
 end
 
 function ReaSpeechWelcomeUI:render_footer()
-  ImGui.Dummy(ctx, self.WIDTH, self.FOOTER_MARGIN)
+  ImGui.Dummy(Ctx(), self.WIDTH, self.FOOTER_MARGIN)
 
-  local draw_list = ImGui.GetWindowDrawList(ctx)
-  local screen_x, screen_y = ImGui.GetCursorScreenPos(ctx)
-  local cursor_x, cursor_y = ImGui.GetCursorPos(ctx)
+  local draw_list = ImGui.GetWindowDrawList(Ctx())
+  local screen_x, screen_y = ImGui.GetCursorScreenPos(Ctx())
+  local cursor_x, cursor_y = ImGui.GetCursorPos(Ctx())
 
   ImGui.DrawList_AddRectFilled(
     draw_list,
@@ -111,12 +111,12 @@ function ReaSpeechWelcomeUI:render_footer()
     self.FOOTER_BG_COLOR
   )
 
-  ImGui.Dummy(ctx, self.WIDTH, self.FOOTER_HEIGHT)
-  ImGui.SetCursorPos(ctx, cursor_x + self.PADDING, cursor_y + self.PADDING)
+  ImGui.Dummy(Ctx(), self.WIDTH, self.FOOTER_HEIGHT)
+  ImGui.SetCursorPos(Ctx(), cursor_x + self.PADDING, cursor_y + self.PADDING)
 
   Widgets.link("ReaSpeech Website", ReaUtil.url_opener(self.HOME_URL))
-  ImGui.SameLine(ctx)
+  ImGui.SameLine(Ctx())
   Widgets.link("GitHub", ReaUtil.url_opener(self.GITHUB_URL))
-  ImGui.SameLine(ctx)
+  ImGui.SameLine(Ctx())
   Widgets.link("Docker Hub", ReaUtil.url_opener(self.DOCKER_HUB_URL))
 end

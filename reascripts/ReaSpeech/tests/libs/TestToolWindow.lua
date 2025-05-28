@@ -6,6 +6,7 @@ require('tests/mock_reaper')
 
 require('include/globals')
 
+require('libs/Ctx')
 require('libs/ImGuiTheme')
 require('libs/Logging')
 require('libs/Polo')
@@ -216,6 +217,7 @@ function TestToolWindow:testRender()
   ImGui.SetNextWindowFocus = function(_) end
   ImGui.SetNextWindowPos = function(_, _, _, _, _, _) end
   ImGui.SetNextWindowSize = function(_, _, _, _) end
+  ImGui.ValidatePtr = function(_, _) return true end
   ImGui.Viewport_GetCenter = function() return 0, 0 end
   ImGui.WindowFlags_AlwaysAutoResize = function() return 0 end
   ImGui.WindowFlags_NoCollapse = function() return 1 end

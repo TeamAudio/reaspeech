@@ -139,8 +139,8 @@ function TranscriptExporter:show_success()
     local file_path = self.target_filename:get()
     local filename = PathUtil.get_filename(self.target_filename:get())
 
-    ImGui.Text(ctx, 'Exported ' .. self.export_formats:selected_key() .. ' to: ')
-    ImGui.SameLine(ctx)
+    ImGui.Text(Ctx(), 'Exported ' .. self.export_formats:selected_key() .. ' to: ')
+    ImGui.SameLine(Ctx())
 
     Widgets.link(filename, function()
       ExecProcess.new(PathUtil.get_reveal_command(file_path)):no_wait()
@@ -158,11 +158,11 @@ function TranscriptExporter:render_content()
 
   self.export_formats:render_combo(self.INPUT_WIDTH)
 
-  ImGui.Spacing(ctx)
+  ImGui.Spacing(Ctx())
 
   self.export_formats:render_format_options(self.export_options)
 
-  ImGui.Spacing(ctx)
+  ImGui.Spacing(Ctx())
 
   self:render_file_selector()
 
@@ -174,17 +174,17 @@ end
 function TranscriptExporter:render_file_selector()
   self.file_selector:render()
 
-  ImGui.Spacing(ctx)
+  ImGui.Spacing(Ctx())
 
   self.apply_extension:render()
 
-  ImGui.Spacing(ctx)
+  ImGui.Spacing(Ctx())
 
   local show_target_filename = self.file_selector:value() == ''
     or self.target_filename:get() ~= self.file_selector:value()
 
   if show_target_filename then
-    ImGui.Text(ctx, 'Target File: ' .. self.target_filename_display:get())
+    ImGui.Text(Ctx(), 'Target File: ' .. self.target_filename_display:get())
   end
 
   if self.target_filename_exists:get() then
@@ -194,15 +194,15 @@ end
 
 function TranscriptExporter:render_buttons()
   Widgets.disable_if(self.file_selector:value() == '', function()
-    if ImGui.Button(ctx, 'Export', self.BUTTON_WIDTH, 0) then
+    if ImGui.Button(Ctx(), 'Export', self.BUTTON_WIDTH, 0) then
       if self:handle_export() then
         self:show_success()
       end
     end
   end)
 
-  ImGui.SameLine(ctx)
-  if ImGui.Button(ctx, 'Cancel', self.BUTTON_WIDTH, 0) then
+  ImGui.SameLine(Ctx())
+  if ImGui.Button(Ctx(), 'Cancel', self.BUTTON_WIDTH, 0) then
     self:close()
   end
 end
@@ -239,13 +239,13 @@ TranscriptExporterFormats = Polo {
 }
 
 function TranscriptExporterFormats:render_combo(width)
-  ImGui.Text(ctx, 'Format')
-  ImGui.SetNextItemWidth(ctx, width)
-  if ImGui.BeginCombo(ctx, "##format", self.selected_format_key) then
+  ImGui.Text(Ctx(), 'Format')
+  ImGui.SetNextItemWidth(Ctx(), width)
+  if ImGui.BeginCombo(Ctx(), "##format", self.selected_format_key) then
     Trap(function()
       for _, format in pairs(self.formatters) do
         local is_selected = self.selected_format_key == format.key
-        if ImGui.Selectable(ctx, format.key, is_selected) then
+        if ImGui.Selectable(Ctx(), format.key, is_selected) then
           self.selected_format_key = format.key
 
           if self.on_change then
@@ -253,11 +253,11 @@ function TranscriptExporterFormats:render_combo(width)
           end
         end
         if is_selected then
-          ImGui.SetItemDefaultFocus(ctx)
+          ImGui.SetItemDefaultFocus(Ctx())
         end
       end
     end)
-    ImGui.EndCombo(ctx)
+    ImGui.EndCombo(Ctx())
   end
 end
 
@@ -325,7 +325,7 @@ function TranscriptExportFormat.exporter_json()
 end
 
 function TranscriptExportFormat.options_json(options)
-  local rv, value = ImGui.Checkbox(ctx, 'One Object per Transcript Segment', options.object_per_segment)
+  local rv, value = ImGui.Checkbox(Ctx(), 'One Object per Transcript Segment', options.object_per_segment)
   if rv then
     options.object_per_segment = value
   end
@@ -357,26 +357,26 @@ end
 function TranscriptExportFormat.options_srt(options)
   local rv, value
 
-  rv, value = ImGui.InputText(ctx, 'X1', options.coords_x1, ImGui.InputTextFlags_CharsDecimal())
+  rv, value = ImGui.InputText(Ctx(), 'X1', options.coords_x1, ImGui.InputTextFlags_CharsDecimal())
   if rv then
     options.coords_x1 = TranscriptExportFormat.strip_non_numeric(value)
   end
 
-  ImGui.SameLine(ctx)
+  ImGui.SameLine(Ctx())
 
-  rv, value = ImGui.InputText(ctx, 'Y1', options.coords_y1, ImGui.InputTextFlags_CharsDecimal())
+  rv, value = ImGui.InputText(Ctx(), 'Y1', options.coords_y1, ImGui.InputTextFlags_CharsDecimal())
   if rv then
     options.coords_y1 = TranscriptExportFormat.strip_non_numeric(value)
   end
 
-  rv, value = ImGui.InputText(ctx, 'X2', options.coords_x2, ImGui.InputTextFlags_CharsDecimal())
+  rv, value = ImGui.InputText(Ctx(), 'X2', options.coords_x2, ImGui.InputTextFlags_CharsDecimal())
   if rv then
     options.coords_x2 = TranscriptExportFormat.strip_non_numeric(value)
   end
 
-  ImGui.SameLine(ctx)
+  ImGui.SameLine(Ctx())
 
-  rv, value = ImGui.InputText(ctx, 'Y2', options.coords_y2, ImGui.InputTextFlags_CharsDecimal())
+  rv, value = ImGui.InputText(Ctx(), 'Y2', options.coords_y2, ImGui.InputTextFlags_CharsDecimal())
   if rv then
     options.coords_y2 = TranscriptExportFormat.strip_non_numeric(value)
   end
@@ -407,24 +407,24 @@ function TranscriptExportFormat.options_csv(options)
     end
   end
 
-  if ImGui.BeginCombo(ctx, 'Delimiter', selected_delimiter.name) then
+  if ImGui.BeginCombo(Ctx(), 'Delimiter', selected_delimiter.name) then
     Trap(function()
       for _, delimiter in ipairs(delimiters) do
         local is_selected = options.delimiter == delimiter.char
-        if ImGui.Selectable(ctx, delimiter.name, is_selected) then
+        if ImGui.Selectable(Ctx(), delimiter.name, is_selected) then
           options.delimiter = delimiter.char
         end
         if is_selected then
-          ImGui.SetItemDefaultFocus(ctx)
+          ImGui.SetItemDefaultFocus(Ctx())
         end
       end
     end)
-    ImGui.EndCombo(ctx)
+    ImGui.EndCombo(Ctx())
   end
 
-  ImGui.Spacing(ctx)
+  ImGui.Spacing(Ctx())
 
-  local rv, value = ImGui.Checkbox(ctx, 'Include Header Row', options.include_header_row)
+  local rv, value = ImGui.Checkbox(Ctx(), 'Include Header Row', options.include_header_row)
   if rv then
     options.include_header_row = value
   end

@@ -50,11 +50,11 @@ function TranscriptAnnotationsUI:render_content()
   local selected_type = self.annotation_types:selected_type()
 
   if selected_type then
-    ImGui.Spacing(ctx)
+    ImGui.Spacing(Ctx())
 
     self.annotation_types:render_type_options(self.annotation_type)
 
-    ImGui.Spacing(ctx)
+    ImGui.Spacing(Ctx())
   end
 
   self:render_separator()
@@ -64,14 +64,14 @@ end
 
 function TranscriptAnnotationsUI:render_buttons(is_disabled)
   Widgets.disable_if(is_disabled, function()
-    if ImGui.Button(ctx, 'Create', self.BUTTON_WIDTH, 0) then
+    if ImGui.Button(Ctx(), 'Create', self.BUTTON_WIDTH, 0) then
       self:handle_create()
     end
   end)
 
-  ImGui.SameLine(ctx)
+  ImGui.SameLine(Ctx())
 
-  if ImGui.Button(ctx, 'Close', self.BUTTON_WIDTH, 0) then
+  if ImGui.Button(Ctx(), 'Close', self.BUTTON_WIDTH, 0) then
     self:close()
   end
 end
@@ -196,9 +196,9 @@ function TranscriptAnnotationTypes.take_markers(has_words)
     key = 'take_markers',
     renderer = function ()
       granularity_combo:render()
-      ImGui.Spacing(ctx)
+      ImGui.Spacing(Ctx())
       track_filter_mode:render()
-      ImGui.Spacing(ctx)
+      ImGui.Spacing(Ctx())
       track_selector:render()
     end,
     creator = function (annotations)
@@ -266,7 +266,7 @@ function TranscriptAnnotationTypes.notes_track(has_words)
 
     renderer = function ()
       track_name:render()
-      ImGui.Spacing(ctx)
+      ImGui.Spacing(Ctx())
       granularity_combo:render()
     end,
 

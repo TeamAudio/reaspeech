@@ -61,7 +61,7 @@ end
 
 function TranscriptImporter:render_buttons()
   -- alternatively we could do a disable-button-if-no-file thing
-  if ImGui.Button(ctx, 'Import', self.BUTTON_WIDTH, 0) then
+  if ImGui.Button(Ctx(), 'Import', self.BUTTON_WIDTH, 0) then
     local filepath = self.file_selector:value()
     if filepath == '' then
       self:show_error('No file selected')
@@ -78,9 +78,9 @@ function TranscriptImporter:render_buttons()
     end
   end
 
-  ImGui.SameLine(ctx)
+  ImGui.SameLine(Ctx())
 
-  if ImGui.Button(ctx, 'Close', self.BUTTON_WIDTH, 0) then
+  if ImGui.Button(Ctx(), 'Close', self.BUTTON_WIDTH, 0) then
     self:close()
   end
 end

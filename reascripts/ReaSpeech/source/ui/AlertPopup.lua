@@ -36,10 +36,10 @@ function AlertPopup:render_content()
     self.msg()
     return
   end
-  ImGui.Text(ctx, self.msg)
+  ImGui.Text(Ctx(), self.msg)
 
   self:render_separator()
-  if ImGui.Button(ctx, 'OK', self.BUTTON_WIDTH, 0) then
+  if ImGui.Button(Ctx(), 'OK', self.BUTTON_WIDTH, 0) then
     self:close()
   end
 end

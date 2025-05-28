@@ -90,23 +90,23 @@ end
 FileSelector.renderer = function(self)
   local options = self.options
 
-  ImGui.Text(ctx, options.label)
+  ImGui.Text(Ctx(), options.label)
 
   FileSelector.render_jsapi_notice(self)
 
   options.button:render()
-  ImGui.SameLine(ctx)
+  ImGui.SameLine(Ctx())
 
   local w, _
   if not options.input_width then
-    w, _ = ImGui.GetContentRegionAvail(ctx)
+    w, _ = ImGui.GetContentRegionAvail(Ctx())
   else
     w = options.input_width
   end
 
-  ImGui.SetNextItemWidth(ctx, w)
+  ImGui.SetNextItemWidth(Ctx(), w)
   local hint = '...or type one here.'
-  local file_changed, file = ImGui.InputTextWithHint(ctx, '##file', hint, self:value())
+  local file_changed, file = ImGui.InputTextWithHint(Ctx(), '##file', hint, self:value())
   if file_changed then
     self:set(file)
   end
@@ -117,14 +117,14 @@ FileSelector.render_jsapi_notice = function(self)
     return
   end
 
-  local _, spacing_v = ImGui.GetStyleVar(ctx, ImGui.StyleVar_ItemSpacing())
-  ImGui.PushStyleVar(ctx, ImGui.StyleVar_ItemSpacing(), 0, spacing_v)
-  ImGui.Text(ctx, "To enable file selector, ")
-  ImGui.SameLine(ctx)
+  local _, spacing_v = ImGui.GetStyleVar(Ctx(), ImGui.StyleVar_ItemSpacing())
+  ImGui.PushStyleVar(Ctx(), ImGui.StyleVar_ItemSpacing(), 0, spacing_v)
+  ImGui.Text(Ctx(), "To enable file selector, ")
+  ImGui.SameLine(Ctx())
   Widgets.link('install js_ReaScriptAPI', ReaUtil.url_opener(FileSelector.JSREASCRIPT_URL))
-  ImGui.SameLine(ctx)
-  ImGui.Text(ctx, ".")
-  ImGui.PopStyleVar(ctx)
+  ImGui.SameLine(Ctx())
+  ImGui.Text(Ctx(), ".")
+  ImGui.PopStyleVar(Ctx())
 end
 
 return FileSelector

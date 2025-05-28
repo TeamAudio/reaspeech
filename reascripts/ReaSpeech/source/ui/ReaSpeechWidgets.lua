@@ -17,12 +17,12 @@ function ReaSpeechWidget:init()
 end
 
 function ReaSpeechWidget:render(...)
-  ImGui.PushID(ctx, self.widget_id)
+  ImGui.PushID(Ctx(), self.widget_id)
   local args = ...
   Trap(function()
     self.renderer(self, args)
   end)
-  ImGui.PopID(ctx)
+  ImGui.PopID(Ctx())
 end
 
 function ReaSpeechWidget:render_help_icon()
@@ -35,14 +35,14 @@ function ReaSpeechWidget:render_label(label)
   local options = self.options
   label = label or options.label
 
-  ImGui.Text(ctx, label)
+  ImGui.Text(Ctx(), label)
 
   if label ~= '' and options.help_text then
-    ImGui.SameLine(ctx)
+    ImGui.SameLine(Ctx())
     self:render_help_icon()
   end
 
-  ImGui.Dummy(ctx, 0, 0)
+  ImGui.Dummy(Ctx(), 0, 0)
 end
 
 function ReaSpeechWidget:value()

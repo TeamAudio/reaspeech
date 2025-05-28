@@ -146,20 +146,20 @@ function TranscriptUI:confirm_close()
   end
 
   self.confirmation_popup:show('Transcript not saved!', function()
-    ImGui.Text(ctx, "This transcript hasn't been saved/exported. Are you sure you want to close it?")
-    ImGui.Separator(ctx)
-    if ImGui.Button(ctx, 'Cancel') then
+    ImGui.Text(Ctx(), "This transcript hasn't been saved/exported. Are you sure you want to close it?")
+    ImGui.Separator(Ctx())
+    if ImGui.Button(Ctx(), 'Cancel') then
       self.confirmation_popup:close()
     end
 
-    ImGui.SameLine(ctx)
-    if ImGui.Button(ctx, 'Close without Saving') then
+    ImGui.SameLine(Ctx())
+    if ImGui.Button(Ctx(), 'Close without Saving') then
       self.confirmation_popup:close()
       app.plugins:remove_plugin(self)
     end
 
-    ImGui.SameLine(ctx)
-    if ImGui.Button(ctx, 'Save') then
+    ImGui.SameLine(Ctx())
+    if ImGui.Button(Ctx(), 'Save') then
       self.confirmation_popup:close()
       self.transcript_exporter.on_export = function()
         app.plugins:remove_plugin(self)
@@ -189,7 +189,7 @@ end
 
 function TranscriptUI:clipper()
   if not ImGui.ValidatePtr(self._clipper, 'ImGui_ListClipper*') then
-    self._clipper = ImGui.CreateListClipper(ctx)
+    self._clipper = ImGui.CreateListClipper(Ctx())
   end
 
   return self._clipper
@@ -306,13 +306,13 @@ end
 
 function TranscriptUI:_drop_zone_renderer(text, files)
   return function(_)
-    Fonts.wrap(ctx, Fonts.bigboi, function()
-      local text_width, _ = ImGui.CalcTextSize(ctx, text)
-      local _, y = ImGui.GetContentRegionMax(ctx)
+    Fonts.wrap(Ctx(), Fonts.bigboi, function()
+      local text_width, _ = ImGui.CalcTextSize(Ctx(), text)
+      local _, y = ImGui.GetContentRegionMax(Ctx())
 
-      ImGui.SetCursorPosX(ctx, (ImGui.GetWindowWidth(ctx) - text_width) / 2)
-      ImGui.SetCursorPosY(ctx, y / 3)
-      ImGui.Text(ctx, text)
+      ImGui.SetCursorPosX(Ctx(), (ImGui.GetWindowWidth(Ctx()) - text_width) / 2)
+      ImGui.SetCursorPosY(Ctx(), y / 3)
+      ImGui.Text(Ctx(), text)
     end, Trap)
 
     self:_render_drop_zone_files(files)
@@ -320,13 +320,13 @@ function TranscriptUI:_drop_zone_renderer(text, files)
 end
 
 function TranscriptUI:_render_drop_zone_files(files)
-  Fonts.wrap(ctx, Fonts.big, function()
+  Fonts.wrap(Ctx(), Fonts.big, function()
     for _, file in ipairs(files) do
       local text = PathUtil.get_filename(file)
-      local text_width, _ = ImGui.CalcTextSize(ctx, text)
+      local text_width, _ = ImGui.CalcTextSize(Ctx(), text)
 
-      ImGui.SetCursorPosX(ctx, (ImGui.GetWindowWidth(ctx) - text_width) / 2)
-      ImGui.Text(ctx, text)
+      ImGui.SetCursorPosX(Ctx(), (ImGui.GetWindowWidth(Ctx()) - text_width) / 2)
+      ImGui.Text(Ctx(), text)
     end
   end, Trap)
 end
@@ -343,54 +343,54 @@ function TranscriptUI:render()
 end
 
 function TranscriptUI:render_name()
-  ImGui.PushFont(ctx, Fonts.big)
+  ImGui.PushFont(Ctx(), Fonts.big)
   Trap(function()
     if self.editing_name then
       self.name_editor:render()
     else
-      ImGui.Dummy(ctx, 1, 2)
-      ImGui.Dummy(ctx, 2, 0)
-      ImGui.SameLine(ctx)
+      ImGui.Dummy(Ctx(), 1, 2)
+      ImGui.Dummy(Ctx(), 2, 0)
+      ImGui.SameLine(Ctx())
 
       if #self.transcript.name < 1 then
-        ImGui.Text(ctx, "(Untitled)")
+        ImGui.Text(Ctx(), "(Untitled)")
       else
-        ImGui.Text(ctx, self.transcript.name)
+        ImGui.Text(Ctx(), self.transcript.name)
       end
-      ImGui.SameLine(ctx)
+      ImGui.SameLine(Ctx())
       local icon_size = Fonts.size:get() - 1
       if Widgets.icon(Icons.pencil, "##edit_name", icon_size, icon_size, "Edit") then
         self._original_transcript_name = self.transcript.name
         self.editing_name = true
       end
-      ImGui.Dummy(ctx, 1, 2)
+      ImGui.Dummy(Ctx(), 1, 2)
     end
   end)
-  ImGui.PopFont(ctx)
+  ImGui.PopFont(Ctx())
 end
 
 function TranscriptUI:render_result_actions()
   self:render_annotations_button()
-  ImGui.SameLine(ctx)
+  ImGui.SameLine(Ctx())
   self:render_export()
-  ImGui.SameLine(ctx)
+  ImGui.SameLine(Ctx())
   self:render_clear()
 end
 
 function TranscriptUI:render_annotations_button()
-  if ImGui.Button(ctx, "Create Markers") then
+  if ImGui.Button(Ctx(), "Create Markers") then
     self.annotations:present()
   end
 end
 
 function TranscriptUI:render_export()
-  if ImGui.Button(ctx, "Export") then
+  if ImGui.Button(Ctx(), "Export") then
     self:handle_export()
   end
 end
 
 function TranscriptUI:render_clear()
-  if ImGui.Button(ctx, "Clear") then
+  if ImGui.Button(Ctx(), "Clear") then
     self:handle_transcript_clear()
   end
 end
@@ -398,22 +398,22 @@ end
 function TranscriptUI:render_options()
   local rv, value
 
-  rv, value = ImGui.Checkbox(ctx, "Auto Play", self.autoplay)
+  rv, value = ImGui.Checkbox(Ctx(), "Auto Play", self.autoplay)
   if rv then
     self.autoplay = value
   end
 
   if self.transcript:has_words() then
-    ImGui.SameLine(ctx)
+    ImGui.SameLine(Ctx())
 
-    rv, value = ImGui.Checkbox(ctx, "Words", self.words)
+    rv, value = ImGui.Checkbox(Ctx(), "Words", self.words)
     if rv then
       self.words = value
     end
 
     if self.words then
-      ImGui.SameLine(ctx)
-      rv, value = ImGui.Checkbox(ctx, "Colorize", self.colorize_words)
+      ImGui.SameLine(Ctx())
+      rv, value = ImGui.Checkbox(Ctx(), "Colorize", self.colorize_words)
       if rv then
         self.colorize_words = value
       end
@@ -422,15 +422,15 @@ function TranscriptUI:render_options()
 end
 
 function TranscriptUI:render_search(column)
-  ImGui.SetCursorPosX(ctx, ImGui.GetWindowWidth(ctx) - column.width - self.ACTIONS_MARGIN)
-  ImGui.PushItemWidth(ctx, column.width)
+  ImGui.SetCursorPosX(Ctx(), ImGui.GetWindowWidth(Ctx()) - column.width - self.ACTIONS_MARGIN)
+  ImGui.PushItemWidth(Ctx(), column.width)
   Trap(function()
-    local search_changed, search = ImGui.InputTextWithHint(ctx, '##search', 'Search', self.transcript.search)
+    local search_changed, search = ImGui.InputTextWithHint(Ctx(), '##search', 'Search', self.transcript.search)
     if search_changed then
       self:handle_search(search)
     end
   end)
-  ImGui.PopItemWidth(ctx)
+  ImGui.PopItemWidth(Ctx())
 end
 
 function TranscriptUI:handle_export()
@@ -456,10 +456,10 @@ function TranscriptUI:render_table()
     imgui_id = "transcript-untitled"
   end
 
-  ImGui.PushID(ctx, imgui_id)
-  if ImGui.BeginTable(ctx, "results", num_columns, self.table_flags(true), 0, -10) then
+  ImGui.PushID(Ctx(), imgui_id)
+  if ImGui.BeginTable(Ctx(), "results", num_columns, self.table_flags(true), 0, -10) then
     Trap(function ()
-      ImGui.TableSetupColumn(ctx, "##actions", ImGui.TableColumnFlags_NoSort(), 20)
+      ImGui.TableSetupColumn(Ctx(), "##actions", ImGui.TableColumnFlags_NoSort(), 20)
 
       for _, column in pairs(columns) do
         local column_flags = 0
@@ -476,14 +476,14 @@ function TranscriptUI:render_table()
           init_width = self.LARGE_COLUMN_WIDTH
         end
         -- reaper.ShowConsoleMsg(string.format('column %s: %s / flags: %s\n', column, default_hide, column_flags))
-        ImGui.TableSetupColumn(ctx, column, column_flags, init_width)
+        ImGui.TableSetupColumn(Ctx(), column, column_flags, init_width)
       end
 
-      ImGui.TableSetupScrollFreeze(ctx, 0, 1)
+      ImGui.TableSetupScrollFreeze(Ctx(), 0, 1)
 
       local clipper = self:clipper()
       local items_count = #self.transcript + 1
-      local items_height = ImGui.GetTextLineHeightWithSpacing(ctx)
+      local items_height = ImGui.GetTextLineHeightWithSpacing(Ctx())
 
       ImGui.ListClipper_Begin(clipper, items_count, items_height)
 
@@ -492,24 +492,24 @@ function TranscriptUI:render_table()
 
         for row = display_start, display_end - 1 do
           if row == 0 then
-            ImGui.TableHeadersRow(ctx)
+            ImGui.TableHeadersRow(Ctx())
             self:sort_table()
           else
             local segment = self.transcript:get_segment(row)
-            ImGui.TableNextRow(ctx)
-            ImGui.TableNextColumn(ctx)
+            ImGui.TableNextRow(Ctx())
+            ImGui.TableNextColumn(Ctx())
             self:render_segment_actions(segment, row)
             for _, column in pairs(columns) do
-              ImGui.TableNextColumn(ctx)
+              ImGui.TableNextColumn(Ctx())
               self:render_table_cell(segment, column)
             end
           end
         end
       end
     end)
-    ImGui.EndTable(ctx)
+    ImGui.EndTable(Ctx())
   end
-  ImGui.PopID(ctx)
+  ImGui.PopID(Ctx())
 end
 
 function TranscriptUI:render_segment_actions(segment, index)
@@ -520,8 +520,8 @@ function TranscriptUI:render_segment_actions(segment, index)
     self.transcript_editor:edit_segment(segment, index)
   end
 
-  if ImGui.IsItemHovered(ctx) then
-    ImGui.SetMouseCursor(ctx, ImGui.MouseCursor_Hand())
+  if ImGui.IsItemHovered(Ctx()) then
+    ImGui.SetMouseCursor(Ctx(), ImGui.MouseCursor_Hand())
   end
 end
 
@@ -531,9 +531,9 @@ function TranscriptUI:render_table_cell(segment, column)
   elseif column == "score" then
     self:render_score(segment:get(column, 0.0))
   elseif column == 'start' then
-    ImGui.Text(ctx, reaper.format_timestr(segment:timeline_start_time(), ''))
+    ImGui.Text(Ctx(), reaper.format_timestr(segment:timeline_start_time(), ''))
   elseif column == 'end' then
-    ImGui.Text(ctx, reaper.format_timestr(segment:timeline_end_time(), ''))
+    ImGui.Text(Ctx(), reaper.format_timestr(segment:timeline_end_time(), ''))
   else
     local value = segment:get(column)
     if type(value) == 'table' then
@@ -541,7 +541,7 @@ function TranscriptUI:render_table_cell(segment, column)
     elseif math.type(value) == 'float' then
       value = self.FLOAT_FORMAT:format(value)
     end
-    ImGui.Text(ctx, tostring(value))
+    ImGui.Text(Ctx(), tostring(value))
   end
 end
 
@@ -561,9 +561,9 @@ function TranscriptUI:render_text_words(segment, _)
   if segment.words then
     for i, word in pairs(segment.words) do
       if i > 1 then
-        ImGui.SameLine(ctx, 0, 0)
-        ImGui.Text(ctx, ' ')
-        ImGui.SameLine(ctx, 0, 0)
+        ImGui.SameLine(Ctx(), 0, 0)
+        ImGui.Text(Ctx(), ' ')
+        ImGui.SameLine(Ctx(), 0, 0)
       end
       local color = nil
       if self.colorize_words then
@@ -578,12 +578,12 @@ function TranscriptUI:render_score(value)
   local w, h = 50 * value, 3
   local color = self.score_color(value)
   if color then
-    local draw_list = ImGui.GetWindowDrawList(ctx)
-    local x, y = ImGui.GetCursorScreenPos(ctx)
+    local draw_list = ImGui.GetWindowDrawList(Ctx())
+    local x, y = ImGui.GetCursorScreenPos(Ctx())
     y = y + 7
     ImGui.DrawList_AddRectFilled(draw_list, x, y, x + w, y + h, color)
   end
-  ImGui.Dummy(ctx, w, h)
+  ImGui.Dummy(Ctx(), w, h)
 end
 
 function TranscriptUI.score_color(value)
@@ -603,7 +603,7 @@ function TranscriptUI.score_color(value)
 end
 
 function TranscriptUI:sort_table()
-  local specs_dirty, has_specs = ImGui.TableNeedSort(ctx)
+  local specs_dirty, has_specs = ImGui.TableNeedSort(Ctx())
   if not specs_dirty then return end
 
   if not has_specs then
@@ -617,7 +617,7 @@ function TranscriptUI:sort_table()
 
   for next_id = 0, math.huge do
     local ok, col_idx, _, sort_direction =
-      ImGui.TableGetColumnSortSpecs(ctx, next_id)
+      ImGui.TableGetColumnSortSpecs(Ctx(), next_id)
     if not ok then break end
 
     column = columns[col_idx]

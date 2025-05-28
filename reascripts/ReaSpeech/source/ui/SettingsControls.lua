@@ -49,9 +49,9 @@ function SettingsControls:init_layout()
 
     render_column = function (column)
       if renderers[column.num] then
-        ImGui.PushItemWidth(ctx, column.width)
+        ImGui.PushItemWidth(Ctx(), column.width)
         Trap(function () renderers[column.num](self, column) end)
-        ImGui.PopItemWidth(ctx)
+        ImGui.PopItemWidth(Ctx())
       end
     end
   }
@@ -79,7 +79,7 @@ function SettingsControls:render_logging()
   ReaSpeechControlsUI:render_input_label('Logging')
 
   self.log_enable:render()
-  ImGui.SameLine(ctx)
+  ImGui.SameLine(Ctx())
 
   Widgets.disable_if(not self.log_enable:value(), function ()
     self.log_debug:render()

@@ -39,9 +39,9 @@ NumberInput.renderer = function (self)
 
   local imgui_label = ("##%s"):format(options.label)
 
-  local rv, value = ImGui.InputInt(ctx, imgui_label, self:value())
+  local rv, value = ImGui.InputInt(Ctx(), imgui_label, self:value())
 
-  if rv and ImGui.IsItemDeactivatedAfterEdit(ctx) then
+  if rv and ImGui.IsItemDeactivatedAfterEdit(Ctx()) then
     self:set(value)
   end
 end
