@@ -34,16 +34,16 @@ function ReaSpeechControlsUI:init_tabs()
       label = '+',
       position = 'trailing',
       on_click = function()
-        ImGui.OpenPopup(ctx, 'new-tab-popup')
+        ImGui.OpenPopup(Ctx(), 'new-tab-popup')
       end,
       render = function()
-        if ImGui.BeginPopup(ctx, 'new-tab-popup') then
+        if ImGui.BeginPopup(Ctx(), 'new-tab-popup') then
           for _, menu_item in ipairs(self.plugins:new_tab_menu()) do
-            if ImGui.Selectable(ctx, menu_item.label) then
+            if ImGui.Selectable(Ctx(), menu_item.label) then
               menu_item.on_click()
             end
           end
-          ImGui.EndPopup(ctx)
+          ImGui.EndPopup(Ctx())
         end
       end
     })
@@ -59,20 +59,20 @@ function ReaSpeechControlsUI:init_tabs()
 end
 
 function ReaSpeechControlsUI:render()
-  ImGui.BeginGroup(ctx)
+  ImGui.BeginGroup(Ctx())
   Trap(function()
     Widgets.png('reaspeech-logo-small')
 
     -- Nice big column under the logo to render into, ie
-    -- if ImGui.Button(ctx, 'Metrics') then
+    -- if ImGui.Button(Ctx(), 'Metrics') then
     --   ReaSpeechUI.METRICS = not ReaSpeechUI.METRICS
     -- end
   end)
-  ImGui.EndGroup(ctx)
+  ImGui.EndGroup(Ctx())
 
-  ImGui.SameLine(ctx)
+  ImGui.SameLine(Ctx())
 
-  ImGui.BeginGroup(ctx)
+  ImGui.BeginGroup(Ctx())
   Trap(function()
     self:render_heading()
 
@@ -83,7 +83,7 @@ function ReaSpeechControlsUI:render()
     end
 
   end)
-  ImGui.EndGroup(ctx)
+  ImGui.EndGroup(Ctx())
 
   -- Drop target applies to last appended item
   -- rendering it in all cases means you can
@@ -93,7 +93,7 @@ function ReaSpeechControlsUI:render()
 end
 
 function ReaSpeechControlsUI:_render_drop_zone()
-  local avail_w, avail_h = ImGui.GetContentRegionAvail(ctx)
+  local avail_w, avail_h = ImGui.GetContentRegionAvail(Ctx())
 
   local drop_zone_height = (avail_h - 10) / #self._drop_zones
 
@@ -114,24 +114,24 @@ function ReaSpeechControlsUI:_render_drop_zone()
 
     local which_theme = drop_zone.hovered and theme_selected or theme
 
-    which_theme:wrap(ctx, function()
-      ImGui.BeginChild(ctx, 'drop-zone-' .. i, avail_w, drop_zone_height, child_flags)
+    which_theme:wrap(Ctx(), function()
+      ImGui.BeginChild(Ctx(), 'drop-zone-' .. i, avail_w, drop_zone_height, child_flags)
       Trap(function()
         drop_zone:render()
       end)
-      ImGui.EndChild(ctx)
-      drop_zone.hovered = ImGui.IsItemHovered(ctx, ImGui.HoveredFlags_AllowWhenBlockedByActiveItem())
+      ImGui.EndChild(Ctx())
+      drop_zone.hovered = ImGui.IsItemHovered(Ctx(), ImGui.HoveredFlags_AllowWhenBlockedByActiveItem())
     end, Trap)
   end
 end
 
 function ReaSpeechControlsUI:_render_drop_target()
-  if ImGui.BeginDragDropTarget(ctx) then
+  if ImGui.BeginDragDropTarget(Ctx()) then
     Trap(function()
       local dragdrop_flags = ImGui.DragDropFlags_AcceptNoPreviewTooltip()
         | (self._dragdrop_flags or ImGui.DragDropFlags_AcceptPeekOnly())
 
-      local payload, count = ImGui.AcceptDragDropPayloadFiles(ctx, nil,
+      local payload, count = ImGui.AcceptDragDropPayloadFiles(Ctx(), nil,
         dragdrop_flags | ImGui.DragDropFlags_AcceptNoDrawDefaultRect())
 
       if not payload then return end
@@ -142,7 +142,7 @@ function ReaSpeechControlsUI:_render_drop_target()
         self:_init_drag_drop(count)
       end
     end)
-    ImGui.EndDragDropTarget(ctx)
+    ImGui.EndDragDropTarget(Ctx())
   elseif self._dropped_files then
     self:_reset_drag_drop()
   end
@@ -151,7 +151,7 @@ end
 function ReaSpeechControlsUI:_init_drag_drop(file_count)
   local files = {}
   for i = 0, file_count do
-    local file_result, file = ImGui.GetDragDropPayloadFile(ctx, i)
+    local file_result, file = ImGui.GetDragDropPayloadFile(Ctx(), i)
     if file_result then
       table.insert(files, file)
     end
@@ -182,7 +182,7 @@ end
 
 function ReaSpeechControlsUI:render_heading()
   local button_size = Fonts.size:get() * 1.7
-  ImGui.PushStyleVar(ctx, ImGui.StyleVar_FrameRounding(), 4)
+  ImGui.PushStyleVar(Ctx(), ImGui.StyleVar_FrameRounding(), 4)
   Trap(function ()
     if Widgets.icon_button(Icons.gear, '##settings', button_size, button_size, 'Settings') then
       local settings_plugin = self.plugins:get_plugin(SettingsPlugin.PLUGIN_KEY)
@@ -194,29 +194,29 @@ function ReaSpeechControlsUI:render_heading()
       end
     end
   end)
-  ImGui.PopStyleVar(ctx)
-  ImGui.SameLine(ctx)
+  ImGui.PopStyleVar(Ctx())
+  ImGui.SameLine(Ctx())
 
-  local avail_w, _ = ImGui.GetContentRegionAvail(ctx)
+  local avail_w, _ = ImGui.GetContentRegionAvail(Ctx())
 
   local logo = IMAGES['heading-logo-tech-audio']
 
   local tab_bar_width = avail_w - logo.width - self.COLUMN_PADDING
 
-  ImGui.BeginChild(ctx, 'tab-bar', tab_bar_width, logo.height)
+  ImGui.BeginChild(Ctx(), 'tab-bar', tab_bar_width, logo.height)
   Trap(function ()
     self.tab_bar:render()
   end)
-  ImGui.EndChild(ctx)
+  ImGui.EndChild(Ctx())
 
-  ImGui.SameLine(ctx)
+  ImGui.SameLine(Ctx())
 
   Widgets.png(logo)
 end
 
 function ReaSpeechControlsUI:render_input_label(text)
-  ImGui.Text(ctx, text)
-  ImGui.Dummy(ctx, 0, 0)
+  ImGui.Text(Ctx(), text)
+  ImGui.Dummy(Ctx(), 0, 0)
 end
 
 function ReaSpeechControlsUI:render_tab_content()
@@ -224,11 +224,11 @@ function ReaSpeechControlsUI:render_tab_content()
 
   for _, tab in ipairs(self.plugins:tabs()) do
     if tab.tab.key == tab_bar_value then
-      ImGui.BeginChild(ctx, 'tab-content', 0, 0)
+      ImGui.BeginChild(Ctx(), 'tab-content', 0, 0)
       Trap(function()
         tab:render()
       end)
-      ImGui.EndChild(ctx)
+      ImGui.EndChild(Ctx())
     end
 
     if tab.render_bg then tab:render_bg() end

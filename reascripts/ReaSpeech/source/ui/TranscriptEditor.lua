@@ -79,7 +79,7 @@ function TranscriptEditor:edit_word(index)
 end
 
 function TranscriptEditor:render_content()
-  if not ImGui.IsAnyItemActive(ctx) then
+  if not ImGui.IsAnyItemActive(Ctx()) then
     self.key_bindings:react()
   end
 
@@ -102,13 +102,13 @@ function TranscriptEditor:render_content()
 
   self:render_separator()
 
-  if ImGui.Button(ctx, 'Save', self.BUTTON_WIDTH, 0) then
+  if ImGui.Button(Ctx(), 'Save', self.BUTTON_WIDTH, 0) then
     self:handle_save()
     self:close()
   end
 
-  ImGui.SameLine(ctx)
-  if ImGui.Button(ctx, 'Cancel', self.BUTTON_WIDTH, 0) then
+  ImGui.SameLine(Ctx())
+  if ImGui.Button(Ctx(), 'Cancel', self.BUTTON_WIDTH, 0) then
     self:close()
   end
 end
@@ -117,48 +117,48 @@ function TranscriptEditor:render_word_navigation()
   local words = self.editing.words
   local word_index = self.editing.word_index
   local num_words = #words
-  local spacing = ImGui.GetStyleVar(ctx, ImGui.StyleVar_ItemInnerSpacing())
+  local spacing = ImGui.GetStyleVar(Ctx(), ImGui.StyleVar_ItemInnerSpacing())
 
-  ImGui.PushButtonRepeat(ctx, true)
+  ImGui.PushButtonRepeat(Ctx(), true)
   Trap(function ()
-    if ImGui.ArrowButton(ctx, '##left', ImGui.Dir_Left()) then
+    if ImGui.ArrowButton(Ctx(), '##left', ImGui.Dir_Left()) then
       self:edit_word(self.editing.word_index - 1)
     end
-    ImGui.SameLine(ctx, 0, spacing)
-    if ImGui.ArrowButton(ctx, '##right', ImGui.Dir_Right()) then
+    ImGui.SameLine(Ctx(), 0, spacing)
+    if ImGui.ArrowButton(Ctx(), '##right', ImGui.Dir_Right()) then
       self:edit_word(self.editing.word_index + 1)
     end
   end)
-  ImGui.PopButtonRepeat(ctx)
+  ImGui.PopButtonRepeat(Ctx())
 
-  ImGui.SameLine(ctx)
-  ImGui.AlignTextToFramePadding(ctx)
-  ImGui.Text(ctx, 'Word ' .. word_index .. ' / ' .. num_words)
+  ImGui.SameLine(Ctx())
+  ImGui.AlignTextToFramePadding(Ctx())
+  ImGui.Text(Ctx(), 'Word ' .. word_index .. ' / ' .. num_words)
 
-  ImGui.SameLine(ctx)
-  if ImGui.Button(ctx, 'Add') then
+  ImGui.SameLine(Ctx())
+  if ImGui.Button(Ctx(), 'Add') then
     self:handle_word_add()
   end
   Widgets.tooltip('Add word after current word')
 
-  ImGui.SameLine(ctx, 0, spacing)
+  ImGui.SameLine(Ctx(), 0, spacing)
 
   Widgets.disable_if(num_words <= 1, function()
-    if ImGui.Button(ctx, 'Delete') then
+    if ImGui.Button(Ctx(), 'Delete') then
       self:handle_word_delete()
     end
   end)
   Widgets.tooltip('Delete current word')
 
-  ImGui.SameLine(ctx, 0, spacing)
-  if ImGui.Button(ctx, 'Split') then
+  ImGui.SameLine(Ctx(), 0, spacing)
+  if ImGui.Button(Ctx(), 'Split') then
     self:handle_word_split()
   end
   Widgets.tooltip('Split current word into two words')
 
-  ImGui.SameLine(ctx, 0, spacing)
+  ImGui.SameLine(Ctx(), 0, spacing)
   Widgets.disable_if(word_index >= num_words, function()
-    if ImGui.Button(ctx, 'Merge') then
+    if ImGui.Button(Ctx(), 'Merge') then
       self:handle_word_merge()
     end
   end)
@@ -168,24 +168,24 @@ end
 function TranscriptEditor:render_words()
   local words = self.editing.words
   local num_words = #words
-  local spacing = ImGui.GetStyleVar(ctx, ImGui.StyleVar_ItemInnerSpacing())
+  local spacing = ImGui.GetStyleVar(Ctx(), ImGui.StyleVar_ItemInnerSpacing())
   local edit_requested = nil
 
   for i, word in pairs(words) do
     if self.editing.word_index ~= i then
-      ImGui.PushStyleColor(ctx, ImGui.Col_Button(), 0xffffff33)
+      ImGui.PushStyleColor(Ctx(), ImGui.Col_Button(), 0xffffff33)
     end
     Trap(function()
-      if ImGui.Button(ctx, word.word .. '##' .. i) then
+      if ImGui.Button(Ctx(), word.word .. '##' .. i) then
         edit_requested = i
       end
     end)
     if self.editing.word_index ~= i then
-      ImGui.PopStyleColor(ctx)
+      ImGui.PopStyleColor(Ctx())
     end
 
     if i < num_words and i % self.WORDS_PER_LINE ~= 0 then
-      ImGui.SameLine(ctx, 0, spacing)
+      ImGui.SameLine(Ctx(), 0, spacing)
     end
   end
 
@@ -214,7 +214,7 @@ function TranscriptEditor:render_word_inputs()
 end
 
 function TranscriptEditor:render_word_input()
-  local rv, value = ImGui.InputText(ctx, 'word', self.editing.word.word)
+  local rv, value = ImGui.InputText(Ctx(), 'word', self.editing.word.word)
   if rv then
     value = value:gsub('^%s*(.-)%s*$', '%1')
     if #value > 0 then
@@ -225,7 +225,7 @@ end
 
 function TranscriptEditor:render_time_input(label, value, callback)
   local value_str = reaper.format_timestr(value, '')
-  local rv, new_value = ImGui.InputText(ctx, label, value_str)
+  local rv, new_value = ImGui.InputText(Ctx(), label, value_str)
   if rv then
     callback(reaper.parse_timestr(new_value))
   end
@@ -234,17 +234,17 @@ end
 function TranscriptEditor:render_score_input()
   local color = TranscriptUI.score_color(self.editing.word:score())
   if color then
-    ImGui.PushStyleColor(ctx, ImGui.Col_SliderGrab(), color)
-    ImGui.PushStyleColor(ctx, ImGui.Col_SliderGrabActive(), color)
+    ImGui.PushStyleColor(Ctx(), ImGui.Col_SliderGrab(), color)
+    ImGui.PushStyleColor(Ctx(), ImGui.Col_SliderGrabActive(), color)
   end
   Trap(function ()
-    local rv, value = ImGui.SliderDouble(ctx, 'score', self.editing.word.probability, 0, 1)
+    local rv, value = ImGui.SliderDouble(Ctx(), 'score', self.editing.word.probability, 0, 1)
     if rv then
       self.editing.word.probability = value
     end
   end)
   if color then
-    ImGui.PopStyleColor(ctx, 2)
+    ImGui.PopStyleColor(Ctx(), 2)
   end
 end
 
@@ -256,15 +256,15 @@ function TranscriptEditor:render_word_actions()
     reaper.Main_OnCommand(40044, 0) -- Transport: Play/stop
   end
 
-  local spacing = ImGui.GetStyleVar(ctx, ImGui.StyleVar_ItemInnerSpacing())
-  ImGui.SameLine(ctx, 0, spacing)
+  local spacing = ImGui.GetStyleVar(Ctx(), ImGui.StyleVar_ItemInnerSpacing())
+  ImGui.SameLine(Ctx(), 0, spacing)
 
   if Widgets.icon_button(Icons.stop, '##stop', 27, 27, 'Stop') then
     reaper.Main_OnCommand(1016, 0) -- Transport: Stop
   end
 
-  ImGui.SameLine(ctx)
-  local rv, value = ImGui.Checkbox(ctx, 'sync time selection', self.sync_time_selection)
+  ImGui.SameLine(Ctx())
+  local rv, value = ImGui.Checkbox(Ctx(), 'sync time selection', self.sync_time_selection)
   if rv then
     self.sync_time_selection = value
     if value then
@@ -272,33 +272,33 @@ function TranscriptEditor:render_word_actions()
     end
   end
 
-  ImGui.SameLine(ctx)
-  ImGui.Text(ctx, 'and')
-  ImGui.SameLine(ctx)
+  ImGui.SameLine(Ctx())
+  ImGui.Text(Ctx(), 'and')
+  ImGui.SameLine(Ctx())
   self:render_zoom_combo()
 end
 
 function TranscriptEditor:render_zoom_combo()
-  ImGui.SameLine(ctx)
-  ImGui.Text(ctx, "zoom to")
-  ImGui.SameLine(ctx)
-  ImGui.PushItemWidth(ctx, self.BUTTON_WIDTH)
+  ImGui.SameLine(Ctx())
+  ImGui.Text(Ctx(), "zoom to")
+  ImGui.SameLine(Ctx())
+  ImGui.PushItemWidth(Ctx(), self.BUTTON_WIDTH)
   Trap(function()
     Widgets.disable_if(not self.sync_time_selection, function()
-      if ImGui.BeginCombo(ctx, "##zoom_level", self.zoom_level) then
+      if ImGui.BeginCombo(Ctx(), "##zoom_level", self.zoom_level) then
         Trap(function()
           for _, zoom in pairs(self.ZOOM_LEVEL) do
-            if ImGui.Selectable(ctx, zoom.description, self.zoom_level == zoom.value) then
+            if ImGui.Selectable(Ctx(), zoom.description, self.zoom_level == zoom.value) then
               self.zoom_level = zoom.value
               self:handle_zoom_change()
             end
           end
         end)
-        ImGui.EndCombo(ctx)
+        ImGui.EndCombo(Ctx())
       end
     end)
   end)
-  ImGui.PopItemWidth(ctx)
+  ImGui.PopItemWidth(Ctx())
 end
 
 function TranscriptEditor:offset()

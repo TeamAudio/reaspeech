@@ -47,10 +47,10 @@ TextInput.renderer = function (self)
 
   local imgui_label = ("##%s"):format(options.label)
 
-  local rv, value = ImGui.InputText(ctx, imgui_label, self:value())
+  local rv, value = ImGui.InputText(Ctx(), imgui_label, self:value())
 
-  if ImGui.IsItemDeactivated(ctx) then
-    if ImGui.IsKeyPressed(ctx, ImGui.Key_Escape()) then
+  if ImGui.IsItemDeactivated(Ctx()) then
+    if ImGui.IsKeyPressed(Ctx(), ImGui.Key_Escape()) then
       self.options.on_cancel()
     else
       self.options.on_enter()

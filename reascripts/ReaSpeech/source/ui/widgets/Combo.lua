@@ -40,16 +40,16 @@ Combo.renderer = function (self)
   local item_label = options.item_labels[self:value()] or ""
   local combo_flags = ImGui.ComboFlags_HeightLarge()
 
-  if ImGui.BeginCombo(ctx, imgui_label, item_label, combo_flags) then
+  if ImGui.BeginCombo(Ctx(), imgui_label, item_label, combo_flags) then
     Trap(function()
       for _, item in pairs(options.items) do
         local is_selected = (item == self:value())
-        if ImGui.Selectable(ctx, options.item_labels[item], is_selected) then
+        if ImGui.Selectable(Ctx(), options.item_labels[item], is_selected) then
           self:set(item)
         end
       end
     end)
-    ImGui.EndCombo(ctx)
+    ImGui.EndCombo(Ctx())
   end
 end
 

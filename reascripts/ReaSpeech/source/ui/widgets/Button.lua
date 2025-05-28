@@ -38,7 +38,7 @@ Button.renderer = function(self)
   end
 
   Widgets.disable_if(disabled, function()
-    if ImGui.Button(ctx, options.label, options.width) then
+    if ImGui.Button(Ctx(), options.label, options.width) then
       Trap(options.on_click)
     end
   end)

@@ -4,7 +4,6 @@
 
 ]]--
 
-ctx = nil
 app = nil
 
 ReaSpeechMain = {}
@@ -14,9 +13,7 @@ function ReaSpeechMain:main()
   reaper.atexit(function () self:on_exit() end)
 
   self:init_logging()
-
   self:init_ctx()
-  ctx = Ctx()
 
   Theme:init()
   app = ReaSpeechUI.new()
@@ -28,8 +25,7 @@ end
 function ReaSpeechMain:loop()
   return function()
     if app:presenting() or app:is_open() then
-      ctx = Ctx()
-      Fonts:check(ctx)
+      Fonts:check(Ctx())
       Trap(function() app:react() end)
       reaper.defer(self:loop())
     end
@@ -56,6 +52,7 @@ function ReaSpeechMain:init_ctx()
   Ctx.on_create = function (ctx)
     Fonts:init(ctx)
   end
+  Ctx()
 end
 
 function ReaSpeechMain:init_logging()

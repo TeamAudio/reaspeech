@@ -97,6 +97,8 @@ reaper = reaper or {
   ShowConsoleMsg = print,
   ShowMessageBox = print,
 
+  ImGui_ValidatePtr = function (_pointer, _ctypename) return true end,
+
   ImGui_PushStyleColor = function (_context, _key, _value) end,
   ImGui_PopStyleColor = function (_context, _count) end,
 

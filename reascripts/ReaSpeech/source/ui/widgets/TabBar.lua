@@ -32,7 +32,7 @@ TabBar.renderer = function (self)
                      | ImGui.TabBarFlags_FittingPolicyScroll()
                      | ImGui.TabBarFlags_NoTabListScrollingButtons()
 
-  if ImGui.BeginTabBar(ctx, 'TabBar', tabbar_flags) then
+  if ImGui.BeginTabBar(Ctx(), 'TabBar', tabbar_flags) then
     local tabs = self.options.tabs
     local current_value = self:value()
 
@@ -41,7 +41,7 @@ TabBar.renderer = function (self)
     end
 
     for i, tab in ipairs(tabs) do
-      ImGui.PushID(ctx, 'tab- ' .. i)
+      ImGui.PushID(Ctx(), 'tab- ' .. i)
       Trap(function()
         if tab.on_click then
           TabBar.render_tab_button(self, tab)
@@ -49,9 +49,9 @@ TabBar.renderer = function (self)
           TabBar.render_tab_item(self, tab, current_value)
         end
       end)
-      ImGui.PopID(ctx)
+      ImGui.PopID(Ctx())
     end
-    ImGui.EndTabBar(ctx)
+    ImGui.EndTabBar(Ctx())
   end
 end
 
@@ -63,7 +63,7 @@ TabBar.tab = function(key, label)
 end
 
 TabBar.render_tab_button = function(self, tab)
-  if ImGui.TabItemButton(ctx, tab.label, TabBar.tab_flags(tab)) then
+  if ImGui.TabItemButton(Ctx(), tab.label, TabBar.tab_flags(tab)) then
     tab.on_click()
   end
   tab.render()
@@ -96,7 +96,7 @@ TabBar.render_tab_item = function(self, tab, current_value)
     flags = flags | ImGui.TabItemFlags_NoAssumedClosure()
   end
 
-  local tab_selected, tab_open = ImGui.BeginTabItem(ctx, label, closeable, flags)
+  local tab_selected, tab_open = ImGui.BeginTabItem(Ctx(), label, closeable, flags)
 
   Trap(function()
     if (closeable and not tab_open) and tab.will_close() then
@@ -110,7 +110,7 @@ TabBar.render_tab_item = function(self, tab, current_value)
         self:set(tab.key)
       end
     end)
-    ImGui.EndTabItem(ctx)
+    ImGui.EndTabItem(Ctx())
   end
 end
 

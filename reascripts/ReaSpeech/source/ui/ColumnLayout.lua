@@ -47,24 +47,24 @@ function ColumnLayout:render()
 end
 
 function ColumnLayout:_column_gap(padding)
-  ImGui.SameLine(ctx, 0, padding)
+  ImGui.SameLine(Ctx(), 0, padding)
 end
 
 function ColumnLayout:_get_avail_width()
-  local avail_width, _ = ImGui.GetContentRegionAvail(ctx)
+  local avail_width, _ = ImGui.GetContentRegionAvail(Ctx())
   return avail_width
 end
 
 function ColumnLayout:_horiz_margin(margin)
-  ImGui.SetCursorPosX(ctx, ImGui.GetCursorPosX(ctx) + margin)
+  ImGui.SetCursorPosX(Ctx(), ImGui.GetCursorPosX(Ctx()) + margin)
 end
 
 function ColumnLayout:_vert_margin(margin, width)
-  ImGui.Dummy(ctx, width, margin)
+  ImGui.Dummy(Ctx(), width, margin)
 end
 
 function ColumnLayout:_with_group(f)
-  ImGui.BeginGroup(ctx)
+  ImGui.BeginGroup(Ctx())
   Trap(f)
-  ImGui.EndGroup(ctx)
+  ImGui.EndGroup(Ctx())
 end

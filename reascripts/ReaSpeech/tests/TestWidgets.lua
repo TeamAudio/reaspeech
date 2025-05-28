@@ -6,6 +6,7 @@ require('tests/mock_reaper')
 
 require('include/globals')
 
+require('libs/Ctx')
 require('libs/Trap')
 require('ui/Widgets')
 
