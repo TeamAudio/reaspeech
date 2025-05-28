@@ -1021,6 +1021,64 @@ files = [
 ]
 
 [[package]]
+name = "mlx"
+version = "0.25.2"
+description = "A framework for machine learning on Apple silicon."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+markers = "sys_platform != \"linux\" and sys_platform != \"darwin\" or platform_machine != \"arm64\" and platform_machine != \"x86_64\" or () and (sys_platform == \"darwin\" or sys_platform == \"linux\")"
+files = [
+    {file = "mlx-0.25.2-cp310-cp310-macosx_13_0_arm64.whl", hash = "sha256:112a02030b14c0e08eeb4e6a1c6e0d259d2c6ae28cfb684d02a32e720e8656da"},
+    {file = "mlx-0.25.2-cp310-cp310-macosx_14_0_arm64.whl", hash = "sha256:5b1173bafca02c2e4b7902a2440bf635d2588f5ab40f68fa83bad43ceca818f2"},
+    {file = "mlx-0.25.2-cp310-cp310-macosx_15_0_arm64.whl", hash = "sha256:22f5e80bf2424dc73052e48eeb769056514b78ea28d66a33a5daf1cb83e1acaa"},
+    {file = "mlx-0.25.2-cp310-cp310-manylinux_2_31_x86_64.whl", hash = "sha256:e44385a2f5d37d586b245bd7f6ed79998429129880cff0e89f308da73d8f4b56"},
+    {file = "mlx-0.25.2-cp311-cp311-macosx_13_0_arm64.whl", hash = "sha256:ab9d9eda941004d805d7365006d65789c88a37b6df896bf8c7e9ea1ca85630d3"},
+    {file = "mlx-0.25.2-cp311-cp311-macosx_14_0_arm64.whl", hash = "sha256:c89ec8726e8cb48196fc07435579482a49d3d2d484b5e2c4d15dfd3a390eec91"},
+    {file = "mlx-0.25.2-cp311-cp311-macosx_15_0_arm64.whl", hash = "sha256:f3ef4e8e9a6adc43371f242445423147cce338d1b1368366b84f9dd74483a980"},
+    {file = "mlx-0.25.2-cp311-cp311-manylinux_2_31_x86_64.whl", hash = "sha256:3bbce1ad8f6066376ed82002af05fe2451776fd345600e7d4743777898aaaf49"},
+    {file = "mlx-0.25.2-cp312-cp312-macosx_13_0_arm64.whl", hash = "sha256:c9d35eac8d3224c9e005e7d469dd927dbdecd3d01b2e23390fd0d496e0010b7f"},
+    {file = "mlx-0.25.2-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:c965289d64814005f85c4b121d5df00889a0ea5160883a62edb396b360bf5736"},
+    {file = "mlx-0.25.2-cp312-cp312-macosx_15_0_arm64.whl", hash = "sha256:24055a8fba9a6261d94dbfd31c37ede75106c7a832cb0609cb5b65e7e903e1fb"},
+    {file = "mlx-0.25.2-cp312-cp312-manylinux_2_31_x86_64.whl", hash = "sha256:d7cc749e66e759ccad70d736896e0bc71d15f99fdbccfaa292da65fd6988bab8"},
+    {file = "mlx-0.25.2-cp313-cp313-macosx_13_0_arm64.whl", hash = "sha256:836e224efabbcdd55340c59148a6f36c69bd80e08b2e73fe6f6a6b02a00888b1"},
+    {file = "mlx-0.25.2-cp313-cp313-macosx_14_0_arm64.whl", hash = "sha256:a39fef63444a7642f090ee09aaed8c59592962104d91bc655f330169dfacb8c0"},
+    {file = "mlx-0.25.2-cp313-cp313-macosx_15_0_arm64.whl", hash = "sha256:20f36ebf454b12a77d8b82a7a510dd235ab2cb24ef83011e9dd1daef1933617d"},
+    {file = "mlx-0.25.2-cp313-cp313-manylinux_2_31_x86_64.whl", hash = "sha256:7af0708c8b80f71d5a6f583d788e2d6086b7dc37019ed5419e0143cc7c7e7002"},
+    {file = "mlx-0.25.2-cp39-cp39-macosx_13_0_arm64.whl", hash = "sha256:8d4d2a78053f2bf9ff0796316cc3a2e1b4c5fabc262f65cdc614e37316f1abca"},
+    {file = "mlx-0.25.2-cp39-cp39-macosx_14_0_arm64.whl", hash = "sha256:63ade62972c19f3ea0f150f66a346457f302232fd529d6b593026ec6eff8e79c"},
+    {file = "mlx-0.25.2-cp39-cp39-macosx_15_0_arm64.whl", hash = "sha256:dfc156b39493f2fa1c727bb199a42bb88901635047f57de01dcfa98db99d97b7"},
+    {file = "mlx-0.25.2-cp39-cp39-manylinux_2_31_x86_64.whl", hash = "sha256:9a349eec06663be9cf8013aa4bee3175aae2f87b089a9b76a4ca995b2763194e"},
+]
+
+[package.extras]
+dev = ["nanobind (==2.4.0)", "numpy", "pre-commit", "setuptools (>=42)", "torch", "typing_extensions"]
+
+[[package]]
+name = "mlx-whisper"
+version = "0.4.2"
+description = "OpenAI Whisper on Apple silicon with MLX and the Hugging Face Hub"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+markers = "sys_platform != \"linux\" and sys_platform != \"darwin\" or platform_machine != \"arm64\" and platform_machine != \"x86_64\" or () and (sys_platform == \"darwin\" or sys_platform == \"linux\")"
+files = [
+    {file = "mlx_whisper-0.4.2-py3-none-any.whl", hash = "sha256:19a343deaa85f461be4fdc9c14e6e8b61d65260374872e07f9f6101ad397a053"},
+    {file = "mlx_whisper-0.4.2.tar.gz", hash = "sha256:5487d967245291fd45d5f11c98a69da1130b9304d0767663412d56fffd71e088"},
+]
+
+[package.dependencies]
+huggingface_hub = "*"
+mlx = ">=0.11"
+more-itertools = "*"
+numba = "*"
+numpy = "*"
+scipy = "*"
+tiktoken = "*"
+torch = "*"
+tqdm = "*"
+
+[[package]]
 name = "more-itertools"
 version = "10.6.0"
 description = "More routines for operating on iterables, beyond itertools"
@@ -1726,6 +1784,71 @@ urllib3 = ">=1.21.1,<3"
 [package.extras]
 socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
+
+[[package]]
+name = "scipy"
+version = "1.15.3"
+description = "Fundamental algorithms for scientific computing in Python"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+markers = "sys_platform != \"linux\" and sys_platform != \"darwin\" or platform_machine != \"arm64\" and platform_machine != \"x86_64\" or () and (sys_platform == \"darwin\" or sys_platform == \"linux\")"
+files = [
+    {file = "scipy-1.15.3-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:a345928c86d535060c9c2b25e71e87c39ab2f22fc96e9636bd74d1dbf9de448c"},
+    {file = "scipy-1.15.3-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:ad3432cb0f9ed87477a8d97f03b763fd1d57709f1bbde3c9369b1dff5503b253"},
+    {file = "scipy-1.15.3-cp310-cp310-macosx_14_0_arm64.whl", hash = "sha256:aef683a9ae6eb00728a542b796f52a5477b78252edede72b8327a886ab63293f"},
+    {file = "scipy-1.15.3-cp310-cp310-macosx_14_0_x86_64.whl", hash = "sha256:1c832e1bd78dea67d5c16f786681b28dd695a8cb1fb90af2e27580d3d0967e92"},
+    {file = "scipy-1.15.3-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:263961f658ce2165bbd7b99fa5135195c3a12d9bef045345016b8b50c315cb82"},
+    {file = "scipy-1.15.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9e2abc762b0811e09a0d3258abee2d98e0c703eee49464ce0069590846f31d40"},
+    {file = "scipy-1.15.3-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:ed7284b21a7a0c8f1b6e5977ac05396c0d008b89e05498c8b7e8f4a1423bba0e"},
+    {file = "scipy-1.15.3-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:5380741e53df2c566f4d234b100a484b420af85deb39ea35a1cc1be84ff53a5c"},
+    {file = "scipy-1.15.3-cp310-cp310-win_amd64.whl", hash = "sha256:9d61e97b186a57350f6d6fd72640f9e99d5a4a2b8fbf4b9ee9a841eab327dc13"},
+    {file = "scipy-1.15.3-cp311-cp311-macosx_10_13_x86_64.whl", hash = "sha256:993439ce220d25e3696d1b23b233dd010169b62f6456488567e830654ee37a6b"},
+    {file = "scipy-1.15.3-cp311-cp311-macosx_12_0_arm64.whl", hash = "sha256:34716e281f181a02341ddeaad584205bd2fd3c242063bd3423d61ac259ca7eba"},
+    {file = "scipy-1.15.3-cp311-cp311-macosx_14_0_arm64.whl", hash = "sha256:3b0334816afb8b91dab859281b1b9786934392aa3d527cd847e41bb6f45bee65"},
+    {file = "scipy-1.15.3-cp311-cp311-macosx_14_0_x86_64.whl", hash = "sha256:6db907c7368e3092e24919b5e31c76998b0ce1684d51a90943cb0ed1b4ffd6c1"},
+    {file = "scipy-1.15.3-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:721d6b4ef5dc82ca8968c25b111e307083d7ca9091bc38163fb89243e85e3889"},
+    {file = "scipy-1.15.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:39cb9c62e471b1bb3750066ecc3a3f3052b37751c7c3dfd0fd7e48900ed52982"},
+    {file = "scipy-1.15.3-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:795c46999bae845966368a3c013e0e00947932d68e235702b5c3f6ea799aa8c9"},
+    {file = "scipy-1.15.3-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:18aaacb735ab38b38db42cb01f6b92a2d0d4b6aabefeb07f02849e47f8fb3594"},
+    {file = "scipy-1.15.3-cp311-cp311-win_amd64.whl", hash = "sha256:ae48a786a28412d744c62fd7816a4118ef97e5be0bee968ce8f0a2fba7acf3bb"},
+    {file = "scipy-1.15.3-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:6ac6310fdbfb7aa6612408bd2f07295bcbd3fda00d2d702178434751fe48e019"},
+    {file = "scipy-1.15.3-cp312-cp312-macosx_12_0_arm64.whl", hash = "sha256:185cd3d6d05ca4b44a8f1595af87f9c372bb6acf9c808e99aa3e9aa03bd98cf6"},
+    {file = "scipy-1.15.3-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:05dc6abcd105e1a29f95eada46d4a3f251743cfd7d3ae8ddb4088047f24ea477"},
+    {file = "scipy-1.15.3-cp312-cp312-macosx_14_0_x86_64.whl", hash = "sha256:06efcba926324df1696931a57a176c80848ccd67ce6ad020c810736bfd58eb1c"},
+    {file = "scipy-1.15.3-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c05045d8b9bfd807ee1b9f38761993297b10b245f012b11b13b91ba8945f7e45"},
+    {file = "scipy-1.15.3-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:271e3713e645149ea5ea3e97b57fdab61ce61333f97cfae392c28ba786f9bb49"},
+    {file = "scipy-1.15.3-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:6cfd56fc1a8e53f6e89ba3a7a7251f7396412d655bca2aa5611c8ec9a6784a1e"},
+    {file = "scipy-1.15.3-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:0ff17c0bb1cb32952c09217d8d1eed9b53d1463e5f1dd6052c7857f83127d539"},
+    {file = "scipy-1.15.3-cp312-cp312-win_amd64.whl", hash = "sha256:52092bc0472cfd17df49ff17e70624345efece4e1a12b23783a1ac59a1b728ed"},
+    {file = "scipy-1.15.3-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:2c620736bcc334782e24d173c0fdbb7590a0a436d2fdf39310a8902505008759"},
+    {file = "scipy-1.15.3-cp313-cp313-macosx_12_0_arm64.whl", hash = "sha256:7e11270a000969409d37ed399585ee530b9ef6aa99d50c019de4cb01e8e54e62"},
+    {file = "scipy-1.15.3-cp313-cp313-macosx_14_0_arm64.whl", hash = "sha256:8c9ed3ba2c8a2ce098163a9bdb26f891746d02136995df25227a20e71c396ebb"},
+    {file = "scipy-1.15.3-cp313-cp313-macosx_14_0_x86_64.whl", hash = "sha256:0bdd905264c0c9cfa74a4772cdb2070171790381a5c4d312c973382fc6eaf730"},
+    {file = "scipy-1.15.3-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:79167bba085c31f38603e11a267d862957cbb3ce018d8b38f79ac043bc92d825"},
+    {file = "scipy-1.15.3-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c9deabd6d547aee2c9a81dee6cc96c6d7e9a9b1953f74850c179f91fdc729cb7"},
+    {file = "scipy-1.15.3-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:dde4fc32993071ac0c7dd2d82569e544f0bdaff66269cb475e0f369adad13f11"},
+    {file = "scipy-1.15.3-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:f77f853d584e72e874d87357ad70f44b437331507d1c311457bed8ed2b956126"},
+    {file = "scipy-1.15.3-cp313-cp313-win_amd64.whl", hash = "sha256:b90ab29d0c37ec9bf55424c064312930ca5f4bde15ee8619ee44e69319aab163"},
+    {file = "scipy-1.15.3-cp313-cp313t-macosx_10_13_x86_64.whl", hash = "sha256:3ac07623267feb3ae308487c260ac684b32ea35fd81e12845039952f558047b8"},
+    {file = "scipy-1.15.3-cp313-cp313t-macosx_12_0_arm64.whl", hash = "sha256:6487aa99c2a3d509a5227d9a5e889ff05830a06b2ce08ec30df6d79db5fcd5c5"},
+    {file = "scipy-1.15.3-cp313-cp313t-macosx_14_0_arm64.whl", hash = "sha256:50f9e62461c95d933d5c5ef4a1f2ebf9a2b4e83b0db374cb3f1de104d935922e"},
+    {file = "scipy-1.15.3-cp313-cp313t-macosx_14_0_x86_64.whl", hash = "sha256:14ed70039d182f411ffc74789a16df3835e05dc469b898233a245cdfd7f162cb"},
+    {file = "scipy-1.15.3-cp313-cp313t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0a769105537aa07a69468a0eefcd121be52006db61cdd8cac8a0e68980bbb723"},
+    {file = "scipy-1.15.3-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9db984639887e3dffb3928d118145ffe40eff2fa40cb241a306ec57c219ebbbb"},
+    {file = "scipy-1.15.3-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "sha256:40e54d5c7e7ebf1aa596c374c49fa3135f04648a0caabcb66c52884b943f02b4"},
+    {file = "scipy-1.15.3-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "sha256:5e721fed53187e71d0ccf382b6bf977644c533e506c4d33c3fb24de89f5c3ed5"},
+    {file = "scipy-1.15.3-cp313-cp313t-win_amd64.whl", hash = "sha256:76ad1fb5f8752eabf0fa02e4cc0336b4e8f021e2d5f061ed37d6d264db35e3ca"},
+    {file = "scipy-1.15.3.tar.gz", hash = "sha256:eae3cf522bc7df64b42cad3925c876e1b0b6c35c1337c93e12c0f366f55b0eaf"},
+]
+
+[package.dependencies]
+numpy = ">=1.23.5,<2.5"
+
+[package.extras]
+dev = ["cython-lint (>=0.12.2)", "doit (>=0.36.0)", "mypy (==1.10.0)", "pycodestyle", "pydevtool", "rich-click", "ruff (>=0.0.292)", "types-psutil", "typing_extensions"]
+doc = ["intersphinx_registry", "jupyterlite-pyodide-kernel", "jupyterlite-sphinx (>=0.19.1)", "jupytext", "matplotlib (>=3.5)", "myst-nb", "numpydoc", "pooch", "pydata-sphinx-theme (>=0.15.2)", "sphinx (>=5.0.0,<8.0.0)", "sphinx-copybutton", "sphinx-design (>=0.4.0)"]
+test = ["Cython", "array-api-strict (>=2.0,<2.1.1)", "asv", "gmpy2", "hypothesis (>=6.30)", "meson", "mpmath", "ninja", "pooch", "pytest", "pytest-cov", "pytest-timeout", "pytest-xdist", "scikit-umfpack", "threadpoolctl"]
 
 [[package]]
 name = "setuptools"
@@ -2480,4 +2603,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "c902a3f0021e8cd5b29953df8b71bf60ab110a46f5add68b951e42571b77a617"
+content-hash = "7bc1126fff3aa4c954b6bc4c20f45520f86cbd5957e35fa6384dabac9a0897a7"
