@@ -52,11 +52,11 @@ Checkbox.renderer = function (self, column)
   end
 
   Widgets.disable_if(self.options.disabled_if(), function()
-    local rv, value = ImGui.Checkbox(ctx, label, self:value())
+    local rv, value = ImGui.Checkbox(Ctx(), label, self:value())
 
     if options.help_text then
-      ImGui.SameLine(ctx)
-      ImGui.SetCursorPosY(ctx, ImGui.GetCursorPosY(ctx) + 7)
+      ImGui.SameLine(Ctx())
+      ImGui.SetCursorPosY(Ctx(), ImGui.GetCursorPosY(Ctx()) + 7)
       self:render_help_icon()
     end
 

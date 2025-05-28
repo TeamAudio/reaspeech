@@ -32,15 +32,15 @@ function SampleMultipleUploadControls:init_layout()
     num_columns = 1,
 
     render_column = function (column)
-      ImGui.PushItemWidth(ctx, column.width)
+      ImGui.PushItemWidth(Ctx(), column.width)
       Trap(function () self:render_controls() end)
-      ImGui.PopItemWidth(ctx)
+      ImGui.PopItemWidth(Ctx())
     end
   }
 
   function SampleMultipleUploadControls:render_controls()
     self.upload_file1:render()
-    ImGui.Dummy(ctx, 0, 5)
+    ImGui.Dummy(Ctx(), 0, 5)
     self.upload_file2:render()
   end
 end

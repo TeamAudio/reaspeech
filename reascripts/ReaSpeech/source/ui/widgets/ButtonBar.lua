@@ -31,10 +31,10 @@ ButtonBar.new = function (options)
   local with_button_color = function (selected, f)
     local color = Theme.COLORS.dark_gray_translucent
     if selected then color = Theme.COLORS.medium_gray_opaque end
-    ImGui.PushStyleColor(ctx, ImGui.Col_Button(), color)
-    ImGui.PushStyleColor(ctx, ImGui.Col_ButtonHovered(), color)
+    ImGui.PushStyleColor(Ctx(), ImGui.Col_Button(), color)
+    ImGui.PushStyleColor(Ctx(), ImGui.Col_ButtonHovered(), color)
     Trap(f)
-    ImGui.PopStyleColor(ctx, 2)
+    ImGui.PopStyleColor(Ctx(), 2)
   end
 
   o.layout = ColumnLayout.new {
@@ -51,7 +51,7 @@ ButtonBar.new = function (options)
 
       local button_label, model_name = table.unpack(options.buttons[column.num])
       with_button_color(o:value() == model_name, function ()
-        if ImGui.Button(ctx, button_label, column.width) then
+        if ImGui.Button(Ctx(), button_label, column.width) then
           o:set(model_name)
         end
       end)

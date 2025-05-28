@@ -40,7 +40,7 @@ ListBox.renderer = function(self)
   local imgui_label = ("##%s"):format(options.label)
 
   local needs_update = false
-  if ImGui.BeginListBox(ctx, imgui_label) then
+  if ImGui.BeginListBox(Ctx(), imgui_label) then
     Trap(function()
       local current = self:value()
       local new_value = {}
@@ -48,23 +48,23 @@ ListBox.renderer = function(self)
         new_value[item] = current[item] or false
         local is_selected = current[item]
         local label = options.item_labels[item]
-        ImGui.PushID(ctx, 'item' .. i)
+        ImGui.PushID(Ctx(), 'item' .. i)
         Trap(function()
-          local result, now_selected = ImGui.Selectable(ctx, label, is_selected)
+          local result, now_selected = ImGui.Selectable(Ctx(), label, is_selected)
 
           if result and is_selected ~= now_selected then
             needs_update = true
             new_value[item] = now_selected
           end
         end)
-        ImGui.PopID(ctx)
+        ImGui.PopID(Ctx())
       end
 
       if needs_update then
         self:set(new_value)
       end
     end)
-    ImGui.EndListBox(ctx)
+    ImGui.EndListBox(Ctx())
   end
 end
 

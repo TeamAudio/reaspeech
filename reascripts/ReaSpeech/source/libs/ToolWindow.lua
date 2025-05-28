@@ -99,12 +99,12 @@ ToolWindow.modal = function(o, config)
   config.is_modal = true
 
   ToolWindow._wrap_method_0_args(o, 'open', function()
-    ImGui.OpenPopup(ctx, o._tool_window.title)
+    ImGui.OpenPopup(Ctx(), o._tool_window.title)
     return true
   end)
 
   ToolWindow._wrap_method_0_args(o, 'close', function()
-    ImGui.CloseCurrentPopup(ctx)
+    ImGui.CloseCurrentPopup(Ctx())
     return true
   end)
 
@@ -263,13 +263,13 @@ function ToolWindow.render(o)
   end
 
   local f = function()
-    state.theme:wrap(ctx, function()
+    state.theme:wrap(Ctx(), function()
       ToolWindow._render_window(o)
     end, Trap)
   end
 
   if state.font then
-    Fonts.wrap(ctx, Fonts.main, f, Trap)
+    Fonts.wrap(Ctx(), Fonts.main, f, Trap)
   else
     f()
   end
@@ -279,22 +279,22 @@ function ToolWindow._render_window(o)
   local state = o._tool_window
 
   if state.position == ToolWindow.POSITION_CENTER then
-    local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(ctx))}
-    ImGui.SetNextWindowPos(ctx, center[1], center[2], ImGui.Cond_Appearing(), 0.5, 0.5)
+    local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(Ctx()))}
+    ImGui.SetNextWindowPos(Ctx(), center[1], center[2], ImGui.Cond_Appearing(), 0.5, 0.5)
   elseif type(state.position) == 'table' and #state.position == 2 then
     local position = state.position
-    ImGui.SetNextWindowPos(ctx, position[1], position[2], ImGui.Cond_Appearing())
+    ImGui.SetNextWindowPos(Ctx(), position[1], position[2], ImGui.Cond_Appearing())
   end
 
-  ImGui.SetNextWindowSize(ctx, state.width, state.height, ImGui.Cond_FirstUseEver())
-  local visible, open = state.begin_f(ctx, state.title, true, state.window_flags)
+  ImGui.SetNextWindowSize(Ctx(), state.width, state.height, ImGui.Cond_FirstUseEver())
+  local visible, open = state.begin_f(Ctx(), state.title, true, state.window_flags)
   if visible then
     Trap(function ()
       if o.render_content then
         o:render_content()
       end
     end)
-    state.end_f(ctx)
+    state.end_f(Ctx())
   else
     -- Checking for "not NoCollapse" here accounts for the main window
     -- that can be minimized and expanded.
@@ -312,7 +312,7 @@ function ToolWindow._render_window(o)
 end
 
 function ToolWindow.render_separator(_o)
-  ImGui.Dummy(ctx, 0, 0)
-  ImGui.Separator(ctx)
-  ImGui.Dummy(ctx, 0, 0)
+  ImGui.Dummy(Ctx(), 0, 0)
+  ImGui.Separator(Ctx())
+  ImGui.Dummy(Ctx(), 0, 0)
 end

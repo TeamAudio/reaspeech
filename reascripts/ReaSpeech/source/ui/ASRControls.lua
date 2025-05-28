@@ -161,9 +161,9 @@ function ASRControls:init_simple_layout()
     num_columns = #renderers,
 
     render_column = function (column)
-      ImGui.PushItemWidth(ctx, column.width)
+      ImGui.PushItemWidth(Ctx(), column.width)
       Trap(function () renderers[column.num](self, column) end)
-      ImGui.PopItemWidth(ctx)
+      ImGui.PopItemWidth(Ctx())
     end
   }
 end
@@ -204,12 +204,12 @@ function ASRControls:init_advanced_layout()
     num_columns = #renderers,
 
     render_column = function (column)
-      ImGui.PushItemWidth(ctx, column.width)
+      ImGui.PushItemWidth(Ctx(), column.width)
       for row, renderer in ipairs(renderers[column.num]) do
-        if row > 1 then ImGui.Spacing(ctx) end
+        if row > 1 then ImGui.Spacing(Ctx()) end
         Trap(function () renderer(self, column) end)
       end
-      ImGui.PopItemWidth(ctx)
+      ImGui.PopItemWidth(Ctx())
     end
   }
 end
@@ -225,25 +225,25 @@ function ASRControls:render_actions()
   Widgets.disable_if(progress, function()
     local plugin_actions = self.actions:actions()
     for i, action in ipairs(plugin_actions) do
-      if i > 1 then ImGui.SameLine(ctx) end
+      if i > 1 then ImGui.SameLine(Ctx()) end
       action:render()
     end
   end)
 
   if progress then
-    ImGui.SameLine(ctx)
+    ImGui.SameLine(Ctx())
 
-    if ImGui.Button(ctx, "Cancel") then
+    if ImGui.Button(Ctx(), "Cancel") then
       worker:cancel()
     end
 
-    ImGui.SameLine(ctx)
+    ImGui.SameLine(Ctx())
     local overlay = string.format("%.0f%%", progress * 100)
     local status = worker:status()
     if status then
       overlay = overlay .. ' - ' .. status
     end
-    ImGui.ProgressBar(ctx, progress, nil, nil, overlay)
+    ImGui.ProgressBar(Ctx(), progress, nil, nil, overlay)
   end
 end
 
@@ -265,15 +265,15 @@ end
 function ASRControls:render()
   self:check_asr_info()
   self.simple_layout:render()
-  ImGui.Unindent(ctx)
-  ImGui.Dummy(ctx, ReaSpeechControlsUI.MARGIN_LEFT, 0)
-  ImGui.SameLine(ctx)
-  if ImGui.TreeNode(ctx, "Advanced Options") then
+  ImGui.Unindent(Ctx())
+  ImGui.Dummy(Ctx(), ReaSpeechControlsUI.MARGIN_LEFT, 0)
+  ImGui.SameLine(Ctx())
+  if ImGui.TreeNode(Ctx(), "Advanced Options") then
     self.advanced_layout:render()
-    ImGui.TreePop(ctx)
+    ImGui.TreePop(Ctx())
   end
-  ImGui.Indent(ctx)
-  ImGui.Spacing(ctx)
+  ImGui.Indent(Ctx())
+  ImGui.Spacing(Ctx())
   self.actions_layout:render()
 self.alert_popup:render()
 end
@@ -281,7 +281,7 @@ end
 function ASRControls:render_language(column)
   if self.asr_options.language then
     self.language:render()
-    ImGui.Spacing(ctx)
+    ImGui.Spacing(Ctx())
     self.translate:render(column)
   end
 end

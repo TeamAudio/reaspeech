@@ -105,7 +105,7 @@ end
 
 function ReaSpeechUI:render_content()
   if ReaSpeechUI.METRICS then
-    ImGui.ShowMetricsWindow(ctx)
+    ImGui.ShowMetricsWindow(Ctx())
   end
 
   Trap(function ()
