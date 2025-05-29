@@ -22,7 +22,10 @@ def load_model(next_model_name: str):
         if model and next_model_name == model_name:
             return model
 
-        model = snapshot_download(f"mlx-community/whisper-{next_model_name}-mlx", cache_dir=model_path)
+        repo_id = f"mlx-community/whisper-{next_model_name}"
+        if not repo_id.endswith("-turbo"):
+            repo_id += "-mlx"
+        model = snapshot_download(repo_id, cache_dir=model_path)
 
         model_name = next_model_name
 
