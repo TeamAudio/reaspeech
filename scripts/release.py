@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 # Set to True for dry run, False for actual execution
-DRY_RUN = FALSE
+DRY_RUN = False
 
 # Path to version file
 VERSION_FILE = 'reascripts/ReaSpeech/version.lua'
