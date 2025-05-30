@@ -81,8 +81,7 @@ def update_version_file(version):
 
     try:
         with open(VERSION_FILE, 'w') as f:
-            f.write(f"""ReaSpeechUI.VERSION = "{version}"
-""")
+            f.write(f'ReaSpeechUI.VERSION = "{version}"\n')
         print(f"Updated version.lua with {version}")
         return True
     except IOError as e:
