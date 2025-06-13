@@ -45,3 +45,14 @@ jobs:
         DOCKER_IMAGE_LATEST=$REPO_NAME:latest${{ matrix.tag_extension }}
         DOCKER_IMAGE_VERSION=$REPO_NAME:$GITHUB_REF_NAME${{ matrix.tag_extension }}
         docker buildx build . --no-cache --platform=${{ matrix.platforms }} -t "${DOCKER_IMAGE_LATEST}" -t "${DOCKER_IMAGE_VERSION}" -f ${{ matrix.docker_file }} --push
+
+  release: 
+    if: contains(github.ref, 'tags/v')
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          prerelease: true
