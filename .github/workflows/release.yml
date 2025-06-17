@@ -8,19 +8,19 @@ on:
       project_id:
         description: 'Project ID'
         required: true
-        default: 'Test Project'
+        default: 'reaspeech'
       project_name:
         description: 'Test project name'
         required: true
-        default: 'Test Project Name'
+        default: 'ReaSpeech'
       project_repository:
         description: 'GitHub repository where the project is hosted'
         required: true
-        default: 'Test Repo'
+        default: 'reaspeech'
       release_body:
         description: 'Release body content'
         required: true
-        default: 'Release body content goes here'
+        default: 'Release body for Reaspeech'
 
 jobs:
   publish-release-notes:
