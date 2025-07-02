@@ -31,6 +31,7 @@ RUN git clone https://github.com/absadiki/pywhispercpp \
     && cd pywhispercpp \
     && git checkout v1.3.3 \
     && git submodule update --init \
+    && export CMAKE_POLICY_VERSION_MINIMUM=3.5 \
     && GGML_CUDA=1 $POETRY_VENV/bin/pip install -e .
 
 FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
