@@ -1,1 +1,1 @@
-ReaSpeechUI.VERSION = "0.1.0"
+ReaSpeechUI.VERSION = "0.6.0"
