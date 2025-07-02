@@ -97,18 +97,18 @@ def validate_version(version):
 
 def run_command(command, description):
     """Run a shell command and print the result"""
-    print(f"Running: {command}")
+    print(f"Running: {' '.join(command)}")
     if DRY_RUN:
         print("DRY RUN: Command not executed.")
         return True
     try:
-        result = subprocess.run(command, 
-                               shell=True, 
+        result = subprocess.run(command,
+                               shell=False,
                                check=True,
-                               stdout=subprocess.PIPE, 
+                               stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE,
-                               universal_newlines=True)  
-        
+                               universal_newlines=True)
+
         print(f"{description}: Success")
         if result.stdout:
             print(result.stdout)
@@ -156,7 +156,7 @@ def main():
     tag = f"v{version}"
 
     # Stage version.lua and commit
-    if not run_command(["git", "add", f"{VERSION_FILE}"], "Staging version.lua"):
+    if not run_command(["git", "add", VERSION_FILE], "Staging version.lua"):
         sys.exit(1)
 
     if not run_command(["git", "commit", "-m", f"Release {tag}"], "Committing changes"):
