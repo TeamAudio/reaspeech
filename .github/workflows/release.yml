@@ -46,3 +46,5 @@ jobs:
           version_tag: ${{ github.event.release.tag_name || 'v0.0.1-test' }}
           release_body: ${{ github.event.release.body }}
           service_token: ${{ secrets.PUBLISH_RELEASE_SERVICE_TOKEN }}
+          latest_release_url: ${{ vars.LATEST_RELEASE_URL || 'https://hub.docker.com/r/techaudiodoc/reaspeech' }}
+  
