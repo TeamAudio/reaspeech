@@ -49,6 +49,11 @@ class Model(BaseModel):
             t0 = pw.whisper_full_get_segment_t0(ctx, i)
             t1 = pw.whisper_full_get_segment_t1(ctx, i)
             text = pw.whisper_full_get_segment_text(ctx, i)
+
+            # Ensure text is a string, not bytes
+            if isinstance(text, bytes):
+                text = text.decode('utf-8', errors='replace')
+
             token_n = pw.whisper_full_n_tokens(ctx, i)
             words = []
             for j in range(0, token_n):
@@ -57,6 +62,11 @@ class Model(BaseModel):
                 token_data = pw.whisper_full_get_token_data(ctx, i, j)
                 token_text = pw.whisper_full_get_token_text(ctx, i, j)
                 token_p = pw.whisper_full_get_token_p(ctx, i, j)
+
+                # Ensure token_text is a string, not bytes
+                if isinstance(token_text, bytes):
+                    token_text = token_text.decode('utf-8', errors='replace')
+
                 if words and not token_text.startswith(' '):
                     words[-1].t1 = token_data.t1
                     words[-1].text += token_text.strip()
