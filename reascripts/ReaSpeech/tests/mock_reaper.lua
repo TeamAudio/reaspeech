@@ -167,4 +167,5 @@ ImGui = ImGui or {
   WindowFlags_TopMost = function() return 4 end,
   Cond_FirstUseEver = function() return 0 end,
   Cond_Appearing = function() return 1 end,
+  FontFlags_None = function() return 0 end,
 }

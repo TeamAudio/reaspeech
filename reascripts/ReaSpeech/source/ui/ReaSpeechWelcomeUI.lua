@@ -80,13 +80,11 @@ function ReaSpeechWelcomeUI:render_close_button()
 end
 
 function ReaSpeechWelcomeUI:render_heading(text)
-  ImGui.PushFont(Ctx(), Fonts.bold)
-  Trap(function ()
+  Fonts.wrap(Ctx(), Fonts.bold, function()
     ImGui.Dummy(Ctx(), self.WIDTH, self.HEADING_MARGIN)
     ImGui.SetCursorPosX(Ctx(), self.PADDING)
     ImGui.Text(Ctx(), text)
-  end)
-  ImGui.PopFont(Ctx())
+  end, Trap)
 end
 
 function ReaSpeechWelcomeUI:render_text(text)
