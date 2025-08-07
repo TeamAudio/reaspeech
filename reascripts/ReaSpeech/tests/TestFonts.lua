@@ -38,7 +38,7 @@ function TestFonts:testWrap()
   reaper = old_reaper
 end
 
-function TestFonts:testFont()
+function TestFonts:testCreateFont()
   local old_create_font = ImGui.CreateFont
   ImGui.CreateFont = function(_, name, size)
     -- object will be an actual font object in the real implementation
