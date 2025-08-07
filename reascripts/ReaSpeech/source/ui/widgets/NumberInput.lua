@@ -13,6 +13,8 @@ NumberInput.new = function (options)
     label = nil,
   }
   options.default = options.default or 0
+  options.min = options.min or nil
+  options.max = options.max or nil
 
   local o = ReaSpeechWidget.new({
     state = options.state,
@@ -39,9 +41,13 @@ NumberInput.renderer = function (self)
 
   local imgui_label = ("##%s"):format(options.label)
 
-  local rv, value = ImGui.InputInt(Ctx(), imgui_label, self:value())
+  local current_value = self:value()
 
-  if rv and ImGui.IsItemDeactivatedAfterEdit(Ctx()) then
+  local rv, value = ImGui.InputInt(Ctx(), imgui_label, current_value)
+
+  local in_bounds = (options.min == nil or value >= options.min) and (options.max == nil or value <= options.max)
+
+  if rv and in_bounds then
     self:set(value)
   end
 end

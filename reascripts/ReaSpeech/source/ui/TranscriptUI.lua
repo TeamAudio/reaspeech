@@ -343,8 +343,7 @@ function TranscriptUI:render()
 end
 
 function TranscriptUI:render_name()
-  ImGui.PushFont(Ctx(), Fonts.big)
-  Trap(function()
+  Fonts.wrap(Ctx(), Fonts.big, function()
     if self.editing_name then
       self.name_editor:render()
     else
@@ -365,8 +364,7 @@ function TranscriptUI:render_name()
       end
       ImGui.Dummy(Ctx(), 1, 2)
     end
-  end)
-  ImGui.PopFont(Ctx())
+  end, Trap)
 end
 
 function TranscriptUI:render_result_actions()

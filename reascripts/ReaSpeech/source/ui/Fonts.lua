@@ -10,6 +10,11 @@ Fonts = {
   MAX_SIZE = 24,
 }
 
+function Fonts:create_font(name, size, flags)
+  flags = flags or ImGui.FontFlags_None()
+  return { object = ImGui.CreateFont(name, flags), size = size }
+end
+
 function Fonts:init(ctx)
   self._attached_ctx = {}
 
@@ -39,7 +44,9 @@ end
 function Fonts:check(ctx)
   local current_font_size = self.size:get()
 
-  if current_font_size == self.last_font_size then
+  local out_of_bounds = current_font_size < self.MIN_SIZE or current_font_size > self.MAX_SIZE
+
+  if current_font_size == self.last_font_size or out_of_bounds then
     return
   end
 
@@ -50,35 +57,41 @@ end
 
 function Fonts:load_and_attach(ctx, font_size)
   self:_detach(self.main)
-  self.main = ImGui.CreateFont('sans-serif', font_size)
+  self.main = self:create_font('sans-serif', font_size)
   self:_attach(ctx, self.main)
 
   self:_detach(self.big)
-  self.big = ImGui.CreateFont('sans-serif', font_size + 4)
+  self.big = self:create_font('sans-serif', font_size + 4)
   self:_attach(ctx, self.big)
 
   self:_detach(self.bigboi)
-  self.bigboi = ImGui.CreateFont('sans-serif', font_size + 8)
+  self.bigboi = self:create_font('sans-serif', font_size + 8)
   self:_attach(ctx, self.bigboi)
 
   self:_detach(self.bold)
-  self.bold = ImGui.CreateFont('sans-serif', font_size, ImGui.FontFlags_Bold())
+  self.bold = self:create_font('sans-serif', font_size, ImGui.FontFlags_Bold())
   self:_attach(ctx, self.bold)
 end
 
+
+
 function Fonts:_attach(ctx, font)
-  ImGui.Attach(ctx, font)
+  ImGui.Attach(ctx, font.object)
   self._attached_ctx[font] = ctx
 end
 
 function Fonts:_detach(font)
-  if not ImGui.ValidatePtr(font, 'ImGui_Font*') then return end
+  if not font or not font.object then
+    return
+  end
+
+  if not ImGui.ValidatePtr(font.object, 'ImGui_Font*') then return end
 
   local attached_ctx = self._attached_ctx[font]
   self._attached_ctx[font] = nil
   if not ImGui.ValidatePtr(attached_ctx, 'ImGui_Context*') then return end
 
-  ImGui.Detach(attached_ctx, font)
+  ImGui.Detach(attached_ctx, font.object)
 end
 
 function Fonts.wrap(ctx, font, f, trap_f)
@@ -86,7 +99,7 @@ function Fonts.wrap(ctx, font, f, trap_f)
     return xpcall(f_, reaper.ShowConsoleMsg)
   end
 
-  ImGui.PushFont(ctx, font)
+  ImGui.PushFont(ctx, font.object, font.size)
   trap_f(function() f() end)
   ImGui.PopFont(ctx)
 end

@@ -31,6 +31,8 @@ function SettingsControls:init()
   self.font_size = Widgets.NumberInput.new {
     state = Fonts.size,
     label = 'Font Size',
+    min = Fonts.MIN_SIZE,
+    max = Fonts.MAX_SIZE,
   }
 
   self:init_logging()

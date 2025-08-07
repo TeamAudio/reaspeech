@@ -15,7 +15,7 @@ function TestFonts:testWrap()
 
   local push_called = false
   local pop_called = false
-  ImGui.PushFont = function(_, _font)
+  ImGui.PushFont = function(_, _font, _size)
     push_called = true
   end
   ImGui.PopFont = function(_)
@@ -38,12 +38,28 @@ function TestFonts:testWrap()
   reaper = old_reaper
 end
 
+function TestFonts:testFont()
+  local old_create_font = ImGui.CreateFont
+  ImGui.CreateFont = function(_, name, size)
+    -- object will be an actual font object in the real implementation
+    return { object = 'sans-serif', size = size }
+  end
+
+  local font = Fonts:create_font('sans-serif', 12)
+
+  lu.assertEquals(font.object, ImGui.CreateFont('sans-serif', 12))
+
+  lu.assertEquals(font.size, 12)
+
+  ImGui.CreateFont = old_create_font
+end
+
 function TestFonts:testWrapErrorHandler()
   local old_imgui = ImGui
 
   local push_called = false
   local pop_called = false
-  ImGui.PushFont = function(_, _font)
+  ImGui.PushFont = function(_, _font, _size)
     push_called = true
   end
   ImGui.PopFont = function()
@@ -75,7 +91,7 @@ function TestFonts:testErrorHandlerDefault()
   local old_reaper = reaper
 
   local push_called = false
-  ImGui.PushFont = function(_, _font)
+  ImGui.PushFont = function(_, _font, _size)
     push_called = true
   end
 

@@ -34,6 +34,24 @@ end
 
 function ReaSpeechMain:check_imgui()
   if ImGui.CreateContext then
+    local _, _, reaimgui_version_string = ImGui.GetVersion()
+
+    local major, minor = reaimgui_version_string:match("(%d+)%.(%d+)")
+    major = tonumber(major)
+    minor = tonumber(minor)
+
+    if major == 0 and minor < 10 then
+      reaper.MB(
+        "ReaSpeech requires ReaImGui version 0.10 or higher.\n\n"
+        .. "Please update ReaImGui from:\n\n"
+        .. "Extensions > ReaPack > Browse packages...",
+        "ReaImGui version error",
+        0
+      )
+      return false
+    end
+
+
     return true
   else
     reaper.MB(
