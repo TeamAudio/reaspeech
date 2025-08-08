@@ -63,5 +63,5 @@ jobs:
         with:
           prerelease: true
           generate_release_notes: true
-          body: "[Latest Release](${{ vars.LATEST_RELEASE_URL }})"
+          body: "Get the latest Docker image at [Docker Hub](${{ vars.LATEST_RELEASE_URL }})!"
           append_body: true
