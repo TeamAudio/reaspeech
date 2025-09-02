@@ -22,13 +22,12 @@ function Widgets.disable_if(predicate, f, tooltip)
       local flags = ImGui.ChildFlags_None()
                   | ImGui.ChildFlags_AutoResizeX()
                   | ImGui.ChildFlags_AutoResizeY()
-      ImGui.BeginChild(Ctx(), imgui_id, 0, 0, flags)
-    end
-
-    Trap(f)
-
-    if tooltip then
-      ImGui.EndChild(Ctx())
+      if ImGui.BeginChild(Ctx(), imgui_id, 0, 0, flags) then
+        Trap(f)
+        ImGui.EndChild(Ctx())
+      end
+    else
+      Trap(f)
     end
   end)
   ImGui.EndDisabled(Ctx())
