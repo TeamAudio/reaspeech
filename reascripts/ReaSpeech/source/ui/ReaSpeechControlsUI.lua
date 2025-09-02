@@ -115,11 +115,12 @@ function ReaSpeechControlsUI:_render_drop_zone()
     local which_theme = drop_zone.hovered and theme_selected or theme
 
     which_theme:wrap(Ctx(), function()
-      ImGui.BeginChild(Ctx(), 'drop-zone-' .. i, avail_w, drop_zone_height, child_flags)
-      Trap(function()
-        drop_zone:render()
-      end)
-      ImGui.EndChild(Ctx())
+      if ImGui.BeginChild(Ctx(), 'drop-zone-' .. i, avail_w, drop_zone_height, child_flags) then
+        Trap(function()
+          drop_zone:render()
+        end)
+        ImGui.EndChild(Ctx())
+      end
       drop_zone.hovered = ImGui.IsItemHovered(Ctx(), ImGui.HoveredFlags_AllowWhenBlockedByActiveItem())
     end, Trap)
   end
@@ -203,11 +204,12 @@ function ReaSpeechControlsUI:render_heading()
 
   local tab_bar_width = avail_w - logo.width - self.COLUMN_PADDING
 
-  ImGui.BeginChild(Ctx(), 'tab-bar', tab_bar_width, logo.height)
-  Trap(function ()
-    self.tab_bar:render()
-  end)
-  ImGui.EndChild(Ctx())
+  if ImGui.BeginChild(Ctx(), 'tab-bar', tab_bar_width, logo.height) then
+    Trap(function ()
+      self.tab_bar:render()
+    end)
+    ImGui.EndChild(Ctx())
+  end
 
   ImGui.SameLine(Ctx())
 
@@ -224,11 +226,12 @@ function ReaSpeechControlsUI:render_tab_content()
 
   for _, tab in ipairs(self.plugins:tabs()) do
     if tab.tab.key == tab_bar_value then
-      ImGui.BeginChild(Ctx(), 'tab-content', 0, 0)
-      Trap(function()
-        tab:render()
-      end)
-      ImGui.EndChild(Ctx())
+      if ImGui.BeginChild(Ctx(), 'tab-content', 0, 0) then
+        Trap(function()
+          tab:render()
+        end)
+        ImGui.EndChild(Ctx())
+      end
     end
 
     if tab.render_bg then tab:render_bg() end
