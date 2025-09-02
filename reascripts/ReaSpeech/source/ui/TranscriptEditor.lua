@@ -119,7 +119,6 @@ function TranscriptEditor:render_word_navigation()
   local num_words = #words
   local spacing = ImGui.GetStyleVar(Ctx(), ImGui.StyleVar_ItemInnerSpacing())
 
-  ImGui.PushButtonRepeat(Ctx(), true)
   Trap(function ()
     if ImGui.ArrowButton(Ctx(), '##left', ImGui.Dir_Left()) then
       self:edit_word(self.editing.word_index - 1)
@@ -129,7 +128,6 @@ function TranscriptEditor:render_word_navigation()
       self:edit_word(self.editing.word_index + 1)
     end
   end)
-  ImGui.PopButtonRepeat(Ctx())
 
   ImGui.SameLine(Ctx())
   ImGui.AlignTextToFramePadding(Ctx())
