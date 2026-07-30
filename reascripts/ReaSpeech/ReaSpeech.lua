@@ -2281,6 +2281,7 @@ end
 function ASRControls:init_asr_info()
   self.asr_engine = 'reaspeech_lib'
   self.asr_options = {
+    hotwords = true,
     language = true,
     vad_filter = true,
   }
@@ -2520,6 +2521,10 @@ function ASRPlugin:asr(jobs)
 
   if controls_data.language and controls_data.language ~= '' then
     data.language = controls_data.language
+  end
+
+  if controls_data.hotwords and controls_data.hotwords ~= '' then
+    data.hotwords = controls_data.hotwords
   end
 
   -- consolidate jobs by path, retaining a collection of
@@ -7283,7 +7288,8 @@ function ReaSpeechWorker:start_next_job()
     data.language or '',
     data.task == 'translate',
     data.vad_filter == true or data.vad_filter == 'true',
-    true
+    true,
+    data.hotwords or ''
   )
 
   if type(active.job_id) ~= 'string' or active.job_id:sub(1, 6) == 'ERROR:' then

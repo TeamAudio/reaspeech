@@ -104,6 +104,7 @@ end
 function ASRControls:init_asr_info()
   self.asr_engine = 'reaspeech_lib'
   self.asr_options = {
+    hotwords = true,
     language = true,
     vad_filter = true,
   }

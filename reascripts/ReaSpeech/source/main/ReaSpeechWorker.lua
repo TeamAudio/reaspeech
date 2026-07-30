@@ -71,7 +71,8 @@ function ReaSpeechWorker:start_next_job()
     data.language or '',
     data.task == 'translate',
     data.vad_filter == true or data.vad_filter == 'true',
-    true
+    true,
+    data.hotwords or ''
   )
 
   if type(active.job_id) ~= 'string' or active.job_id:sub(1, 6) == 'ERROR:' then

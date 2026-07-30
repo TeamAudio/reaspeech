@@ -39,6 +39,10 @@ function ASRPlugin:asr(jobs)
     data.language = controls_data.language
   end
 
+  if controls_data.hotwords and controls_data.hotwords ~= '' then
+    data.hotwords = controls_data.hotwords
+  end
+
   -- consolidate jobs by path, retaining a collection of
   -- { item: MediaItem, take: MediaItem_Take } objects
   -- so that we can process a single file but reflect its
