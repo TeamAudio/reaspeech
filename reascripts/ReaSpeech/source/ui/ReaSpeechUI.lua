@@ -36,17 +36,10 @@ function ReaSpeechUI:init()
   self.requests = {}
   self.responses = {}
 
-  ReaSpeechAPI:init(Script.host, Script.protocol)
-
   self.worker = ReaSpeechWorker.new({
     requests = self.requests,
     responses = self.responses,
   })
-
-  if Script.env == 'demo' then
-    self.welcome_ui = ReaSpeechWelcomeUI.new { is_demo = true }
-    self.welcome_ui:present()
-  end
 
   self.plugins = ReaSpeechPlugins.new(self, {
     ASRPlugin,
@@ -109,9 +102,6 @@ function ReaSpeechUI:render_content()
   end
 
   Trap(function ()
-    if self.welcome_ui then
-      self.welcome_ui:render()
-    end
     self.controls_ui:render()
     self.alert_popup:render()
   end)
@@ -126,7 +116,6 @@ function ReaSpeechUI:load_transcript(transcript)
 end
 
 function ReaSpeechUI:submit_request(request)
-  assert(request.endpoint, "Endpoint required for API call")
   request.callback = request.callback or function() end
   table.insert(self.requests, request)
 end

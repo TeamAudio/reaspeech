@@ -5,7 +5,6 @@
 ]]--
 
 ASRPlugin = Plugin {
-  ENDPOINT = '/asr',
   PLUGIN_KEY = 'asr',
 }
 
@@ -40,14 +39,6 @@ function ASRPlugin:asr(jobs)
     data.language = controls_data.language
   end
 
-  if controls_data.hotwords and controls_data.hotwords ~= '' then
-    data.hotwords = controls_data.hotwords
-  end
-
-  if controls_data.initial_prompt and controls_data.initial_prompt ~= '' then
-    data.initial_prompt = controls_data.initial_prompt
-  end
-
   -- consolidate jobs by path, retaining a collection of
   -- { item: MediaItem, take: MediaItem_Take } objects
   -- so that we can process a single file but reflect its
@@ -75,7 +66,6 @@ function ASRPlugin:asr(jobs)
       audio_file = function(job) return job.path end
     },
     jobs = consolidated_jobs,
-    endpoint = self.ENDPOINT,
     callback = self:handle_response(#consolidated_jobs)
   }
 

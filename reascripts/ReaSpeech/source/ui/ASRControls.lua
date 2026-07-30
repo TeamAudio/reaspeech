@@ -102,46 +102,15 @@ function ASRControls:init_model_name()
 end
 
 function ASRControls:init_asr_info()
-  self.asr_engine = nil
-  self.asr_options = {}
-
-  local request = CurlRequest().async {
-    url = ReaSpeechAPI:get_api_url('asr_info'),
-    method = 'GET',
+  self.asr_engine = 'reaspeech_lib'
+  self.asr_options = {
+    language = true,
+    vad_filter = true,
   }
-
-  self.asr_info_request = request:execute()
 end
 
 function ASRControls:check_asr_info()
-  if self.asr_engine or not self.asr_info_request then return end
-
-  if self.asr_info_request:error() then
-    self.alert_popup.onclose = function()
-      self:init_asr_info()
-      self.alert_popup.onclose = nil
-    end
-
-    self.alert_popup:show('Whoops!', self.asr_info_request:error())
-    self.asr_info_request = nil
-    return
-  end
-
-  if self.asr_info_request:ready() then
-    local asr_info = self.asr_info_request:result()
-    self:debug(dump(asr_info))
-
-    self.asr_engine = asr_info and asr_info.engine
-
-    if asr_info and asr_info.options then
-      for _, option in pairs(asr_info.options) do
-        self.asr_options[option] = true
-      end
-    end
-
-    self:init_model_name()
-    self:init_advanced_layout()
-  end
+  -- Capabilities are supplied by the installed ReaSpeech extension.
 end
 
 function ASRControls:init_layouts()
@@ -180,7 +149,7 @@ function ASRControls:_get_renderers()
     table.insert(renderers, {
       self.render_hotwords
     })
-  else
+  elseif self.asr_options.initial_prompt then
     table.insert(renderers, {
       self.render_initial_prompt
     })

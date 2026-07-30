@@ -10,6 +10,7 @@ ReaSpeechMain = {}
 
 function ReaSpeechMain:main()
   if not self:check_imgui() then return end
+  if not self:check_reaspeech_lib() then return end
   reaper.atexit(function () self:on_exit() end)
 
   self:init_logging()
@@ -20,6 +21,20 @@ function ReaSpeechMain:main()
   app:present()
 
   reaper.defer(self:loop())
+end
+
+function ReaSpeechMain:check_reaspeech_lib()
+  if reaper.ReaSpeech_Start and reaper.ReaSpeech_Poll and reaper.ReaSpeech_Cancel then
+    return true
+  end
+  reaper.MB(
+    "This script requires ReaSpeech Lib.\n\n"
+    .. "Install the ReaSpeech extension in REAPER's UserPlugins directory, "
+    .. "then restart REAPER.",
+    "ReaSpeech Lib required",
+    0
+  )
+  return false
 end
 
 function ReaSpeechMain:loop()

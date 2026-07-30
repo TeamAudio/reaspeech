@@ -9,7 +9,7 @@ Changelog
 - Configurable font size
 - Improved export interface
 - Added support for whisper.cpp ASR engine
-- Better process handling when running outside of Docker
+- Better external process handling
 - Removed dependency on Redis
 - Usability and reliability improvements
 

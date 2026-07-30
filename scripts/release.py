@@ -152,11 +152,17 @@ def main():
     if not update_version_file(version):
         sys.exit(1)
 
+    if not run_command(["make", "-C", "reascripts/ReaSpeech", "build"],
+                       "Building ReaSpeech.lua"):
+        sys.exit(1)
+
     # Git operations
     tag = f"v{version}"
 
-    # Stage version.lua and commit
-    if not run_command(["git", "add", VERSION_FILE], "Staging version.lua"):
+    # Stage the version and rebuilt release artifact
+    if not run_command(
+            ["git", "add", VERSION_FILE, "reascripts/ReaSpeech/ReaSpeech.lua"],
+            "Staging release files"):
         sys.exit(1)
 
     if not run_command(["git", "commit", "-m", f"Release {tag}"], "Committing changes"):
