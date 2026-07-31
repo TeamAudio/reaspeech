@@ -153,16 +153,14 @@ def main():
         sys.exit(1)
 
     if not run_command(["make", "-C", "reascripts/ReaSpeech", "build"],
-                       "Building ReaSpeech.lua"):
+                       "Building build/ReaSpeech.lua"):
         sys.exit(1)
 
     # Git operations
     tag = f"v{version}"
 
-    # Stage the version and rebuilt release artifact
-    if not run_command(
-            ["git", "add", VERSION_FILE, "reascripts/ReaSpeech/ReaSpeech.lua"],
-            "Staging release files"):
+    # The generated script is distributed separately and remains ignored.
+    if not run_command(["git", "add", VERSION_FILE], "Staging version.lua"):
         sys.exit(1)
 
     if not run_command(["git", "commit", "-m", f"Release {tag}"], "Committing changes"):

@@ -6,6 +6,8 @@
 
 ReaSpeechWorker = Polo {}
 
+local REASPEECH_BEAM_SIZE = 1
+
 function ReaSpeechWorker:init()
   assert(self.requests, 'missing requests')
   assert(self.responses, 'missing responses')
@@ -65,15 +67,16 @@ function ReaSpeechWorker:start_next_job()
   local active = self.active_job
   local data = active.data
   active.status = 'Starting'
-  active.job_id = reaper.ReaSpeech_Start(
-    active.job.path,
-    data.model_name or 'small',
-    data.language or '',
-    data.task == 'translate',
-    data.vad_filter == true or data.vad_filter == 'true',
-    true,
-    data.hotwords or ''
-  )
+  local job_options = {
+    model = data.model_name or 'small',
+    language = data.language or '',
+    translate = data.task == 'translate',
+    vad = data.vad_filter == true or data.vad_filter == 'true',
+    words = true,
+    hotwords = data.hotwords or '',
+    beamSize = REASPEECH_BEAM_SIZE,
+  }
+  active.job_id = reaper.ReaSpeech_StartEx(active.job.path, json.encode(job_options))
 
   if type(active.job_id) ~= 'string' or active.job_id:sub(1, 6) == 'ERROR:' then
     self:finish_with_error(active.job_id or 'Unable to start transcription')

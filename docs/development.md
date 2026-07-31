@@ -2,7 +2,7 @@
 
 The application is maintained as readable Lua modules under
 `reascripts/ReaSpeech/source`. The release artifact is one self-contained
-`reascripts/ReaSpeech/ReaSpeech.lua` file.
+`reascripts/ReaSpeech/build/ReaSpeech.lua` file.
 
 ## Requirements
 
@@ -23,12 +23,13 @@ make build
 ```
 
 `make build` concatenates the header, bundled JSON implementation, embedded
-images, application modules, version, and entry point into `ReaSpeech.lua`.
+images, application modules, version, and entry point into
+`build/ReaSpeech.lua`. The `build` directory is ignored by Git.
 The result is plain Lua and runs on both Lua versions supported by REAPER.
 
 The tests use a mocked REAPER API and can be run without launching REAPER.
-For interactive testing, rebuild `ReaSpeech.lua`, add that file to REAPER's
-Actions window, and run it.
+For interactive testing, rebuild `build/ReaSpeech.lua`, add that file to
+REAPER's Actions window, and run it.
 
 ## Architecture
 

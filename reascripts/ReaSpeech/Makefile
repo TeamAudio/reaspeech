@@ -9,7 +9,7 @@ TEST_ROOT=tests
 
 # Miscellaneous directly-referenced bundle components
 BUNDLE_INCLUDE=$(SOURCE_ROOT)/include
-BUNDLE_TARGET=ReaSpeech.lua
+BUNDLE_TARGET=build/ReaSpeech.lua
 
 # usage: $(call lua_sources,<directory>,<file_prefix>)
 # e.g. $(call lua_sources,tests,Test) -> tests/Test*.lua tests/**/Test*.lua
@@ -47,6 +47,7 @@ test-noversion: $(source) $(tests)
 build: $(BUNDLE_TARGET)
 
 $(BUNDLE_TARGET): $(bundle_contents)
+	mkdir -p $(dir $(BUNDLE_TARGET))
 	cat $(bundle_contents) > $(BUNDLE_TARGET)
 
 .PHONY: tags

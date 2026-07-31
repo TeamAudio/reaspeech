@@ -12,7 +12,7 @@ responsive during recognition.
 
 ## Install
 
-Copy `reascripts/ReaSpeech/ReaSpeech.lua` into your REAPER scripts directory,
+Copy `reascripts/ReaSpeech/build/ReaSpeech.lua` into your REAPER scripts directory,
 add it from the Actions window, and run it. The script is self-contained; its
 only runtime dependencies are ReaImGui and ReaSpeech Lib.
 

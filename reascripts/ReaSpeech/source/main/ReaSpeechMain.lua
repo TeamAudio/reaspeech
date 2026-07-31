@@ -24,7 +24,7 @@ function ReaSpeechMain:main()
 end
 
 function ReaSpeechMain:check_reaspeech_lib()
-  if reaper.ReaSpeech_Start and reaper.ReaSpeech_Poll and reaper.ReaSpeech_Cancel then
+  if reaper.ReaSpeech_StartEx and reaper.ReaSpeech_Poll and reaper.ReaSpeech_Cancel then
     return true
   end
   reaper.MB(
