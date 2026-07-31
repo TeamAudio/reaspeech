@@ -4,9 +4,9 @@
 
 ]]--
 
-ReaSpeechWorker = Polo {}
-
-local REASPEECH_BEAM_SIZE = 1
+ReaSpeechWorker = Polo {
+  BEAM_SIZE = 1,
+}
 
 function ReaSpeechWorker:init()
   assert(self.requests, 'missing requests')
@@ -74,7 +74,7 @@ function ReaSpeechWorker:start_next_job()
     vad = data.vad_filter == true or data.vad_filter == 'true',
     words = true,
     hotwords = data.hotwords or '',
-    beamSize = REASPEECH_BEAM_SIZE,
+    beamSize = ReaSpeechWorker.BEAM_SIZE,
   }
   active.job_id = reaper.ReaSpeech_StartEx(active.job.path, json.encode(job_options))
 
