@@ -130,7 +130,6 @@ function ReaSpeechWorker:convert_segment(segment)
     ['end'] = (tonumber(segment.endMs) or 0) / 1000,
     text = segment.text or '',
   }
-  if segment.confidence ~= nil then result.confidence = segment.confidence end
   if segment.words then result.words = segment.words end
   return result
 end
