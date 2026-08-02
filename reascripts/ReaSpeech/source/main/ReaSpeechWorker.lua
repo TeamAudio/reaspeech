@@ -76,7 +76,10 @@ function ReaSpeechWorker:start_next_job()
     hotwords = data.hotwords or '',
     beamSize = ReaSpeechWorker.BEAM_SIZE,
   }
-  active.job_id = reaper.ReaSpeech_StartEx(active.job.path, json.encode(job_options))
+  job_options_json = json.encode(job_options)
+  self:log(active.job.path)
+  self:debug(job_options_json)
+  active.job_id = reaper.ReaSpeech_StartEx(active.job.path, job_options_json)
 
   if type(active.job_id) ~= 'string' or active.job_id:sub(1, 6) == 'ERROR:' then
     self:finish_with_error(active.job_id or 'Unable to start transcription')
@@ -88,6 +91,7 @@ function ReaSpeechWorker:poll_active_job()
   while active and self.active_job == active do
     local event_json = reaper.ReaSpeech_Poll(active.job_id)
     if not event_json or event_json == '' then return end
+    self:debug(event_json)
 
     local ok, event = pcall(json.decode, event_json)
     if not ok then
