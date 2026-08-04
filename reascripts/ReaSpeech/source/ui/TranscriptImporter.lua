@@ -141,7 +141,7 @@ function TranscriptImporter:import(filepath)
     return nil, 'Invalid JSON'
   end
 
-  if not parsed.segments then
+  if type(parsed.segments) ~= 'table' then
     return nil, 'No segments field'
   end
 
