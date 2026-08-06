@@ -91,13 +91,13 @@ function ReaSpeechWorker:poll_active_job()
   while active and self.active_job == active do
     local event_json = reaper.ReaSpeech_Poll(active.job_id)
     if not event_json or event_json == '' then return end
-    self:debug(event_json)
 
     local ok, event = pcall(json.decode, event_json)
     if not ok then
       self:finish_with_error('Could not decode ReaSpeech Lib response: ' .. tostring(event))
       return
     end
+    if event.type ~= 'progress' then self:debug(event_json) end
     self:handle_event(event)
   end
 end
