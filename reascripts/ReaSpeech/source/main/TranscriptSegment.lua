@@ -206,6 +206,8 @@ function TranscriptSegment:get_file_with_extension()
 end
 
 function TranscriptSegment:navigate(word_index, autoplay)
+  if not self:_has_valid_media_refs() then return end
+
   local start = self.start
   if word_index then
     start = self.words[word_index].start
@@ -221,16 +223,31 @@ function TranscriptSegment:navigate(word_index, autoplay)
   end
 end
 
+function TranscriptSegment:_has_valid_media_refs()
+  if not reaper.ValidatePtr2 then return true end
+
+  return reaper.ValidatePtr2(0, self.item, 'MediaItem*')
+    and reaper.ValidatePtr2(0, self.take, 'MediaItem_Take*')
+end
+
+function TranscriptSegment:_timeline_time(position)
+  local cache_key = '_timeline_' .. position
+
+  if self:_has_valid_media_refs() then
+    self[cache_key] = reaper.GetMediaItemInfo_Value(self.item, 'D_POSITION')
+      + self[position]
+      - reaper.GetMediaItemTakeInfo_Value(self.take, 'D_STARTOFFS')
+  end
+
+  return self[cache_key] or self[position]
+end
+
 function TranscriptSegment:timeline_start_time()
-  return reaper.GetMediaItemInfo_Value(self.item, 'D_POSITION')
-    + self.start
-    - reaper.GetMediaItemTakeInfo_Value(self.take, 'D_STARTOFFS')
+  return self:_timeline_time('start')
 end
 
 function TranscriptSegment:timeline_end_time()
-  return reaper.GetMediaItemInfo_Value(self.item, 'D_POSITION')
-    + self.end_
-    - reaper.GetMediaItemTakeInfo_Value(self.take, 'D_STARTOFFS')
+  return self:_timeline_time('end_')
 end
 
 function TranscriptSegment:_navigate_to_media_item(item)

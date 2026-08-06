@@ -41,6 +41,7 @@ TestTranscript = {
 
 function TestTranscript:setUp()
   reaper.__test_setUp()
+  reaper.ValidatePtr2 = function (_, _, _) return true end
 end
 
 function TestTranscript:make_transcript()
@@ -256,6 +257,39 @@ function TestTranscript:testSegmentScore()
   }
   lu.assertAlmostEquals(s:score(), 0.75, 0.01)
   lu.assertAlmostEquals(s:get('score'), 0.75, 0.01)
+end
+
+function TestTranscript:testTimelineTimesSurviveClosedProject()
+  local valid = true
+  reaper.ValidatePtr2 = function (_, _, _) return valid end
+  reaper.GetMediaItemInfo_Value = function (_, _) return 10 end
+  reaper.GetMediaItemTakeInfo_Value = function (_, _) return 0.5 end
+
+  local s = self.segment {
+    start = 1.0,
+    end_ = 2.0,
+    text = "test"
+  }
+
+  lu.assertEquals(s:timeline_start_time(), 10.5)
+  lu.assertEquals(s:timeline_end_time(), 11.5)
+
+  valid = false
+  lu.assertEquals(s:timeline_start_time(), 10.5)
+  lu.assertEquals(s:timeline_end_time(), 11.5)
+end
+
+function TestTranscript:testTimelineTimesUseSegmentTimesWhenProjectAlreadyClosed()
+  reaper.ValidatePtr2 = function (_, _, _) return false end
+
+  local s = self.segment {
+    start = 1.0,
+    end_ = 2.0,
+    text = "test"
+  }
+
+  lu.assertEquals(s:timeline_start_time(), 1.0)
+  lu.assertEquals(s:timeline_end_time(), 2.0)
 end
 
 function TestTranscript:testHasWords()
