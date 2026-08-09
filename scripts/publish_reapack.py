@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Publish the generated ReaSpeech bundle to the Team Audio ReaPack repo."""
+"""Stage or publish the generated ReaSpeech bundle in the Team Audio ReaPack repo."""
 
 import argparse
 import re
@@ -26,56 +26,70 @@ def git(repo: Path, *args: str, capture: bool = False) -> str:
     return run("git", *args, cwd=repo, capture=capture)
 
 
-def require_clean_main(repo: Path, label: str) -> None:
-    branch = git(repo, "branch", "--show-current", capture=True)
-    if branch != "main":
-        raise RuntimeError(f"{label} must be on main (currently {branch or 'detached'})")
+def require_clean(repo: Path, label: str) -> None:
     if git(repo, "status", "--porcelain", capture=True):
         raise RuntimeError(f"{label} working tree is not clean")
+
+
+def show_diff(repo: Path, target: Path) -> None:
+    relative = target.relative_to(repo)
+    tracked = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", str(relative)],
+        cwd=repo, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    ).returncode == 0
+    if tracked:
+        subprocess.run(["git", "diff", "--stat", "--", str(relative)], cwd=repo, check=True)
+        print(f"Review with: git -C {repo} diff -- {relative}")
+    else:
+        # diff returns 1 when differences are found, which is the expected result.
+        subprocess.run(
+            ["git", "diff", "--no-index", "--stat", "/dev/null", str(relative)],
+            cwd=repo,
+        )
+        print(f"Review with: git -C {repo} diff --no-index /dev/null {relative}")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("bundle", type=Path)
     parser.add_argument("--reascripts-dir", required=True, type=Path)
-    parser.add_argument("--check", action="store_true", help="validate without changing files")
-    parser.add_argument("--push", action="store_true", help="push the completed ReaPack release")
+    parser.add_argument(
+        "--release", action="store_true",
+        help="commit the package and index (the default only stages files for review)",
+    )
     args = parser.parse_args()
 
-    source_repo = Path(__file__).resolve().parents[1]
     bundle = args.bundle.resolve()
     destination_repo = args.reascripts_dir.resolve()
     if not bundle.is_file():
         raise RuntimeError(f"bundle not found: {bundle}")
     if not (destination_repo / ".git").exists():
         raise RuntimeError(f"not a git repository: {destination_repo}")
-    if shutil.which("reapack-index") is None:
-        raise RuntimeError("reapack-index is required")
+    if args.release and shutil.which("reapack-index") is None:
+        raise RuntimeError("reapack-index is required for --release")
 
     match = VERSION_RE.search(bundle.read_text(encoding="utf-8"))
     if not match:
         raise RuntimeError("bundle has no valid ReaPack @version header")
     version = match.group(1)
-    require_clean_main(destination_repo, "ReaPack repository")
-
-    if args.check:
-        print(f"ReaSpeech {version} is ready to publish to {destination_repo}")
-        return 0
-
-    require_clean_main(source_repo, "ReaSpeech repository")
+    if args.release:
+        require_clean(destination_repo, "ReaPack repository")
 
     target = destination_repo / PACKAGE_PATH
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(bundle, target)
+    print(f"Staged ReaSpeech {version} in {target}")
+    if not args.release:
+        show_diff(destination_repo, target)
+        print("Review the change, then restore it and rerun with --release.")
+        return 0
+
     git(destination_repo, "add", str(PACKAGE_PATH))
     git(destination_repo, "commit", "-m", f"ReaSpeech {version}")
     run("reapack-index", "--commit", str(destination_repo), cwd=destination_repo)
     if git(destination_repo, "status", "--porcelain", capture=True):
         raise RuntimeError("ReaPack repository is dirty after indexing")
-    if args.push:
-        git(destination_repo, "push", "origin", "main")
-    else:
-        print("Release committed locally; push the ReaPack main branch to publish it.")
+    print("ReaPack commits created. Review them, then push the ReaPack repository manually.")
     return 0
 
 

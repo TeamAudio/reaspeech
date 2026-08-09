@@ -34,7 +34,7 @@ main:=$(BUNDLE_INCLUDE)/main.lua
 
 bundle_contents:=$(headers) $(vendor) $(images) $(sources) $(version) $(main)
 
-all: lint test publish
+all: lint test build
 
 lint: $(source)
 	$(LUACHECK) $?
@@ -53,13 +53,13 @@ $(BUNDLE_TARGET): $(bundle_contents)
 	mkdir -p $(dir $(BUNDLE_TARGET))
 	cat $(bundle_contents) | sed 's/@REASPEECH_VERSION@/$(shell sed -n 's/.*VERSION = "\([^"]*\)"/\1/p' version.lua)/' > $(BUNDLE_TARGET)
 
-.PHONY: publish-check
-publish-check: $(BUNDLE_TARGET)
-	$(PYTHON) ../../scripts/publish_reapack.py --check --reascripts-dir "$(REASCRIPTS_DIR)" "$(BUNDLE_TARGET)"
-
 .PHONY: publish
 publish: $(BUNDLE_TARGET)
-	$(PYTHON) ../../scripts/publish_reapack.py --push --reascripts-dir "$(REASCRIPTS_DIR)" "$(BUNDLE_TARGET)"
+	$(PYTHON) ../../scripts/publish_reapack.py --reascripts-dir "$(REASCRIPTS_DIR)" "$(BUNDLE_TARGET)"
+
+.PHONY: publish-release
+publish-release: $(BUNDLE_TARGET)
+	$(PYTHON) ../../scripts/publish_reapack.py --release --reascripts-dir "$(REASCRIPTS_DIR)" "$(BUNDLE_TARGET)"
 
 .PHONY: tags
 tags : tagged_paths = $(SOURCE_ROOT)

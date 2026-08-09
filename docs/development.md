@@ -31,18 +31,20 @@ images, application modules, version, and entry point into
 The release bundle is published through the Team Audio ReaPack repository. By
 default that repository is expected at `../reascripts` relative to this one.
 
-First validate the bundle and destination repository without changing either:
-
-    make -C reascripts/ReaSpeech publish-check
-
-To publish, ensure both repositories are on `main` with clean working trees,
-then run:
+Stage the generated package in the ReaPack checkout and inspect the printed
+diff:
 
     make -C reascripts/ReaSpeech publish
 
+This does not commit or push anything. Restore the staged package after review,
+ensure the ReaPack repository is clean, then create the release commits with:
+
+    make -C reascripts/ReaSpeech publish-release
+
 This builds `build/ReaSpeech.lua`, copies it to `ReaSpeech/ReaSpeech.lua` in the
 ReaPack repository, commits the package, runs `reapack-index` to commit the
-updated index, and pushes the ReaPack repository. Override the destination with
+updated index, and leaves both commits for review. Push the ReaPack repository
+manually to publish. Override the destination with
 `REASCRIPTS_DIR=/path/to/reascripts` when needed.
 The result is plain Lua and runs on both Lua versions supported by REAPER.
 
