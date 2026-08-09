@@ -2,6 +2,9 @@ LUA53=lua5.3
 LUA54=lua5.4
 LUACHECK=luacheck
 LUA=lua
+PYTHON=python3
+
+REASCRIPTS_DIR?=$(abspath ../../../reascripts)
 
 VENDOR=json.lua
 SOURCE_ROOT=source
@@ -48,7 +51,15 @@ build: $(BUNDLE_TARGET)
 
 $(BUNDLE_TARGET): $(bundle_contents)
 	mkdir -p $(dir $(BUNDLE_TARGET))
-	cat $(bundle_contents) > $(BUNDLE_TARGET)
+	cat $(bundle_contents) | sed 's/@REASPEECH_VERSION@/$(shell sed -n 's/.*VERSION = "\([^"]*\)"/\1/p' version.lua)/' > $(BUNDLE_TARGET)
+
+.PHONY: publish-check
+publish-check: $(BUNDLE_TARGET)
+	$(PYTHON) ../../scripts/publish_reapack.py --check --reascripts-dir "$(REASCRIPTS_DIR)" "$(BUNDLE_TARGET)"
+
+.PHONY: publish
+publish: $(BUNDLE_TARGET)
+	$(PYTHON) ../../scripts/publish_reapack.py --push --reascripts-dir "$(REASCRIPTS_DIR)" "$(BUNDLE_TARGET)"
 
 .PHONY: tags
 tags : tagged_paths = $(SOURCE_ROOT)

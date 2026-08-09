@@ -12,9 +12,13 @@ responsive during recognition.
 
 ## Install
 
-Copy `reascripts/ReaSpeech/build/ReaSpeech.lua` into your REAPER scripts directory,
-add it from the Actions window, and run it. The script is self-contained; its
-only runtime dependencies are ReaImGui and ReaSpeech Lib.
+Add the Team Audio repository to ReaPack:
+
+    https://github.com/TeamAudio/reascripts/raw/main/index.xml
+
+Install **ReaSpeech** and one **ReaSpeech Lib** backend from ReaPack, then run
+ReaSpeech from REAPER's Actions window. The script is self-contained; its only
+runtime dependencies are ReaImGui and ReaSpeech Lib.
 
 Select one or more media items and click **Transcribe Selected Items**.
 Recognition runs asynchronously, with progress and cancellation available in

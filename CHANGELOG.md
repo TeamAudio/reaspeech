@@ -1,6 +1,16 @@
 Changelog
 =========
 
+[1.0.0] (2026-08-09)
+--------------------
+
+### Changed
+
+- Replaced the Docker, PyTorch, curl, and web-service stack with ReaSpeech Lib
+- Distributed ReaSpeech as a single Lua script through ReaPack
+- Added asynchronous progress reporting and cancellation through ReaSpeech Lib
+- Simplified installation and development setup
+
 [0.5.0] (2025-01-16)
 --------------------
 
