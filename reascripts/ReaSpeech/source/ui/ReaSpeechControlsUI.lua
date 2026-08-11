@@ -6,10 +6,11 @@ ReaSpeechControlsUI.lua - UI elements for configuring ASR services
 
 ReaSpeechControlsUI = Polo {
   COLUMN_PADDING = 15,
-  MARGIN_BOTTOM = 5,
-  MARGIN_LEFT = 5,
+  MARGIN_BOTTOM = 2,
+  MARGIN_LEFT = 8,
   MARGIN_RIGHT = 0,
   NARROW_COLUMN_WIDTH = 150,
+  HEADING_SPACING = 8,
 }
 
 function ReaSpeechControlsUI:init()
@@ -182,10 +183,10 @@ function ReaSpeechControlsUI:_reset_drag_drop()
 end
 
 function ReaSpeechControlsUI:render_heading()
-  local button_size = Fonts.size:get() * 1.7
+  local button_size = ImGui.GetFrameHeight(Ctx())
   ImGui.PushStyleVar(Ctx(), ImGui.StyleVar_FrameRounding(), 4)
   Trap(function ()
-    if Widgets.icon_button(Icons.gear, '##settings', button_size, button_size, 'Settings') then
+    if Widgets.icon_button(Icons.gear, '##settings', button_size, button_size, 'Settings', nil, 0.72) then
       local settings_plugin = self.plugins:get_plugin(SettingsPlugin.PLUGIN_KEY)
       if settings_plugin then
         self.plugins:remove_plugin(settings_plugin)
@@ -196,13 +197,13 @@ function ReaSpeechControlsUI:render_heading()
     end
   end)
   ImGui.PopStyleVar(Ctx())
-  ImGui.SameLine(Ctx())
+  ImGui.SameLine(Ctx(), 0, self.HEADING_SPACING)
 
   local avail_w, _ = ImGui.GetContentRegionAvail(Ctx())
 
   local logo = IMAGES['heading-logo-tech-audio']
 
-  local tab_bar_width = avail_w - logo.width - self.COLUMN_PADDING
+  local tab_bar_width = avail_w - logo.width - self.HEADING_SPACING
 
   if ImGui.BeginChild(Ctx(), 'tab-bar', tab_bar_width, logo.height) then
     Trap(function ()
@@ -211,7 +212,7 @@ function ReaSpeechControlsUI:render_heading()
     ImGui.EndChild(Ctx())
   end
 
-  ImGui.SameLine(Ctx())
+  ImGui.SameLine(Ctx(), 0, self.HEADING_SPACING)
 
   Widgets.png(logo)
 end
