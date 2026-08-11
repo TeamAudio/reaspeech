@@ -347,10 +347,6 @@ function TranscriptUI:render_name()
     if self.editing_name then
       self.name_editor:render()
     else
-      ImGui.Dummy(Ctx(), 1, 2)
-      ImGui.Dummy(Ctx(), 2, 0)
-      ImGui.SameLine(Ctx())
-
       if #self.transcript.name < 1 then
         ImGui.Text(Ctx(), "(Untitled)")
       else
@@ -358,7 +354,7 @@ function TranscriptUI:render_name()
       end
       ImGui.SameLine(Ctx())
       local icon_size = Fonts.size:get() - 1
-      if Widgets.icon(Icons.pencil, "##edit_name", icon_size, icon_size, "Edit") then
+      if Widgets.inline_icon(Icons.pencil, "##edit_name", icon_size, icon_size, "Edit") then
         self._original_transcript_name = self.transcript.name
         self.editing_name = true
       end
@@ -420,7 +416,6 @@ function TranscriptUI:render_options()
 end
 
 function TranscriptUI:render_search(column)
-  ImGui.SetCursorPosX(Ctx(), ImGui.GetWindowWidth(Ctx()) - column.width - self.ACTIONS_MARGIN)
   ImGui.PushItemWidth(Ctx(), column.width)
   Trap(function()
     local search_changed, search = ImGui.InputTextWithHint(Ctx(), '##search', 'Search', self.transcript.search)
@@ -457,7 +452,11 @@ function TranscriptUI:render_table()
   ImGui.PushID(Ctx(), imgui_id)
   if ImGui.BeginTable(Ctx(), "results", num_columns, self.table_flags(true), 0, -10) then
     Trap(function ()
-      ImGui.TableSetupColumn(Ctx(), "##actions", ImGui.TableColumnFlags_NoSort(), 20)
+      ImGui.TableSetupColumn(
+        Ctx(),
+        "##actions",
+        ImGui.TableColumnFlags_NoSort(),
+        Fonts.size:get() - 1)
 
       for _, column in pairs(columns) do
         local column_flags = 0
@@ -481,9 +480,8 @@ function TranscriptUI:render_table()
 
       local clipper = self:clipper()
       local items_count = #self.transcript + 1
-      local items_height = ImGui.GetTextLineHeightWithSpacing(Ctx())
 
-      ImGui.ListClipper_Begin(clipper, items_count, items_height)
+      ImGui.ListClipper_Begin(clipper, items_count)
 
       while ImGui.ListClipper_Step(clipper) do
         local display_start, display_end = ImGui.ListClipper_GetDisplayRange(clipper)
@@ -514,7 +512,7 @@ function TranscriptUI:render_segment_actions(segment, index)
   if not segment.words then return end
 
   local icon_size = Fonts.size:get() - 1
-  if Widgets.icon(Icons.pencil, "##edit" .. index, icon_size, icon_size, "Edit") then
+  if Widgets.inline_icon(Icons.pencil, "##edit" .. index, icon_size, icon_size, "Edit") then
     self.transcript_editor:edit_segment(segment, index)
   end
 

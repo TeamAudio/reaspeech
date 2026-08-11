@@ -28,7 +28,7 @@ end
 function ReaSpeechWidget:render_help_icon()
   local options = self.options
   local size = Fonts.size:get()
-  Widgets.icon(Icons.info, '##help-text', size, size, options.help_text, 0xffffffa0, 0xffffffff)
+  Widgets.inline_icon(Icons.info, '##help-text', size, size, options.help_text, 0xffffffa0, 0xffffffff)
 end
 
 function ReaSpeechWidget:render_label(label)
