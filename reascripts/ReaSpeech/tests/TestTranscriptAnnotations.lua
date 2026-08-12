@@ -164,6 +164,27 @@ function TestTranscriptMarkers:testProjectMarkers()
   lu.assertEquals(reaper_state.markers[2].wantidx, 2)
 end
 
+function TestTranscriptMarkers:testProjectMarkersWithoutSegmentIdsUseSequentialNumbers()
+  local t = Transcript.new()
+  t:add_segment(self.segment {
+    start = 1.0,
+    end_ = 2.0,
+    text = "test 1"
+  })
+  t:add_segment(self.segment {
+    start = 2.0,
+    end_ = 3.0,
+    text = "test 2"
+  })
+  t:update()
+
+  local m = TranscriptAnnotations.new { transcript = t }
+  m:project_markers(0, false)
+
+  lu.assertEquals(reaper_state.markers[1].wantidx, 1)
+  lu.assertEquals(reaper_state.markers[2].wantidx, 2)
+end
+
 function TestTranscriptMarkers:testProjectRegions()
   local t = Transcript.new()
   t:add_segment(self.segment {

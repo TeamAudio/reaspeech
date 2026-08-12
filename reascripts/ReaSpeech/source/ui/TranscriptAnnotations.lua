@@ -60,14 +60,16 @@ function TranscriptAnnotations:create_project_markers(project, use_regions, use_
   use_regions = use_regions or false
   use_words = use_words or false
 
+  local marker_index = 1
   for element in self.transcript:iterator(use_words) do
     local offset = Transcript.calculate_offset(element.item, element.take)
-    local want_index = element.id or 0
+    local want_index = element.id or marker_index
     local color = 0
 
     local start = element.start + offset
     local end_ = element.end_ + offset
     reaper.AddProjectMarker2(project, use_regions, start, end_, element.text, want_index, color)
+    marker_index = marker_index + 1
   end
 end
 
