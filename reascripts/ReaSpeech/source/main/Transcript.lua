@@ -203,15 +203,27 @@ function Transcript:to_json()
 end
 
 function Transcript.from_json(json_str)
-  local data = json.decode(json_str)
+  return Transcript.from_table(json.decode(json_str))
+end
 
+function Transcript.from_table(data)
   local t = Transcript.new {
     name = data.name or ''
   }
 
+  local items_by_guid = {}
+  for item in ReaIter.each_media_item() do
+    local guid = ReaUtil.get_item_info(item, 'GUID')
+    if guid then
+      items_by_guid[guid] = item
+    end
+  end
+
   for _, segment_data in pairs(data.segments) do
-    local segment = TranscriptSegment.from_table(segment_data)
-    t:add_segment(segment)
+    local segment = TranscriptSegment.from_table(segment_data, items_by_guid)
+    if segment then
+      t:add_segment(segment)
+    end
   end
   t:update()
   return t
