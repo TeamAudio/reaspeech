@@ -1,0 +1,6 @@
+ReaperConstants = {
+  CURRENT_PROJECT = 0,
+
+  TRANSPORT_PLAY = 1007,
+  TRANSPORT_STOP = 1016,
+}

@@ -128,6 +128,31 @@ function Icons._gear_points(center_x, center_y, inner_radius, outer_radius, num_
   return points
 end
 
+-- Arrow into a landing bar: the jump-to glyph
+function Icons.jump(dl, x, y, w, h, color)
+  local mid_y = y + h / 2
+  local shaft_end = x + w * 0.55
+
+  ImGui.DrawList_AddLine(dl, x, mid_y, shaft_end, mid_y, color, 1)
+  ImGui.DrawList_AddTriangleFilled(dl,
+    shaft_end, y + h * 0.22,
+    shaft_end, y + h * 0.78,
+    x + w * 0.8, mid_y,
+    color)
+  ImGui.DrawList_AddLine(dl, x + w * 0.94, y + h * 0.15, x + w * 0.94, y + h * 0.85, color, 1)
+end
+
+-- Two offset sheets: the classic copy glyph
+function Icons.copy(dl, x, y, w, h, color)
+  local offset_x, offset_y = w * 0.3, h * 0.3
+  local rounding = math.max(1, w * 0.12)
+
+  ImGui.DrawList_AddRect(dl,
+    x, y, x + w - offset_x, y + h - offset_y, color, rounding)
+  ImGui.DrawList_AddRect(dl,
+    x + offset_x, y + offset_y, x + w, y + h, color, rounding)
+end
+
 function Icons.info(dl, x, y, w, h, color)
   ImGui.DrawList_AddCircle(
     dl,

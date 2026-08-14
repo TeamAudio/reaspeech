@@ -30,6 +30,7 @@ function ReaSpeechUI:init()
   Logging().init(self, 'ReaSpeechUI')
 
   Trap.on_error = function (e)
+    self:debug(dump(debug.traceback(e, 2)))
     self:log(e)
   end
 
@@ -50,6 +51,7 @@ function ReaSpeechUI:init()
 
   self.plugins = ReaSpeechPlugins.new(self, {
     ASRPlugin,
+    ScriptMatchPlugin,
     -- DetectLanguagePlugin,
     -- SampleMultipleUploadPlugin,
     TranscriptUI.plugin(),
@@ -104,6 +106,14 @@ function ReaSpeechUI:react_to_worker_response()
 end
 
 function ReaSpeechUI:render_content()
+  -- Restore ImGui keyboard navigation each frame; panels that own the
+  -- keyboard suppress it again while they render. This must run INSIDE
+  -- the frame (after the implicit NewFrame from the window Begin):
+  -- dear imgui reads the nav flag during NewFrame, so a re-enable
+  -- issued before any draw call lands ahead of nav processing and
+  -- defeats the suppression for the whole frame.
+  Widgets.set_keyboard_nav(true)
+
   if ReaSpeechUI.METRICS then
     ImGui.ShowMetricsWindow(Ctx())
   end

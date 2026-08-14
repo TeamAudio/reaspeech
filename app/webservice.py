@@ -40,6 +40,9 @@ import aiofiles
 from .util import apierror
 from .worker import transcribe, detect_language as detect_language_task
 
+# Import modular routers
+from .script_match.endpoints import router as script_match_router
+
 logging.basicConfig(format='[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s', level=logging.INFO, force=True)
 logger = logging.getLogger(__name__)
 
@@ -116,6 +119,9 @@ templates = Jinja2Templates(directory=templates_path)
 output_directory = os.environ.get("OUTPUT_DIRECTORY", os.getcwd() + "/app/output")
 output_url_prefix = os.environ.get("OUTPUT_URL_PREFIX", "/output")
 app.mount(output_url_prefix, StaticFiles(directory=output_directory), name="output")
+
+# Include modular routers
+app.include_router(script_match_router, prefix="/script_match", tags=["Script Matching"])
 
 def reascript_filename(name):
     if APP_ENV == 'production':

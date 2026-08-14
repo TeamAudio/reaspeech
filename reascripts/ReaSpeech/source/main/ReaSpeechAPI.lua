@@ -64,3 +64,17 @@ function ReaSpeechAPI:post_request(url_path, data, file_uploads)
 
   return request:execute()
 end
+
+-- Sends a JSON POST request to the API.
+-- This method is non-blocking and returns a request object that can be polled for completion.
+-- Use this for sending structured data (objects, arrays) to JSON API endpoints.
+function ReaSpeechAPI:post_json_request(url_path, json_data)
+  local request = CurlRequest().async {
+    url = self:get_api_url(url_path),
+    http_method = 'POST',
+    json_data = json_data,
+    -- Note: headers will be automatically set to application/json by CurlRequest
+  }
+
+  return request:execute()
+end

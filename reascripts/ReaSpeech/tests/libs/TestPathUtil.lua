@@ -243,4 +243,26 @@ function TestPathUtil:testJoin()
 
 end
 
+function TestPathUtil:testNormalizeOnWindows()
+  reaper.GetOS = function() return 'Win64' end
+
+  lu.assertEquals(PathUtil.normalize("C:\\proj\\.\\Media"), "C:\\proj\\Media")
+  lu.assertEquals(PathUtil.normalize("C:\\proj\\Media"), "C:\\proj\\Media")
+  lu.assertEquals(PathUtil.normalize("C:\\proj\\Media\\."), "C:\\proj\\Media")
+end
+
+function TestPathUtil:testNormalizeOnMac()
+  reaper.GetOS = function() return 'OSX64' end
+
+  -- Windows-authored record path (".\Media") joined into a mac path
+  lu.assertEquals(
+    PathUtil.normalize("/Volumes/X/My Project/.\\Media/reaspeech"),
+    "/Volumes/X/My Project/Media/reaspeech")
+  lu.assertEquals(PathUtil.normalize("/a/./b"), "/a/b")
+  lu.assertEquals(PathUtil.normalize("/a/././b"), "/a/b")
+  lu.assertEquals(PathUtil.normalize("/a/b/."), "/a/b")
+  lu.assertEquals(PathUtil.normalize("/.hidden/file"), "/.hidden/file")
+  lu.assertEquals(PathUtil.normalize("/plain/path"), "/plain/path")
+end
+
 os.exit(lu.LuaUnit.run())

@@ -1,7 +1,6 @@
 import logging
 import os
 
-from celery import Celery
 from typing import Union, Callable
 from whisper import tokenizer
 import tqdm
@@ -56,12 +55,12 @@ STATES = {
     'transcribing': 'TRANSCRIBING',
     'detecting_language': 'DETECTING_LANGUAGE',
 }
-celery = Celery(__name__)
-celery.conf.broker_connection_retry_on_startup = True
-celery.conf.broker_url = os.environ.get("CELERY_BROKER_URL", "sqla+sqlite:///celery.sqlite")
-celery.conf.result_backend = os.environ.get("CELERY_RESULT_BACKEND", "db+sqlite:///results.sqlite")
-celery.conf.worker_hijack_root_logger = False
-celery.conf.worker_redirect_stdouts_level = "DEBUG"
+
+# Import shared celery instance
+from .celery_app import celery
+
+# Import modular tasks (after celery instance is available)
+from .script_match.tasks import fuzzy_match, parse_spreadsheet as parse_spreadsheet_task
 
 @celery.task(name="transcribe", bind=True)
 def transcribe(

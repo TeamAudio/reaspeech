@@ -118,6 +118,10 @@ function TranscriptImporter:can_import(filepath)
 end
 
 function TranscriptImporter:import(filepath)
+  if not PathUtil.has_extension(filepath, 'json') then
+    return nil, 'File must be a JSON file'
+  end
+
   local file = io.open(filepath, 'r')
   if not file then
     return nil, 'File not found'
@@ -126,12 +130,41 @@ function TranscriptImporter:import(filepath)
   local content = file:read('*a')
   file:close()
 
-  local transcript = Transcript.from_json(content)
+  if not content or #content < 1 then
+    return nil, 'File is empty'
+  end
+
+  local parsed
+  if not Trap(function ()
+    parsed = json.decode(content)
+  end) or type(parsed) ~= 'table' then
+    return nil, 'Invalid JSON'
+  end
+
+  if type(parsed.segments) ~= 'table' then
+    return nil, 'No segments field'
+  end
+
+  local transcript = Transcript.from_table(parsed)
+
+  if not transcript.filepath or transcript.filepath == '' then
+    transcript.filepath = filepath
+  end
 
   return transcript
 end
 
-function TranscriptImporter:quick_import()
+function TranscriptImporter:quick_import(callback)
+  callback = callback or function(transcript, filename)
+    local plugin = TranscriptUI.new {
+      app = app,
+      transcript = transcript,
+      _transcript_saved = true,
+      filepath = filename
+    }
+    app.plugins:add_plugin(plugin)
+  end
+
   return function()
     local filenames = Widgets.FileSelector.simple_open(
       'Import Transcript',
@@ -155,23 +188,12 @@ function TranscriptImporter:quick_import()
     local load_errors = {}
 
     for _, filename in ipairs(valid_filenames) do
-      local can_import, msg = self:can_import(filename)
+      local transcript, err = self:import(filename)
 
-      if not can_import then
-        table.insert(load_errors, {filename, msg})
+      if not transcript or err then
+        table.insert(load_errors, {filename, err})
       else
-        local transcript, err = self:import(filename)
-
-        if not transcript or err then
-          table.insert(load_errors, {filename, err})
-        else
-          local plugin = TranscriptUI.new {
-            app = app,
-            transcript = transcript,
-            _transcript_saved = true
-          }
-          app.plugins:add_plugin(plugin)
-        end
+        callback(transcript, filename)
       end
     end
 
