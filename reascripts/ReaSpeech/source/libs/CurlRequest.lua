@@ -74,8 +74,14 @@ function CurlRequest._init()
 
     -- If json_data is provided, ensure proper Content-Type header and validate no query conflicts
     if self.json_data then
-      self.headers = self.headers or {}
-      self.headers['Content-Type'] = 'application/json'
+      -- copy before mutating; self.headers may alias DEFAULT_HEADERS or
+      -- a caller-owned table
+      local headers = {}
+      for k, v in pairs(self.headers) do
+        headers[k] = v
+      end
+      headers['Content-Type'] = 'application/json'
+      self.headers = headers
 
       -- Warn if both json_data and query_data are provided (could be confusing)
       if next(self.query_data) then
