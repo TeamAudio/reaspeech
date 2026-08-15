@@ -37,6 +37,8 @@ string.base64_decode = string.base64_decode or function(str)
     for j = 1, 4 do
       local char = block:sub(j, j)
       if char == '=' then
+        -- padding may only be the last one or two chars of the final block
+        if j < 3 or i + 3 < #str then return nil end
         pad = pad + 1
         n = n << 6
       else

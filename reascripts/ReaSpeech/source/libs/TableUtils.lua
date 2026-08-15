@@ -4,7 +4,8 @@
 
 ]]--
 
--- Recursive copy of plain data tables (no cycle or metatable handling)
+-- Recursive copy of plain data tables (no cycle or metatable handling;
+-- keys are shared with the original, only values are copied)
 table.deep_copy = table.deep_copy or function(value)
   if type(value) ~= 'table' then return value end
 
