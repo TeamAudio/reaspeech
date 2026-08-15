@@ -3,9 +3,8 @@
   WavFile.lua - read WAV metadata and slice sample ranges to new files
 
   Pure Lua file I/O; no REAPER APIs. Supports PCM and IEEE-float WAV
-  sources of any bit depth and channel count. Used by script match
-  export to cut matched line audio directly from source media without
-  touching the project.
+  sources of any bit depth and channel count. Lets callers cut audio
+  ranges directly from source media without touching the project.
 
 ]]--
 
