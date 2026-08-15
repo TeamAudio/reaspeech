@@ -13,38 +13,92 @@ function TranscriptAnnotations:init()
 end
 
 function TranscriptAnnotations:take_markers(use_words, track_filter_config)
-    track_filter_config = track_filter_config or { mode = 'ignore', tracks = {} }
+  track_filter_config = track_filter_config or { mode = 'ignore', tracks = {} }
 
-    local oddly_specific_black = 0x01030405
+  local oddly_specific_black = 0x01030405
 
-    local takes = {}
+  local source_paths = {}
+  local targets_by_path = {}
+  local stamped = {}
 
-    for element in self.transcript:iterator(use_words) do
-      local _, take_guid = reaper.GetSetMediaItemTakeInfo_String(element.take, 'GUID', '', false)
+  for element in self.transcript:iterator(use_words) do
+    local path = source_paths[element.take]
 
-      if not takes[take_guid] then
-        takes[take_guid] = {}
-        local path = ReaUtil.get_source_path(element.take)
+    if path == nil then
+      -- a transcript reloaded in a changed project can hold takes that no
+      -- longer exist; skip their elements instead of erroring out
+      local ok, result = Trap(function ()
+        return ReaUtil.get_source_path(element.take)
+      end)
+      path = ok and result or false
+      source_paths[element.take] = path
+    end
 
-        for item in ReaIter.each_media_item() do
-          for take in ReaIter.each_take(item) do
-            local take_path = ReaUtil.get_source_path(take)
+    if path and element.text then
+      if not targets_by_path[path] then
+        targets_by_path[path] = self:_take_marker_targets(path, track_filter_config)
+      end
 
-            if take_path == path then
-              local track_guid = reaper.GetTrackGUID(reaper.GetMediaItemTake_Track(take))
-              if track_filter_config.mode == 'ignore' and not track_filter_config.tracks[track_guid]
-              or track_filter_config.mode == 'include' and track_filter_config.tracks[track_guid] then
-                table.insert(takes[take_guid], take)
-              end
-            end
+      for _, target in ipairs(targets_by_path[path]) do
+        if not target.window_start
+        or (element.start >= target.window_start and element.start < target.window_end) then
+          if not stamped[target.take] then
+            stamped[target.take] = self._existing_take_markers(target.take)
+          end
+
+          local marker_key = element.start .. '\0' .. element.text
+          if not stamped[target.take][marker_key] then
+            stamped[target.take][marker_key] = true
+            reaper.SetTakeMarker(target.take, -1, element.text, element.start, oddly_specific_black)
           end
         end
       end
+    end
+  end
+end
 
-      for _, take in ipairs(takes[take_guid]) do
-        reaper.SetTakeMarker(take, -1, element.text, element.start, oddly_specific_black)
+function TranscriptAnnotations:_take_marker_targets(path, track_filter_config)
+  local targets = {}
+
+  for item in ReaIter.each_media_item() do
+    for take in ReaIter.each_take(item) do
+      if ReaUtil.get_source_path(take) == path
+      and self._track_filter_allows(track_filter_config, take) then
+        local window_start, window_end = TranscriptSegment.take_source_window(item, take)
+
+        table.insert(targets, {
+          take = take,
+          window_start = window_start,
+          window_end = window_end
+        })
       end
     end
+  end
+
+  return targets
+end
+
+function TranscriptAnnotations._track_filter_allows(track_filter_config, take)
+  local track_guid = reaper.GetTrackGUID(reaper.GetMediaItemTake_Track(take))
+
+  if track_filter_config.mode == 'ignore' then
+    return not track_filter_config.tracks[track_guid]
+  elseif track_filter_config.mode == 'include' then
+    return track_filter_config.tracks[track_guid] and true or false
+  end
+
+  return false
+end
+
+function TranscriptAnnotations._existing_take_markers(take)
+  local existing = {}
+
+  for i = 0, reaper.GetNumTakeMarkers(take) - 1 do
+    local position, name = reaper.GetTakeMarker(take, i)
+    existing[position .. '\0' .. name] = true
+  end
+
+  return existing
 end
 
 function TranscriptAnnotations:project_markers(project, use_words)

@@ -29,7 +29,44 @@ function TranscriptSegment:init()
   self.data['file'] = self:get_file()
 end
 
+-- The source-time window that a take's visible section covers within its
+-- media item, or nil when the window cannot be determined
+TranscriptSegment.take_source_window = function(item, take)
+  local length = reaper.GetMediaItemInfo_Value(item, 'D_LENGTH')
+
+  if not length or length <= 0 then
+    return nil
+  end
+
+  local start_offset = reaper.GetMediaItemTakeInfo_Value(take, 'D_STARTOFFS')
+  local playrate = reaper.GetMediaItemTakeInfo_Value(take, 'D_PLAYRATE')
+
+  if not playrate or playrate <= 0 then
+    playrate = 1.0
+  end
+
+  return start_offset, start_offset + length * playrate
+end
+
+-- Whether any part of [start_time, end_time) is within the take's visible
+-- section; true when the section cannot be determined
+TranscriptSegment.overlaps_take_section = function(item, take, start_time, end_time)
+  local window_start, window_end = TranscriptSegment.take_source_window(item, take)
+
+  if not window_start then
+    return true
+  end
+
+  return end_time > window_start and start_time < window_end
+end
+
 TranscriptSegment.from_whisper = function(segment, item, take)
+  -- a source file can appear in many items; each item should only receive
+  -- the segments its visible section can play
+  if not TranscriptSegment.overlaps_take_section(item, take, segment.start, segment['end']) then
+    return {}
+  end
+
   local result = {}
   local words = segment.words
 
@@ -65,38 +102,48 @@ TranscriptSegment.from_whisper = function(segment, item, take)
   return result
 end
 
-TranscriptSegment.from_table = function(data)
+-- Returns nil for segments that fall outside their item's visible section;
+-- items_by_guid is an optional prebuilt GUID lookup to avoid per-segment
+-- scans of the project's media items
+TranscriptSegment.from_table = function(data, items_by_guid)
   local segment_data = {}
-  local words = data.words
   local item, take
-  data.words = nil
-
-  if words then
-    local transcript_words = {}
-    for _, word in pairs(words) do
-      table.insert(transcript_words, TranscriptWord.from_table(word))
-    end
-    data.words = transcript_words
-  end
 
   for k, v in pairs(data) do
     if k == 'item' then
-      item = ReaUtil.get_item_by_guid(v) or {}
+      if items_by_guid then
+        item = items_by_guid[v]
+      else
+        item = ReaUtil.get_item_by_guid(v)
+      end
     elseif k == 'take' then
-      take = reaper.GetMediaItemTakeByGUID(0, v) or {}
-    --luacheck: ignore
-    elseif k == 'words' then
-      -- empty branch is okay! already handled
-    else
+      take = reaper.GetMediaItemTakeByGUID(0, v)
+    elseif k ~= 'words' then
       segment_data[k] = v
+    end
+  end
+
+  -- transcripts saved before segments were clipped to their items can repeat
+  -- the full segment list once per item sharing the source file; drop the
+  -- copies that fall outside their item's visible section
+  if item and take and segment_data.start and segment_data['end']
+  and not TranscriptSegment.overlaps_take_section(item, take, segment_data.start, segment_data['end']) then
+    return nil
+  end
+
+  local transcript_words
+  if data.words then
+    transcript_words = {}
+    for _, word in pairs(data.words) do
+      table.insert(transcript_words, TranscriptWord.from_table(word))
     end
   end
 
   return TranscriptSegment.new {
     data = segment_data,
-    item = item,
-    take = take,
-    words = data.words
+    item = item or {},
+    take = take or {},
+    words = transcript_words
   }
 end
 

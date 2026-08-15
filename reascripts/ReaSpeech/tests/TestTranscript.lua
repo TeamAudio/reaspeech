@@ -602,6 +602,207 @@ function TestTranscript:TestFromJson()
   lu.assertEquals(t.init_data[2].take, "take_userdata2")
 end
 
+function TestTranscript:testFromJsonClipsLegacySegments()
+  -- two items splitting one source file: item 1 shows source [0, 2),
+  -- item 2 shows source [2, 4)
+  reaper.CountMediaItems = function() return 2 end
+  reaper.GetMediaItem = function(_, idx)
+    if idx == 0 then
+      return "split_item_1"
+    elseif idx == 1 then
+      return "split_item_2"
+    end
+  end
+
+  ReaIter.each_media_item = ReaIter._make_iterator(reaper.CountMediaItems, reaper.GetMediaItem)
+
+  reaper.GetMediaItemTakeByGUID = function(_, guid)
+    return ({
+      split_take_guid1 = "split_take_1",
+      split_take_guid2 = "split_take_2",
+    })[guid]
+  end
+
+  local fake_guids = {
+    split_item_1 = "split_item_guid1",
+    split_item_2 = "split_item_guid2",
+  }
+
+  reaper.GetSetMediaItemInfo_String = function(item, param)
+    if param == 'GUID' then
+      return true, fake_guids[item]
+    end
+  end
+
+  reaper.GetMediaItemInfo_Value = function (item, param)
+    if param == 'D_LENGTH' then
+      return ({ split_item_1 = 2.0, split_item_2 = 2.0 })[item] or 0
+    end
+    return 0
+  end
+
+  reaper.GetMediaItemTakeInfo_Value = function (take, param)
+    if param == 'D_STARTOFFS' then
+      return ({ split_take_1 = 0.0, split_take_2 = 2.0 })[take] or 0
+    elseif param == 'D_PLAYRATE' then
+      return 1.0
+    end
+    return 0
+  end
+
+  -- transcripts saved before segments were clipped to their items repeat
+  -- the full segment list once per item sharing the source file
+  local segments = {}
+  for _, guids in ipairs({
+    { item = "split_item_guid1", take = "split_take_guid1" },
+    { item = "split_item_guid2", take = "split_take_guid2" },
+  }) do
+    table.insert(segments, {
+      id = 1, start = 0.5, ['end'] = 1.5, text = "test 1",
+      item = guids.item, take = guids.take
+    })
+    table.insert(segments, {
+      id = 2, start = 2.5, ['end'] = 3.5, text = "test 2",
+      item = guids.item, take = guids.take
+    })
+  end
+
+  local t = Transcript.from_json(json.encode({ name = "test", segments = segments }))
+
+  lu.assertEquals(#t.init_data, 2)
+  lu.assertEquals(t.init_data[1].data.text, "test 1")
+  lu.assertEquals(t.init_data[1].take, "split_take_1")
+  lu.assertEquals(t.init_data[2].data.text, "test 2")
+  lu.assertEquals(t.init_data[2].take, "split_take_2")
+end
+
+function TestTranscript:testFromJsonKeepsUnresolvableSegments()
+  -- importing into a different project: no GUIDs resolve, nothing is clipped
+  reaper.CountMediaItems = function() return 0 end
+  ReaIter.each_media_item = ReaIter._make_iterator(reaper.CountMediaItems, reaper.GetMediaItem)
+  reaper.GetMediaItemTakeByGUID = function(_, _) return nil end
+
+  local segments = {
+    {
+      id = 1, start = 0.5, ['end'] = 1.5, text = "test 1",
+      item = "unknown_item_guid", take = "unknown_take_guid"
+    },
+    {
+      id = 2, start = 2.5, ['end'] = 3.5, text = "test 2",
+      item = "unknown_item_guid", take = "unknown_take_guid"
+    },
+  }
+
+  local t = Transcript.from_json(json.encode({ name = "test", segments = segments }))
+
+  lu.assertEquals(#t.init_data, 2)
+  lu.assertEquals(t.init_data[1].item, {})
+  lu.assertEquals(t.init_data[1].take, {})
+end
+
+TestFromWhisper = {
+  -- source-time window per item/take, applied by the mocks below
+  item_lengths = {},
+  take_offsets = {},
+  take_playrates = {},
+
+  whisper_segment = function (overrides)
+    local segment = {
+      id = 1,
+      start = 1.0,
+      ['end'] = 2.0,
+      text = "test 1",
+      words = {
+        { word = "test", start = 1.0, ['end'] = 1.5, probability = 1.0 },
+        { word = "1", start = 1.5, ['end'] = 2.0, probability = 0.5 }
+      }
+    }
+    for k, v in pairs(overrides or {}) do
+      segment[k] = v
+    end
+    return segment
+  end
+}
+
+function TestFromWhisper:setUp()
+  reaper.__test_setUp()
+
+  TestFromWhisper.item_lengths = {}
+  TestFromWhisper.take_offsets = {}
+  TestFromWhisper.take_playrates = {}
+
+  reaper.GetMediaItemInfo_Value = function (item, param)
+    if param == 'D_LENGTH' then
+      return TestFromWhisper.item_lengths[item] or 0
+    end
+    return 0
+  end
+
+  reaper.GetMediaItemTakeInfo_Value = function (take, param)
+    if param == 'D_STARTOFFS' then
+      return TestFromWhisper.take_offsets[take] or 0
+    elseif param == 'D_PLAYRATE' then
+      return TestFromWhisper.take_playrates[take] or 1.0
+    end
+    return 0
+  end
+end
+
+function TestFromWhisper:testKeepsSegmentInsideTakeSection()
+  TestFromWhisper.item_lengths['item'] = 2.0
+  TestFromWhisper.take_offsets['take'] = 0.5
+
+  local segments = TranscriptSegment.from_whisper(self.whisper_segment(), 'item', 'take')
+  lu.assertEquals(#segments, 1)
+  lu.assertEquals(segments[1]:get('text'), "test 1")
+end
+
+function TestFromWhisper:testDropsSegmentOutsideTakeSection()
+  TestFromWhisper.item_lengths['item'] = 2.0
+  TestFromWhisper.take_offsets['take'] = 10.0
+
+  local segments = TranscriptSegment.from_whisper(self.whisper_segment(), 'item', 'take')
+  lu.assertEquals(#segments, 0)
+
+  -- ends exactly at the start of the section
+  TestFromWhisper.take_offsets['take'] = 2.0
+  segments = TranscriptSegment.from_whisper(self.whisper_segment(), 'item', 'take')
+  lu.assertEquals(#segments, 0)
+
+  -- starts exactly at the end of the section
+  TestFromWhisper.take_offsets['take'] = 0.0
+  TestFromWhisper.item_lengths['item'] = 1.0
+  segments = TranscriptSegment.from_whisper(self.whisper_segment(), 'item', 'take')
+  lu.assertEquals(#segments, 0)
+end
+
+function TestFromWhisper:testKeepsSegmentStraddlingTakeSection()
+  TestFromWhisper.item_lengths['item'] = 2.0
+  TestFromWhisper.take_offsets['take'] = 1.5
+
+  local segments = TranscriptSegment.from_whisper(self.whisper_segment(), 'item', 'take')
+  lu.assertEquals(#segments, 1)
+end
+
+function TestFromWhisper:testHonorsPlayrate()
+  -- section covers source time [0.0, 0.5) at playrate 1.0; [0.0, 2.0) at 4.0
+  TestFromWhisper.item_lengths['item'] = 0.5
+  TestFromWhisper.take_offsets['take'] = 0.0
+
+  local segments = TranscriptSegment.from_whisper(self.whisper_segment(), 'item', 'take')
+  lu.assertEquals(#segments, 0)
+
+  TestFromWhisper.take_playrates['take'] = 4.0
+  segments = TranscriptSegment.from_whisper(self.whisper_segment(), 'item', 'take')
+  lu.assertEquals(#segments, 1)
+end
+
+function TestFromWhisper:testKeepsSegmentWhenSectionUnknown()
+  -- no item length available: no window to clip against
+  local segments = TranscriptSegment.from_whisper(self.whisper_segment(), 'item', 'take')
+  lu.assertEquals(#segments, 1)
+end
+
 --
 
 os.exit(lu.LuaUnit.run())

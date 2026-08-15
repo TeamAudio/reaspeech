@@ -65,6 +65,16 @@ reaper.SetTakeMarker = function(take, _index, name, pos, color)
   })
 end
 
+reaper.GetNumTakeMarkers = function(take)
+  local markers = reaper_state.take_markers[take]
+  return markers and #markers or 0
+end
+
+reaper.GetTakeMarker = function(take, idx)
+  local marker = reaper_state.take_markers[take][idx + 1]
+  return marker.pos, marker.name, marker.color
+end
+
 reaper.GetCursorPosition = function () return 0 end
 reaper.GetMediaItemInfo_Value = function (_, _) return 0 end
 reaper.GetMediaItemTakeInfo_Value = function (_, _) return 0 end
@@ -123,12 +133,87 @@ TestTranscriptMarkers = {
   word = TranscriptWord.new
 }
 
+local original_get_source_path = ReaUtil.get_source_path
+
 function TestTranscriptMarkers:setUp()
   reaper_state = {
     markers = {},
     item_state_chunk = "",
     take_markers = {},
   }
+
+  ReaUtil.get_source_path = original_get_source_path
+  reaper.GetMediaItemInfo_Value = function (_, _) return 0 end
+  reaper.GetMediaItemTakeInfo_Value = function (_, _) return 0 end
+end
+
+-- One source file split into three items, each showing a two-second slice:
+-- take 1 covers source time [0, 2), take 2 covers [2, 4), take 3 covers [4, 6)
+function TestTranscriptMarkers:setup_split_project()
+  reaper.GetSetMediaItemTakeInfo_String = function(take, _)
+    return true, ({
+      ['take 1'] = "take 1 guid",
+      ['take 2'] = "take 2 guid",
+      ['take 3'] = "take 3 guid",
+    })[take]
+  end
+
+  reaper.CountMediaItems = function () return 3 end
+
+  reaper.GetMediaItem = function (_, i)
+    return ({
+      [0] = "item 1",
+      [1] = "item 2",
+      [2] = "item 3",
+    })[i]
+  end
+
+  reaper.CountTakes = function (_) return 1 end
+
+  reaper.GetTake = function (item, _)
+    return ({
+      ["item 1"] = "take 1",
+      ["item 2"] = "take 2",
+      ["item 3"] = "take 3",
+    })[item]
+  end
+
+  ReaIter.each_media_item = ReaIter._make_iterator(reaper.CountMediaItems, reaper.GetMediaItem)
+  ReaIter.each_take = ReaIter._make_iterator(reaper.CountTakes, reaper.GetTake)
+
+  reaper.GetMediaItemTake_Track = function (_) return "first track" end
+  reaper.GetTrackGUID = function (_) return "track 1 guid" end
+
+  ReaUtil.get_source_path = function (take)
+    if type(take) ~= 'string' then
+      error('invalid take')
+    end
+    return "interview.wav"
+  end
+
+  reaper.GetMediaItemInfo_Value = function (item, param)
+    if param == 'D_LENGTH' then
+      return ({
+        ['item 1'] = 2.0,
+        ['item 2'] = 2.0,
+        ['item 3'] = 2.0,
+      })[item] or 0
+    end
+    return 0
+  end
+
+  reaper.GetMediaItemTakeInfo_Value = function (take, param)
+    if param == 'D_STARTOFFS' then
+      return ({
+        ['take 1'] = 0.0,
+        ['take 2'] = 2.0,
+        ['take 3'] = 4.0,
+      })[take] or 0
+    elseif param == 'D_PLAYRATE' then
+      return 1.0
+    end
+    return 0
+  end
 end
 
 function TestTranscriptMarkers:testProjectMarkers()
@@ -373,6 +458,128 @@ function TestTranscriptMarkers:testTakeMarkersWords()
   lu.assertEquals(markers[4].name, "2%")
   lu.assertEquals(markers[4].pos, 2.5)
   lu.assertEquals(markers[4].color, 0x01030405)
+end
+
+function TestTranscriptMarkers:testTakeMarkersClippedToSplitItems()
+  self:setup_split_project()
+
+  local t = Transcript.new()
+  t:add_segment(self.segment {
+    id = 1,
+    start = 1.0,
+    end_ = 2.0,
+    text = "test 1",
+    take = 'take 1'
+  })
+  t:add_segment(self.segment {
+    id = 2,
+    start = 3.0,
+    end_ = 4.0,
+    text = "test 2",
+    take = 'take 2'
+  })
+  t:update()
+
+  local m = TranscriptAnnotations.new { transcript = t }
+  m:take_markers(false)
+
+  lu.assertEquals(#reaper_state.take_markers['take 1'], 1)
+  lu.assertEquals(reaper_state.take_markers['take 1'][1].name, "test 1")
+  lu.assertEquals(reaper_state.take_markers['take 1'][1].pos, 1.0)
+  lu.assertEquals(#reaper_state.take_markers['take 2'], 1)
+  lu.assertEquals(reaper_state.take_markers['take 2'][1].name, "test 2")
+  lu.assertEquals(reaper_state.take_markers['take 2'][1].pos, 3.0)
+  lu.assertIsNil(reaper_state.take_markers['take 3'])
+end
+
+function TestTranscriptMarkers:testTakeMarkersDeduplicatesLegacyTranscript()
+  self:setup_split_project()
+
+  -- transcripts saved before segments were clipped to their items repeat
+  -- the full segment list once per item sharing the source file
+  local t = Transcript.new()
+  for _, take in ipairs({'take 1', 'take 2', 'take 3'}) do
+    t:add_segment(self.segment {
+      id = 1,
+      start = 1.0,
+      end_ = 2.0,
+      text = "test 1",
+      take = take
+    })
+    t:add_segment(self.segment {
+      id = 2,
+      start = 3.0,
+      end_ = 4.0,
+      text = "test 2",
+      take = take
+    })
+  end
+  t:update()
+
+  local m = TranscriptAnnotations.new { transcript = t }
+  m:take_markers(false)
+
+  lu.assertEquals(#reaper_state.take_markers['take 1'], 1)
+  lu.assertEquals(reaper_state.take_markers['take 1'][1].name, "test 1")
+  lu.assertEquals(#reaper_state.take_markers['take 2'], 1)
+  lu.assertEquals(reaper_state.take_markers['take 2'][1].name, "test 2")
+  lu.assertIsNil(reaper_state.take_markers['take 3'])
+end
+
+function TestTranscriptMarkers:testTakeMarkersRerunIsIdempotent()
+  self:setup_split_project()
+
+  local t = Transcript.new()
+  t:add_segment(self.segment {
+    id = 1,
+    start = 1.0,
+    end_ = 2.0,
+    text = "test 1",
+    take = 'take 1'
+  })
+  t:update()
+
+  local m = TranscriptAnnotations.new { transcript = t }
+  m:take_markers(false)
+  m:take_markers(false)
+
+  lu.assertEquals(#reaper_state.take_markers['take 1'], 1)
+end
+
+function TestTranscriptMarkers:testTakeMarkersSkipsUnresolvableTake()
+  self:setup_split_project()
+
+  local trap_errors = 0
+  local original_on_error = Trap.on_error
+  Trap.on_error = function (_) trap_errors = trap_errors + 1 end
+
+  -- a transcript reloaded from JSON in a changed project can hold takes
+  -- whose GUIDs no longer resolve
+  local t = Transcript.new()
+  t:add_segment(self.segment {
+    id = 1,
+    start = 1.0,
+    end_ = 2.0,
+    text = "test 1",
+    take = {}
+  })
+  t:add_segment(self.segment {
+    id = 2,
+    start = 3.0,
+    end_ = 4.0,
+    text = "test 2",
+    take = 'take 2'
+  })
+  t:update()
+
+  local m = TranscriptAnnotations.new { transcript = t }
+  m:take_markers(false)
+
+  Trap.on_error = original_on_error
+
+  lu.assertEquals(#reaper_state.take_markers['take 2'], 1)
+  lu.assertIsNil(reaper_state.take_markers['take 1'])
+  lu.assertEquals(trap_errors, 1)
 end
 
 function TestTranscriptMarkers:testTakeMarkersTrackFilterInclude()
