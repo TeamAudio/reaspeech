@@ -125,4 +125,54 @@ function TestStorage:testDerivedCell()
   lu.assertNil(my_derived_setting.erase)
 end
 
+--
+
+reaper.file_exists = reaper.file_exists or function(path)
+  local f = io.open(path, 'r')
+  if f then f:close() return true end
+  return false
+end
+
+reaper.RecursiveCreateDirectory = reaper.RecursiveCreateDirectory or function() end
+
+TestJSONFileCache = {}
+
+function TestJSONFileCache:setUp()
+  reaper.__test_setUp()
+  self.filepath = os.tmpname()
+  Storage.JSONFile.invalidate()
+end
+
+function TestJSONFileCache:tearDown()
+  os.remove(self.filepath)
+end
+
+function TestJSONFileCache:testRoundTrip()
+  local cell = Storage.JSONFile(self.filepath):table('things', {})
+  cell:set({ 'a', 'b' })
+  lu.assertEquals(cell:get(), { 'a', 'b' })
+end
+
+function TestJSONFileCache:testReadsSharedAcrossInstances()
+  Storage.JSONFile(self.filepath):table('things', {}):set({ 'a' })
+
+  -- A second engine on the same path sees the write via the cache
+  local reader = Storage.JSONFile(self.filepath):table('things', {})
+  lu.assertEquals(reader:get(), { 'a' })
+
+  -- Once cached, reads no longer touch the file
+  os.remove(self.filepath)
+  lu.assertEquals(reader:get(), { 'a' })
+end
+
+function TestJSONFileCache:testInvalidateRereadsFromDisk()
+  local cell = Storage.JSONFile(self.filepath):table('things', {})
+  cell:set({ 'a' })
+
+  os.remove(self.filepath)
+  Storage.JSONFile.invalidate(self.filepath)
+
+  lu.assertEquals(cell:get(), {})
+end
+
 os.exit(lu.LuaUnit.run())
