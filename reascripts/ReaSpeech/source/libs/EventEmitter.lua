@@ -21,7 +21,17 @@
 
 ]]--
 
-EventEmitter = Polo {}
+-- Plain table class rather than Polo: library files can load in name
+-- order (the bundle concatenates them that way), so nothing here may
+-- call a sibling-defined global at load time
+EventEmitter = {}
+EventEmitter.__index = EventEmitter
+
+EventEmitter.new = function(options)
+  local o = setmetatable(options or {}, EventEmitter)
+  o:init()
+  return o
+end
 
 function EventEmitter:init()
   assert(self.schema, 'EventEmitter: schema is required')
