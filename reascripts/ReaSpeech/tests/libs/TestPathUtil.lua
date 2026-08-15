@@ -265,4 +265,29 @@ function TestPathUtil:testNormalizeOnMac()
   lu.assertEquals(PathUtil.normalize("/plain/path"), "/plain/path")
 end
 
+function TestPathUtil:testNormalizeLeadingDot()
+  reaper.GetOS = function() return 'OSX64' end
+
+  lu.assertEquals(PathUtil.normalize("./Media"), "Media")
+  lu.assertEquals(PathUtil.normalize(".\\Media"), "Media")
+  lu.assertEquals(PathUtil.normalize("../Media"), "../Media")
+end
+
+function TestPathUtil:testGetOpenFolderCommand()
+  local windows_path = "C:\\path\\to\\folder"
+  local mac_and_other_path = "/path/to/folder"
+
+  reaper.GetOS = function() return "Win64" end
+  lu.assertEquals(PathUtil.get_open_folder_command(windows_path),
+    '%SystemRoot%\\explorer.exe "' .. windows_path .. '"')
+
+  reaper.GetOS = function() return "OSX64" end
+  lu.assertEquals(PathUtil.get_open_folder_command(mac_and_other_path),
+    '/usr/bin/env open "' .. mac_and_other_path .. '"')
+
+  reaper.GetOS = function() return "Other" end
+  lu.assertEquals(PathUtil.get_open_folder_command(mac_and_other_path),
+    '/usr/bin/env xdg-open "' .. mac_and_other_path .. '"')
+end
+
 os.exit(lu.LuaUnit.run())

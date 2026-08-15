@@ -97,6 +97,11 @@ PathUtil.normalize = function(path)
     path = path:gsub("([/\\])%.[/\\]", "%1")
   until path == previous
 
+  -- a leading "./" has no separator before the dot, so the loop above
+  -- can't see it ("../" does not match: the dot must be followed by a
+  -- separator)
+  path = path:gsub("^%.[/\\]+", "")
+
   return (path:gsub("[/\\]%.$", ""))
 end
 

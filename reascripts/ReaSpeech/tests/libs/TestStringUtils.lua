@@ -52,4 +52,11 @@ function TestBase64:testDecodeRejectsGarbage()
   lu.assertNil(('abc'):base64_decode()) -- bad length
 end
 
+function TestBase64:testDecodeRejectsInvalidPadding()
+  lu.assertNil(('===='):base64_decode())
+  lu.assertNil(('T==='):base64_decode())
+  lu.assertNil(('=TQ='):base64_decode())
+  lu.assertNil(('TQ==TQ=='):base64_decode()) -- padding before the final block
+end
+
 os.exit(lu.LuaUnit.run())

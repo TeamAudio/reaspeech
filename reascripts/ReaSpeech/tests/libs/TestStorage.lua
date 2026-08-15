@@ -175,4 +175,53 @@ function TestJSONFileCache:testInvalidateRereadsFromDisk()
   lu.assertEquals(cell:get(), {})
 end
 
+function TestJSONFileCache:testRepeatedWritesWithNonReplacingRename()
+  -- Windows os.rename fails when the destination exists; saving must
+  -- fall back to remove-then-rename
+  local real_rename = os.rename
+  os.rename = function(from, to)
+    local f = io.open(to, 'r')
+    if f then
+      f:close()
+      return nil, 'destination exists'
+    end
+    return real_rename(from, to)
+  end
+
+  local ok, err = pcall(function()
+    local cell = Storage.JSONFile(self.filepath):table('things', {})
+    cell:set({ 'a' })
+    cell:set({ 'a', 'b' })
+
+    Storage.JSONFile.invalidate(self.filepath)
+    lu.assertEquals(cell:get(), { 'a', 'b' })
+  end)
+
+  os.rename = real_rename
+  lu.assertTrue(ok, tostring(err))
+end
+
+function TestJSONFileCache:testCreatesMissingParentDirectories()
+  local created = {}
+  local real_rcd = reaper.RecursiveCreateDirectory
+  reaper.RecursiveCreateDirectory = function(dir, _)
+    table.insert(created, dir)
+    os.execute('mkdir -p "' .. dir .. '"')
+    return 0
+  end
+
+  local base = self.filepath .. '-dir'
+  local filepath = base .. '/nested/data.json'
+  local ok, err = pcall(function()
+    Storage.JSONFile(filepath):table('things', {}):set({ 'a' })
+  end)
+
+  reaper.RecursiveCreateDirectory = real_rcd
+  os.execute('rm -rf "' .. base .. '"')
+
+  lu.assertTrue(ok, tostring(err))
+  -- the full absolute parent path, in a single call
+  lu.assertEquals(created, { base .. '/nested' })
+end
+
 os.exit(lu.LuaUnit.run())

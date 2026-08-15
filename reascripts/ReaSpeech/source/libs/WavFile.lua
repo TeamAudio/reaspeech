@@ -43,10 +43,15 @@ function WavFile.info(path)
 
     if chunk_id == 'fmt ' then
       local fmt = f:read(chunk_size)
+      if not fmt or #fmt < 16 then
+        f:close()
+        return nil, 'Truncated fmt chunk: ' .. path
+      end
       info.audio_format, info.channels, info.sample_rate,
         info.byte_rate, info.block_align, info.bits_per_sample =
         string.unpack('<I2I2I4I4I2I2', fmt)
       info.fmt_chunk = fmt
+      f:seek('cur', chunk_size % 2)
     elseif chunk_id == 'data' then
       info.data_offset = f:seek()
       info.data_size = chunk_size
@@ -72,6 +77,13 @@ function WavFile.info(path)
       :format(info.audio_format, path)
   end
 
+  -- WAVE_FORMAT_EXTENSIBLE stores the effective format in the first two
+  -- bytes of the SubFormat GUID (fmt chunk offset 24, after cbSize,
+  -- valid bits, and channel mask)
+  if info.audio_format == 0xFFFE and #info.fmt_chunk >= 26 then
+    info.subformat = string.unpack('<I2', info.fmt_chunk, 25)
+  end
+
   info.frame_count = info.data_size // info.block_align
   info.duration = info.frame_count / info.sample_rate
 
@@ -85,6 +97,8 @@ end
 -- Returns the list, or nil and an error message.
 WavFile.PEAK_SAMPLES_PER_COLUMN = 64
 
+-- Reads the requested range into memory in one block, so memory scales
+-- with the range length; callers pass short (seconds-long) ranges
 function WavFile.peaks(path, start_seconds, end_seconds, columns)
   local info, err = WavFile.info(path)
   if not info then return nil, err end
@@ -134,11 +148,20 @@ function WavFile.peaks(path, start_seconds, end_seconds, columns)
 end
 
 -- Returns fn(data, offset) -> first-channel sample in [-1, 1], or nil
--- for formats peaks can't interpret. WAVE_FORMAT_EXTENSIBLE guesses:
--- 32-bit means float, anything else integer PCM.
+-- for formats peaks can't interpret. For WAVE_FORMAT_EXTENSIBLE the
+-- SubFormat GUID decides PCM vs float, not the bit depth.
 function WavFile._sample_reader(info)
   local bits = info.bits_per_sample
-  local is_float = info.audio_format == 3 or (info.audio_format == 0xFFFE and bits == 32)
+
+  local format = info.audio_format
+  if format == 0xFFFE then
+    format = info.subformat
+  end
+  if format ~= 1 and format ~= 3 then
+    return nil
+  end
+
+  local is_float = format == 3
 
   if is_float and bits == 32 then
     return function(data, offset)

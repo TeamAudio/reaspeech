@@ -62,20 +62,57 @@ function TestWavFileInfo:testParsesFormat()
   lu.assertAlmostEquals(info.duration, 2.0, 0.001)
 end
 
+-- Mono WAVE_FORMAT_EXTENSIBLE fixture: a full 40-byte fmt chunk whose
+-- SubFormat GUID carries the given format code (1 = PCM, 3 = float)
+local function write_extensible_wav(path, subformat_code, bits, data)
+  local block_align = bits // 8
+  local guid = string.pack('<I2', subformat_code)
+    .. '\x00\x00\x00\x00\x10\x00\x80\x00\x00\xAA\x00\x38\x9B\x71'
+  local fmt = string.pack('<I2I2I4I4I2I2I2I2I4',
+    0xFFFE, 1, 48000, 48000 * block_align, block_align, bits, 22, bits, 1)
+    .. guid
+  local body = 'fmt ' .. string.pack('<I4', #fmt) .. fmt
+    .. 'data' .. string.pack('<I4', #data) .. data
+  local f = assert(io.open(path, 'wb'))
+  f:write('RIFF', string.pack('<I4', 4 + #body), 'WAVE', body)
+  f:close()
+end
+
 function TestWavFileInfo:testAcceptsExtensibleFormat()
   local path = TEST_DIR .. '/extensible.wav'
-  local fmt = string.pack('<I2I2I4I4I2I2I2I2I4', 0xFFFE, 2, 48000, 48000 * 8, 8, 32, 22, 32, 3)
-    .. string.rep('\0', 14) -- subformat GUID remainder
-  local data = string.rep('\0', 80) -- 10 frames of silence
+  write_extensible_wav(path, 3, 32, string.rep('\0', 40)) -- 10 frames of silence
+
+  local info = assert(WavFile.info(path))
+  lu.assertEquals(info.audio_format, 0xFFFE)
+  lu.assertEquals(info.subformat, 3)
+  lu.assertEquals(info.frame_count, 10)
+end
+
+function TestWavFileInfo:testRejectsTruncatedFmtChunk()
+  local path = TEST_DIR .. '/truncated-fmt.wav'
+  local fmt = string.pack('<I2I2I4', 1, 1, 48000) -- 8 of the required 16 bytes
   local body = 'fmt ' .. string.pack('<I4', #fmt) .. fmt
+  local f = assert(io.open(path, 'wb'))
+  f:write('RIFF', string.pack('<I4', 4 + #body), 'WAVE', body)
+  f:close()
+
+  local info, err = WavFile.info(path)
+  lu.assertNil(info)
+  lu.assertStrContains(err, 'Truncated fmt chunk')
+end
+
+function TestWavFileInfo:testConsumesFmtChunkPadding()
+  local path = TEST_DIR .. '/odd-fmt.wav'
+  local fmt = string.pack('<I2I2I4I4I2I2', 1, 1, 100, 200, 2, 16) .. '\1' -- odd size
+  local data = string.rep('\0', 4)
+  local body = 'fmt ' .. string.pack('<I4', #fmt) .. fmt .. '\0'
     .. 'data' .. string.pack('<I4', #data) .. data
   local f = assert(io.open(path, 'wb'))
   f:write('RIFF', string.pack('<I4', 4 + #body), 'WAVE', body)
   f:close()
 
   local info = assert(WavFile.info(path))
-  lu.assertEquals(info.audio_format, 0xFFFE)
-  lu.assertEquals(info.frame_count, 10)
+  lu.assertEquals(info.frame_count, 2)
 end
 
 function TestWavFileInfo:testRejectsRF64()
@@ -169,6 +206,27 @@ function TestWavFilePeaks:testEmptyRangeErrors()
   local peaks, err = WavFile.peaks(SRC, 5, 6, 4)
   lu.assertIsNil(peaks)
   lu.assertStrContains(err, 'Empty')
+end
+
+function TestWavFilePeaks:testExtensibleFloatUsesSubformat()
+  local path = TEST_DIR .. '/extensible-float.wav'
+  write_extensible_wav(path, 3, 32,
+    string.pack('<f', 0.5) .. string.pack('<f', -0.25))
+
+  local peaks = assert(WavFile.peaks(path, 0, 1, 1))
+  lu.assertAlmostEquals(peaks[1][1], -0.25, 0.001)
+  lu.assertAlmostEquals(peaks[1][2], 0.5, 0.001)
+end
+
+function TestWavFilePeaks:testExtensiblePcm32UsesSubformat()
+  -- 32-bit extensible PCM must be read as integer samples, not float
+  local path = TEST_DIR .. '/extensible-pcm32.wav'
+  write_extensible_wav(path, 1, 32,
+    string.pack('<i4', 0x40000000) .. string.pack('<i4', -0x40000000))
+
+  local peaks = assert(WavFile.peaks(path, 0, 1, 1))
+  lu.assertAlmostEquals(peaks[1][1], -0.5, 0.001)
+  lu.assertAlmostEquals(peaks[1][2], 0.5, 0.001)
 end
 
 function TestWavFilePeaks:testMissingFileErrors()

@@ -154,7 +154,9 @@ Storage.__index = Storage
 -- Storage Schema Versioning Utilities
 -- Per-instance versioning with simple incrementing numbers
 
--- Apply migrations to upgrade data from one version to another
+-- Apply migrations to upgrade data from one version to another.
+-- The migrations table may be sparse: a version with no entry is a
+-- no-op upgrade (the data was already compatible with that version).
 function Storage._apply_migrations(data, from_version, to_version, migrations, minimum_version)
   -- Ensure data has proper structure
   if not data._version then
@@ -414,24 +416,9 @@ Storage.JSONFile = {
     local function ensure_dir(path)
       local dir = path:match("(.+)[/\\][^/\\]*$")
       if dir and not reaper.file_exists(dir) then
-        -- Create directory recursively
-        local parts = {}
-        for part in dir:gmatch("[^/\\]+") do
-          table.insert(parts, part)
-        end
-
-        local current_path = ""
-        for i, part in ipairs(parts) do
-          if i == 1 and string.match(part, "^[A-Za-z]:$") then
-            -- Windows drive letter
-            current_path = part .. "\\"
-          else
-            current_path = current_path .. (i == 1 and "" or "/") .. part
-            if not reaper.file_exists(current_path) then
-              reaper.RecursiveCreateDirectory(current_path, 0)
-            end
-          end
-        end
+        -- RecursiveCreateDirectory handles the whole path, including
+        -- absolute roots and Windows drive letters
+        reaper.RecursiveCreateDirectory(dir, 0)
       end
     end
 
@@ -494,8 +481,13 @@ Storage.JSONFile = {
       file:write(json.encode(data))
       file:close()
 
-      -- Atomic move
+      -- Atomic move; on Windows os.rename will not replace an existing
+      -- destination, so fall back to remove-then-rename
       local success = os.rename(temp_filepath, filepath)
+      if not success then
+        os.remove(filepath)
+        success = os.rename(temp_filepath, filepath)
+      end
       if not success then
         os.remove(temp_filepath)
         error("Failed to atomically write file: " .. filepath)
