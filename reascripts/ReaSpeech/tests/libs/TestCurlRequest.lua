@@ -197,4 +197,115 @@ function TestCurlRequest:testMaybeQuotePlatformBehavior()
   lu.assertEquals(CurlRequest()._maybe_quote('a b'), 'a b')
 end
 
+function TestCurlRequest:testJsonDataFalseIsSent()
+  local request = new_request {
+    url = 'http://localhost:9000/endpoint',
+    json_data = false,
+  }
+
+  local args = request:json_data_arguments()
+  lu.assertEquals(args[1], '-d')
+
+  local f = assert(io.open(args[2]:sub(2), 'r'))
+  local contents = f:read('*all')
+  f:close()
+
+  lu.assertEquals(contents, 'false')
+  lu.assertTrue(header_values(request)['"Content-Type: application/json"'])
+end
+
+function TestCurlRequest:testJsonDataKeepsCallerContentType()
+  local request = new_request {
+    url = 'http://localhost:9000/endpoint',
+    json_data = { foo = 'bar' },
+    headers = { ['content-type'] = 'application/json; charset=utf-8' },
+  }
+
+  local headers = header_values(request)
+  lu.assertTrue(headers['"content-type: application/json; charset=utf-8"'])
+  lu.assertNil(headers['"Content-Type: application/json"'])
+end
+
+function TestCurlRequest:testJsonDataImpliesPostAndExplicitMethod()
+  local request = new_request {
+    url = 'http://localhost:9000/endpoint',
+    json_data = { a = 1 },
+  }
+  lu.assertEquals(request:curl_http_method_argument(), { '-X', 'POST' })
+
+  -- -d makes curl infer POST, so a configured GET must be explicit
+  local get_request = new_request {
+    url = 'http://localhost:9000/endpoint',
+    json_data = { a = 1 },
+    http_method = 'GET',
+  }
+  lu.assertEquals(get_request:curl_http_method_argument(), { '-X', 'GET' })
+end
+
+function TestCurlRequest:testRejectsJsonDataWithFileUploads()
+  lu.assertErrorMsgContains('json_data and file_uploads', function()
+    new_request {
+      url = 'http://localhost:9000/endpoint',
+      json_data = { a = 1 },
+      file_uploads = { file = '/tmp/upload.wav' },
+    }
+  end)
+end
+
+function TestCurlRequest:testQueryKeysAreEncoded()
+  local request = new_request {
+    url = 'http://localhost:9000/endpoint',
+    query_data = { ['a b'] = 'c d' },
+  }
+
+  lu.assertEquals(request:get_url(),
+    { '"http://localhost:9000/endpoint?'
+      .. url.quote('a b') .. '=' .. url.quote('c d') .. '"' })
+end
+
+function TestCurlRequest:testSyncExecuteCleansUpJsonTempFile()
+  local real_exec = ExecProcess
+  ExecProcess = {
+    new = function()
+      return {
+        wait = function() return '0\nHTTP/1.1 200 OK\n\n{"ok":true}' end,
+      }
+    end,
+  }
+
+  local removed = {}
+  local real_remove = Tempfile.remove
+  Tempfile.remove = function(tempfile, name)
+    table.insert(removed, name)
+    return real_remove(tempfile, name)
+  end
+
+  local request = new_request {
+    url = 'http://localhost:9000/endpoint',
+    json_data = { a = 1 },
+  }
+  local response = request:execute()
+
+  ExecProcess = real_exec
+  Tempfile.remove = real_remove
+
+  lu.assertEquals(response, { ok = true })
+  lu.assertEquals(#removed, 1)
+  lu.assertNil(request.json_temp_file)
+end
+
+function TestCurlRequest:testJsonBodyIsNotLogged()
+  Logging().logs = {}
+
+  local request = new_request {
+    url = 'http://localhost:9000/endpoint',
+    json_data = { password = 'hunter2' },
+  }
+  request:build_curl_command()
+
+  for _, entry in ipairs(Logging().logs) do
+    lu.assertNil(entry[1]:find('hunter2', 1, true))
+  end
+end
+
 os.exit(lu.LuaUnit.run())
