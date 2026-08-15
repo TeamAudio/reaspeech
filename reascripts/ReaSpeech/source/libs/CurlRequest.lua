@@ -64,12 +64,24 @@ function CurlRequest._init()
     Logging().init(self, "CurlRequest")
 
     self.query_data = self.query_data or {}
+    self.json_data = self.json_data or nil
     self.http_method = self.http_method or self.DEFAULT_HTTP_METHOD
     self.headers = self.headers or self.DEFAULT_HEADERS
     self.curl_timeout = self.curl_timeout or self.DEFAULT_CURL_TIMEOUT
     self.extra_curl_options = self.extra_curl_options or self.DEFAULT_EXTRA_CURL_OPTIONS
     self.error_handler = self.error_handler or self.DEFAULT_ERROR_HANDLER
     self.timeout_handler = self.timeout_handler or self.DEFAULT_TIMEOUT_HANDLER
+
+    -- If json_data is provided, ensure proper Content-Type header and validate no query conflicts
+    if self.json_data then
+      self.headers = self.headers or {}
+      self.headers['Content-Type'] = 'application/json'
+
+      -- Warn if both json_data and query_data are provided (could be confusing)
+      if next(self.query_data) then
+        self:log("WARNING: Both json_data and query_data provided. Query params will be appended to URL, JSON will be in request body.")
+      end
+    end
   end
 
   function API:execute()
@@ -99,6 +111,11 @@ function CurlRequest._init()
     if not f then
       self.error_msg = "Couldn't open output file: " .. tostring(self.output_file)
       Tempfile:remove(self.progress_file)
+      -- Clean up JSON temp file if it exists
+      if self.json_temp_file then
+        Tempfile:remove(self.json_temp_file)
+        self.json_temp_file = nil
+      end
       return false
     end
 
@@ -113,17 +130,33 @@ function CurlRequest._init()
     Tempfile:remove(self.output_file)
     Tempfile:remove(self.progress_file)
 
+    -- Clean up JSON temp file if it exists
+    if self.json_temp_file then
+      Tempfile:remove(self.json_temp_file)
+      self.json_temp_file = nil
+    end
+
     if http_status ~= 200 then
       self.error_msg = "Server responded with status " .. http_status
       self.error_handler(self.error_msg)
       self:log(self.error_msg)
       self:debug(body)
+      -- Clean up JSON temp file if it exists
+      if self.json_temp_file then
+        Tempfile:remove(self.json_temp_file)
+        self.json_temp_file = nil
+      end
       return false
     end
 
     if #body < 1 then
       self.error_msg = "Empty response"
       self.error_handler(self.error_msg)
+      -- Clean up JSON temp file if it exists
+      if self.json_temp_file then
+        Tempfile:remove(self.json_temp_file)
+        self.json_temp_file = nil
+      end
       return false
     end
 
@@ -135,6 +168,11 @@ function CurlRequest._init()
       self.error_msg = "JSON parse error"
       self.error_handler(self.error_msg)
       self:log(body)
+      -- Clean up JSON temp file if it exists
+      if self.json_temp_file then
+        Tempfile:remove(self.json_temp_file)
+        self.json_temp_file = nil
+      end
       return false
     end
   end
@@ -239,6 +277,7 @@ function CurlRequest._init()
       self:curl_http_method_argument(),
       self:curl_header_arguments(),
       self:file_upload_arguments(),
+      self:json_data_arguments(),
       self:curl_timeout_argument(),
     }), ' ')
   end
@@ -268,11 +307,24 @@ function CurlRequest._init()
 
   function API:get_url()
     local query = {}
+
+    -- Only build query string from query_data for non-JSON requests or when explicitly mixing both
+    -- (When using json_data, we typically want clean URLs without query params)
     for k, v in pairs(self.query_data) do
-      table.insert(query, k .. '=' .. url.quote(v))
+      if type(v) ~= 'table' then
+        table.insert(query, k .. '=' .. url.quote(tostring(v)))
+      else
+        -- Skip table values with a warning - they should go in json_data instead
+        self:log("WARNING: Table value in query_data for key '" .. k .. "'. Consider using json_data instead.")
+      end
     end
 
-    return { '"' .. self.url .. '?' .. table.concat(query, '&') .. '"' }
+    local url_with_query = self.url
+    if #query > 0 then
+      url_with_query = url_with_query .. '?' .. table.concat(query, '&')
+    end
+
+    return { '"' .. url_with_query .. '"' }
   end
 
   function API:extra_curl_arguments()
@@ -303,11 +355,38 @@ function CurlRequest._init()
   function API:file_upload_arguments()
     local uploads = {}
 
-    for key, path in pairs(self.file_uploads or {}) do
-      table.insert(uploads, { '-F', self._maybe_quote(key .. '=@"' .. path .. '"') })
+    if self.file_uploads and next(self.file_uploads) then
+      self:log("File uploads: " .. dump(self.file_uploads))
+      for key, path in pairs(self.file_uploads) do
+        table.insert(uploads, { '-F', self._maybe_quote(key .. '=@"' .. path .. '"') })
+      end
     end
 
     return table.flatten(uploads)
+  end
+
+  function API:json_data_arguments()
+    if not self.json_data then
+      return {}
+    end
+
+    local json_string = json.encode(self.json_data)
+    self:log("JSON data: " .. json_string)
+
+    -- Write JSON to a temporary file to avoid shell escaping issues
+    local temp_file = Tempfile:name()
+    local f = io.open(temp_file, 'w')
+    if not f then
+      error("Failed to create temporary file for JSON data: " .. temp_file)
+    end
+    f:write(json_string)
+    f:close()
+
+    -- Store temp file for cleanup later
+    self.json_temp_file = temp_file
+
+    -- Use -d @filename to read JSON from file
+    return { '-d', '@' .. temp_file }
   end
 
   function API._maybe_quote(str)
