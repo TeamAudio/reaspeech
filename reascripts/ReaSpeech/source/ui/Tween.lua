@@ -42,14 +42,17 @@ Tween = {
     tween_definition.__call = function(_self, start_value, end_value, duration, on_end)
       local t = {}
       t.start_value = start_value
-      t.end_value = end_value
+      t.end_value = end_value  -- Can be a number or function
       t.duration = duration
-      t.change = end_value - start_value
       t.start_time = time_f()
       t.on_end = on_end or function() end
 
       t.__call = function(self)
         local time = time_f()
+
+        -- Resolve end_value dynamically if it's a function
+        local current_end_value = type(self.end_value) == "function" and self.end_value() or self.end_value
+        local current_change = current_end_value - self.start_value
 
         if time >= t.start_time + t.duration then
           if t.on_end then
@@ -57,12 +60,12 @@ Tween = {
             self.on_end = function() end
           end
 
-          return self.end_value
+          return current_end_value
         else
           return tween_definition.f(
             time - self.start_time,
             self.start_value,
-            self.end_value - self.start_value,
+            current_change,  -- Recalculated each frame
             self.duration
           )
         end

@@ -33,6 +33,8 @@ function SettingsControls:init()
     label = 'Font Size',
     min = Fonts.MIN_SIZE,
     max = Fonts.MAX_SIZE,
+    step = 1,
+    format = '%.0f',
   }
 
   self:init_logging()

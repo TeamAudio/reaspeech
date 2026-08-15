@@ -15,6 +15,11 @@ NumberInput.new = function (options)
   options.default = options.default or 0
   options.min = options.min or nil
   options.max = options.max or nil
+  -- InputDouble only draws the +/- step buttons when a step is given
+  -- (InputInt defaults step=1, InputDouble defaults step=0)
+  options.step = options.step or nil
+  options.step_fast = options.step_fast or nil
+  options.format = options.format or nil
 
   local o = ReaSpeechWidget.new({
     state = options.state,
@@ -43,7 +48,8 @@ NumberInput.renderer = function (self)
 
   local current_value = self:value()
 
-  local rv, value = ImGui.InputInt(Ctx(), imgui_label, current_value)
+  local rv, value = ImGui.InputDouble(Ctx(), imgui_label, current_value,
+    options.step, options.step_fast, options.format)
 
   local in_bounds = (options.min == nil or value >= options.min) and (options.max == nil or value <= options.max)
 

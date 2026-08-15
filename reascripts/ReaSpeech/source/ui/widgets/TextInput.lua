@@ -14,6 +14,8 @@ TextInput.new = function (options)
   }
   options.default = options.default or ''
 
+  options.disabled = options.disabled or function() return false end
+
   options.on_cancel = options.on_cancel or function() end
 
   options.on_change = options.on_change or function() end
@@ -27,6 +29,13 @@ TextInput.new = function (options)
     renderer = TextInput.renderer,
     options = options,
   })
+
+  -- Abandon any in-progress edit; the next render reads from state.
+  -- Used when the value is changed programmatically mid-edit
+  -- (e.g. autocomplete completing the text being typed).
+  o.clear_edit_buffer = function(widget)
+    widget._edit_buffer = nil
+  end
 
   return o
 end
@@ -47,20 +56,43 @@ TextInput.renderer = function (self)
 
   local imgui_label = ("##%s"):format(options.label)
 
-  local rv, value = ImGui.InputText(Ctx(), imgui_label, self:value())
+  local width = options.width and (type(options.width) == 'function' and options.width() or options.width) or nil
 
-  if ImGui.IsItemDeactivated(Ctx()) then
-    if ImGui.IsKeyPressed(Ctx(), ImGui.Key_Escape()) then
-      self.options.on_cancel()
-    else
-      self.options.on_enter()
-    end
-    self:set(value)
+  if width then
+    ImGui.SetNextItemWidth(Ctx(), width)
   end
 
+  -- While the input is being edited, keystrokes accumulate in a local
+  -- buffer; state (which may be disk-backed) is only written when the
+  -- edit ends. on_change still fires per keystroke for live feedback.
+  local buffer = self._edit_buffer or self:value()
+
+  local rv, value
+  Widgets.disable_if(options.disabled(), function()
+    if options.hint and options.hint ~= '' then
+      rv, value = ImGui.InputTextWithHint(Ctx(), imgui_label, options.hint, buffer)
+    else
+      rv, value = ImGui.InputText(Ctx(), imgui_label, buffer)
+    end
+  end)
+
   if rv then
+    self._edit_buffer = value
     self.options.on_change(value)
-    self:set(value)
+  end
+
+  if ImGui.IsItemDeactivated(Ctx()) then
+    local final_value = self._edit_buffer
+    self._edit_buffer = nil
+
+    if ImGui.IsKeyPressed(Ctx(), ImGui.Key_Escape()) then
+      self.options.on_cancel()
+    elseif final_value ~= nil then
+      self:set(final_value)
+      self.options.on_enter(final_value)
+    else
+      self.options.on_enter(self:value())
+    end
   end
 end
 

@@ -41,14 +41,19 @@ function Fonts:init(ctx)
   self:load_and_attach(ctx, self.last_font_size)
 end
 
+function Fonts:current_size()
+  return self.size:get()
+end
+
 function Fonts:check(ctx)
   local current_font_size = self.size:get()
 
   local out_of_bounds = current_font_size < self.MIN_SIZE or current_font_size > self.MAX_SIZE
 
-  if current_font_size == self.last_font_size or out_of_bounds then
+  if (current_font_size == self.last_font_size and not self._has_new_fonts) or out_of_bounds then
     return
   end
+  self._has_new_fonts = false
 
   self.last_font_size = current_font_size
 
@@ -71,6 +76,13 @@ function Fonts:load_and_attach(ctx, font_size)
   self:_detach(self.bold)
   self.bold = self:create_font('sans-serif', font_size, ImGui.FontFlags_Bold())
   self:_attach(ctx, self.bold)
+
+  for name, font in pairs(self.registered_fonts or {}) do
+    local flags = font.flags or ImGui.FontFlags_None()
+    self:_detach(self[name])
+    self[name] = self:create_font(font.font_family, font_size + font.size, flags)
+    self:_attach(ctx, self[name])
+  end
 end
 
 
@@ -102,4 +114,19 @@ function Fonts.wrap(ctx, font, f, trap_f)
   ImGui.PushFont(ctx, font.object, font.size)
   trap_f(function() f() end)
   ImGui.PopFont(ctx)
+end
+
+function Fonts:register(name, font_family, relative_size, flags)
+  self.registered_fonts = self.registered_fonts or {}
+
+  if not name or not font_family or not relative_size then
+    error("Fonts:register: name, font_family, and size are required")
+  end
+
+  self.registered_fonts[name] = {
+    font_family = font_family,
+    size = relative_size,
+    flags = flags,
+  }
+  self._has_new_fonts = true
 end
