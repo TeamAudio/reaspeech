@@ -24,6 +24,10 @@ function ScriptMatchAudioTrackConfigurationUI:init()
 
   self.metadata_layer_uis = self:init_metadata_layer_uis()
 
+  -- Fresh per dialog open: transcript JSONs found in the project
+  -- folder, offered as one-press links in the Transcript section
+  self._project_transcripts = ProjectFolderScan.new {}:scan().transcripts
+
   -- self:log("Initialized ScriptMatchAudioTrackConfigurationUI")
   self:log("Initialized ScriptMatchAudioTrackConfigurationUI for track: " .. dump(self.track))
 end
@@ -120,6 +124,20 @@ function ScriptMatchAudioTrackConfigurationUI:render_transcript_section()
   local transcript_uis = self:layer_uis_for_key('transcript')
 
   if #transcript_uis == 0 then
+    -- Quick choices ahead of the file browser: transcript JSONs the
+    -- project folder already holds, one press to link
+    for _, filepath in ipairs(self._project_transcripts or {}) do
+      RowChip.render('##quick-transcript-' .. filepath, {
+        icon = 'wav',
+        label = PathUtil.get_filename(filepath),
+        dim = true,
+        tooltip = filepath .. '\nPress to link this transcript.',
+        on_press = function()
+          self:link_transcript_file(filepath)
+        end,
+      })
+    end
+
     if ImGui.Button(Ctx(), "Link Transcript...") then
       self:add_metadata_layer(self:registry_layer('transcript'))
 
@@ -135,6 +153,21 @@ function ScriptMatchAudioTrackConfigurationUI:render_transcript_section()
 
   for _, layer_ui in ipairs(transcript_uis) do
     layer_ui:render()
+  end
+end
+
+-- The quick-choice path: create the transcript layer and link the
+-- chosen file directly, no file dialog. On failure the empty slot
+-- stays (its own Choose button is the retry).
+function ScriptMatchAudioTrackConfigurationUI:link_transcript_file(filepath)
+  self:add_metadata_layer(self:registry_layer('transcript'))
+
+  local new_ui = self.metadata_layer_uis[#self.metadata_layer_uis]
+  if new_ui.handler and new_ui.handler.import_file then
+    local ok, err = new_ui.handler:import_file(filepath)
+    if not ok then
+      self:log("Quick-choice transcript link failed: " .. tostring(err))
+    end
   end
 end
 

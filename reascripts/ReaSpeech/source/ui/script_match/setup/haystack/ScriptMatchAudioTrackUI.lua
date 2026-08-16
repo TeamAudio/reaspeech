@@ -74,31 +74,38 @@ function ScriptMatchAudioTrackUI:render_summary()
   self:save_if_dirty()
 end
 
+-- A pressable row per track (chips over small text links): the whole
+-- row opens the configuration dialog, unlink keeps its own hit zone
 function ScriptMatchAudioTrackUI:render_track_name()
-  local link_color = self.is_linked_to_session and 0xeeeeeeff or 0xbbbbbbff
+  RowChip.render('##track-row-' .. self.track.guid, {
+    icon = 'headphone',
+    label = self:track_name(),
+    dim = not self.is_linked_to_session,
+    tooltip = self.is_linked_to_session
+      and 'Linked to this session. Press to configure.'
+      or 'Press to link this track to the session and configure it.',
+    on_press = function()
+      self.track_configuration_ui = ScriptMatchAudioTrackConfigurationUI.new {
+        session_id = self.session_id,
+        workflow = self.workflow,
+        audio_tracks = self.audio_tracks,
+        track = self.track,
+        track_ui = self,
+      }
 
-  Widgets.link(self:track_name(), function()
-    self.track_configuration_ui = ScriptMatchAudioTrackConfigurationUI.new {
-      session_id = self.session_id,
-      workflow = self.workflow,
-      audio_tracks = self.audio_tracks,
-      track = self.track,
-      track_ui = self,
-    }
-
-    self.audio_tracks:add_track(self.track)
-    self.is_linked_to_session = true
-    self.track_configuration_ui:present()
-  end, link_color, link_color)
-
-  if self.is_linked_to_session then
-    ImGui.SameLine(Ctx())
-
-    Widgets.link('[unlink]', function()
-      self:log('Unlinking track: ' .. self:track_name())
-      self:unlink_track()
-    end)
-  end
+      self.audio_tracks:add_track(self.track)
+      self.is_linked_to_session = true
+      self.track_configuration_ui:present()
+    end,
+    action = self.is_linked_to_session and {
+      label = 'unlink',
+      tooltip = 'Unlink this track from the session',
+      on_press = function()
+        self:log('Unlinking track: ' .. self:track_name())
+        self:unlink_track()
+      end,
+    } or nil,
+  })
 end
 
 function ScriptMatchAudioTrackUI:unlink_track()

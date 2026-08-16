@@ -10,6 +10,11 @@ function ScriptMaterialsUI:init()
 
   self.material_uis = self:init_material_uis()
 
+  -- Obvious candidates already in the project folder, offered as
+  -- one-press quick choices below the linked materials
+  self.folder_scan = ProjectFolderScan.new {}
+  self._scan = self.folder_scan:scan()
+
   self.workflow:listen_for_event('script_material_unlinked', function(event)
     self:log("Received script_material_unlinked event for material: " .. dump(event.material))
     self:mark_dirty()
@@ -50,9 +55,60 @@ function ScriptMaterialsUI:render()
     for _, material_ui in ipairs(self.material_uis) do
       material_ui:render_summary()
     end
+
+    self:render_quick_choices()
   end)
   ImGui.PopStyleVar(Ctx())
   ImGui.Unindent(Ctx(), 6)
+end
+
+-- Spreadsheets discovered next to the project, minus what's already
+-- linked: one press imports without the file browser
+function ScriptMaterialsUI:quick_choice_spreadsheets()
+  local linked = {}
+  for _, material in ipairs(self.script_materials:get_materials()) do
+    linked[material.filepath] = true
+  end
+
+  local candidates = {}
+  for _, filepath in ipairs((self._scan and self._scan.spreadsheets) or {}) do
+    if not linked[filepath] then
+      table.insert(candidates, filepath)
+    end
+  end
+  return candidates
+end
+
+function ScriptMaterialsUI:render_quick_choices()
+  local candidates = self:quick_choice_spreadsheets()
+  if #candidates == 0 then return end
+
+  ImGui.Dummy(Ctx(), 0, 2)
+  ImGui.TextColored(Ctx(), 0x888888FF, 'Found in project folder:')
+  ImGui.SameLine(Ctx())
+  Widgets.link('rescan', function()
+    self._scan = self.folder_scan:scan()
+  end, 0x888888FF, 0xEEEEEEFF)
+
+  for _, filepath in ipairs(candidates) do
+    local lower = filepath:lower()
+    RowChip.render('##quick-material-' .. filepath, {
+      icon = (lower:match('%.csv$') or lower:match('%.tsv$')) and 'csv' or 'spreadsheet',
+      label = PathUtil.get_filename(filepath),
+      dim = true,
+      tooltip = filepath .. '\nPress to import as a script material.',
+      on_press = function()
+        self:import_quick_choice(filepath)
+      end,
+    })
+  end
+end
+
+function ScriptMaterialsUI:import_quick_choice(filepath)
+  local material = self.script_materials:import_file(filepath)
+  self.workflow:emit_event('script_material_updated', { material = material })
+  self.material_uis = self:init_material_uis()
+  self:log("Imported quick choice: " .. filepath)
 end
 
 function ScriptMaterialsUI:import()

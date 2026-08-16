@@ -66,12 +66,29 @@ end
 
 function AudioTrackTranscriptMetadataLayerUI:begin_import()
   TranscriptImporter:quick_import(function(imported, filename)
-    self._transcript = imported
-    self.storage.transcript_file:set(filename)
-    self.layer.config.transcript_file = filename
-    self.workflow:emit_event('audio_track_metadata_layer_updated', { track = self.track, layer = self.layer })
-    self:log("Imported transcript from file: " .. filename)
+    self:attach_transcript(imported, filename)
   end)()
+end
+
+-- Link a known file directly - the quick-choice path, no file dialog.
+-- Returns ok, error message.
+function AudioTrackTranscriptMetadataLayerUI:import_file(filename)
+  local transcript, err = TranscriptImporter:import(filename)
+  if not transcript then
+    self:log("Error loading transcript from file: " .. tostring(err))
+    return false, err
+  end
+
+  self:attach_transcript(transcript, filename)
+  return true
+end
+
+function AudioTrackTranscriptMetadataLayerUI:attach_transcript(transcript, filename)
+  self._transcript = transcript
+  self.storage.transcript_file:set(filename)
+  self.layer.config.transcript_file = filename
+  self.workflow:emit_event('audio_track_metadata_layer_updated', { track = self.track, layer = self.layer })
+  self:log("Imported transcript from file: " .. filename)
 end
 
 function AudioTrackTranscriptMetadataLayerUI:get_transcript()
