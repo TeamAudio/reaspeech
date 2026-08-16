@@ -224,6 +224,12 @@ function ExportPreviewUI:render_action_band(stats)
     self:finish_export_run()
   end
 
+  -- Drive the run before any drawing: a render error below (trapped
+  -- or not) must never be able to stall an in-flight export
+  if runner:is_running() then
+    runner:tick()
+  end
+
   ImGui.Dummy(Ctx(), 0, 4)
   local x, y = ImGui.GetCursorScreenPos(Ctx())
   local avail = ImGui.GetContentRegionAvail(Ctx())
@@ -342,17 +348,22 @@ function ExportPreviewUI:render_action_band(stats)
       'Last: ' .. table.concat(parts, ', ') .. ' at ' .. last.when)
   end
 
-  -- Drive the run: one frame's worth of slicing after the band drew,
-  -- so progress renders before the work extends the frame
-  if running then
-    runner:tick()
-  end
 end
 
 -- One pressable action card in the phase-selector language:
 -- InvisibleButton hit area, DrawList body, halo when begging, progress
--- fill while running. Returns true on click.
+-- fill while running. Returns true on click. The body runs under its
+-- own Trap: a card that errors renders as nothing, and its siblings
+-- (and the band around them) keep working.
 function ExportPreviewUI:render_action_card(id, opts)
+  local clicked = false
+  Trap(function()
+    clicked = self:render_action_card_body(id, opts)
+  end)
+  return clicked
+end
+
+function ExportPreviewUI:render_action_card_body(id, opts)
   local c = ExportPreviewUI.CARD
   local x, y = ImGui.GetCursorScreenPos(Ctx())
   local w = opts.width
