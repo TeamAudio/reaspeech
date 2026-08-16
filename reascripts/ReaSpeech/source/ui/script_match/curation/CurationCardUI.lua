@@ -124,11 +124,45 @@ function CurationCardUI:render_card(panel_width)
       self:render_needle_content()
       self:render_navigation_path(panel_width)
       self:render_metadata_summary(panel_width)
+      self:render_diagnosis_line(panel_width)
       self:render_generate_suggestions_button()
       ImGui.Dummy(Ctx(), 0, 2)
     end)
 
     ImGui.EndChild(Ctx())
+  end
+end
+
+CurationCardUI.DIAGNOSIS_COLORS = {
+  unlinked_track = 0xE0B060FF,
+  not_recorded = 0x999999FF,
+  non_verbal = 0xB090E0FF,
+}
+
+-- The verdict for a rolled-but-empty line, right on the card: WHY it
+-- found nothing (audio on an unlinked track, likely never recorded,
+-- non-verbal direction). Colors match the nav badges.
+function CurationCardUI:render_diagnosis_line(panel_width)
+  local needle = self.current_needle
+  if not needle or not needle.locator then return end
+
+  local status = needle.guid and self.workflow:get_needle_status(needle.guid)
+  if not status or status.total > 0 then return end
+
+  local verdict = self.workflow:get_needle_diagnosis():get(needle.locator)
+  if not verdict then return end
+
+  local color = CurationCardUI.DIAGNOSIS_COLORS[verdict.class] or 0x999999FF
+  ImGui.Dummy(Ctx(), 0, 2)
+  ImGui.PushTextWrapPos(Ctx(), panel_width - 20)
+  ImGui.TextColored(Ctx(), color, verdict.reason)
+  ImGui.PopTextWrapPos(Ctx())
+
+  if verdict.class == 'unlinked_track' and verdict.evidence then
+    ImGui.SameLine(Ctx())
+    ImGui.TextColored(Ctx(), 0x777777FF,
+      (' (%.0f%%%s)'):format((verdict.evidence.confidence or 0) * 100,
+        verdict.evidence.long_shot and ', long shot' or ''))
   end
 end
 

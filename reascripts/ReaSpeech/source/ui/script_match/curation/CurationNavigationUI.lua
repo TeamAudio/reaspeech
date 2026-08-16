@@ -284,9 +284,20 @@ end
 CurationNavigationUI.NAME_CURATED_COLOR = 0x9FD9A0FF   -- soft green tint
 CurationNavigationUI.NAME_UNMATCHED_COLOR = 0xE06060FF -- soft red: rolled, found nothing
 
+-- Rolled-but-empty needles with a diagnosis wear its class instead of
+-- the generic red: amber = the audio lives on an unlinked track
+-- (actionable), dim gray = likely never recorded (excluded lane),
+-- lavender = non-verbal direction (matching can't help yet)
+CurationNavigationUI.DIAGNOSIS_BADGES = {
+  unlinked_track = { 'warning', 0xE0B060FF },
+  not_recorded = { 'stopped', 0x999999FF },
+  non_verbal = { 'search', 0xB090E0FF },
+}
+
 -- Badge icon for a needle's curation state: check = curated, progress
 -- = has suggestions, error = rolled but nothing found (name tints
--- red), none = untouched. Curated names also tint green.
+-- red; a diagnosis refines icon + tint), none = untouched. Curated
+-- names also tint green.
 function CurationNavigationUI:needle_badge(node)
   local needle = self.needles[node.index]
   local status = needle and needle.guid and self.workflow:get_needle_status(needle.guid)
@@ -296,8 +307,14 @@ function CurationNavigationUI:needle_badge(node)
   end
 
   -- Rolled and found NOTHING: a red flag, not a quiet blank - this
-  -- line needs a human (relink a track, re-roll, or hunt by hand)
+  -- line needs a human. A diagnosis upgrades the flag to its WHY.
   if status.total == 0 then
+    local verdict = needle.locator
+      and self.workflow:get_needle_diagnosis():get(needle.locator)
+    local badge = verdict and CurationNavigationUI.DIAGNOSIS_BADGES[verdict.class]
+    if badge then
+      return badge[1], badge[2]
+    end
     return 'error', CurationNavigationUI.NAME_UNMATCHED_COLOR
   end
 

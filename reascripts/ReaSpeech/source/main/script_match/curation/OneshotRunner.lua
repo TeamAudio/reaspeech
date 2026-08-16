@@ -55,7 +55,24 @@ function OneshotRunner:init()
   self.auto_accepted = 0
   self.auto_accept_threshold = nil
 
+  -- Needles whose roll came up empty queue for the diagnosis pass
+  -- (the WHY: unlinked track, never recorded, non-verbal)
+  self.diagnosis_queue = {}
+  self.diagnosed = 0
+
   self:log('Initialized OneshotRunner')
+end
+
+-- The workflow-owned diagnosis service, when available (test doubles
+-- may not carry it; the runner then skips the diagnosis pass)
+function OneshotRunner:get_diagnosis()
+  if self.workflow.get_needle_diagnosis then
+    return self.workflow:get_needle_diagnosis()
+  end
+end
+
+function OneshotRunner:is_diagnosing()
+  return self.state == 'rolling' and #self.queue == 0 and #self.diagnosis_queue > 0
 end
 
 function OneshotRunner:is_rolling()
@@ -88,7 +105,16 @@ function OneshotRunner:start(needles, opts)
   self.takes_found = 0
   self.auto_accepted = 0
   self.auto_accept_threshold = opts and opts.auto_accept_threshold or nil
+  self.diagnosis_queue = {}
+  self.diagnosed = 0
   self.state = self.total > 0 and 'rolling' or 'idle'
+
+  -- Tracks may have been linked since the last roll; the candidate
+  -- list must reflect today's session
+  local diagnosis = self:get_diagnosis()
+  if diagnosis then
+    diagnosis:refresh_candidates()
+  end
 
   self:log(('Oneshot start: %d of %d needles to match'):format(self.total, #(needles or {})))
   return self.total
@@ -105,6 +131,33 @@ function OneshotRunner:tick()
   repeat
     local needle = table.remove(self.queue, 1)
     if not needle then break end
+
+    self:tick_matching(needle, state_manager)
+  until reaper.time_precise() >= deadline
+
+  -- Second phase, same budget: diagnose the empties (the matching
+  -- queue must fully drain first - a long-shot landing late would
+  -- outdate an early verdict)
+  if #self.queue == 0 then
+    local diagnosis = self:get_diagnosis()
+    while diagnosis and #self.diagnosis_queue > 0
+      and reaper.time_precise() < deadline do
+      self:tick_diagnosis(diagnosis)
+    end
+
+    if not diagnosis then
+      self.diagnosis_queue = {}
+    end
+  end
+
+  if #self.queue == 0 and #self.diagnosis_queue == 0 then
+    self.state = 'done'
+    self:log(('Oneshot done: %d needles, %d takes, %d auto-accepted, %d diagnosed'):format(
+      self.completed, self.takes_found, self.auto_accepted, self.diagnosed))
+  end
+end
+
+function OneshotRunner:tick_matching(needle, state_manager)
 
     local ok, suggestions = pcall(self.matcher.match, self.matcher, needle)
     if not ok then
@@ -150,13 +203,36 @@ function OneshotRunner:tick()
         })
       end
     end
-  until reaper.time_precise() >= deadline
 
-  if #self.queue == 0 then
-    self.state = 'done'
-    self:log(('Oneshot done: %d needles, %d takes, %d auto-accepted'):format(
-      self.completed, self.takes_found, self.auto_accepted))
+    -- Empty rolls line up for the diagnosis pass; a roll that found
+    -- something outdates any verdict from an earlier session
+    if #persisted == 0 then
+      table.insert(self.diagnosis_queue, needle)
+    else
+      local diagnosis = self:get_diagnosis()
+      if diagnosis then
+        diagnosis:clear(needle.locator)
+      end
+    end
+end
+
+function OneshotRunner:tick_diagnosis(diagnosis)
+  local needle = table.remove(self.diagnosis_queue, 1)
+  if not needle then return end
+
+  local ok, verdict = pcall(diagnosis.diagnose, diagnosis, needle)
+  if not ok then
+    self:log('Oneshot diagnosis failed for needle ' .. tostring(needle.guid) .. ': ' .. tostring(verdict))
+    verdict = nil
   end
+
+  self.diagnosed = self.diagnosed + 1
+
+  self.workflow:emit_event('needle_diagnosed', {
+    needle_id = needle.guid,
+    locator = needle.locator,
+    verdict = verdict,
+  })
 end
 
 -- The dice end of the slider: accept fresh pending suggestions the

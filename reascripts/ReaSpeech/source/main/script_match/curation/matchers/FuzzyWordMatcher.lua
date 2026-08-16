@@ -266,20 +266,59 @@ function FuzzyWordMatcher:_prepared_stream(audio_track)
   if entry then return entry end
 
   local transcript = TranscriptImporter:import(transcript_file)
+  entry = self:_prepare_transcript(transcript)
+  self._stream_cache[cache_key] = entry
+  self:log("Prepared word stream for track " .. audio_track.guid
+    .. " (" .. #entry.words .. " words)")
+  return entry
+end
+
+function FuzzyWordMatcher:_prepare_transcript(transcript)
   local words = self:create_word_stream_from_transcript(transcript)
   local texts = {}
   for i, word in ipairs(words) do
     texts[i] = word.text
   end
 
-  entry = {
+  return {
     words = words,
     prepared = FuzzyAligner.prepare_stream(texts),
   }
-  self._stream_cache[cache_key] = entry
-  self:log("Prepared word stream for track " .. audio_track.guid
-    .. " (" .. #words .. " words)")
-  return entry
+end
+
+-- Diagnosis probe: search an arbitrary transcript FILE (typically one
+-- discovered in the project folder but not linked to any track) for
+-- the needle. Mirrors real matching - normal floor first, long-shot
+-- fallback - and returns the best hit { confidence, long_shot } or
+-- nil. Streams cache alongside the track streams.
+function FuzzyWordMatcher:probe_transcript_file(needle, transcript_file)
+  local tokens, options = self:_needle_tokens(needle)
+  if #tokens == 0 then return nil end
+
+  local cache_key = '\0probe\0' .. transcript_file
+  local entry = self._stream_cache[cache_key]
+  if not entry then
+    local transcript = TranscriptImporter:import(transcript_file)
+    if not transcript then return nil end
+    entry = self:_prepare_transcript(transcript)
+    self._stream_cache[cache_key] = entry
+  end
+
+  local best
+  local function consider(matches, long_shot)
+    for _, match in ipairs(matches) do
+      if not best or match.confidence > best.confidence then
+        best = { confidence = match.confidence, long_shot = long_shot or nil }
+      end
+    end
+  end
+
+  consider(FuzzyAligner.find_matches(tokens, entry.prepared, options), false)
+  if not best then
+    consider(FuzzyAligner.find_matches(tokens, entry.prepared, self:_long_shot_options(options)), true)
+  end
+
+  return best
 end
 
 function FuzzyWordMatcher:_transcript_file(audio_track)

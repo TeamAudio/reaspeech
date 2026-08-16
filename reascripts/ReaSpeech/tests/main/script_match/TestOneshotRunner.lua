@@ -44,7 +44,22 @@ FuzzyWordMatcher = {
 
 require('main/script_match/curation/OneshotRunner')
 
-local function make_runner(already_suggested)
+-- Optional diagnosis double: records diagnose/clear calls
+local function make_diagnosis_double()
+  return {
+    diagnosed = {},
+    cleared = {},
+    refreshed = 0,
+    refresh_candidates = function(self) self.refreshed = self.refreshed + 1 end,
+    diagnose = function(self, needle)
+      table.insert(self.diagnosed, needle)
+      return { class = 'not_recorded' }
+    end,
+    clear = function(self, locator) table.insert(self.cleared, locator) end,
+  }
+end
+
+local function make_runner(already_suggested, diagnosis)
   local persisted = {}
   local events = {}
   local decisions = {}
@@ -99,6 +114,9 @@ local function make_runner(already_suggested)
       table.insert(events, { name = name, data = data })
     end,
   }
+  if diagnosis then
+    workflow.get_needle_diagnosis = function() return diagnosis end
+  end
 
   local runner = OneshotRunner.new { session_id = 'S', workflow = workflow }
   return runner, persisted, events, decisions
@@ -230,6 +248,47 @@ function TestOneshotRunner:testResetReturnsToIdle()
   tick_until_done(runner)
   runner:reset()
   lu.assertEquals(runner.state, 'idle')
+end
+
+-- The diagnosis pass: empties get a verdict after the matching queue
+-- drains; rolls that found something clear any stale verdict
+function TestOneshotRunner:testDiagnosesEmptyRollsAfterMatching()
+  local diagnosis = make_diagnosis_double()
+  local runner, _, events = make_runner(nil, diagnosis)
+
+  runner:start({
+    { guid = 'A', locator = 'L-A', matches = 0 },
+    { guid = 'B', locator = 'L-B', matches = 2 },
+  })
+  tick_until_done(runner)
+
+  lu.assertEquals(runner.state, 'done')
+  lu.assertEquals(runner.diagnosed, 1)
+  lu.assertEquals(#diagnosis.diagnosed, 1)
+  lu.assertEquals(diagnosis.diagnosed[1].guid, 'A')
+  lu.assertEquals(diagnosis.cleared, { 'L-B' })
+  lu.assertEquals(diagnosis.refreshed, 1)
+
+  local diagnosed_events = 0
+  for _, event in ipairs(events) do
+    if event.name == 'needle_diagnosed' then
+      diagnosed_events = diagnosed_events + 1
+      lu.assertEquals(event.data.locator, 'L-A')
+      lu.assertEquals(event.data.verdict.class, 'not_recorded')
+    end
+  end
+  lu.assertEquals(diagnosed_events, 1)
+end
+
+-- Without a diagnosis service (older doubles), the runner still
+-- completes cleanly
+function TestOneshotRunner:testNoDiagnosisServiceStillCompletes()
+  local runner = make_runner()
+  runner:start({ { guid = 'A', matches = 0 } })
+  tick_until_done(runner)
+
+  lu.assertEquals(runner.state, 'done')
+  lu.assertEquals(runner.diagnosed, 0)
 end
 
 --

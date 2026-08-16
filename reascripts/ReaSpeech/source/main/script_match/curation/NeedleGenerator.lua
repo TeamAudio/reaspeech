@@ -75,6 +75,9 @@ function NeedleGenerator:deduplicate_needles(fresh_needles, existing_by_locator,
   for _, fresh_needle in ipairs(fresh_needles) do
     local needle = self:resolve_needle(fresh_needle, existing_by_locator)
     self:ensure_navigation_path(needle, material)
+    -- Content-derived, so recomputed on every generation (a config
+    -- change may swap the line column under the same locator)
+    needle.matchability = Matchability.classify(needle.content)
     table.insert(deduplicated_needles, needle)
   end
 

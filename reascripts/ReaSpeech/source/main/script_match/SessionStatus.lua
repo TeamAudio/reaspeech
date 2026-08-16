@@ -29,6 +29,7 @@ SessionStatus.INVALIDATING_EVENTS = {
   'script_material_updated',
   'script_material_unlinked',
   'export_status_changed',
+  'needle_diagnosed',
 }
 
 function SessionStatus:init()
@@ -79,7 +80,7 @@ function SessionStatus.is_curated(needle_summary)
 end
 
 function SessionStatus:compute_summary()
-  local live_guids, line_count = self:live_needle_guids()
+  local live_guids, line_count, live_locators = self:live_needle_guids()
 
   local summary = {
     tracks = #self.workflow:audio_tracks(),
@@ -88,6 +89,7 @@ function SessionStatus:compute_summary()
     with_suggestions = 0,
     curated = 0,
     accepted = 0,
+    excluded = 0,
     exported = self:count_exported(),
   }
 
@@ -115,21 +117,44 @@ function SessionStatus:compute_summary()
     end
   end
 
+  -- The excluded lane: lines diagnosed as never recorded leave the
+  -- completion pressure but stay VISIBLE (silent denominator
+  -- shrinkage would be the tool grading its own homework)
+  local diagnoses = self:read_diagnoses()
+  for guid in pairs(live_guids) do
+    local verdict = live_locators[guid] and diagnoses[live_locators[guid]]
+    if verdict and verdict.class == 'not_recorded' then
+      local needle_summary = self._needle_summaries[guid]
+      if not needle_summary or needle_summary.total == 0 then
+        summary.excluded = summary.excluded + 1
+      end
+    end
+  end
+
   return summary
 end
 
--- Needle guids belonging to currently linked materials. Persisted
--- needle stores and suggestion files survive unlinking, so every count
--- must be scoped to this set or it includes ghosts of unlinked
--- materials.
+function SessionStatus:read_diagnoses()
+  return Storage.ProjectJSON(
+    ('reaspeech/script_match/sessions/%s/diagnoses.json'):format(self.session_id),
+    { schema_version = 1, migrations = {} }
+  ):table('diagnoses', {}):get()
+end
+
+-- Needle guids belonging to currently linked materials, plus the
+-- guid -> locator map (diagnoses key by locator). Persisted needle
+-- stores and suggestion files survive unlinking, so every count must
+-- be scoped to this set or it includes ghosts of unlinked materials.
 function SessionStatus:live_needle_guids()
   local guids = {}
+  local locators = {}
   local count = 0
 
   local function add(needles)
     for _, needle in ipairs(needles) do
       if needle.guid then
         guids[needle.guid] = true
+        locators[needle.guid] = needle.locator
         count = count + 1
       end
     end
@@ -137,7 +162,7 @@ function SessionStatus:live_needle_guids()
 
   if #self._needles > 0 then
     add(self._needles)
-    return guids, count
+    return guids, count, locators
   end
 
   -- Needles have not been generated this session; read the persisted
@@ -149,7 +174,7 @@ function SessionStatus:live_needle_guids()
     ):table('needles', {}):get())
   end
 
-  return guids, count
+  return guids, count, locators
 end
 
 function SessionStatus:count_exported()

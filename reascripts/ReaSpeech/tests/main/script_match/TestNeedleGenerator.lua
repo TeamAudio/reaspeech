@@ -36,6 +36,12 @@ Storage = {
   end
 }
 
+-- Classification is content-derived and covered by TestMatchability;
+-- here it just needs to not blow up
+Matchability = {
+  classify = function(_content) return { class = 'text' } end,
+}
+
 require('main/script_match/curation/NeedleGenerator')
 
 --

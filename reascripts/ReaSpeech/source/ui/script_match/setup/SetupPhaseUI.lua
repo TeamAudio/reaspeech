@@ -332,7 +332,11 @@ function SetupPhaseUI:render_oneshot_progress(runner)
   local text_x = x + c.PADDING + c.ICON_SIZE + c.ICON_GAP
   ImGui.SetCursorScreenPos(Ctx(), text_x, y + 8)
   Fonts.wrap(Ctx(), Fonts.big, function()
-    ImGui.Text(Ctx(), ('Rolling  %d / %d'):format(runner.completed, runner.total))
+    if runner:is_diagnosing() then
+      ImGui.Text(Ctx(), ('Diagnosing %d unmatched…'):format(#runner.diagnosis_queue))
+    else
+      ImGui.Text(Ctx(), ('Rolling  %d / %d'):format(runner.completed, runner.total))
+    end
   end, Trap)
 
   ImGui.SetCursorScreenPos(Ctx(), text_x, y + c.HEIGHT - 24)
@@ -341,6 +345,9 @@ function SetupPhaseUI:render_oneshot_progress(runner)
     local found = ('%d takes found'):format(runner.takes_found)
     if runner.auto_accepted > 0 then
       found = found .. (', %d auto-accepted'):format(runner.auto_accepted)
+    end
+    if runner.diagnosed > 0 then
+      found = found .. (', %d diagnosed'):format(runner.diagnosed)
     end
     ImGui.Text(Ctx(), found)
   end)

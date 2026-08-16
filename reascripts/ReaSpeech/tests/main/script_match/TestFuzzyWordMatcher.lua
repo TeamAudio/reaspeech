@@ -208,6 +208,36 @@ function TestFuzzyWordMatcher:testRestartAfterCompletion()
   lu.assertIsTrue(#matcher:get_results() > 0)
 end
 
+-- The diagnosis probe searches an arbitrary transcript FILE (no
+-- track involved), mirroring real matching semantics
+function TestFuzzyWordMatcher:testProbeFindsNeedleInFile()
+  local matcher = make_matcher()
+  local hit = matcher:probe_transcript_file(
+    { content = 'Jammed. Of course.' }, 'unlinked.json')
+
+  lu.assertNotNil(hit)
+  lu.assertEquals(hit.confidence, 1.0)
+  lu.assertNil(hit.long_shot)
+end
+
+function TestFuzzyWordMatcher:testProbeNonVerbalNeedleReturnsNil()
+  local matcher = make_matcher()
+  lu.assertNil(matcher:probe_transcript_file({ content = '[Shrieks.]' }, 'unlinked.json'))
+end
+
+function TestFuzzyWordMatcher:testProbeEmptyTranscriptReturnsNil()
+  fake_segments = {}
+  local matcher = make_matcher()
+  lu.assertNil(matcher:probe_transcript_file({ content = 'Jammed. Of course.' }, 'unlinked.json'))
+end
+
+function TestFuzzyWordMatcher:testProbeCachesFileStream()
+  local matcher = make_matcher()
+  matcher:probe_transcript_file({ content = 'Jammed. Of course.' }, 'unlinked.json')
+  matcher:probe_transcript_file({ content = 'completely different words entirely' }, 'unlinked.json')
+  lu.assertEquals(import_count, 1)
+end
+
 function TestFuzzyWordMatcher:testStreamCacheAvoidsReimport()
   local matcher = make_matcher()
   matcher:match({ content = 'Jammed. Of course.' })

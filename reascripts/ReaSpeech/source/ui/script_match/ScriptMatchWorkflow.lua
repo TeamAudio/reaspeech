@@ -355,6 +355,24 @@ function ScriptMatchWorkflow:get_matcher_stream_cache()
   return self.matcher_stream_cache
 end
 
+-- Get the workflow-owned needle diagnosis service (created on first
+-- use); shares the matcher stream cache so probes reuse prepared
+-- streams
+function ScriptMatchWorkflow:get_needle_diagnosis()
+  if not self.needle_diagnosis then
+    self.needle_diagnosis = NeedleDiagnosis.new {
+      session_id = self.session_ui:session_id(),
+      workflow = self,
+      matcher = FuzzyWordMatcher.new {
+        session_id = self.session_ui:session_id(),
+        workflow = self,
+        stream_cache = self:get_matcher_stream_cache(),
+      },
+    }
+  end
+  return self.needle_diagnosis
+end
+
 -- Get the workflow-owned oneshot runner (created on first use)
 function ScriptMatchWorkflow:get_oneshot_runner()
   if not self.oneshot_runner then

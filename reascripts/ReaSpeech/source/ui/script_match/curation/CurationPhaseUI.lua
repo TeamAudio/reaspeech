@@ -54,6 +54,9 @@ function CurationPhaseUI:get_status_callback()
   if status.lines > 0 then
     hint = hint .. (', %d lines'):format(status.lines)
   end
+  if (status.excluded or 0) > 0 then
+    hint = hint .. (', %d excluded'):format(status.excluded)
+  end
 
   return {
     indicator = done and '*' or 'o',
