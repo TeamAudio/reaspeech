@@ -136,7 +136,22 @@ function ExportPreviewUI:render(_width)
   local summary_text = string.format("%d files • %s estimated • %d exported",
     stats.files, formatted_size, stats.exported)
   ImGui.TextColored(Ctx(), 0x4CAF50FF, summary_text)
-  ImGui.TextColored(Ctx(), 0x888888FF, "-> " .. self:get_export_root_directory())
+
+  -- Open lives with the path it opens - a permanent fixture, not a
+  -- post-export surprise. Stat the root only when it changes (or
+  -- after an export run), not every frame.
+  local output_root = self:get_export_root_directory()
+  ImGui.TextColored(Ctx(), 0x888888FF, "-> " .. output_root)
+  if self._folder_check_path ~= output_root then
+    self._folder_check_path = output_root
+    self._folder_exists = reaper.file_exists(output_root)
+  end
+  ImGui.SameLine(Ctx())
+  Widgets.disable_if(not self._folder_exists, function()
+    if ImGui.SmallButton(Ctx(), 'Open') then
+      self:open_output_folder()
+    end
+  end, 'Nothing has been exported there yet')
 
   if self._last_export then
     local last = self._last_export
@@ -204,10 +219,10 @@ ExportPreviewUI.CARD = {
 -- Everything below the tree region: three big pressable cards (Files
 -- / Tracks / Regions - each an honest, independent press; tracks AND
 -- regions is two presses, safe because both landings replace their
--- own previous run) over a quiet row of secondary controls. Fixed
--- height so the tree child can reserve exactly this much.
+-- own previous run). Fixed height so the tree child can reserve
+-- exactly this much.
 function ExportPreviewUI:action_band_height()
-  local h = 6 + ExportPreviewUI.CARD.HEIGHT + 6 + ImGui.GetFrameHeightWithSpacing(Ctx())
+  local h = 6 + ExportPreviewUI.CARD.HEIGHT + 6
   if self._last_track_export then
     h = h + ImGui.GetTextLineHeightWithSpacing(Ctx())
   end
@@ -239,7 +254,8 @@ function ExportPreviewUI:render_action_band(stats)
   local remaining = stats.files - stats.exported
 
   -- Files card: idle it begs to be pressed; running it IS the
-  -- progress bar and the cancel button
+  -- progress bar and the cancel button; done it re-words itself into
+  -- the re-export (no dimming, no extra buttons popping up)
   local files_opts
   if running then
     files_opts = {
@@ -248,17 +264,28 @@ function ExportPreviewUI:render_action_band(stats)
       title = ('Exporting… %d/%d'):format(runner.completed, runner.total),
       tagline = 'Click to cancel',
     }
+  elseif stats.files == 0 then
+    files_opts = {
+      width = card_w, icon = 'wav', disabled = true,
+      title = 'Export Files',
+      tagline = 'Nothing to export yet',
+    }
+  elseif remaining == 0 then
+    files_opts = {
+      width = card_w, icon = 'wav',
+      title = ('Re-export All (%d)'):format(stats.files),
+      tagline = 'Everything is exported',
+      tooltip = 'Run the whole set again. The Overwrite option decides whether '
+        .. 'files already on disk are replaced or kept.',
+    }
   else
     files_opts = {
       width = card_w, icon = 'wav',
-      accent = remaining > 0,
-      disabled = remaining == 0,
+      accent = true,
       title = stats.failed > 0
         and ('Export Files (%d, %d failed)'):format(remaining, stats.failed)
         or ('Export Files (%d)'):format(remaining),
-      tagline = remaining == 0
-        and (stats.files > 0 and 'Everything is exported' or 'Nothing to export yet')
-        or 'Slice accepted takes to disk',
+      tagline = 'Slice accepted takes to disk',
       tooltip = 'Slice each accepted take out of its source WAV, into the output folder. '
         .. 'Failures count as remaining - exporting again retries them.',
     }
@@ -270,6 +297,8 @@ function ExportPreviewUI:render_action_band(stats)
       runner:cancel()
     elseif remaining > 0 then
       self:start_export(true)
+    elseif stats.files > 0 then
+      self:start_export(false)
     end
   end
 
@@ -302,36 +331,6 @@ function ExportPreviewUI:render_action_band(stats)
   end
 
   ImGui.SetCursorScreenPos(Ctx(), x, y + c.HEIGHT + 6)
-  -- The quiet row may render nothing; the cursor move must not be the
-  -- band's last submission (same EndChild assertion as the cards)
-  ImGui.Dummy(Ctx(), 0, 0)
-  ImGui.SameLine(Ctx(), 0, 0)
-
-  -- Quiet row: the less-juicy actions
-  local quiet_row_used = false
-  if stats.exported > 0 and not running then
-    if ImGui.SmallButton(Ctx(), ('Re-export All (%d)'):format(stats.files)) then
-      self:start_export(false)
-    end
-    quiet_row_used = true
-  end
-
-  -- Stat the root only when it changes (or after an export run), not
-  -- every frame
-  local output_root = self:get_export_root_directory()
-  if self._folder_check_path ~= output_root then
-    self._folder_check_path = output_root
-    self._folder_exists = reaper.file_exists(output_root)
-  end
-  if self._folder_exists then
-    if quiet_row_used then
-      ImGui.SameLine(Ctx(), 0, 18)
-    end
-    if ImGui.SmallButton(Ctx(), 'Open Output Folder') then
-      self:open_output_folder()
-    end
-  end
-
   if self._last_track_export then
     local last = self._last_track_export
     local parts = {}
@@ -346,8 +345,11 @@ function ExportPreviewUI:render_action_band(stats)
     end
     ImGui.TextColored(Ctx(), 0x888888FF,
       'Last: ' .. table.concat(parts, ', ') .. ' at ' .. last.when)
+  else
+    -- The cursor move must not be the band's last submission (the
+    -- EndChild assertion again)
+    ImGui.Dummy(Ctx(), 0, 0)
   end
-
 end
 
 -- One pressable action card in the phase-selector language:
@@ -559,6 +561,16 @@ function ExportPreviewUI:render_directory_node(directory, opts)
   ImGui.TextColored(Ctx(), 0x666666FF,
     ('(%d file%s)'):format(count, count == 1 and '' or 's'))
 
+  -- Jump straight into this folder on disk (nearest existing ancestor
+  -- until an export has created it)
+  ImGui.SameLine(Ctx(), 0, 10)
+  local open_size = Fonts.size:get() - 3
+  if Widgets.icon(Icons.jump, '##open-dir-' .. (node.path or ''),
+    open_size, open_size, 'Open this folder', 0x666666FF, Theme.COLORS.pink_opaque)
+  then
+    self:open_directory(node)
+  end
+
   if open then
     Trap(function()
       -- Render files in this directory (the end of a compressed
@@ -718,6 +730,26 @@ end
 
 function ExportPreviewUI:open_output_folder()
   ExecProcess.new(PathUtil.get_open_folder_command(self:get_export_root_directory())):no_wait()
+end
+
+-- Open a preview directory in the OS file browser: the directory
+-- itself once an export has created it, else the deepest ancestor
+-- that exists (worst case the export root)
+function ExportPreviewUI:open_directory(node)
+  local root = self:get_export_root_directory()
+  local target = root
+
+  local prefix = ''
+  for part in (node.path or ''):gmatch('[^/]+') do
+    prefix = prefix .. '/' .. part
+    if reaper.file_exists(root .. prefix) then
+      target = root .. prefix
+    else
+      break
+    end
+  end
+
+  ExecProcess.new(PathUtil.get_open_folder_command(target)):no_wait()
 end
 
 -- Cache invalidation when template or settings change
