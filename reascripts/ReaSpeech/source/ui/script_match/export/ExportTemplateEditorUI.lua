@@ -521,10 +521,10 @@ function ExportTemplateEditorUI:autocomplete_keyboard(matches)
   end
 end
 
--- The suggestion list floats in an overlay window anchored under the
--- input, so it never pushes the controls below it down while typing.
--- NoFocusOnAppearing keeps keystrokes landing in the input; TopMost
--- keeps the overlay clickable above the main window.
+-- The suggestion list draws as an overlay child anchored under the
+-- input - same window, submitted after everything it overlaps, so it
+-- paints on top and receives clicks through the ordinary path instead
+-- of a separate floating window's focus/z-order dance.
 function ExportTemplateEditorUI:render_autocomplete_popup(width)
   local autocomplete = self._autocomplete
 
@@ -537,21 +537,14 @@ function ExportTemplateEditorUI:render_autocomplete_popup(width)
   local rect = self._input_rect
   if not rect then return end
 
+  local saved_x, saved_y = ImGui.GetCursorScreenPos(Ctx())
+
   local overlay_w = math.max(rect.max_x - rect.min_x, math.min(width - 20, 200))
-  ImGui.SetNextWindowPos(Ctx(), rect.min_x, rect.max_y + 2)
-  ImGui.SetNextWindowSizeConstraints(Ctx(), overlay_w, 0, overlay_w, 10000)
+  ImGui.SetCursorScreenPos(Ctx(), rect.min_x, rect.max_y + 2)
 
-  local flags = ImGui.WindowFlags_NoTitleBar()
-    | ImGui.WindowFlags_NoResize()
-    | ImGui.WindowFlags_NoMove()
-    | ImGui.WindowFlags_AlwaysAutoResize()
-    | ImGui.WindowFlags_NoSavedSettings()
-    | ImGui.WindowFlags_NoFocusOnAppearing()
-    | ImGui.WindowFlags_NoDocking()
-    | ImGui.WindowFlags_NoNav()
-    | ImGui.WindowFlags_TopMost()
-
-  if ImGui.Begin(Ctx(), '##template_autocomplete', nil, flags) then
+  ImGui.PushStyleColor(Ctx(), ImGui.Col_ChildBg(), 0x202020F8)
+  local child_flags = ImGui.ChildFlags_Borders() | ImGui.ChildFlags_AutoResizeY()
+  if ImGui.BeginChild(Ctx(), '##template_autocomplete', overlay_w, 0, child_flags) then
     Trap(function()
       local apply = self:autocomplete_keyboard(autocomplete.matches)
 
@@ -573,16 +566,24 @@ function ExportTemplateEditorUI:render_autocomplete_popup(width)
         self:apply_autocomplete(apply)
       end
     end)
-    ImGui.End(Ctx())
+    ImGui.EndChild(Ctx())
   end
+  ImGui.PopStyleColor(Ctx())
+
+  -- Put the cursor back where the normal flow left it (and submit an
+  -- item there - trailing cursor moves before EndChild assert)
+  ImGui.SetCursorScreenPos(Ctx(), saved_x, saved_y)
+  ImGui.Dummy(Ctx(), 0, 0)
 end
 
 function ExportTemplateEditorUI:render(width)
   Trap(function()
     self:render_template_input(width)
-    self:render_autocomplete_popup(width)
     self:render_validation_errors(width)
     self:render_live_preview(width)
     self:render_quick_insert_tokens(width)
+    -- Submitted LAST so it paints (and hit-tests) above the controls
+    -- it overlaps
+    self:render_autocomplete_popup(width)
   end)
 end

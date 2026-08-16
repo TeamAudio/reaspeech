@@ -251,7 +251,7 @@ function ExportPreviewUI:render_action_band(stats)
   else
     files_opts = {
       width = card_w, icon = 'wav',
-      halo = remaining > 0,
+      accent = remaining > 0,
       disabled = remaining == 0,
       title = stats.failed > 0
         and ('Export Files (%d, %d failed)'):format(remaining, stats.failed)
@@ -366,7 +366,9 @@ end
 function ExportPreviewUI:render_action_card_body(id, opts)
   local c = ExportPreviewUI.CARD
   local x, y = ImGui.GetCursorScreenPos(Ctx())
-  local w = opts.width
+  -- Integer-align the rect or the 1px outline renders unevenly
+  x, y = math.floor(x), math.floor(y)
+  local w = math.floor(opts.width)
 
   local clicked = ImGui.InvisibleButton(Ctx(), id, w, c.HEIGHT)
   local hovered = ImGui.IsItemHovered(Ctx())
@@ -380,18 +382,6 @@ function ExportPreviewUI:render_action_card_body(id, opts)
   end
 
   local dl = ImGui.GetWindowDrawList(Ctx())
-
-  -- Halo with a slow pulse; hover holds it at full glow
-  if opts.halo and not opts.disabled then
-    local pulse = hovered and 1 or (0.5 + 0.5 * math.sin(reaper.time_precise() * 2.2))
-    local accent = Theme.COLORS.pink_opaque
-    for i, alpha in ipairs({ 0x99, 0x55, 0x26 }) do
-      local halo = math.floor(alpha * (0.45 + 0.55 * pulse))
-      ImGui.DrawList_AddRect(dl,
-        x - i, y - i, x + w + i, y + c.HEIGHT + i,
-        (accent & 0xFFFFFF00) | halo, c.ROUNDING + i)
-    end
-  end
 
   local bg = Theme.COLORS.dark_gray_translucent
   if not opts.disabled then
@@ -411,6 +401,20 @@ function ExportPreviewUI:render_action_card_body(id, opts)
         (Theme.COLORS.pink_opaque & 0xFFFFFF00) | 0x55, c.ROUNDING)
     end
   end
+
+  -- A crisp outline that answers the cursor: quiet when idle (accent-
+  -- tinted on the card begging to be pressed), full accent on hover.
+  -- Momentary buttons, not sticky phase cards - no halo.
+  local accent = Theme.COLORS.pink_opaque
+  local outline, thickness = 0x666666AA, 1
+  if opts.disabled then
+    outline = 0x44444466
+  elseif hovered or held then
+    outline, thickness = accent, 2
+  elseif opts.accent then
+    outline = (accent & 0xFFFFFF00) | 0x88
+  end
+  ImGui.DrawList_AddRect(dl, x, y, x + w, y + c.HEIGHT, outline, c.ROUNDING, 0, thickness)
 
   local press = held and c.PRESS_NUDGE or 0
   local cursor_x = x + c.PADDING
