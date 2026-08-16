@@ -249,6 +249,13 @@ function ScriptMaterialWorksheetUI:add_tag_layer()
   self.workflow:emit_event('script_material_updated', { material = self.material })
 end
 
+-- With no hidden rows in the parse, 'Skip Hidden Rows' is a no-op and
+-- showing it implies a choice that doesn't exist (delimited files never
+-- have hidden rows; neither do most workbooks)
+function ScriptMaterialWorksheetUI:has_hidden_rows()
+  return next(self.config.hidden_rows or {}) ~= nil
+end
+
 ScriptMaterialWorksheetUI.FILTER_GRID_COLUMNS = 4
 ScriptMaterialWorksheetUI.FILTER_GRID_SPACING = 10
 ScriptMaterialWorksheetUI.FILTER_GRID_LABELS = { 'Column', 'Condition', 'Value', '' }
@@ -261,8 +268,10 @@ function ScriptMaterialWorksheetUI:render()
   self.widgets.enabled:render()
   ImGui.SameLine(Ctx())
   self.widgets.has_header_row:render()
-  ImGui.SameLine(Ctx())
-  self.widgets.skip_hidden_rows:render()
+  if self:has_hidden_rows() then
+    ImGui.SameLine(Ctx())
+    self.widgets.skip_hidden_rows:render()
+  end
 
   ImGui.Dummy(Ctx(), 0, 4)
   ImGui.Text(Ctx(), "Line Column:")
