@@ -296,6 +296,10 @@ function ExportPreviewUI:render_action_band(stats)
   end
 
   ImGui.SetCursorScreenPos(Ctx(), x, y + c.HEIGHT + 6)
+  -- The quiet row may render nothing; the cursor move must not be the
+  -- band's last submission (same EndChild assertion as the cards)
+  ImGui.Dummy(Ctx(), 0, 0)
+  ImGui.SameLine(Ctx(), 0, 0)
 
   -- Quiet row: the less-juicy actions
   local quiet_row_used = false
@@ -418,7 +422,12 @@ function ExportPreviewUI:render_action_card(id, opts)
     ImGui.TextColored(Ctx(), 0x999999FF, opts.tagline)
   end
 
+  -- Restore the cursor past the card AND submit an item there:
+  -- SetCursorScreenPos as the last act before an EndChild is an ImGui
+  -- assertion ("submit an item e.g. Dummy() to grow boundaries")
   ImGui.SetCursorScreenPos(Ctx(), x, y + c.HEIGHT)
+  ImGui.Dummy(Ctx(), 0, 0)
+
   return clicked and not opts.disabled
 end
 
