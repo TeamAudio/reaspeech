@@ -98,7 +98,7 @@ function ScriptMatchAudioTrackUI:render_track_name()
       self.track_configuration_ui:present()
     end,
     action = self.is_linked_to_session and {
-      label = 'unlink',
+      icon = Icons.x_mark,
       tooltip = 'Unlink this track from the session',
       on_press = function()
         self:log('Unlinking track: ' .. self:track_name())

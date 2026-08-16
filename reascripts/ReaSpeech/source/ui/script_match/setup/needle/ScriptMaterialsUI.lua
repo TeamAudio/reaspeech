@@ -86,9 +86,12 @@ function ScriptMaterialsUI:render_quick_choices()
   ImGui.Dummy(Ctx(), 0, 2)
   ImGui.TextColored(Ctx(), 0x888888FF, 'Found in project folder:')
   ImGui.SameLine(Ctx())
-  Widgets.link('rescan', function()
+  local rescan_size = Fonts.size:get() - 2
+  if Widgets.icon(Icons.refresh, '##rescan-project-folder',
+    rescan_size, rescan_size, 'Rescan the project folder', 0x888888FF, 0xEEEEEEFF)
+  then
     self._scan = self.folder_scan:scan()
-  end, 0x888888FF, 0xEEEEEEFF)
+  end
 
   for _, filepath in ipairs(candidates) do
     local lower = filepath:lower()
@@ -102,7 +105,7 @@ function ScriptMaterialsUI:render_quick_choices()
       tooltip = filepath .. '\nPress to import as a script material.',
       on_press = import_this,
       action = {
-        label = 'import',
+        icon = Icons.plus,
         tooltip = 'Import as a script material',
         on_press = import_this,
       },

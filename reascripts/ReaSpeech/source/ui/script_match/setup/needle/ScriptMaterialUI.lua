@@ -56,7 +56,7 @@ function ScriptMaterialUI:render_summary()
       self.material_configuration_ui:present()
     end,
     action = {
-      label = 'unlink',
+      icon = Icons.x_mark,
       tooltip = 'Unlink this material from the session',
       on_press = function()
         self:log('Unlinking material: ' .. self.material.name)

@@ -20,8 +20,9 @@ RowChip = Polo {
 }
 
 -- opts: icon, label, detail (dim suffix), dim (muted label), tooltip,
--- width (defaults to available), action = { label, tooltip, on_press },
--- on_press. Renders one row; invokes callbacks on press.
+-- width (defaults to available), on_press, and action = { tooltip,
+-- on_press, icon (an Icons.* draw function) or label (text) }.
+-- Renders one row; invokes callbacks on press.
 function RowChip.render(id, opts)
   Trap(function()
     RowChip.render_body(id, opts)
@@ -36,7 +37,8 @@ function RowChip.render_body(id, opts)
 
   local action_w = 0
   if opts.action then
-    action_w = math.floor(ImGui.CalcTextSize(Ctx(), opts.action.label)) + c.PAD_X * 2
+    action_w = opts.action.icon and c.HEIGHT
+      or (math.floor(ImGui.CalcTextSize(Ctx(), opts.action.label)) + c.PAD_X * 2)
   end
   local main_w = w - action_w - (action_w > 0 and 4 or 0)
 
@@ -98,9 +100,18 @@ function RowChip.render_body(id, opts)
       ImGui.DrawList_AddRectFilled(dl, ax, y, ax + action_w, y + c.HEIGHT,
         Theme.COLORS.dark_gray_semi_transparent, c.ROUNDING)
     end
-    local label_w = ImGui.CalcTextSize(Ctx(), opts.action.label)
-    ImGui.SetCursorScreenPos(Ctx(), ax + (action_w - label_w) / 2, y + (c.HEIGHT - line_h) / 2)
-    ImGui.TextColored(Ctx(), action_hovered and 0xEEEEEEFF or 0x888888FF, opts.action.label)
+
+    local glyph_color = action_hovered and 0xEEEEEEFF or 0x888888FF
+    if opts.action.icon then
+      local size = math.floor(c.HEIGHT * 0.45)
+      opts.action.icon(dl,
+        math.floor(ax + (action_w - size) / 2), math.floor(y + (c.HEIGHT - size) / 2),
+        size, size, glyph_color)
+    else
+      local label_w = ImGui.CalcTextSize(Ctx(), opts.action.label)
+      ImGui.SetCursorScreenPos(Ctx(), ax + (action_w - label_w) / 2, y + (c.HEIGHT - line_h) / 2)
+      ImGui.TextColored(Ctx(), glyph_color, opts.action.label)
+    end
   end
 
   -- Land the cursor below the row and submit an item there (trailing

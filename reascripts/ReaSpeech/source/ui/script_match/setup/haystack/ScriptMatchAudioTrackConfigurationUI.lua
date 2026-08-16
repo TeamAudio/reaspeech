@@ -140,7 +140,7 @@ function ScriptMatchAudioTrackConfigurationUI:render_transcript_section()
         tooltip = filepath .. '\nPress to link this transcript.',
         on_press = link_this,
         action = {
-          label = 'link',
+          icon = Icons.plus,
           tooltip = 'Link this transcript to the track',
           on_press = link_this,
         },
