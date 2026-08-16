@@ -55,6 +55,11 @@ function ExportTemplateEditorUI:init()
   self._input_active = false
   self._autocomplete_hovered = false
 
+  -- True while the in-flight value holds an unclosed ${ block: the
+  -- signal for "a replacement code is being typed right now"
+  self._mid_block = false
+  self._live_value = self.settings:get_template()
+
   -- Template validation state
   self.validation_errors = {}
   self.preview_filename = ''
@@ -72,9 +77,17 @@ end
 function ExportTemplateEditorUI:on_template_changed(value)
   -- While typing, the value has not been committed to settings yet, so
   -- validate and preview the passed value
+  self._live_value = value
   self:validate_current_template(value)
-  self:update_preview(value)
   self:update_autocomplete(value)
+
+  -- Nonsense-state filter: while a replacement code is mid-edit (an
+  -- unclosed ${ block) or the value fails validation, the preview line
+  -- and the tree downstream hold their last good render instead of
+  -- flashing through half-formed filenames
+  if self._mid_block or #self.validation_errors > 0 then return end
+
+  self:update_preview(value)
 
   -- Call the optional template change callback with the live value
   if self.on_template_change then
@@ -193,12 +206,18 @@ function ExportTemplateEditorUI:render_template_input(width)
   end)
   ImGui.PopItemWidth(Ctx())
   self._input_active = ImGui.IsItemActive(Ctx())
+
+  -- The autocomplete overlay anchors to the input's on-screen rect
+  local min_x, min_y = ImGui.GetItemRectMin(Ctx())
+  local max_x, max_y = ImGui.GetItemRectMax(Ctx())
+  self._input_rect = { min_x = min_x, min_y = min_y, max_x = max_x, max_y = max_y }
 end
 
 -- Inspect an in-flight template value for an unclosed ${ block and build
 -- the narrowing suggestion list: variables inside ${, processors after :
 function ExportTemplateEditorUI:update_autocomplete(value)
   self._autocomplete = nil
+  self._mid_block = false
   if not value or value == '' then return end
 
   -- Find the last ${ in the value
@@ -211,6 +230,10 @@ function ExportTemplateEditorUI:update_autocomplete(value)
   end
   if not open_start then return end
   if value:find('}', open_start + 2, true) then return end -- block closed
+
+  -- An unclosed block means a replacement code is mid-edit, whether or
+  -- not it yields suggestions below
+  self._mid_block = true
 
   local partial = value:sub(open_start + 2)
   if partial:find('%s') then return end -- not variable-shaped
@@ -272,6 +295,11 @@ function ExportTemplateEditorUI:apply_autocomplete(name)
 end
 
 function ExportTemplateEditorUI:render_validation_errors(_width)
+  -- Feedback, not punishment: while the input is active with a
+  -- replacement code mid-edit (or momentarily cleared), the red text
+  -- stays quiet - errors surface once the block closes or the edit ends
+  if self._input_active and (self._mid_block or self._live_value == '') then return end
+
   if #self.validation_errors > 0 then
     ImGui.Spacing(Ctx())
     ImGui.PushStyleColor(Ctx(), reaper.ImGui_Col_Text(), 0xFF4444FF) -- Red text
@@ -459,6 +487,9 @@ end
 -- unclosed ${ block is being typed. Click a row to complete it. Shown
 -- while the input is active or the list itself is hovered (clicking a
 -- row defocuses the input for a frame).
+-- The suggestion list floats in an overlay window anchored under the
+-- input, so it never pushes the controls below it down while typing.
+-- NoFocusOnAppearing keeps keystrokes landing in the input.
 function ExportTemplateEditorUI:render_autocomplete_popup(width)
   local autocomplete = self._autocomplete
 
@@ -467,8 +498,23 @@ function ExportTemplateEditorUI:render_autocomplete_popup(width)
     return
   end
 
-  local flags = ImGui.ChildFlags_Borders() | ImGui.ChildFlags_AutoResizeY()
-  if ImGui.BeginChild(Ctx(), '##template_autocomplete', width - 20, 0, flags) then
+  local rect = self._input_rect
+  if not rect then return end
+
+  local overlay_w = math.max(rect.max_x - rect.min_x, math.min(width - 20, 200))
+  ImGui.SetNextWindowPos(Ctx(), rect.min_x, rect.max_y + 2)
+  ImGui.SetNextWindowSizeConstraints(Ctx(), overlay_w, 0, overlay_w, 10000)
+
+  local flags = ImGui.WindowFlags_NoTitleBar()
+    | ImGui.WindowFlags_NoResize()
+    | ImGui.WindowFlags_NoMove()
+    | ImGui.WindowFlags_AlwaysAutoResize()
+    | ImGui.WindowFlags_NoSavedSettings()
+    | ImGui.WindowFlags_NoFocusOnAppearing()
+    | ImGui.WindowFlags_NoDocking()
+    | ImGui.WindowFlags_NoNav()
+
+  if ImGui.Begin(Ctx(), '##template_autocomplete', nil, flags) then
     Trap(function()
       for _, match in ipairs(autocomplete.matches) do
         local label = match.name
@@ -479,10 +525,10 @@ function ExportTemplateEditorUI:render_autocomplete_popup(width)
           self:apply_autocomplete(match.name)
         end
       end
+      self._autocomplete_hovered = ImGui.IsWindowHovered(Ctx())
     end)
-    ImGui.EndChild(Ctx())
+    ImGui.End(Ctx())
   end
-  self._autocomplete_hovered = ImGui.IsItemHovered(Ctx())
 end
 
 function ExportTemplateEditorUI:render(width)
