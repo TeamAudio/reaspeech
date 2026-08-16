@@ -206,6 +206,9 @@ function ExportTemplateEditorUI:render_template_input(width)
   end)
   ImGui.PopItemWidth(Ctx())
   self._input_active = ImGui.IsItemActive(Ctx())
+  -- Enter deactivates the input on the same frame the completion
+  -- should apply; the popup needs to see that frame
+  self._input_deactivated = ImGui.IsItemDeactivated(Ctx())
 
   -- The autocomplete overlay anchors to the input's on-screen rect
   local min_x, min_y = ImGui.GetItemRectMin(Ctx())
@@ -273,6 +276,14 @@ function ExportTemplateEditorUI:update_autocomplete(value)
   end
 
   if #matches == 0 then return end
+
+  -- Keyboard selection survives recomputes of the same in-flight
+  -- value (the Enter-commit frame recomputes without changing it) and
+  -- resets when typing changes the list
+  if self._autocomplete_value ~= value then
+    self._ac_selected = nil
+  end
+  self._autocomplete_value = value
 
   self._autocomplete = {
     prefix = prefix,
@@ -487,13 +498,38 @@ end
 -- unclosed ${ block is being typed. Click a row to complete it. Shown
 -- while the input is active or the list itself is hovered (clicking a
 -- row defocuses the input for a frame).
+-- Keyboard driving for the suggestion list: arrows move the
+-- selection, Enter applies it (no selection = Enter just commits the
+-- text as typed), Escape dismisses. Returns the applied name, if any.
+function ExportTemplateEditorUI:autocomplete_keyboard(matches)
+  if self._input_active then
+    if ImGui.IsKeyPressed(Ctx(), ImGui.Key_DownArrow()) then
+      self._ac_selected = math.min((self._ac_selected or 0) + 1, #matches)
+    elseif ImGui.IsKeyPressed(Ctx(), ImGui.Key_UpArrow()) then
+      self._ac_selected = math.max((self._ac_selected or 2) - 1, 1)
+    elseif ImGui.IsKeyPressed(Ctx(), ImGui.Key_Escape()) then
+      self._autocomplete = nil
+      return
+    end
+  end
+
+  -- Enter lands on the frame the input deactivates
+  if self._ac_selected and (self._input_active or self._input_deactivated)
+    and (ImGui.IsKeyPressed(Ctx(), ImGui.Key_Enter())
+      or ImGui.IsKeyPressed(Ctx(), ImGui.Key_KeypadEnter())) then
+    return matches[self._ac_selected] and matches[self._ac_selected].name
+  end
+end
+
 -- The suggestion list floats in an overlay window anchored under the
 -- input, so it never pushes the controls below it down while typing.
--- NoFocusOnAppearing keeps keystrokes landing in the input.
+-- NoFocusOnAppearing keeps keystrokes landing in the input; TopMost
+-- keeps the overlay clickable above the main window.
 function ExportTemplateEditorUI:render_autocomplete_popup(width)
   local autocomplete = self._autocomplete
 
-  if not autocomplete or not (self._input_active or self._autocomplete_hovered) then
+  if not autocomplete
+    or not (self._input_active or self._autocomplete_hovered or self._input_deactivated) then
     self._autocomplete_hovered = false
     return
   end
@@ -513,19 +549,29 @@ function ExportTemplateEditorUI:render_autocomplete_popup(width)
     | ImGui.WindowFlags_NoFocusOnAppearing()
     | ImGui.WindowFlags_NoDocking()
     | ImGui.WindowFlags_NoNav()
+    | ImGui.WindowFlags_TopMost()
 
   if ImGui.Begin(Ctx(), '##template_autocomplete', nil, flags) then
     Trap(function()
-      for _, match in ipairs(autocomplete.matches) do
+      local apply = self:autocomplete_keyboard(autocomplete.matches)
+
+      for i, match in ipairs(autocomplete.matches) do
         local label = match.name
         if match.description then
           label = ('%s   (%s)'):format(match.name, match.description:sub(1, 50))
         end
-        if ImGui.Selectable(Ctx(), label .. '##ac_' .. match.name) then
-          self:apply_autocomplete(match.name)
+        if ImGui.Selectable(Ctx(), label .. '##ac_' .. match.name, i == self._ac_selected) then
+          apply = match.name
         end
       end
+
+      ImGui.TextColored(Ctx(), 0x666666FF, '\xE2\x86\x91\xE2\x86\x93 select \xC2\xB7 Enter complete')
+
       self._autocomplete_hovered = ImGui.IsWindowHovered(Ctx())
+
+      if apply then
+        self:apply_autocomplete(apply)
+      end
     end)
     ImGui.End(Ctx())
   end

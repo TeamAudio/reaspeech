@@ -201,9 +201,11 @@ ExportPreviewUI.CARD = {
   ICON_SIZE = 24,
 }
 
--- Everything below the tree region: two big pressable cards (files /
--- project) over a quiet row of secondary controls. Fixed height so the
--- tree child can reserve exactly this much.
+-- Everything below the tree region: three big pressable cards (Files
+-- / Tracks / Regions - each an honest, independent press; tracks AND
+-- regions is two presses, safe because both landings replace their
+-- own previous run) over a quiet row of secondary controls. Fixed
+-- height so the tree child can reserve exactly this much.
 function ExportPreviewUI:action_band_height()
   local h = 6 + ExportPreviewUI.CARD.HEIGHT + 6 + ImGui.GetFrameHeightWithSpacing(Ctx())
   if self._last_track_export then
@@ -225,7 +227,7 @@ function ExportPreviewUI:render_action_band(stats)
   ImGui.Dummy(Ctx(), 0, 4)
   local x, y = ImGui.GetCursorScreenPos(Ctx())
   local avail = ImGui.GetContentRegionAvail(Ctx())
-  local card_w = math.floor((avail - c.GAP) / 2)
+  local card_w = math.floor((avail - c.GAP * 2) / 3)
 
   local running = runner:is_running()
   local remaining = stats.files - stats.exported
@@ -265,52 +267,43 @@ function ExportPreviewUI:render_action_band(stats)
     end
   end
 
-  -- Project card: tracks and/or regions per the toggles in the quiet
-  -- row; the label says exactly what a press will do
-  local tracks_on = self.settings.tracks_tracks:get()
-  local regions_on = self.settings.tracks_regions:get()
-  local project_title
-  if tracks_on and regions_on then
-    project_title = ('Export Tracks + Regions (%d)'):format(stats.files)
-  elseif tracks_on then
-    project_title = ('Export to Tracks (%d)'):format(stats.files)
-  elseif regions_on then
-    project_title = ('Export Regions (%d)'):format(stats.files)
-  else
-    project_title = 'Export to Project'
-  end
+  local project_disabled = running or stats.files == 0
 
   ImGui.SetCursorScreenPos(Ctx(), x + card_w + c.GAP, y)
-  if self:render_action_card('##export-project-card', {
-    width = avail - card_w - c.GAP, icon = 'package',
-    disabled = running or stats.files == 0 or not (tracks_on or regions_on),
-    title = project_title,
-    tagline = (tracks_on or regions_on)
-      and 'Land matches in the open project'
-      or 'Pick tracks and/or regions below',
-    tooltip = 'Tracks: a muted child track per source, matched sections as items '
-      .. 'referencing the original audio, colored by confidence - solo to audition. '
-      .. 'Regions: named, confidence-colored regions at each matched span; the ruler '
-      .. 'becomes the heatmap. Re-exports replace this session\'s landing.',
-  }) and not running and stats.files > 0 and (tracks_on or regions_on) then
-    self:start_track_export()
+  if self:render_action_card('##export-tracks-card', {
+    width = card_w, icon = 'headphone',
+    disabled = project_disabled,
+    title = ('Export Tracks (%d)'):format(stats.files),
+    tagline = 'Muted child tracks to audition',
+    tooltip = 'A muted child track per source: matched sections as items '
+      .. 'referencing the original audio, colored by confidence. Solo to '
+      .. 'audition. Re-exports refill the same tracks.',
+  }) then
+    self:start_project_export({ tracks = true })
+  end
+
+  ImGui.SetCursorScreenPos(Ctx(), x + (card_w + c.GAP) * 2, y)
+  if self:render_action_card('##export-regions-card', {
+    width = avail - (card_w + c.GAP) * 2, icon = 'pin',
+    disabled = project_disabled,
+    title = ('Export Regions (%d)'):format(stats.files),
+    tagline = 'The ruler becomes the heatmap',
+    tooltip = 'Named, confidence-colored regions at each matched span; the '
+      .. 'region render matrix can batch-render matches. Re-exports replace '
+      .. 'this session\'s regions. Want tracks too? Press both cards.',
+  }) then
+    self:start_project_export({ regions = true })
   end
 
   ImGui.SetCursorScreenPos(Ctx(), x, y + c.HEIGHT + 6)
 
-  -- Quiet row: the toggles and the less-juicy actions
-  local changed, value = ImGui.Checkbox(Ctx(), 'Tracks', tracks_on)
-  if changed then self.settings.tracks_tracks:set(value) end
-
-  ImGui.SameLine(Ctx())
-  changed, value = ImGui.Checkbox(Ctx(), 'Regions', regions_on)
-  if changed then self.settings.tracks_regions:set(value) end
-
+  -- Quiet row: the less-juicy actions
+  local quiet_row_used = false
   if stats.exported > 0 and not running then
-    ImGui.SameLine(Ctx(), 0, 18)
     if ImGui.SmallButton(Ctx(), ('Re-export All (%d)'):format(stats.files)) then
       self:start_export(false)
     end
+    quiet_row_used = true
   end
 
   -- Stat the root only when it changes (or after an export run), not
@@ -321,7 +314,9 @@ function ExportPreviewUI:render_action_band(stats)
     self._folder_exists = reaper.file_exists(output_root)
   end
   if self._folder_exists then
-    ImGui.SameLine(Ctx(), 0, 18)
+    if quiet_row_used then
+      ImGui.SameLine(Ctx(), 0, 18)
+    end
     if ImGui.SmallButton(Ctx(), 'Open Output Folder') then
       self:open_output_folder()
     end
@@ -427,11 +422,11 @@ function ExportPreviewUI:render_action_card(id, opts)
   return clicked and not opts.disabled
 end
 
--- Land every accepted take on its source's matched child track and/or
--- as regions, per the toggles. Always the full set: the project target
--- has no per-file completion to skip - a re-export replaces the
--- previous landing wholesale.
-function ExportPreviewUI:start_track_export()
+-- Land every accepted take in the project: which.tracks places the
+-- matched child tracks, which.regions the heatmap regions. Always the
+-- full set: the project targets have no per-file completion to skip -
+-- a re-export replaces the previous landing wholesale.
+function ExportPreviewUI:start_project_export(which)
   local current_template = self._live_template or self.settings:get_template()
   local tree = self.data_service:generate_export_items(current_template, self.settings:get_timing())
 
@@ -446,12 +441,11 @@ function ExportPreviewUI:start_track_export()
   end
   collect_files(tree)
 
-  local opts = { tracks = self.settings.tracks_tracks:get() }
-  if self.settings.tracks_regions:get() then
+  local opts = { tracks = which.tracks or false }
+  if which.regions then
     opts.regions = true
     opts.region_ledger = self.settings.tracks_region_ledger:get()
   end
-  if not opts.tracks and not opts.regions then return end
 
   local ok, result = pcall(self.track_exporter.export, self.track_exporter, queue, opts)
   if not ok then
@@ -474,13 +468,51 @@ function ExportPreviewUI:start_track_export()
 end
 
 function ExportPreviewUI:render_export_tree(export_directories, opts)
-  for _, directory in ipairs(export_directories) do
-    self:render_directory_node(directory, opts or {})
+  opts = opts or {}
+
+  -- An empty "(Root)" wrapper around subdirectories is pure noise:
+  -- render its children as the top level instead
+  local top = export_directories
+  if #top == 1 and top[1].path == "" and #top[1].files == 0 and #top[1].children > 0 then
+    top = top[1].children
+  end
+
+  -- Always open at least enough directories to show SOME files: the
+  -- first-directory spine down to the first row of real files opens
+  -- by default, however deep the template nests (spreadsheet ->
+  -- worksheet -> files was landing as one closed row). Siblings stay
+  -- collapsed; the counts speak for them.
+  if not opts.default_open and not opts.force_open then
+    opts.spine = {}
+    local level = top
+    while #level > 0 do
+      local first = level[1]
+      opts.spine[first] = true
+      if #first.files > 0 then break end
+      level = first.children
+    end
+  end
+
+  for _, directory in ipairs(top) do
+    self:render_directory_node(directory, opts)
   end
 end
 
 function ExportPreviewUI:render_directory_node(directory, opts)
-  local tree_label = directory.path == "" and "(Root)" or (directory.display_name .. "/")
+  -- Chain compression: wrapper directories holding nothing but a
+  -- single child collapse into one a/b/c/ row
+  local node = directory
+  local tree_label
+  if directory.path == "" then
+    tree_label = "(Root)"
+  else
+    local label_parts = { directory.display_name }
+    while #node.files == 0 and #node.children == 1 do
+      node = node.children[1]
+      table.insert(label_parts, node.display_name)
+    end
+    tree_label = table.concat(label_parts, '/') .. "/"
+  end
 
   EmojiText.icon('folder')
   ImGui.SameLine(Ctx(), 0, 4)
@@ -488,9 +520,9 @@ function ExportPreviewUI:render_directory_node(directory, opts)
   if opts.force_open then
     -- Filtering: every surviving directory shows its matches
     ImGui.SetNextItemOpen(Ctx(), true, ImGui.Cond_Always())
-  elseif opts.default_open then
-    -- Small trees open expanded for visual impact; big ones stay
-    -- collapsed and lean on the counts
+  elseif opts.default_open or (opts.spine and opts.spine[directory]) then
+    -- Small trees open expanded for visual impact; big ones open just
+    -- the spine and lean on the counts
     ImGui.SetNextItemOpen(Ctx(), true, ImGui.Cond_FirstUseEver())
   end
 
@@ -505,13 +537,14 @@ function ExportPreviewUI:render_directory_node(directory, opts)
 
   if open then
     Trap(function()
-      -- Render files in this directory
-      for _, file in ipairs(directory.files) do
+      -- Render files in this directory (the end of a compressed
+      -- chain owns the contents)
+      for _, file in ipairs(node.files) do
         self:render_file_node(file)
       end
 
       -- Render child directories recursively
-      for _, child_directory in ipairs(directory.children) do
+      for _, child_directory in ipairs(node.children) do
         self:render_directory_node(child_directory, opts)
       end
     end)

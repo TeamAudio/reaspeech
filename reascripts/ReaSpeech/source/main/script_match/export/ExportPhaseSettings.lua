@@ -31,11 +31,8 @@ function ExportPhaseSettings:init()
   self.skip_on_error = self.storage:boolean('skip_on_error', false)
   self.open_folder_when_done = self.storage:boolean('open_folder_when_done', false)
 
-  -- Project target: matched child tracks and/or heatmap regions -
-  -- each landable on its own - plus the ledger of region ids we
-  -- created (so re-exports replace instead of stack)
-  self.tracks_tracks = self.storage:boolean('tracks_tracks', true)
-  self.tracks_regions = self.storage:boolean('tracks_regions', false)
+  -- Region export ledger: the region ids we created, so re-exports
+  -- replace instead of stack
   self.tracks_region_ledger = self.storage:table('tracks_region_ledger', {})
 
   self:log('Initialized ExportPhaseSettings for session: ' .. self.session_id)
