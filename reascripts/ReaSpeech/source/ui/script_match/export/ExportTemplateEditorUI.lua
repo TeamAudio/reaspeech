@@ -38,6 +38,15 @@ function ExportTemplateEditorUI:init()
     end,
   }
 
+  -- The stock TextInput renderer can't pass an InputText callback,
+  -- and the widgets are frozen verbatim under the extraction-PR
+  -- boundary - so this one instance gets a bespoke renderer with the
+  -- same buffer/commit contract. Upstream a callback option into
+  -- Widgets.TextInput once the PRs land.
+  self.template_input.renderer = function(widget)
+    self:render_template_input_item(widget)
+  end
+
   -- Set up event listener for metadata changes (if workflow is available)
   if self.needle_metadata_service and self.needle_metadata_service.workflow then
     self.needle_metadata_service.workflow:listen_for_event('metadata_variables_changed', function(event_data)
@@ -199,7 +208,73 @@ function ExportTemplateEditorUI:apply_processor(processor)
   self:log('Applied processor: ' .. processor .. ' to ' .. variable)
 end
 
+-- EEL InputText callback: pins the cursor (and clears the selection)
+-- to want_cursor once, defeating the select-all that programmatic
+-- refocus triggers - so completing a code drops the caret right after
+-- the insertion and typing just continues
+ExportTemplateEditorUI.CURSOR_FIXER_EEL = [[
+EventFlag == InputTextFlags_CallbackAlways && want_cursor >= 0 ? (
+  CursorPos = want_cursor;
+  SelectionStart = want_cursor;
+  SelectionEnd = want_cursor;
+  want_cursor = -1;
+);
+]]
+
+function ExportTemplateEditorUI:cursor_fixer()
+  if not self._cursor_fixer
+    or not ImGui.ValidatePtr(self._cursor_fixer, 'ImGui_Function*') then
+    self._cursor_fixer = ImGui.CreateFunctionFromEEL(ExportTemplateEditorUI.CURSOR_FIXER_EEL)
+    ImGui.Function_SetValue(self._cursor_fixer,
+      'InputTextFlags_CallbackAlways', ImGui.InputTextFlags_CallbackAlways())
+    ImGui.Function_SetValue(self._cursor_fixer, 'want_cursor', -1)
+    ImGui.Attach(Ctx(), self._cursor_fixer)
+  end
+  return self._cursor_fixer
+end
+
+-- Bespoke renderer for the template input (see init): Widgets.TextInput's
+-- buffer/commit contract plus the cursor-fixer callback
+function ExportTemplateEditorUI:render_template_input_item(widget)
+  local options = widget.options
+
+  if options.label then
+    widget:render_label()
+  end
+
+  local buffer = widget._edit_buffer or widget:value()
+  local rv, value = ImGui.InputText(Ctx(), ('##%s'):format(options.label), buffer,
+    ImGui.InputTextFlags_CallbackAlways(), self:cursor_fixer())
+
+  if rv then
+    widget._edit_buffer = value
+    options.on_change(value)
+  end
+
+  if ImGui.IsItemDeactivated(Ctx()) then
+    local final_value = widget._edit_buffer
+    widget._edit_buffer = nil
+
+    if ImGui.IsKeyPressed(Ctx(), ImGui.Key_Escape()) then
+      options.on_cancel()
+    elseif final_value ~= nil then
+      widget:set(final_value)
+      options.on_enter(final_value)
+    else
+      options.on_enter(widget:value())
+    end
+  end
+end
+
 function ExportTemplateEditorUI:render_template_input(width)
+  -- A completion just applied: put focus back in the input with the
+  -- caret after the insertion point
+  if self._pending_cursor then
+    ImGui.SetKeyboardFocusHere(Ctx())
+    ImGui.Function_SetValue(self:cursor_fixer(), 'want_cursor', self._pending_cursor)
+    self._pending_cursor = nil
+  end
+
   ImGui.PushItemWidth(Ctx(), width - 20)
   Trap(function()
     self.template_input:render()
@@ -279,11 +354,15 @@ function ExportTemplateEditorUI:update_autocomplete(value)
 
   -- Keyboard selection survives recomputes of the same in-flight
   -- value (the Enter-commit frame recomputes without changing it) and
-  -- resets when typing changes the list
+  -- resets when typing changes the list. A lone match self-selects:
+  -- Enter completes it (and closes the brace) without an arrow press.
   if self._autocomplete_value ~= value then
     self._ac_selected = nil
   end
   self._autocomplete_value = value
+  if #matches == 1 then
+    self._ac_selected = 1
+  end
 
   self._autocomplete = {
     prefix = prefix,
@@ -291,7 +370,9 @@ function ExportTemplateEditorUI:update_autocomplete(value)
   }
 end
 
--- Complete the unclosed block with the chosen name and close the brace
+-- Complete the unclosed block with the chosen name and close the
+-- brace, then hand focus back to the input with the caret right after
+-- the insertion
 function ExportTemplateEditorUI:apply_autocomplete(name)
   local autocomplete = self._autocomplete
   if not autocomplete then return end
@@ -301,6 +382,7 @@ function ExportTemplateEditorUI:apply_autocomplete(name)
   self.settings:set_template(new_template)
   self.template_input:clear_edit_buffer()
   self._autocomplete = nil
+  self._pending_cursor = #new_template
 
   self:on_template_changed(new_template)
 end
@@ -542,10 +624,18 @@ function ExportTemplateEditorUI:render_autocomplete_popup(width)
   local overlay_w = math.max(rect.max_x - rect.min_x, math.min(width - 20, 200))
   ImGui.SetCursorScreenPos(Ctx(), rect.min_x, rect.max_y + 2)
 
-  ImGui.PushStyleColor(Ctx(), ImGui.Col_ChildBg(), 0x202020F8)
+  ImGui.PushStyleColor(Ctx(), ImGui.Col_ChildBg(), 0x202020FF)
   local child_flags = ImGui.ChildFlags_Borders() | ImGui.ChildFlags_AutoResizeY()
   if ImGui.BeginChild(Ctx(), '##template_autocomplete', overlay_w, 0, child_flags) then
     Trap(function()
+      -- Explicit opaque backdrop: the ChildBg style is subject to the
+      -- theme's global alpha, and the page text underneath was
+      -- bleeding through - DrawList colors are not
+      local dl = ImGui.GetWindowDrawList(Ctx())
+      local wx, wy = ImGui.GetWindowPos(Ctx())
+      local ww, wh = ImGui.GetWindowSize(Ctx())
+      ImGui.DrawList_AddRectFilled(dl, wx, wy, wx + ww, wy + wh, 0x202020FF)
+
       local apply = self:autocomplete_keyboard(autocomplete.matches)
 
       for i, match in ipairs(autocomplete.matches) do
