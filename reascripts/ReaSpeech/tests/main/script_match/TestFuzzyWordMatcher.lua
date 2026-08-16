@@ -208,6 +208,66 @@ function TestFuzzyWordMatcher:testRestartAfterCompletion()
   lu.assertIsTrue(#matcher:get_results() > 0)
 end
 
+-- The vocalization pass: direction-only needles hunt lexicalized
+-- interjections instead of returning empty
+
+function TestFuzzyWordMatcher:testVocalizationMatchesInterjections()
+  fake_segments = {
+    segment_at(0, 'some ordinary spoken words here'),
+    segment_at(10, 'Aah! that hurt'),
+  }
+  local matcher = make_matcher()
+  local suggestions = matcher:match({ content = '[Shrieks.]' })
+
+  lu.assertEquals(#suggestions, 1)
+  lu.assertEquals(suggestions[1].match_type, 'vocalization')
+  lu.assertEquals(suggestions[1].confidence, FuzzyWordMatcher.VOCALIZATION_CONFIDENCE)
+  lu.assertEquals(suggestions[1].long_shot, true)
+  lu.assertEquals(suggestions[1].matching_text, 'Aah!')
+  lu.assertEquals(suggestions[1].start_time, 10)
+end
+
+-- Whisper sometimes writes the direction word itself ("grunts")
+function TestFuzzyWordMatcher:testVocalizationLiteralLexicalization()
+  fake_segments = { segment_at(5, 'grunts loudly then speaks') }
+  local matcher = make_matcher()
+  local suggestions = matcher:match({ content = '[Grunts.]' })
+
+  lu.assertEquals(#suggestions, 1)
+  lu.assertEquals(suggestions[1].matching_text, 'grunts')
+end
+
+function TestFuzzyWordMatcher:testVocalizationStemsDirectionWords()
+  fake_segments = { segment_at(0, 'ugh what a mess') }
+  local matcher = make_matcher()
+  -- "Groaning" stems to "groan" -> ugh
+  lu.assertEquals(#matcher:match({ content = '[Groaning.]' }), 1)
+end
+
+function TestFuzzyWordMatcher:testVocalizationCapsPerTrack()
+  fake_segments = { segment_at(0, 'ah ah ah ah ah ah') }
+  local matcher = make_matcher()
+  local suggestions = matcher:match({ content = '[Shrieks.]' })
+  lu.assertEquals(#suggestions, FuzzyWordMatcher.VOCALIZATION_MAX_PER_TRACK)
+end
+
+function TestFuzzyWordMatcher:testVocalizationUnknownDirectionFindsNothing()
+  local matcher = make_matcher()
+  lu.assertEquals(#matcher:match({ content = '[Genuflects solemnly.]' }), 0)
+end
+
+function TestFuzzyWordMatcher:testVocalizationAsyncParity()
+  fake_segments = { segment_at(10, 'Aah! that hurt') }
+  local matcher = make_matcher()
+
+  lu.assertTrue(matcher:start_async_generation({ content = '[Shrieks.]' }))
+  drive_to_completion(matcher)
+
+  local results = matcher:get_results()
+  lu.assertEquals(#results, 1)
+  lu.assertEquals(results[1].match_type, 'vocalization')
+end
+
 -- The diagnosis probe searches an arbitrary transcript FILE (no
 -- track involved), mirroring real matching semantics
 function TestFuzzyWordMatcher:testProbeFindsNeedleInFile()

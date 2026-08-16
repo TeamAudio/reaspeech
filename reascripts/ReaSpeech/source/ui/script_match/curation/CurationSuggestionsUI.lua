@@ -423,6 +423,13 @@ end
 function CurationSuggestionsUI:render_confidence_text(suggestion)
   local confidence_text = string.format("Confidence: %d%%", math.floor((suggestion.confidence or 0) * 100))
 
+  -- Vocalization guesses: the direction couldn't text-match, so this
+  -- is an interjection the transcript lexicalized ("ah!", "grunts")
+  if suggestion.match_type == 'vocalization' then
+    EmojiText.render(':search: Vocalization guess - ' .. confidence_text)
+    return
+  end
+
   -- Long shots wear the dice: the rescue tier found this below the
   -- normal floor, offered because a weak lead beats silent zero
   if suggestion.long_shot then

@@ -117,17 +117,28 @@ function SessionStatus:compute_summary()
     end
   end
 
-  -- The excluded lane: lines diagnosed as never recorded leave the
-  -- completion pressure but stay VISIBLE (silent denominator
-  -- shrinkage would be the tool grading its own homework)
+  -- Per-class lanes for the unmatched, and the excluded lane: lines
+  -- diagnosed as never recorded leave the completion pressure but
+  -- stay VISIBLE (silent denominator shrinkage would be the tool
+  -- grading its own homework)
+  summary.diagnosis_lanes = {
+    unlinked_track = 0, not_recorded = 0, non_verbal = 0, undiagnosed = 0,
+  }
   local diagnoses = self:read_diagnoses()
   for guid in pairs(live_guids) do
+    local needle_summary = self._needle_summaries[guid]
     local verdict = live_locators[guid] and diagnoses[live_locators[guid]]
-    if verdict and verdict.class == 'not_recorded' then
-      local needle_summary = self._needle_summaries[guid]
-      if not needle_summary or needle_summary.total == 0 then
+    local rolled_empty = needle_summary and needle_summary.total == 0
+
+    if verdict and (rolled_empty or not needle_summary) then
+      local lane = summary.diagnosis_lanes[verdict.class] ~= nil
+        and verdict.class or 'undiagnosed'
+      summary.diagnosis_lanes[lane] = summary.diagnosis_lanes[lane] + 1
+      if verdict.class == 'not_recorded' then
         summary.excluded = summary.excluded + 1
       end
+    elseif rolled_empty then
+      summary.diagnosis_lanes.undiagnosed = summary.diagnosis_lanes.undiagnosed + 1
     end
   end
 

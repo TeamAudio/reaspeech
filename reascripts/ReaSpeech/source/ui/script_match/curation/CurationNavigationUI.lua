@@ -70,9 +70,43 @@ function CurationNavigationUI:render(panel_width)
   -- of the rail
   ImGui.BeginGroup(Ctx())
   Trap(function()
+    self:render_diagnosis_lanes()
     self:render_navigation_list(panel_width)
   end)
   ImGui.EndGroup(Ctx())
+end
+
+CurationNavigationUI.LANE_SPECS = {
+  { key = 'unlinked_track', tag = ':warning:', tip = '%d on unlinked tracks' },
+  { key = 'not_recorded', tag = ':stopped:', tip = '%d likely never recorded' },
+  { key = 'non_verbal', tag = ':search:', tip = '%d non-verbal' },
+  { key = 'undiagnosed', tag = ':error:', tip = '%d unmatched, undiagnosed' },
+}
+
+-- Per-class lanes for the unmatched, at the top of the rail: what
+-- kind of trouble remains, at a glance ("3 on unlinked tracks"
+-- beats a wall of red rows)
+function CurationNavigationUI:render_diagnosis_lanes()
+  local lanes = self.workflow:get_session_status().diagnosis_lanes
+  if not lanes then return end
+
+  local parts, tips = {}, {}
+  for _, spec in ipairs(CurationNavigationUI.LANE_SPECS) do
+    local count = lanes[spec.key] or 0
+    if count > 0 then
+      table.insert(parts, spec.tag .. ' ' .. count)
+      table.insert(tips, spec.tip:format(count))
+    end
+  end
+  if #parts == 0 then return end
+
+  ImGui.BeginGroup(Ctx())
+  Trap(function()
+    EmojiText.render(table.concat(parts, '   '))
+  end)
+  ImGui.EndGroup(Ctx())
+  Widgets.tooltip(table.concat(tips, ' \xC2\xB7 '))
+  ImGui.Dummy(Ctx(), 0, 2)
 end
 
 -- Using the flat list of needles, create a new flat list that inserts hierarchical structure

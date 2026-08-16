@@ -56,7 +56,11 @@ end
 -- Synchronous matching; also the core the async interface drives.
 function FuzzyWordMatcher:match(needle)
   local tokens, options = self:_needle_tokens(needle)
-  if #tokens == 0 then return {} end
+  if #tokens == 0 then
+    -- Nothing speakable: a direction-only line. Whisper LEXICALIZES
+    -- non-verbals, so hunt the interjections instead.
+    return self:_vocalization_matches(needle)
+  end
 
   local suggestions = {}
   for _, audio_track in ipairs(self.workflow:audio_tracks()) do
@@ -74,6 +78,106 @@ function FuzzyWordMatcher:match(needle)
 
   table.sort(suggestions, function(a, b) return a.confidence > b.confidence end)
   self:log("Generated " .. #suggestions .. " suggestions")
+  return suggestions
+end
+
+-- ================================================================================
+-- VOCALIZATION PASS
+-- ================================================================================
+
+-- Whisper LEXICALIZES non-verbals: a scream lands in the transcript
+-- as "ah!"/"aah!", a grunt sometimes as the literal word "grunts"
+-- (both observed in reference data). Direction words map to small
+-- interjection vocabularies; hits offer at a fixed low confidence,
+-- marked vocalization + long_shot, capped per track. KNOWN CAVEAT:
+-- the literal direction words also match a director TRACK saying
+-- them as direction - the low confidence and marking leave that to
+-- the human ear.
+FuzzyWordMatcher.VOCALIZATION_CONFIDENCE = 0.35
+FuzzyWordMatcher.VOCALIZATION_MAX_PER_TRACK = 3
+
+FuzzyWordMatcher.VOCALIZATIONS = {
+  scream = { 'ah', 'aah', 'aaah', 'ahh', 'agh', 'argh' },
+  shriek = { 'ah', 'aah', 'aaah', 'ahh', 'agh', 'argh' },
+  shout = { 'hey', 'ah', 'ahh' },
+  yell = { 'hey', 'ah', 'ahh' },
+  gasp = { 'ah', 'huh', 'oh', 'ohh' },
+  grunt = { 'ugh', 'uh', 'hmm', 'mm', 'hmph' },
+  groan = { 'ugh', 'ohh', 'oh', 'aww' },
+  sigh = { 'ah', 'ahh', 'whew', 'phew', 'hah' },
+  laugh = { 'ha', 'haha', 'heh', 'hehe', 'hah' },
+  chuckle = { 'heh', 'ha', 'hmm' },
+  cough = { 'ahem', 'ugh' },
+  cry = { 'oh', 'ohh', 'ah', 'no' },
+  sob = { 'oh', 'ohh', 'ah' },
+  pain = { 'ow', 'ouch', 'agh', 'ah' },
+  hurt = { 'ow', 'ouch', 'agh' },
+  effort = { 'ugh', 'hup', 'huh', 'ha' },
+  breathe = { 'whew', 'phew', 'hah' },
+  pant = { 'hah', 'huh', 'whew' },
+}
+
+-- Tokens inside the needle's bracketed directions
+function FuzzyWordMatcher:_direction_tokens(content)
+  local directions = {}
+  for _, pattern in ipairs({ '%[(.-)%]', '{(.-)}', '%((.-)%)' }) do
+    for inner in (content or ''):gmatch(pattern) do
+      for _, token in ipairs(TextNormalizer.tokenize(inner)) do
+        table.insert(directions, token)
+      end
+    end
+  end
+  return directions
+end
+
+-- The sounds worth hunting for this needle: each direction word's
+-- interjection vocabulary (stemmed: screams/screaming -> scream)
+-- plus the direction words themselves (literal lexicalization)
+function FuzzyWordMatcher:_vocalization_vocabulary(content)
+  local vocabulary = {}
+  for _, token in ipairs(self:_direction_tokens(content)) do
+    vocabulary[token] = true
+    -- Parenthesized: gsub's second return would corrupt the list
+    for _, stem in ipairs({ token, (token:gsub('ing$', '')), (token:gsub('ed$', '')), (token:gsub('s$', '')) }) do
+      for _, sound in ipairs(FuzzyWordMatcher.VOCALIZATIONS[stem] or {}) do
+        vocabulary[sound] = true
+      end
+    end
+  end
+  return vocabulary
+end
+
+function FuzzyWordMatcher:_vocalization_matches(needle)
+  local vocabulary = self:_vocalization_vocabulary(needle.content)
+  if not next(vocabulary) then return {} end
+
+  local suggestions = {}
+  for _, audio_track in ipairs(self.workflow:audio_tracks()) do
+    local entry = self:_prepared_stream(audio_track)
+    if entry then
+      local track_hits = 0
+      for _, word in ipairs(entry.words) do
+        if track_hits >= FuzzyWordMatcher.VOCALIZATION_MAX_PER_TRACK then break end
+        local token = TextNormalizer.tokenize(word.text)[1]
+        if token and vocabulary[token] then
+          track_hits = track_hits + 1
+          table.insert(suggestions, {
+            start_time = word.start_time,
+            end_time = word.end_time,
+            file = word.file,
+            matching_text = word.text,
+            track_guids = { audio_track.guid },
+            confidence = FuzzyWordMatcher.VOCALIZATION_CONFIDENCE,
+            matched_count = 1,
+            match_type = 'vocalization',
+            long_shot = true,
+          })
+        end
+      end
+    end
+  end
+
+  self:log(('Vocalization pass: %d hit(s)'):format(#suggestions))
   return suggestions
 end
 
@@ -107,7 +211,11 @@ function FuzzyWordMatcher:start_async_generation(needle)
 
   self.async_results = nil
   self.async_error_message = nil
-  self._suggestions = {}
+  -- Direction-only needles take the vocalization pass up front (a
+  -- cheap linear scan); the empty work queue then completes with
+  -- these as the results. The token guard on the long-shot refill
+  -- keeps the rescue pass out of it.
+  self._suggestions = #tokens == 0 and self:_vocalization_matches(needle) or {}
   self._work_queue = {}
   self._async_tokens = tokens
   self._async_options = options
