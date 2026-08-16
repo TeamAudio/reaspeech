@@ -35,6 +35,7 @@ function SettingsControls:init()
     max = Fonts.MAX_SIZE,
     step = 1,
     format = '%.0f',
+    whole = true,
   }
 
   self:init_logging()

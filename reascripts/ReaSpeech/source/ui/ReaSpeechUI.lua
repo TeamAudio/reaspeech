@@ -30,7 +30,9 @@ function ReaSpeechUI:init()
   Logging().init(self, 'ReaSpeechUI')
 
   Trap.on_error = function (e)
-    self:debug(dump(debug.traceback(e, 2)))
+    -- non-string errors pass through debug.traceback unchanged, with no
+    -- stack appended
+    self:debug(dump(debug.traceback(tostring(e), 2)))
     self:log(e)
   end
 
