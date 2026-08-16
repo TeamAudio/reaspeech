@@ -264,7 +264,7 @@ function TestTrackExporter:testFolderClosingSourceStaysParentChildCloses()
     make_track('BUS', 'EQ Bus', 1),
     make_track('SRC-MID', 'VO Nova', 0),
     make_track('SRC-LAST', 'VO Quill', -1),
-    make_track('OUTSIDE', 'VO Director', 0),
+    make_track('OUTSIDE', 'VO Quill', 0),
   })
 
   make_exporter():export({

@@ -54,6 +54,40 @@ local function spreadsheet_with(worksheets)
   }
 end
 
+reaper = reaper or {}
+
+--
+
+TestCanHandleFile = {}
+
+function TestCanHandleFile:tearDown()
+  reaper.DataSource_Parse = nil
+end
+
+function TestCanHandleFile:testAcceptsBackendFormats()
+  lu.assertTrue(ScriptMaterialExcelSpreadsheet:can_handle_file('/a/script.xlsx'))
+  lu.assertTrue(ScriptMaterialExcelSpreadsheet:can_handle_file('/a/script.xls'))
+end
+
+function TestCanHandleFile:testExtensionMatchIsCaseInsensitive()
+  lu.assertTrue(ScriptMaterialExcelSpreadsheet:can_handle_file('/a/SCRIPT.XLSX'))
+end
+
+-- Used to crash concatenating a nil extension
+function TestCanHandleFile:testRejectsPathWithoutExtension()
+  lu.assertFalse(ScriptMaterialExcelSpreadsheet:can_handle_file('/a/README'))
+end
+
+function TestCanHandleFile:testNativeFormatsNeedTheExtension()
+  lu.assertFalse(ScriptMaterialExcelSpreadsheet:can_handle_file('/a/script.csv'))
+
+  reaper.DataSource_Parse = function() end
+  lu.assertTrue(ScriptMaterialExcelSpreadsheet:can_handle_file('/a/script.csv'))
+  lu.assertTrue(ScriptMaterialExcelSpreadsheet:can_handle_file('/a/script.tsv'))
+  lu.assertTrue(ScriptMaterialExcelSpreadsheet:can_handle_file('/a/script.ods'))
+  lu.assertTrue(ScriptMaterialExcelSpreadsheet:can_handle_file('/a/script.xlsb'))
+end
+
 --
 
 TestScriptMaterialExcelSpreadsheet = {}

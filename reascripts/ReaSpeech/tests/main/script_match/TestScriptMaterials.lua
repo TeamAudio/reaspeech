@@ -16,33 +16,57 @@ end
 require('main/script_match/setup/needle/ScriptMaterialExcelSpreadsheet')
 require('main/script_match/setup/needle/ScriptMaterials')
 
+reaper = reaper or {}
+
 --
 
 TestGetSupportedExtensions = {}
 
+function TestGetSupportedExtensions:tearDown()
+  reaper.DataSource_Parse = nil
+end
+
+-- Parse the dialog map into description -> set-of-extensions, order-
+-- insensitively (comma order within a key is pairs()-dependent)
+local function extensions_by_description(result)
+  local by_description = {}
+  for key, description in pairs(result) do
+    lu.assertNil(key:find('%.'))
+    local extensions = {}
+    for part in key:gmatch('[^,]+') do
+      extensions[part] = true
+    end
+    by_description[description] = extensions
+  end
+  return by_description
+end
+
 -- The result feeds Widgets.FileSelector.simple_open, which formats each
 -- key as '*.<key>' (comma keys become '*.a;*.b'): keys must be dotless
 -- or the dialog filter matches nothing
-function TestGetSupportedExtensions:testDialogShape()
+function TestGetSupportedExtensions:testDialogShapeBackendOnly()
   local fake_service = { handlers = { ScriptMaterialExcelSpreadsheet } }
 
   local result = ScriptMaterials.get_supported_extensions(fake_service)
 
-  local count, key, description = 0, nil, nil
-  for k, v in pairs(result) do
-    count = count + 1
-    key, description = k, v
-  end
+  lu.assertEquals(extensions_by_description(result), {
+    ['Excel Spreadsheet'] = { xls = true, xlsx = true },
+  })
+end
 
-  lu.assertEquals(count, 1)
-  lu.assertEquals(description, 'Excel Spreadsheet')
-  lu.assertNil(key:find('%.'))
+-- With reaper-datasource present the gate widens to everything the
+-- native parser reads
+function TestGetSupportedExtensions:testDialogShapeNativeParser()
+  reaper.DataSource_Parse = function() end
+  local fake_service = { handlers = { ScriptMaterialExcelSpreadsheet } }
 
-  local extensions = {}
-  for part in key:gmatch('[^,]+') do
-    extensions[part] = true
-  end
-  lu.assertEquals(extensions, { xls = true, xlsx = true })
+  local result = ScriptMaterials.get_supported_extensions(fake_service)
+
+  lu.assertEquals(extensions_by_description(result), {
+    ['Excel Spreadsheet'] = { xls = true, xlsx = true, xlsm = true, xlsb = true },
+    ['OpenDocument Spreadsheet'] = { ods = true },
+    ['CSV/TSV'] = { csv = true, tsv = true },
+  })
 end
 
 --

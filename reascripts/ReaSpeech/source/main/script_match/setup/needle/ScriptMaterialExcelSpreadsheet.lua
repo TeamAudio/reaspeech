@@ -1,11 +1,34 @@
 
 ScriptMaterialExcelSpreadsheet = Polo {
   key = 'excel_spreadsheet',
-  supported_extensions = {
-    ['.xls'] = 'Excel Spreadsheet',
-    ['.xlsx'] = 'Excel Spreadsheet',
-  }
 }
+
+-- What the backend parse endpoint accepts
+ScriptMaterialExcelSpreadsheet.BACKEND_EXTENSIONS = {
+  ['.xls'] = 'Excel Spreadsheet',
+  ['.xlsx'] = 'Excel Spreadsheet',
+}
+
+-- What the reaper-datasource extension parses natively
+ScriptMaterialExcelSpreadsheet.NATIVE_EXTENSIONS = {
+  ['.xls'] = 'Excel Spreadsheet',
+  ['.xlsx'] = 'Excel Spreadsheet',
+  ['.xlsm'] = 'Excel Spreadsheet',
+  ['.xlsb'] = 'Excel Spreadsheet',
+  ['.ods'] = 'OpenDocument Spreadsheet',
+  ['.csv'] = 'CSV/TSV',
+  ['.tsv'] = 'CSV/TSV',
+}
+
+-- Import gating is capability-conditional: the native parser opens up
+-- formats the backend can't take, and both paths produce the same
+-- response shape, so the wider list needs no other changes
+function ScriptMaterialExcelSpreadsheet.get_supported_extensions()
+  if reaper.DataSource_Parse then
+    return ScriptMaterialExcelSpreadsheet.NATIVE_EXTENSIONS
+  end
+  return ScriptMaterialExcelSpreadsheet.BACKEND_EXTENSIONS
+end
 
 function ScriptMaterialExcelSpreadsheet:init()
   Logging().init(self, 'ScriptMaterialExcelSpreadsheet')
@@ -18,7 +41,8 @@ end
 
 function ScriptMaterialExcelSpreadsheet:can_handle_file(file_path)
   local ext = file_path:match('%.([^%.]+)$')
-  return self.supported_extensions['.' .. ext] ~= nil
+  if not ext then return false end
+  return self.get_supported_extensions()['.' .. ext:lower()] ~= nil
 end
 
 function ScriptMaterialExcelSpreadsheet:get_default_material_data()

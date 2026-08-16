@@ -23,7 +23,7 @@ function ScriptMaterials:get_supported_extensions()
   local extensions_by_description = {}
 
   for _, handler in ipairs(self.handlers) do
-    for ext, description in pairs(handler.supported_extensions) do
+    for ext, description in pairs(handler.get_supported_extensions()) do
       local bare = ext:gsub('^%.', '')
       if extensions_by_description[description] then
         extensions_by_description[description] = extensions_by_description[description] .. ',' .. bare
