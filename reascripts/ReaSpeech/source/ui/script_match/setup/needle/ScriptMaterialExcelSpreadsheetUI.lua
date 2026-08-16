@@ -40,6 +40,11 @@ function ScriptMaterialExcelSpreadsheetUI:render()
     return
   end
 
+  if self.parse_error then
+    self:render_parse_error()
+    return
+  end
+
   if self.material_config.is_parsed then
     self:render_configuration()
     return
@@ -257,7 +262,51 @@ function ScriptMaterialExcelSpreadsheetUI:render_parse_status()
   -- Add logic to show parsing status
 end
 
+function ScriptMaterialExcelSpreadsheetUI:render_parse_error()
+  ImGui.TextWrapped(Ctx(), 'Could not read the spreadsheet: ' .. self.parse_error)
+  if ImGui.Button(Ctx(), 'Retry') then
+    self.parse_error = nil
+  end
+end
+
 function ScriptMaterialExcelSpreadsheetUI:parse_spreadsheet()
+  self.parse_error = nil
+
+  if reaper.DataSource_Parse then
+    self:parse_with_datasource()
+  else
+    self:parse_with_backend()
+  end
+end
+
+-- The reaper-datasource extension parses natively and synchronously:
+-- no backend, no upload, no polling. Its JSON matches the backend's
+-- parse_spreadsheet response shape, so both paths share
+-- parse_backend_response.
+function ScriptMaterialExcelSpreadsheetUI:parse_with_datasource()
+  self:log("Parsing spreadsheet with reaper-datasource: " .. dump(self.material))
+
+  local ok, result = reaper.DataSource_Parse(self.material.filepath, '')
+  if not ok then
+    self:fail_parse(result)
+    return
+  end
+
+  local decoded, response = pcall(json.decode, result)
+  if not decoded then
+    self:fail_parse('Could not decode parser output: ' .. tostring(response))
+    return
+  end
+
+  local success, error_msg = self:parse_backend_response(response)
+  if success then
+    self:handle_parse_success()
+  else
+    self:fail_parse(error_msg or 'Unknown error')
+  end
+end
+
+function ScriptMaterialExcelSpreadsheetUI:parse_with_backend()
   self:log("Starting parse for spreadsheet: " .. dump(self.material))
   self.parse_request = ReaSpeechAPI:post_request(
     self.API_ENDPOINT,
@@ -272,26 +321,37 @@ function ScriptMaterialExcelSpreadsheetUI:parse_spreadsheet()
     end
 
     if self.parse_request:error() then
-      self:log('Parse request error: ' .. self.parse_request:error())
+      self:fail_parse(self.parse_request:error())
+      self.parse_request = nil
+      self.parse_interval = nil
       return
     end
 
     local response = self.parse_request:result()
     local success, error_msg = self:parse_backend_response(response)
 
+    self.parse_interval = nil
+    self.parse_request = nil
+
     if success then
-      self:log('Parse completed successfully')
-      self.parse_interval = nil
-      self.parse_request = nil
-      -- The worksheet UIs were built before the parse populated the
-      -- config; rebuild them so the controls appear immediately.
-      self.worksheet_uis = self:init_worksheet_uis()
-      self.workflow:emit_event('script_material_updated', { material = self.material })
+      self:handle_parse_success()
     else
-      self:log('Parse response error: ' .. (error_msg or 'Unknown error'))
-      return
+      self:fail_parse(error_msg or 'Unknown error')
     end
   end)
+end
+
+function ScriptMaterialExcelSpreadsheetUI:handle_parse_success()
+  self:log('Parse completed successfully')
+  -- The worksheet UIs were built before the parse populated the
+  -- config; rebuild them so the controls appear immediately.
+  self.worksheet_uis = self:init_worksheet_uis()
+  self.workflow:emit_event('script_material_updated', { material = self.material })
+end
+
+function ScriptMaterialExcelSpreadsheetUI:fail_parse(message)
+  self:log('Parse error: ' .. message)
+  self.parse_error = message
 end
 
 function ScriptMaterialExcelSpreadsheetUI:parse_backend_response(response)
