@@ -599,19 +599,43 @@ function ExportTemplateEditorUI:render_autocomplete_popup(width)
 
       local apply = self:autocomplete_keyboard(autocomplete.matches)
 
+      -- Manual rows with raw rect hit-testing: Selectable clicks
+      -- never survived ImGui's window arbitration for this overlay
+      -- (keyboard worked, mouse vanished), so the rows read the
+      -- mouse directly - IsMouseHoveringRect with clipping off owes
+      -- nothing to hover, focus, or z-order
+      local row_h = ImGui.GetTextLineHeightWithSpacing(Ctx())
+      local clicked = ImGui.IsMouseClicked(Ctx(), ImGui.MouseButton_Left())
       for i, match in ipairs(autocomplete.matches) do
+        local _, ry = ImGui.GetCursorScreenPos(Ctx())
+        local row_hovered = ImGui.IsMouseHoveringRect(Ctx(), wx, ry, wx + ww, ry + row_h, false)
+
+        if i == self._ac_selected then
+          ImGui.DrawList_AddRectFilled(dl, wx, ry, wx + ww, ry + row_h,
+            (Theme.COLORS.pink_opaque & 0xFFFFFF00) | 0x33)
+        elseif row_hovered then
+          ImGui.DrawList_AddRectFilled(dl, wx, ry, wx + ww, ry + row_h, 0x3A3A3AFF)
+        end
+
+        if row_hovered then
+          ImGui.SetMouseCursor(Ctx(), ImGui.MouseCursor_Hand())
+          if clicked then
+            apply = match.name
+          end
+        end
+
         local label = match.name
         if match.description then
           label = ('%s   (%s)'):format(match.name, match.description:sub(1, 50))
         end
-        if ImGui.Selectable(Ctx(), label .. '##ac_' .. match.name, i == self._ac_selected) then
-          apply = match.name
-        end
+        ImGui.Text(Ctx(), label)
       end
 
       ImGui.TextColored(Ctx(), 0x666666FF, '\xE2\x86\x91\xE2\x86\x93 select \xC2\xB7 Enter complete')
 
-      self._autocomplete_hovered = ImGui.IsWindowHovered(Ctx())
+      -- Same raw test for keep-alive while the mouse is over the
+      -- popup (IsWindowHovered was subject to the same arbitration)
+      self._autocomplete_hovered = ImGui.IsMouseHoveringRect(Ctx(), wx, wy, wx + ww, wy + wh, false)
 
       if apply then
         self:apply_autocomplete(apply)
