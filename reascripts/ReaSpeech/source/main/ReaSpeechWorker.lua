@@ -79,10 +79,12 @@ function ReaSpeechWorker:start_next_job()
   job_options_json = json.encode(job_options)
   self:log(active.job.path)
   self:debug(job_options_json)
-  active.job_id = reaper.ReaSpeech_StartEx(active.job.path, job_options_json)
 
-  if type(active.job_id) ~= 'string' or active.job_id:sub(1, 6) == 'ERROR:' then
-    self:finish_with_error(active.job_id or 'Unable to start transcription')
+  local ok, job_id = reaper.ReaSpeech_StartEx(active.job.path, job_options_json)
+  if ok then
+    active.job_id = job_id
+  else
+    self:finish_with_error(job_id or 'Unable to start transcription')
   end
 end
 
