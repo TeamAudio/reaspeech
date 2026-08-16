@@ -11,13 +11,26 @@
 ]]--
 
 RowChip = Polo {
-  HEIGHT = 30,
+  HEIGHT = 34,
   ROUNDING = 5,
   PAD_X = 10,
-  ICON_SIZE = 18,
+  ICON_SIZE = 20,
   GAP = 8,
   PRESS_NUDGE = 1,
+
+  -- Label text rides a size up from the main font
+  FONT_DELTA = 2,
 }
+
+-- The chip label font registers on first use; until the font reload
+-- cycle picks it up (next frame), the main font stands in
+function RowChip.label_font()
+  if not RowChip._font_registered then
+    Fonts:register('row_chip', 'sans-serif', RowChip.FONT_DELTA)
+    RowChip._font_registered = true
+  end
+  return Fonts.row_chip or Fonts.main
+end
 
 -- opts: icon, label, detail (dim suffix), dim (muted label), tooltip,
 -- width (defaults to available), on_press, and action = { tooltip,
@@ -75,16 +88,18 @@ function RowChip.render_body(id, opts)
     cx = cx + c.ICON_SIZE + c.GAP
   end
 
-  local line_h = ImGui.GetTextLineHeight(Ctx())
-  local text_y = y + (c.HEIGHT - line_h) / 2 + press
-  ImGui.SetCursorScreenPos(Ctx(), cx, text_y)
-  ImGui.TextColored(Ctx(), opts.dim and 0xBBBBBBFF or 0xEEEEEEFF, opts.label)
+  Fonts.wrap(Ctx(), RowChip.label_font(), function()
+    local line_h = ImGui.GetTextLineHeight(Ctx())
+    local text_y = y + (c.HEIGHT - line_h) / 2 + press
+    ImGui.SetCursorScreenPos(Ctx(), cx, text_y)
+    ImGui.TextColored(Ctx(), opts.dim and 0xBBBBBBFF or 0xEEEEEEFF, opts.label)
 
-  if opts.detail then
-    ImGui.SameLine(Ctx(), 0, c.GAP)
-    ImGui.SetCursorScreenPos(Ctx(), select(1, ImGui.GetCursorScreenPos(Ctx())), text_y)
-    ImGui.TextColored(Ctx(), 0x888888FF, opts.detail)
-  end
+    if opts.detail then
+      ImGui.SameLine(Ctx(), 0, c.GAP)
+      ImGui.SetCursorScreenPos(Ctx(), select(1, ImGui.GetCursorScreenPos(Ctx())), text_y)
+      ImGui.TextColored(Ctx(), 0x888888FF, opts.detail)
+    end
+  end, Trap)
 
   local action_clicked = false
   if opts.action then
@@ -109,7 +124,8 @@ function RowChip.render_body(id, opts)
         size, size, glyph_color)
     else
       local label_w = ImGui.CalcTextSize(Ctx(), opts.action.label)
-      ImGui.SetCursorScreenPos(Ctx(), ax + (action_w - label_w) / 2, y + (c.HEIGHT - line_h) / 2)
+      local label_h = ImGui.GetTextLineHeight(Ctx())
+      ImGui.SetCursorScreenPos(Ctx(), ax + (action_w - label_w) / 2, y + (c.HEIGHT - label_h) / 2)
       ImGui.TextColored(Ctx(), glyph_color, opts.action.label)
     end
   end
