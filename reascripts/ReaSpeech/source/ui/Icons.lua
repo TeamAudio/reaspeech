@@ -178,3 +178,48 @@ function Icons.info(dl, x, y, w, h, color)
     y + h * 0.7,
     color)
 end
+
+-- Plus: add/link/import
+function Icons.plus(dl, x, y, w, h, color)
+  local mid_x, mid_y = x + w / 2, y + h / 2
+  local inset_x, inset_y = w * 0.12, h * 0.12
+  local thickness = math.max(1.5, w * 0.14)
+
+  ImGui.DrawList_AddLine(dl, x + inset_x, mid_y, x + w - inset_x, mid_y, color, thickness)
+  ImGui.DrawList_AddLine(dl, mid_x, y + inset_y, mid_x, y + h - inset_y, color, thickness)
+end
+
+-- X: remove/unlink
+function Icons.x_mark(dl, x, y, w, h, color)
+  local inset_x, inset_y = w * 0.18, h * 0.18
+  local thickness = math.max(1.5, w * 0.14)
+
+  ImGui.DrawList_AddLine(dl,
+    x + inset_x, y + inset_y, x + w - inset_x, y + h - inset_y, color, thickness)
+  ImGui.DrawList_AddLine(dl,
+    x + w - inset_x, y + inset_y, x + inset_x, y + h - inset_y, color, thickness)
+end
+
+-- Circular arrow: refresh/rescan
+function Icons.refresh(dl, x, y, w, h, color)
+  local cx, cy = x + w / 2, y + h / 2
+  local radius = math.min(w, h) * 0.36
+  local thickness = math.max(1.5, w * 0.12)
+
+  local arc_start, arc_end = -math.pi * 0.35, math.pi * 1.05
+  ImGui.DrawList_PathArcTo(dl, cx, cy, radius, arc_start, arc_end)
+  ImGui.DrawList_PathStroke(dl, color, ImGui.DrawFlags_None(), thickness)
+
+  -- Arrowhead continuing the arc's direction of travel
+  local head_x = cx + math.cos(arc_end) * radius
+  local head_y = cy + math.sin(arc_end) * radius
+  local tangent_x, tangent_y = -math.sin(arc_end), math.cos(arc_end)
+  local normal_x, normal_y = math.cos(arc_end), math.sin(arc_end)
+  local size = math.min(w, h) * 0.24
+
+  ImGui.DrawList_AddTriangleFilled(dl,
+    head_x + normal_x * size * 0.7, head_y + normal_y * size * 0.7,
+    head_x - normal_x * size * 0.7, head_y - normal_y * size * 0.7,
+    head_x + tangent_x * size, head_y + tangent_y * size,
+    color)
+end
