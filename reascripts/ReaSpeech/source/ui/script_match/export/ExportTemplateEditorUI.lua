@@ -24,12 +24,15 @@ function ExportTemplateEditorUI:init()
     needle_metadata_service = self.needle_metadata_service
   }
 
-  -- Create enhanced text input widget
+  -- Create enhanced text input widget. The cursor-fixer callback lets
+  -- a completion drop the caret right after its insertion point.
   self.template_input = Widgets.TextInput.new {
     state = self.settings.template,
     label = 'Output Template',
     help_text = 'Template for generating output filenames using ${variable:processor} syntax. '
       .. 'A quoted separator renders only when the variable has a value: ${"-":character}',
+    flags = function() return ImGui.InputTextFlags_CallbackAlways() end,
+    callback = function() return self:cursor_fixer() end,
     on_change = function(value)
       self:on_template_changed(value)
     end,
@@ -37,15 +40,6 @@ function ExportTemplateEditorUI:init()
       self:on_template_changed(value)
     end,
   }
-
-  -- The stock TextInput renderer can't pass an InputText callback,
-  -- and the widgets are frozen verbatim under the extraction-PR
-  -- boundary - so this one instance gets a bespoke renderer with the
-  -- same buffer/commit contract. Upstream a callback option into
-  -- Widgets.TextInput once the PRs land.
-  self.template_input.renderer = function(widget)
-    self:render_template_input_item(widget)
-  end
 
   -- Set up event listener for metadata changes (if workflow is available)
   if self.needle_metadata_service and self.needle_metadata_service.workflow then
@@ -231,39 +225,6 @@ function ExportTemplateEditorUI:cursor_fixer()
     ImGui.Attach(Ctx(), self._cursor_fixer)
   end
   return self._cursor_fixer
-end
-
--- Bespoke renderer for the template input (see init): Widgets.TextInput's
--- buffer/commit contract plus the cursor-fixer callback
-function ExportTemplateEditorUI:render_template_input_item(widget)
-  local options = widget.options
-
-  if options.label then
-    widget:render_label()
-  end
-
-  local buffer = widget._edit_buffer or widget:value()
-  local rv, value = ImGui.InputText(Ctx(), ('##%s'):format(options.label), buffer,
-    ImGui.InputTextFlags_CallbackAlways(), self:cursor_fixer())
-
-  if rv then
-    widget._edit_buffer = value
-    options.on_change(value)
-  end
-
-  if ImGui.IsItemDeactivated(Ctx()) then
-    local final_value = widget._edit_buffer
-    widget._edit_buffer = nil
-
-    if ImGui.IsKeyPressed(Ctx(), ImGui.Key_Escape()) then
-      options.on_cancel()
-    elseif final_value ~= nil then
-      widget:set(final_value)
-      options.on_enter(final_value)
-    else
-      options.on_enter(widget:value())
-    end
-  end
 end
 
 function ExportTemplateEditorUI:render_template_input(width)
