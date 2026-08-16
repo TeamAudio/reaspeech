@@ -126,15 +126,24 @@ function ScriptMatchAudioTrackConfigurationUI:render_transcript_section()
   if #transcript_uis == 0 then
     -- Quick choices ahead of the file browser: transcript JSONs the
     -- project folder already holds, one press to link
+    if #(self._project_transcripts or {}) > 0 then
+      ImGui.TextColored(Ctx(), 0x888888FF, 'Transcripts found in the project folder:')
+    end
     for _, filepath in ipairs(self._project_transcripts or {}) do
+      local link_this = function()
+        self:link_transcript_file(filepath)
+      end
       RowChip.render('##quick-transcript-' .. filepath, {
         icon = 'wav',
         label = PathUtil.get_filename(filepath),
         dim = true,
         tooltip = filepath .. '\nPress to link this transcript.',
-        on_press = function()
-          self:link_transcript_file(filepath)
-        end,
+        on_press = link_this,
+        action = {
+          label = 'link',
+          tooltip = 'Link this transcript to the track',
+          on_press = link_this,
+        },
       })
     end
 

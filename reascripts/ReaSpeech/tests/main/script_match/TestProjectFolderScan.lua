@@ -24,7 +24,8 @@ require('main/script_match/setup/ProjectFolderScan')
 local tree
 
 reaper = reaper or {}
-reaper.GetProjectPathEx = function() return '/proj' end
+reaper.EnumProjects = function() return nil, '/proj/session.rpp' end
+reaper.GetProjectPathEx = function() return '/proj/Media' end
 reaper.EnumerateFiles = function(dir, index)
   local node = tree[dir]
   return node and node.files[index + 1] or nil
@@ -113,11 +114,42 @@ function TestProjectFolderScan:testDotFilesAndMissingProjectPathAreSafe()
   heads['/proj/.hidden.json'] = '{"segments": []}'
   lu.assertEquals(#scanner():scan().transcripts, 0)
 
+  reaper.EnumProjects = function() return nil, '' end
   reaper.GetProjectPathEx = function() return '' end
   local results = scanner():scan()
   lu.assertEquals(#results.transcripts, 0)
   lu.assertEquals(#results.spreadsheets, 0)
-  reaper.GetProjectPathEx = function() return '/proj' end
+  reaper.EnumProjects = function() return nil, '/proj/session.rpp' end
+  reaper.GetProjectPathEx = function() return '/proj/Media' end
+end
+
+-- The scan roots: the .RPP's directory is primary (GetProjectPathEx
+-- alone returns the MEDIA directory and would miss files beside the
+-- project file); an external media path joins as a second root, an
+-- internal one is already covered by the walk
+function TestProjectFolderScan:testScansProjectDirNotJustMediaPath()
+  tree['/proj'].files = { 'lines.xlsx' }
+  tree['/proj'].subdirs = { 'Media' }
+  tree['/proj/Media'] = { files = { 'vo.json' }, subdirs = {} }
+  heads['/proj/Media/vo.json'] = '{"segments": []}'
+
+  local results = scanner():scan()
+
+  lu.assertEquals(results.spreadsheets, { '/proj/lines.xlsx' })
+  lu.assertEquals(results.transcripts, { '/proj/Media/vo.json' })
+end
+
+function TestProjectFolderScan:testExternalMediaPathJoinsAsSecondRoot()
+  reaper.GetProjectPathEx = function() return '/elsewhere/audio' end
+  tree['/proj'].files = { 'lines.xlsx' }
+  tree['/elsewhere/audio'] = { files = { 'vo.json' }, subdirs = {} }
+  heads['/elsewhere/audio/vo.json'] = '{"segments": []}'
+
+  local results = scanner():scan()
+
+  lu.assertEquals(results.spreadsheets, { '/proj/lines.xlsx' })
+  lu.assertEquals(results.transcripts, { '/elsewhere/audio/vo.json' })
+  reaper.GetProjectPathEx = function() return '/proj/Media' end
 end
 
 --

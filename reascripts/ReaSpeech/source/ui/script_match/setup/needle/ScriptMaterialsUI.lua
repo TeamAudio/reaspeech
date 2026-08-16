@@ -92,14 +92,20 @@ function ScriptMaterialsUI:render_quick_choices()
 
   for _, filepath in ipairs(candidates) do
     local lower = filepath:lower()
+    local import_this = function()
+      self:import_quick_choice(filepath)
+    end
     RowChip.render('##quick-material-' .. filepath, {
       icon = (lower:match('%.csv$') or lower:match('%.tsv$')) and 'csv' or 'spreadsheet',
       label = PathUtil.get_filename(filepath),
       dim = true,
       tooltip = filepath .. '\nPress to import as a script material.',
-      on_press = function()
-        self:import_quick_choice(filepath)
-      end,
+      on_press = import_this,
+      action = {
+        label = 'import',
+        tooltip = 'Import as a script material',
+        on_press = import_this,
+      },
     })
   end
 end

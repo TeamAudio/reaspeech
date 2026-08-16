@@ -41,14 +41,46 @@ end
 function ProjectFolderScan:scan()
   local results = { transcripts = {}, spreadsheets = {} }
 
-  local root = reaper.GetProjectPathEx(0)
-  if not root or root == '' then return results end
-
-  self:scan_directory(PathUtil.normalize(root), 1, results)
+  for _, root in ipairs(self:roots()) do
+    self:scan_directory(root, 1, results)
+  end
 
   table.sort(results.transcripts)
   table.sort(results.spreadsheets)
   return results
+end
+
+-- The project folder proper (the .RPP's directory) plus the media
+-- path when it lives elsewhere. GetProjectPathEx alone returns the
+-- MEDIA directory (often <project>/Media), which would miss files
+-- sitting next to the .RPP; a media path inside the project folder
+-- is already covered by the bounded walk.
+function ProjectFolderScan:roots()
+  local roots = {}
+
+  local _, project_file = reaper.EnumProjects(-1, '')
+  if project_file and project_file ~= '' then
+    local project_dir = project_file:match('^(.*)[/\\][^/\\]+$')
+    if project_dir and project_dir ~= '' then
+      table.insert(roots, PathUtil.normalize(project_dir))
+    end
+  end
+
+  local media_path = reaper.GetProjectPathEx(0)
+  if media_path and media_path ~= '' then
+    media_path = PathUtil.normalize(media_path)
+    local covered = false
+    for _, root in ipairs(roots) do
+      if media_path == root or media_path:sub(1, #root + 1) == root .. '/' then
+        covered = true
+      end
+    end
+    if not covered then
+      table.insert(roots, media_path)
+    end
+  end
+
+  return roots
 end
 
 function ProjectFolderScan:scan_directory(dir, depth, results)
