@@ -163,6 +163,21 @@ function CurationCardUI:render_diagnosis_line(panel_width)
     ImGui.TextColored(Ctx(), 0x777777FF,
       (' (%.0f%%%s)'):format((verdict.evidence.confidence or 0) * 100,
         verdict.evidence.long_shot and ', long shot' or ''))
+
+    -- The verdict names a project track: one press links it (with the
+    -- evidence transcript) and re-rolls this line right here
+    if verdict.evidence.track_name then
+      ImGui.SameLine(Ctx(), 0, 10)
+      Widgets.no_nav(function()
+        if ImGui.SmallButton(Ctx(), ('Link %s & re-roll'):format(verdict.evidence.track_name)) then
+          local ok, message = self.workflow:get_needle_diagnosis():link_evidence_track(verdict)
+          self:log('Link & re-roll: ' .. tostring(message))
+          if ok then
+            self:start_suggestion_generation()
+          end
+        end
+      end)
+    end
   end
 end
 
@@ -428,6 +443,12 @@ function CurationCardUI:on_completion(results)
   self.last_suggestion_count = results and #results or 0
   self.active_suggestion_generator = nil
   self:update_display_texts()
+
+  -- A card-generated roll that found something outdates any earlier
+  -- diagnosis (the runner does the same for oneshot rolls)
+  if results and #results > 0 and self.current_needle and self.current_needle.locator then
+    self.workflow:get_needle_diagnosis():clear(self.current_needle.locator)
+  end
 
   -- Emit job status event before suggestions event
   self:emit_job_status_event('completed', { suggestion_count = self.last_suggestion_count })

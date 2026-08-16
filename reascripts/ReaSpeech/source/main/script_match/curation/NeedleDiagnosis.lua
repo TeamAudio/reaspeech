@@ -98,6 +98,7 @@ function NeedleDiagnosis:diagnose(needle)
           long_shot = best_hit.long_shot,
         },
       }
+      self:attach_track_match(verdict.evidence)
     else
       verdict = {
         class = 'not_recorded',
@@ -110,6 +111,81 @@ function NeedleDiagnosis:diagnose(needle)
   self:set(needle.locator, verdict)
   self:log(('Diagnosed %s: %s'):format(tostring(needle.locator), verdict.class))
   return verdict
+end
+
+-- When a project track's name matches the transcript's file stem
+-- ("VO Quill.json" -> track "VO Quill"), the verdict carries
+-- the track so the UI can offer one-press link-and-re-roll. Computed
+-- at diagnose time, not render time (no per-frame track enumeration).
+function NeedleDiagnosis:attach_track_match(evidence)
+  if not self.workflow.get_audio_tracks_service then return end
+
+  local stem = PathUtil.get_filename(evidence.transcript_file):gsub('%.[^%.]+$', '')
+  local stem_lower = stem:lower()
+
+  for _, track in ipairs(self.workflow:get_audio_tracks_service():get_project_tracks()) do
+    if (track.name or ''):lower() == stem_lower then
+      evidence.track_guid = track.guid
+      evidence.track_name = track.name
+      return
+    end
+  end
+end
+
+-- One-press follow-through on an unlinked_track verdict: link the
+-- name-matched project track with the evidence transcript, preserving
+-- any configuration the track already has from an earlier linking.
+-- Returns ok, message.
+function NeedleDiagnosis:link_evidence_track(verdict)
+  local evidence = verdict and verdict.evidence
+  if not evidence or not evidence.track_guid then
+    return false, 'No matching project track to link'
+  end
+
+  local service = self.workflow:get_audio_tracks_service()
+  local storage = service:get_track_storage(evidence.track_guid)
+
+  local track_data = storage:get()
+  if not track_data or not track_data.guid then
+    track_data = service:create_track({
+      guid = evidence.track_guid,
+      name = evidence.track_name,
+    })
+  end
+
+  track_data.metadata_layers = track_data.metadata_layers or {}
+  local transcript_layer
+  for _, layer in ipairs(track_data.metadata_layers) do
+    if layer.key == TranscriptMetadataLayer.key then
+      transcript_layer = layer
+    end
+  end
+  if not transcript_layer then
+    transcript_layer = {
+      key = TranscriptMetadataLayer.key,
+      name = TranscriptMetadataLayer.name,
+      config = {},
+    }
+    table.insert(track_data.metadata_layers, transcript_layer)
+  end
+  transcript_layer.config = transcript_layer.config or {}
+  transcript_layer.config.transcript_file =
+    transcript_layer.config.transcript_file or evidence.transcript_file
+
+  storage:set(track_data)
+  service:add_track({ guid = track_data.guid, name = track_data.name })
+
+  self.workflow:emit_event('audio_track_metadata_layer_updated', {
+    track = track_data,
+    layer = transcript_layer,
+  })
+
+  -- The linked transcript is no longer diagnosis material
+  self:refresh_candidates()
+
+  self:log(('Linked track %s with %s'):format(
+    tostring(evidence.track_name), evidence.transcript_file))
+  return true, ('Linked %s'):format(evidence.track_name)
 end
 
 function NeedleDiagnosis:get(locator)

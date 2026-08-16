@@ -43,19 +43,51 @@ require('main/script_match/curation/NeedleDiagnosis')
 
 local probe_results, probe_calls
 
-local function make_diagnosis(scan_transcripts)
+-- Fake audio-tracks service: project tracks by name, in-memory
+-- per-track storage, session link list
+local function make_tracks_service(project_tracks)
+  local track_stores = {}
+  local session_tracks = {}
+  return {
+    session_tracks = session_tracks,
+    track_stores = track_stores,
+    get_project_tracks = function() return project_tracks or {} end,
+    get_track_storage = function(_self, guid)
+      return {
+        get = function() return track_stores[guid] end,
+        set = function(_s, value) track_stores[guid] = value end,
+      }
+    end,
+    create_track = function(_self, track)
+      track_stores[track.guid] = { guid = track.guid, name = track.name }
+      return track_stores[track.guid]
+    end,
+    add_track = function(_self, track) table.insert(session_tracks, track) end,
+  }
+end
+
+local function make_diagnosis(scan_transcripts, tracks_service)
   local track = {
     guid = 'T1',
     metadata_layers = {
       { key = 'transcript', config = { transcript_file = '/p/linked.json' } },
     },
   }
+  local events = {}
+  local workflow = {
+    events = events,
+    audio_tracks = function() return { track } end,
+    audio_track = function(_self, _guid) return track end,
+    emit_event = function(_self, name, data)
+      table.insert(events, { name = name, data = data })
+    end,
+  }
+  if tracks_service then
+    workflow.get_audio_tracks_service = function() return tracks_service end
+  end
   return NeedleDiagnosis.new {
     session_id = 'S',
-    workflow = {
-      audio_tracks = function() return { track } end,
-      audio_track = function(_self, _guid) return track end,
-    },
+    workflow = workflow,
     matcher = {
       probe_transcript_file = function(_self, needle, filepath)
         table.insert(probe_calls, { needle = needle, filepath = filepath })
@@ -137,6 +169,85 @@ function TestNeedleDiagnosis:testClearRemovesVerdict()
   diagnosis:clear('L1')
 
   lu.assertNil(diagnosis:get('L1'))
+end
+
+-- A project track named like the transcript's file stem rides the
+-- evidence, powering the one-press link affordance
+function TestNeedleDiagnosis:testEvidenceCarriesNameMatchedTrack()
+  probe_results['/p/VO Quill.json'] = { confidence = 0.9 }
+  local service = make_tracks_service({ { guid = 'PT1', name = 'VO Quill' } })
+  local diagnosis = make_diagnosis({ '/p/VO Quill.json' }, service)
+
+  local verdict = diagnosis:diagnose({ locator = 'L1', content = 'some line' })
+
+  lu.assertEquals(verdict.evidence.track_guid, 'PT1')
+  lu.assertEquals(verdict.evidence.track_name, 'VO Quill')
+end
+
+function TestNeedleDiagnosis:testNoNameMatchLeavesEvidenceBare()
+  probe_results['/p/mystery.json'] = { confidence = 0.9 }
+  local service = make_tracks_service({ { guid = 'PT1', name = 'VO Quill' } })
+  local diagnosis = make_diagnosis({ '/p/mystery.json' }, service)
+
+  local verdict = diagnosis:diagnose({ locator = 'L1', content = 'some line' })
+
+  lu.assertNil(verdict.evidence.track_guid)
+end
+
+function TestNeedleDiagnosis:testLinkEvidenceTrack()
+  probe_results['/p/VO Quill.json'] = { confidence = 0.9 }
+  local service = make_tracks_service({ { guid = 'PT1', name = 'VO Quill' } })
+  local diagnosis = make_diagnosis({ '/p/VO Quill.json' }, service)
+  local verdict = diagnosis:diagnose({ locator = 'L1', content = 'some line' })
+
+  local ok, message = diagnosis:link_evidence_track(verdict)
+
+  lu.assertTrue(ok)
+  lu.assertStrContains(message, 'VO Quill')
+
+  -- Track storage carries the transcript layer; the session links it
+  local stored = service.track_stores['PT1']
+  lu.assertEquals(stored.metadata_layers[1].key, 'transcript')
+  lu.assertEquals(stored.metadata_layers[1].config.transcript_file, '/p/VO Quill.json')
+  lu.assertEquals(service.session_tracks[1].guid, 'PT1')
+
+  -- The workflow heard about it
+  local found_event = false
+  for _, event in ipairs(diagnosis.workflow.events) do
+    if event.name == 'audio_track_metadata_layer_updated' then found_event = true end
+  end
+  lu.assertTrue(found_event)
+end
+
+-- An earlier configuration (tags, a transcript already chosen)
+-- survives re-linking
+function TestNeedleDiagnosis:testLinkPreservesExistingTrackConfig()
+  probe_results['/p/VO Quill.json'] = { confidence = 0.9 }
+  local service = make_tracks_service({ { guid = 'PT1', name = 'VO Quill' } })
+  service.track_stores['PT1'] = {
+    guid = 'PT1', name = 'VO Quill',
+    metadata_layers = {
+      { key = 'tags', config = { predefined_tag = 'character' } },
+    },
+  }
+  local diagnosis = make_diagnosis({ '/p/VO Quill.json' }, service)
+  local verdict = diagnosis:diagnose({ locator = 'L1', content = 'some line' })
+
+  diagnosis:link_evidence_track(verdict)
+
+  local stored = service.track_stores['PT1']
+  lu.assertEquals(#stored.metadata_layers, 2)
+  lu.assertEquals(stored.metadata_layers[1].key, 'tags')
+  lu.assertEquals(stored.metadata_layers[2].config.transcript_file, '/p/VO Quill.json')
+end
+
+function TestNeedleDiagnosis:testLinkWithoutTrackMatchRefuses()
+  local diagnosis = make_diagnosis({})
+  local ok, message = diagnosis:link_evidence_track({
+    class = 'unlinked_track', evidence = { transcript_file = '/p/x.json' },
+  })
+  lu.assertFalse(ok)
+  lu.assertStrContains(message, 'No matching')
 end
 
 -- refresh_candidates picks up newly linked tracks on the next roll

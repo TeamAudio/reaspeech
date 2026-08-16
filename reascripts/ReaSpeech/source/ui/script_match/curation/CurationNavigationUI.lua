@@ -393,6 +393,68 @@ function CurationNavigationUI:render_navigation_list(panel_width)
   end
 
   ImGui.TextDisabled(Ctx(), "W/S line  \xC2\xB7  A/D group")
+
+  -- Unmatched-lines report: one press copies every empty needle
+  -- grouped by its diagnosis class, ready for a producer email
+  local unmatched = self:unmatched_needles()
+  if #unmatched > 0 then
+    ImGui.SameLine(Ctx(), 0, 12)
+    local size = Fonts.size:get() - 3
+    if Widgets.icon(Icons.copy, '##copy-unmatched-report', size, size,
+      ('Copy unmatched-lines report (%d)'):format(#unmatched),
+      0x666666FF, Theme.COLORS.pink_opaque)
+    then
+      ImGui.SetClipboardText(Ctx(), self:unmatched_report(unmatched))
+    end
+  end
+end
+
+CurationNavigationUI.REPORT_TITLES = {
+  { class = 'unlinked_track', title = 'Found on unlinked tracks' },
+  { class = 'not_recorded', title = 'Likely never recorded' },
+  { class = 'non_verbal', title = 'Non-verbal directions' },
+  { class = 'undiagnosed', title = 'Unmatched, no diagnosis yet' },
+}
+
+function CurationNavigationUI:unmatched_needles()
+  local unmatched = {}
+  for _, needle in ipairs(self.needles) do
+    local status = needle.guid and self.workflow:get_needle_status(needle.guid)
+    if status and status.total == 0 then
+      table.insert(unmatched, needle)
+    end
+  end
+  return unmatched
+end
+
+function CurationNavigationUI:unmatched_report(unmatched)
+  local groups = {}
+  for _, needle in ipairs(unmatched) do
+    local verdict = needle.locator and self.workflow:get_needle_diagnosis():get(needle.locator)
+    local class = verdict and verdict.class or 'undiagnosed'
+
+    local line = ('- "%s"'):format(needle.content or '')
+    if verdict and verdict.class == 'unlinked_track' then
+      line = line .. (' [%s]'):format(verdict.reason)
+    end
+
+    groups[class] = groups[class] or {}
+    table.insert(groups[class], line)
+  end
+
+  local parts = { ('Unmatched lines (%d):'):format(#unmatched) }
+  for _, entry in ipairs(CurationNavigationUI.REPORT_TITLES) do
+    local lines = groups[entry.class]
+    if lines and #lines > 0 then
+      table.insert(parts, '')
+      table.insert(parts, ('%s (%d):'):format(entry.title, #lines))
+      for _, line in ipairs(lines) do
+        table.insert(parts, line)
+      end
+    end
+  end
+
+  return table.concat(parts, '\n')
 end
 
 -- One clickable row per needle: status icon, wrapped line text, the

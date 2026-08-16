@@ -307,6 +307,12 @@ function ScriptMatchWorkflow:audio_tracks()
   return self.phases.setup:audio_tracks()
 end
 
+-- The setup phase's ScriptMatchAudioTracks service (project-track
+-- enumeration, linking, per-track storage)
+function ScriptMatchWorkflow:get_audio_tracks_service()
+  return self.phases.setup:haystack_setup_ui().audio_tracks
+end
+
 function ScriptMatchWorkflow:audio_track(guid)
   return self.phases.setup:audio_track(guid)
 end
