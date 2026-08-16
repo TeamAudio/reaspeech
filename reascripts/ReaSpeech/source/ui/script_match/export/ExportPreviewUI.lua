@@ -27,6 +27,22 @@ function ExportPreviewUI:init()
     session_id = self.session_id,
   }
 
+  -- File export runs deferred under a per-frame tick budget: the
+  -- Export card doubles as the progress bar and cancel button. The
+  -- queue holds the same file tables the tree renders, so statuses
+  -- land live as items complete.
+  self.export_runner = ExportRunner.new {
+    process_item = function(item)
+      return self:extract_audio_file(item)
+    end,
+    on_item_done = function(item, status)
+      item.status = status
+      if item.export_id then
+        self.data_service:set_export_status(item.export_id, status)
+      end
+    end,
+  }
+
   self:log("Initialized ExportPreviewUI with real data service")
 end
 
@@ -41,43 +57,84 @@ function ExportPreviewUI:set_live_template(value)
   self.data_service:invalidate_items()
 end
 
-function ExportPreviewUI:render(_width)
-  -- Get current template and settings for data generation
-  local current_template = self._live_template or self.settings:get_template()
+-- Above this many files the tree opens with directories collapsed,
+-- leaning on the per-directory counts instead of a wall of rows
+ExportPreviewUI.COLLAPSE_THRESHOLD = 50
 
-  -- Generate export items from real data; timing shapes the slice
-  -- ranges the size/duration figures describe
-  local export_directories = self.data_service:generate_export_items(current_template, self.settings:get_timing())
+-- One pass over the tree: global totals for the summary and action
+-- labels, per-directory subtree counts for the "(n files)" suffixes
+function ExportPreviewUI:tally(export_directories)
+  local stats = { files = 0, size = 0, exported = 0, failed = 0 }
 
-  -- Calculate summary statistics from hierarchical tree
-  local total_files = 0
-  local total_size = 0
-  local exported_count = 0
-  local failed_count = 0
-
-  local function count_files_recursive(nodes)
+  local function visit(nodes)
+    local count = 0
     for _, node in ipairs(nodes) do
-      -- Count files in this directory
       for _, file in ipairs(node.files) do
-        total_files = total_files + 1
-        total_size = total_size + (file.file_size_estimate or 0)
+        stats.size = stats.size + (file.file_size_estimate or 0)
         if file.status == 'completed' then
-          exported_count = exported_count + 1
+          stats.exported = stats.exported + 1
         elseif file.status == 'failed' then
-          failed_count = failed_count + 1
+          stats.failed = stats.failed + 1
         end
       end
-      -- Recurse into children
-      count_files_recursive(node.children)
+      node.subtree_file_count = #node.files + visit(node.children)
+      count = count + node.subtree_file_count
     end
+    return count
   end
 
-  count_files_recursive(export_directories)
+  stats.files = visit(export_directories)
+  return stats
+end
 
-  -- Export summary header
-  local formatted_size = self.data_service:format_file_size(total_size)
+-- A filtered shadow of the tree: directories keep only matching files
+-- (and children that kept something); the original nodes stay untouched
+function ExportPreviewUI.filter_tree(nodes, needle)
+  local out = {}
+  for _, node in ipairs(nodes) do
+    local files = {}
+    for _, file in ipairs(node.files) do
+      if tostring(file.display_name or ''):lower():find(needle, 1, true) then
+        table.insert(files, file)
+      end
+    end
+    local children = ExportPreviewUI.filter_tree(node.children, needle)
+    if #files > 0 or #children > 0 then
+      table.insert(out, setmetatable({ files = files, children = children },
+        { __index = node }))
+    end
+  end
+  return out
+end
+
+function ExportPreviewUI:render(_width)
+  -- While a run is going the tree renders from the snapshot the run
+  -- was started with: mid-run template edits and per-item dirty flags
+  -- can't reshape the thing the progress is landing on
+  local export_directories
+  if self.export_runner:is_running() then
+    export_directories = self._running_tree or {}
+  else
+    local current_template = self._live_template or self.settings:get_template()
+    -- Timing shapes the slice ranges the size/duration figures describe
+    export_directories = self.data_service:generate_export_items(current_template, self.settings:get_timing())
+  end
+
+  local stats = self:tally(export_directories)
+
+  -- The display tree narrows under the filter box; the action cards
+  -- and summary always speak for the full set
+  local display_tree = export_directories
+  local filter = (self._tree_filter or ''):lower():match('^%s*(.-)%s*$')
+  if filter ~= '' then
+    display_tree = ExportPreviewUI.filter_tree(export_directories, filter)
+    self:tally(display_tree)
+  end
+
+  -- Summary strip
+  local formatted_size = self.data_service:format_file_size(stats.size)
   local summary_text = string.format("%d files • %s estimated • %d exported",
-    total_files, formatted_size, exported_count)
+    stats.files, formatted_size, stats.exported)
   ImGui.TextColored(Ctx(), 0x4CAF50FF, summary_text)
   ImGui.TextColored(Ctx(), 0x888888FF, "-> " .. self:get_export_root_directory())
 
@@ -89,34 +146,173 @@ function ExportPreviewUI:render(_width)
   end
 
   ImGui.Spacing(Ctx())
+  self:render_tree_filter(stats, display_tree)
 
-  -- Render file tree from real data
-  self:render_export_tree(export_directories)
+  -- The preview scrolls in its own region; the action band below is
+  -- pinned and never scrolls out of reach
+  if ImGui.BeginChild(Ctx(), 'export-tree-region', 0, -self:action_band_height()) then
+    Trap(function()
+      if stats.files == 0 then
+        ImGui.TextColored(Ctx(), 0xFFFF80FF,
+          "No accepted suggestions found. Complete curation phase first.")
+      else
+        self:render_export_tree(display_tree, {
+          default_open = stats.files <= ExportPreviewUI.COLLAPSE_THRESHOLD,
+          force_open = filter ~= '',
+        })
+      end
+    end)
+    ImGui.EndChild(Ctx())
+  end
 
-  ImGui.Spacing(Ctx())
+  self:render_action_band(stats)
+end
 
-  -- Action buttons: Export takes what isn't done yet (including
-  -- failures - a retry IS an export of the remainder); Re-export All
-  -- appears once something is done and runs the whole set again
-  local remaining_count = total_files - exported_count
-  local export_label = failed_count > 0
-    and string.format("Export (%d, %d failed)", remaining_count, failed_count)
-    or string.format("Export (%d)", remaining_count)
+function ExportPreviewUI:render_tree_filter(stats, display_tree)
+  if stats.files == 0 then return end
 
-  Widgets.disable_if(remaining_count == 0, function()
-    if ImGui.Button(Ctx(), export_label) then
+  ImGui.SetNextItemWidth(Ctx(), 220)
+  local rv, value = ImGui.InputTextWithHint(Ctx(), '##export-tree-filter',
+    'Filter files...', self._tree_filter or '')
+  if rv then
+    self._tree_filter = value
+  end
+
+  if (self._tree_filter or '') ~= '' then
+    ImGui.SameLine(Ctx())
+    if ImGui.SmallButton(Ctx(), 'Clear') then
+      self._tree_filter = ''
+    end
+    ImGui.SameLine(Ctx())
+    local shown = 0
+    for _, node in ipairs(display_tree) do
+      shown = shown + (node.subtree_file_count or 0)
+    end
+    ImGui.TextColored(Ctx(), 0x888888FF, ('%d of %d match'):format(shown, stats.files))
+  end
+end
+
+ExportPreviewUI.CARD = {
+  HEIGHT = 46,
+  ROUNDING = 6,
+  PADDING = 12,
+  GAP = 10,
+  PRESS_NUDGE = 1,
+  ICON_SIZE = 24,
+}
+
+-- Everything below the tree region: two big pressable cards (files /
+-- project) over a quiet row of secondary controls. Fixed height so the
+-- tree child can reserve exactly this much.
+function ExportPreviewUI:action_band_height()
+  local h = 6 + ExportPreviewUI.CARD.HEIGHT + 6 + ImGui.GetFrameHeightWithSpacing(Ctx())
+  if self._last_track_export then
+    h = h + ImGui.GetTextLineHeightWithSpacing(Ctx())
+  end
+  return h
+end
+
+function ExportPreviewUI:render_action_band(stats)
+  local c = ExportPreviewUI.CARD
+  local runner = self.export_runner
+
+  -- A finished run finalizes on the next frame: counts read, statuses
+  -- already persisted per item, tree rebuilt fresh
+  if runner.state == 'done' then
+    self:finish_export_run()
+  end
+
+  ImGui.Dummy(Ctx(), 0, 4)
+  local x, y = ImGui.GetCursorScreenPos(Ctx())
+  local avail = ImGui.GetContentRegionAvail(Ctx())
+  local card_w = math.floor((avail - c.GAP) / 2)
+
+  local running = runner:is_running()
+  local remaining = stats.files - stats.exported
+
+  -- Files card: idle it begs to be pressed; running it IS the
+  -- progress bar and the cancel button
+  local files_opts
+  if running then
+    files_opts = {
+      width = card_w, icon = 'wav',
+      progress = runner.total > 0 and (runner.completed / runner.total) or 0,
+      title = ('Exporting… %d/%d'):format(runner.completed, runner.total),
+      tagline = 'Click to cancel',
+    }
+  else
+    files_opts = {
+      width = card_w, icon = 'wav',
+      halo = remaining > 0,
+      disabled = remaining == 0,
+      title = stats.failed > 0
+        and ('Export Files (%d, %d failed)'):format(remaining, stats.failed)
+        or ('Export Files (%d)'):format(remaining),
+      tagline = remaining == 0
+        and (stats.files > 0 and 'Everything is exported' or 'Nothing to export yet')
+        or 'Slice accepted takes to disk',
+      tooltip = 'Slice each accepted take out of its source WAV, into the output folder. '
+        .. 'Failures count as remaining - exporting again retries them.',
+    }
+  end
+
+  ImGui.SetCursorScreenPos(Ctx(), x, y)
+  if self:render_action_card('##export-files-card', files_opts) then
+    if running then
+      runner:cancel()
+    elseif remaining > 0 then
       self:start_export(true)
     end
-  end, total_files > 0 and 'Everything is exported' or nil)
+  end
 
-  if exported_count > 0 then
-    ImGui.SameLine(Ctx())
-    if ImGui.Button(Ctx(), string.format("Re-export All (%d)", total_files)) then
+  -- Project card: tracks and/or regions per the toggles in the quiet
+  -- row; the label says exactly what a press will do
+  local tracks_on = self.settings.tracks_tracks:get()
+  local regions_on = self.settings.tracks_regions:get()
+  local project_title
+  if tracks_on and regions_on then
+    project_title = ('Export Tracks + Regions (%d)'):format(stats.files)
+  elseif tracks_on then
+    project_title = ('Export to Tracks (%d)'):format(stats.files)
+  elseif regions_on then
+    project_title = ('Export Regions (%d)'):format(stats.files)
+  else
+    project_title = 'Export to Project'
+  end
+
+  ImGui.SetCursorScreenPos(Ctx(), x + card_w + c.GAP, y)
+  if self:render_action_card('##export-project-card', {
+    width = avail - card_w - c.GAP, icon = 'package',
+    disabled = running or stats.files == 0 or not (tracks_on or regions_on),
+    title = project_title,
+    tagline = (tracks_on or regions_on)
+      and 'Land matches in the open project'
+      or 'Pick tracks and/or regions below',
+    tooltip = 'Tracks: a muted child track per source, matched sections as items '
+      .. 'referencing the original audio, colored by confidence - solo to audition. '
+      .. 'Regions: named, confidence-colored regions at each matched span; the ruler '
+      .. 'becomes the heatmap. Re-exports replace this session\'s landing.',
+  }) and not running and stats.files > 0 and (tracks_on or regions_on) then
+    self:start_track_export()
+  end
+
+  ImGui.SetCursorScreenPos(Ctx(), x, y + c.HEIGHT + 6)
+
+  -- Quiet row: the toggles and the less-juicy actions
+  local changed, value = ImGui.Checkbox(Ctx(), 'Tracks', tracks_on)
+  if changed then self.settings.tracks_tracks:set(value) end
+
+  ImGui.SameLine(Ctx())
+  changed, value = ImGui.Checkbox(Ctx(), 'Regions', regions_on)
+  if changed then self.settings.tracks_regions:set(value) end
+
+  if stats.exported > 0 and not running then
+    ImGui.SameLine(Ctx(), 0, 18)
+    if ImGui.SmallButton(Ctx(), ('Re-export All (%d)'):format(stats.files)) then
       self:start_export(false)
     end
   end
 
-  ImGui.SameLine(Ctx())
   -- Stat the root only when it changes (or after an export run), not
   -- every frame
   local output_root = self:get_export_root_directory()
@@ -124,57 +320,117 @@ function ExportPreviewUI:render(_width)
     self._folder_check_path = output_root
     self._folder_exists = reaper.file_exists(output_root)
   end
-  Widgets.disable_if(not self._folder_exists, function()
-    if ImGui.Button(Ctx(), "Open Output Folder") then
+  if self._folder_exists then
+    ImGui.SameLine(Ctx(), 0, 18)
+    if ImGui.SmallButton(Ctx(), 'Open Output Folder') then
       self:open_output_folder()
     end
-  end, 'Nothing has been exported there yet')
-
-  -- Tracks target: the same accepted takes, landed in the project as
-  -- spotty muted child tracks whose items reference the original
-  -- sources (solo to audition through the source's chain)
-  ImGui.Spacing(Ctx())
-  Widgets.disable_if(total_files == 0, function()
-    if ImGui.Button(Ctx(), string.format("Export to Tracks (%d)", total_files)) then
-      self:start_track_export()
-    end
-  end)
-  Widgets.tooltip("A muted child track per source: matched sections as items "
-    .. "referencing the original audio, colored by confidence. "
-    .. "Solo to audition.")
-
-  ImGui.SameLine(Ctx())
-  local changed, regions_on = ImGui.Checkbox(Ctx(), "Also create regions",
-    self.settings.tracks_regions:get())
-  if changed then
-    self.settings.tracks_regions:set(regions_on)
   end
-  Widgets.tooltip("Named, confidence-colored regions at each matched span. "
-    .. "The ruler becomes the heatmap, and the region render matrix can "
-    .. "batch-render matches. Re-exports replace this session's regions.")
 
   if self._last_track_export then
     local last = self._last_track_export
-    local text = string.format("Last: %d items on %d tracks",
-      last.placed, last.tracks)
+    local parts = {}
+    if last.placed > 0 then
+      table.insert(parts, ('%d items on %d tracks'):format(last.placed, last.tracks))
+    end
     if (last.regions or 0) > 0 then
-      text = text .. string.format(", %d regions", last.regions)
+      table.insert(parts, ('%d regions'):format(last.regions))
     end
     if last.skipped > 0 then
-      text = text .. string.format(", %d skipped", last.skipped)
+      table.insert(parts, ('%d skipped'):format(last.skipped))
     end
-    ImGui.TextColored(Ctx(), 0x888888FF, text .. " at " .. last.when)
+    ImGui.TextColored(Ctx(), 0x888888FF,
+      'Last: ' .. table.concat(parts, ', ') .. ' at ' .. last.when)
   end
 
-  ImGui.Spacing(Ctx())
-  if total_files == 0 then
-    ImGui.TextColored(Ctx(), 0xFFFF80FF, "No accepted suggestions found. Complete curation phase first.")
+  -- Drive the run: one frame's worth of slicing after the band drew,
+  -- so progress renders before the work extends the frame
+  if running then
+    runner:tick()
   end
 end
 
--- Land every accepted take on its source's matched child track.
--- Always the full set: the tracks target has no per-file completion
--- to skip - a re-export replaces the previous landing wholesale.
+-- One pressable action card in the phase-selector language:
+-- InvisibleButton hit area, DrawList body, halo when begging, progress
+-- fill while running. Returns true on click.
+function ExportPreviewUI:render_action_card(id, opts)
+  local c = ExportPreviewUI.CARD
+  local x, y = ImGui.GetCursorScreenPos(Ctx())
+  local w = opts.width
+
+  local clicked = ImGui.InvisibleButton(Ctx(), id, w, c.HEIGHT)
+  local hovered = ImGui.IsItemHovered(Ctx())
+  local held = ImGui.IsItemActive(Ctx()) and not opts.disabled
+
+  if hovered and not opts.disabled then
+    ImGui.SetMouseCursor(Ctx(), ImGui.MouseCursor_Hand())
+  end
+  if opts.tooltip then
+    Widgets.tooltip(opts.tooltip)
+  end
+
+  local dl = ImGui.GetWindowDrawList(Ctx())
+
+  -- Halo with a slow pulse; hover holds it at full glow
+  if opts.halo and not opts.disabled then
+    local pulse = hovered and 1 or (0.5 + 0.5 * math.sin(reaper.time_precise() * 2.2))
+    local accent = Theme.COLORS.pink_opaque
+    for i, alpha in ipairs({ 0x99, 0x55, 0x26 }) do
+      local halo = math.floor(alpha * (0.45 + 0.55 * pulse))
+      ImGui.DrawList_AddRect(dl,
+        x - i, y - i, x + w + i, y + c.HEIGHT + i,
+        (accent & 0xFFFFFF00) | halo, c.ROUNDING + i)
+    end
+  end
+
+  local bg = Theme.COLORS.dark_gray_translucent
+  if not opts.disabled then
+    if held then
+      bg = Theme.COLORS.dark_gray_opaque
+    elseif hovered then
+      bg = Theme.COLORS.dark_gray_semi_transparent
+    end
+  end
+  ImGui.DrawList_AddRectFilled(dl, x, y, x + w, y + c.HEIGHT, bg, c.ROUNDING)
+
+  -- The card doubles as its own progress bar
+  if opts.progress then
+    local fill = math.max(0, math.min(1, opts.progress))
+    if fill > 0 then
+      ImGui.DrawList_AddRectFilled(dl, x, y, x + w * fill, y + c.HEIGHT,
+        (Theme.COLORS.pink_opaque & 0xFFFFFF00) | 0x55, c.ROUNDING)
+    end
+  end
+
+  local press = held and c.PRESS_NUDGE or 0
+  local cursor_x = x + c.PADDING
+
+  if opts.icon then
+    ImGui.SetCursorScreenPos(Ctx(), cursor_x, y + (c.HEIGHT - c.ICON_SIZE) / 2 + press)
+    EmojiText.icon(opts.icon, c.ICON_SIZE)
+    cursor_x = cursor_x + c.ICON_SIZE + 10
+  end
+
+  local line_h = ImGui.GetTextLineHeight(Ctx())
+  local has_tagline = opts.tagline and opts.tagline ~= ''
+  local text_h = has_tagline and (line_h * 2 + 2) or line_h
+  local text_y = y + (c.HEIGHT - text_h) / 2 + press
+
+  ImGui.SetCursorScreenPos(Ctx(), cursor_x, text_y)
+  ImGui.TextColored(Ctx(), opts.disabled and 0x777777FF or 0xFFFFFFFF, opts.title)
+  if has_tagline then
+    ImGui.SetCursorScreenPos(Ctx(), cursor_x, text_y + line_h + 2)
+    ImGui.TextColored(Ctx(), 0x999999FF, opts.tagline)
+  end
+
+  ImGui.SetCursorScreenPos(Ctx(), x, y + c.HEIGHT)
+  return clicked and not opts.disabled
+end
+
+-- Land every accepted take on its source's matched child track and/or
+-- as regions, per the toggles. Always the full set: the project target
+-- has no per-file completion to skip - a re-export replaces the
+-- previous landing wholesale.
 function ExportPreviewUI:start_track_export()
   local current_template = self._live_template or self.settings:get_template()
   local tree = self.data_service:generate_export_items(current_template, self.settings:get_timing())
@@ -190,11 +446,12 @@ function ExportPreviewUI:start_track_export()
   end
   collect_files(tree)
 
-  local opts = {}
+  local opts = { tracks = self.settings.tracks_tracks:get() }
   if self.settings.tracks_regions:get() then
     opts.regions = true
     opts.region_ledger = self.settings.tracks_region_ledger:get()
   end
+  if not opts.tracks and not opts.regions then return end
 
   local ok, result = pcall(self.track_exporter.export, self.track_exporter, queue, opts)
   if not ok then
@@ -216,22 +473,37 @@ function ExportPreviewUI:start_track_export()
   }
 end
 
-function ExportPreviewUI:render_export_tree(export_directories)
+function ExportPreviewUI:render_export_tree(export_directories, opts)
   for _, directory in ipairs(export_directories) do
-    self:render_directory_node(directory)
+    self:render_directory_node(directory, opts or {})
   end
 end
 
-function ExportPreviewUI:render_directory_node(directory)
+function ExportPreviewUI:render_directory_node(directory, opts)
   local tree_label = directory.path == "" and "(Root)" or (directory.display_name .. "/")
 
   EmojiText.icon('folder')
   ImGui.SameLine(Ctx(), 0, 4)
 
-  -- Set nodes to be expanded by default for better visual impact
-  ImGui.SetNextItemOpen(Ctx(), true, ImGui.Cond_FirstUseEver())
+  if opts.force_open then
+    -- Filtering: every surviving directory shows its matches
+    ImGui.SetNextItemOpen(Ctx(), true, ImGui.Cond_Always())
+  elseif opts.default_open then
+    -- Small trees open expanded for visual impact; big ones stay
+    -- collapsed and lean on the counts
+    ImGui.SetNextItemOpen(Ctx(), true, ImGui.Cond_FirstUseEver())
+  end
 
-  if ImGui.TreeNode(Ctx(), tree_label) then
+  local open = ImGui.TreeNode(Ctx(), tree_label)
+
+  -- The count rides the row whether open or closed, so a collapsed
+  -- directory still says what it holds
+  ImGui.SameLine(Ctx(), 0, 8)
+  local count = directory.subtree_file_count or 0
+  ImGui.TextColored(Ctx(), 0x666666FF,
+    ('(%d file%s)'):format(count, count == 1 and '' or 's'))
+
+  if open then
     Trap(function()
       -- Render files in this directory
       for _, file in ipairs(directory.files) do
@@ -240,7 +512,7 @@ function ExportPreviewUI:render_directory_node(directory)
 
       -- Render child directories recursively
       for _, child_directory in ipairs(directory.children) do
-        self:render_directory_node(child_directory)
+        self:render_directory_node(child_directory, opts)
       end
     end)
 
@@ -324,7 +596,11 @@ function ExportPreviewUI:get_status_icon(status)
   end
 end
 
+-- Queue up a deferred export run; the runner ticks it forward a
+-- frame-budget at a time from the action band.
 function ExportPreviewUI:start_export(skip_completed)
+  if self.export_runner:is_running() then return end
+
   self:log("Starting production batch export...")
 
   -- Export what the preview shows: the tree renders from the live
@@ -333,23 +609,54 @@ function ExportPreviewUI:start_export(skip_completed)
   local current_template = self._live_template or self.settings:get_template()
   self:log("Current template: " .. current_template)
 
-  -- Generate export items from real data
   local export_items = self.data_service:generate_export_items(current_template, self.settings:get_timing())
 
-  local success_count, total_count = self:process_all_export_items(export_items, skip_completed)
-  if total_count == 0 then
+  -- Flatten the tree into the work queue, leaving completed files
+  -- alone when asked (Export vs Re-export All)
+  local queue = {}
+  local function collect_files(nodes)
+    for _, node in ipairs(nodes) do
+      for _, file_item in ipairs(node.files) do
+        if not (skip_completed and file_item.status == 'completed') then
+          table.insert(queue, file_item)
+        end
+      end
+      collect_files(node.children)
+    end
+  end
+  collect_files(export_items)
+
+  if #queue == 0 then
     self:log("Nothing to export")
     return
   end
 
-  self:show_export_summary(success_count, total_count)
+  -- The run renders against this snapshot until it finishes
+  self._running_tree = export_items
+
+  self.export_runner:start(queue, {
+    stop_on_error = not self.settings:get_options().skip_on_error,
+  })
+end
+
+-- The runner has finished (or was cancelled): read the counts, surface
+-- the summary, rebuild the tree fresh
+function ExportPreviewUI:finish_export_run()
+  local runner = self.export_runner
+
+  self:show_export_summary(runner.succeeded, runner.total)
+
+  self._running_tree = nil
 
   -- The export may have just created the output root
   self._folder_check_path = nil
 
-  if self.settings:get_options().open_folder_when_done and success_count > 0 then
+  if self.settings:get_options().open_folder_when_done
+    and runner.succeeded > 0 and not runner.cancelled then
     self:open_output_folder()
   end
+
+  runner:reset()
 end
 
 function ExportPreviewUI:open_output_folder()
@@ -472,58 +779,6 @@ function ExportPreviewUI:get_output_full_path(export_item)
   end
 
   return full_path
-end
-
-function ExportPreviewUI:process_all_export_items(export_items, skip_completed)
-  -- Flatten the tree into the work queue, leaving completed files
-  -- alone when asked (Export vs Re-export All)
-  local queue = {}
-  local function collect_files(nodes)
-    for _, node in ipairs(nodes) do
-      for _, file_item in ipairs(node.files) do
-        if not (skip_completed and file_item.status == 'completed') then
-          table.insert(queue, file_item)
-        end
-      end
-      collect_files(node.children)
-    end
-  end
-  collect_files(export_items)
-
-  self:log(string.format("Processing %d files", #queue))
-
-  local options = self.settings:get_options()
-  local success_count = 0
-
-  for i, file_item in ipairs(queue) do
-    self:log(string.format("Processing file %d of %d: %s", i, #queue, file_item.display_name))
-
-    -- Protected call: a crashing item must not abort the batch
-    local ok, success, error_msg = pcall(self.extract_audio_file, self, file_item)
-    if not ok then
-      success, error_msg = false, tostring(success)
-    end
-
-    if success then
-      success_count = success_count + 1
-      self:log("✅ Exported successfully")
-    else
-      self:log(string.format("❌ Export failed: %s", error_msg or "unknown"))
-    end
-
-    -- Persist per-file status so the tree shows real outcomes
-    if file_item.export_id then
-      self.data_service:set_export_status(
-        file_item.export_id, success and 'completed' or 'failed')
-    end
-
-    if not success and not options.skip_on_error then
-      self:log("Stopping at first error (Skip errors and continue is off)")
-      break
-    end
-  end
-
-  return success_count, #queue
 end
 
 function ExportPreviewUI:show_export_summary(success_count, total_count)

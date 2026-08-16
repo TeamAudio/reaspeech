@@ -356,6 +356,24 @@ function TestTrackExporter:testRegionsLandWithNamesAndColors()
     reaper.ColorToNative(table.unpack(TrackExporter.COLOR_GREEN)) | 0x1000000)
 end
 
+-- Regions without tracks: opts.tracks = false lands the spans as
+-- regions only - no child tracks, no items, sources left alone
+function TestTrackExporter:testRegionsOnlyExportCreatesNoTracks()
+  local src = project.tracks[1]
+  local result = make_exporter():export({
+    accepted { source_track = src, display_name = 'line001_take1.wav' },
+  }, { tracks = false, regions = true })
+
+  lu.assertEquals(result.placed, 0)
+  lu.assertEquals(result.tracks, 0)
+  lu.assertEquals(result.regions, 1)
+  lu.assertEquals(#project.tracks, 2)
+  lu.assertEquals(src.folder_depth, 0)
+
+  local region = project.regions[result.region_ledger[1].id]
+  lu.assertEquals(region.name, 'line001_take1')
+end
+
 function TestTrackExporter:testReexportReplacesOwnRegionsOnly()
   local src = project.tracks[1]
   local exporter = make_exporter()

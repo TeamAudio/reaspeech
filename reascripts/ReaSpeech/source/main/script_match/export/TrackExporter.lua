@@ -63,13 +63,16 @@ end
 
 -- Export a flat list of export items (as built by ExportDataService:
 -- each carries .match and a template-resolved .display_name) onto
--- child tracks. opts.regions lands the spans as project regions too;
+-- child tracks. opts.tracks = false skips the tracks and lands only
+-- what else was asked for (regions need no tracks to exist).
+-- opts.regions lands the spans as project regions too;
 -- opts.region_ledger is the previous run's ledger to replace.
 -- Returns { placed, skipped, tracks, regions, region_ledger }.
 function TrackExporter:export(export_items, opts)
   local placed, skipped = 0, 0
   local children = {}
   local region_records = {}
+  local tracks_on = not (opts and opts.tracks == false)
 
   reaper.Undo_BeginBlock()
 
@@ -78,10 +81,13 @@ function TrackExporter:export(export_items, opts)
     local resolved = SuggestionTimeline.resolve(match)
 
     if resolved and resolved.source_path and resolved.source_path ~= '' then
-      local child = self:matched_track_for(resolved.track, children)
       local name = TrackExporter.take_name(match, item.display_name)
-      self:place_item(child, match, resolved, name)
-      placed = placed + 1
+
+      if tracks_on then
+        local child = self:matched_track_for(resolved.track, children)
+        self:place_item(child, match, resolved, name)
+        placed = placed + 1
+      end
 
       table.insert(region_records, {
         start_time = resolved.start_time,
@@ -107,7 +113,8 @@ function TrackExporter:export(export_items, opts)
     result.regions = #result.region_ledger
   end
 
-  reaper.Undo_EndBlock('ReaSpeech: export matches to tracks', -1)
+  reaper.Undo_EndBlock(tracks_on and 'ReaSpeech: export matches to tracks'
+    or 'ReaSpeech: export match regions', -1)
   reaper.UpdateArrange()
 
   self:log(('Track export: %d items on %d tracks, %d regions, %d skipped')
