@@ -361,6 +361,16 @@ function ScriptMatchWorkflow:get_matcher_stream_cache()
   return self.matcher_stream_cache
 end
 
+-- Get the workflow-owned claimed-spans service (created on first
+-- use): the timeline territory accepted takes own, consumed by the
+-- matcher's span exclusion and gap inference
+function ScriptMatchWorkflow:get_claimed_spans()
+  if not self.claimed_spans then
+    self.claimed_spans = ClaimedSpans.new { workflow = self }
+  end
+  return self.claimed_spans
+end
+
 -- Get the workflow-owned needle diagnosis service (created on first
 -- use); shares the matcher stream cache so probes reuse prepared
 -- streams

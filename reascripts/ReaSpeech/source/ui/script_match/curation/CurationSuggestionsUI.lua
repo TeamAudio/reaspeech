@@ -430,6 +430,13 @@ function CurationSuggestionsUI:render_confidence_text(suggestion)
     return
   end
 
+  -- Gap guesses are timeline-reasoned, not text-found: script order
+  -- put the search window here
+  if suggestion.gap_inferred then
+    EmojiText.render(':pin: Gap guess - ' .. confidence_text)
+    return
+  end
+
   -- Long shots wear the dice: the rescue tier found this below the
   -- normal floor, offered because a weak lead beats silent zero
   if suggestion.long_shot then

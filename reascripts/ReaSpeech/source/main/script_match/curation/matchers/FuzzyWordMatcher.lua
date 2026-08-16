@@ -28,6 +28,12 @@ FuzzyWordMatcher = Polo {
   LONG_SHOT_MIN_CONFIDENCE = 0.3,
   SHORT_NEEDLE_LONG_SHOT_MIN_CONFIDENCE = 0.5,
   LONG_SHOT_MAX_MATCHES = 3,
+
+  -- The gap-inference tier searches ONLY a script-order-derived
+  -- window, and that evidence buys a floor below the long-shot tier's
+  -- (at the rescue floor the tier would be dead code - long-shot
+  -- already searched everywhere at 0.3)
+  GAP_MIN_CONFIDENCE = 0.1,
 }
 
 function FuzzyWordMatcher:init()
@@ -54,7 +60,11 @@ function FuzzyWordMatcher:name()
 end
 
 -- Synchronous matching; also the core the async interface drives.
-function FuzzyWordMatcher:match(needle)
+-- context (optional): { gap_window = { track_guid, start_time,
+-- end_time } } - script-order evidence for a straggler's location.
+function FuzzyWordMatcher:match(needle, context)
+  self:_snapshot_claims(needle)
+
   local tokens, options = self:_needle_tokens(needle)
   if #tokens == 0 then
     -- Nothing speakable: a direction-only line. Whisper LEXICALIZES
@@ -76,9 +86,62 @@ function FuzzyWordMatcher:match(needle)
     end
   end
 
+  -- Gap-inference tier: still nothing, but script order says the line
+  -- lives in a specific window - search just there, below the rescue
+  -- floor (the window evidence buys it), marked timeline-reasoned
+  if #suggestions == 0 and context and context.gap_window then
+    local window = context.gap_window
+    local gap_options = {
+      max_matches = self.LONG_SHOT_MAX_MATCHES,
+      min_confidence = self.GAP_MIN_CONFIDENCE,
+      long_shot = true,
+      window = window,
+      gap_inferred = true,
+    }
+    for _, audio_track in ipairs(self.workflow:audio_tracks()) do
+      if audio_track.guid == window.track_guid then
+        self:_match_track(tokens, gap_options, audio_track, suggestions)
+      end
+    end
+  end
+
   table.sort(suggestions, function(a, b) return a.confidence > b.confidence end)
   self:log("Generated " .. #suggestions .. " suggestions")
   return suggestions
+end
+
+-- ================================================================================
+-- SPAN EXCLUSION
+-- ================================================================================
+
+-- One consistent view of claimed territory per matching run: spans
+-- other needles' ACCEPTED takes own are off the table (a duplicated
+-- script line gets steered to its OTHER occurrence - the point of the
+-- compounding mechanic). Graceful no-op when the workflow double has
+-- no claims service.
+function FuzzyWordMatcher:_snapshot_claims(needle)
+  self._active_claims = self.workflow.get_claimed_spans
+    and self.workflow:get_claimed_spans():by_track() or nil
+  self._claiming_needle_guid = needle and needle.guid or nil
+end
+
+-- Majority overlap with a foreign claim disqualifies a candidate;
+-- a needle's own claims never block its re-roll
+function FuzzyWordMatcher:_claimed_by_other(track_guid, start_time, end_time)
+  local claims = self._active_claims and self._active_claims[track_guid]
+  if not claims then return false end
+
+  local duration = math.max(end_time - start_time, 0.001)
+  for _, claim in ipairs(claims) do
+    if claim.needle_guid ~= self._claiming_needle_guid then
+      local overlap = math.min(end_time, claim.end_time)
+        - math.max(start_time, claim.start_time)
+      if overlap > duration * 0.5 then
+        return true
+      end
+    end
+  end
+  return false
 end
 
 -- ================================================================================
@@ -159,7 +222,8 @@ function FuzzyWordMatcher:_vocalization_matches(needle)
       for _, word in ipairs(entry.words) do
         if track_hits >= FuzzyWordMatcher.VOCALIZATION_MAX_PER_TRACK then break end
         local token = TextNormalizer.tokenize(word.text)[1]
-        if token and vocabulary[token] then
+        if token and vocabulary[token]
+          and not self:_claimed_by_other(audio_track.guid, word.start_time, word.end_time) then
           track_hits = track_hits + 1
           table.insert(suggestions, {
             start_time = word.start_time,
@@ -203,6 +267,8 @@ function FuzzyWordMatcher:start_async_generation(needle)
     self:log("Cannot start async generation - job already in progress")
     return false
   end
+
+  self:_snapshot_claims(needle)
 
   local tokens, options = self:_needle_tokens(needle)
   if #tokens == 0 then
@@ -341,22 +407,30 @@ function FuzzyWordMatcher:_match_track(tokens, options, audio_track, suggestions
     local first_word = entry.words[match.start_index]
     local last_word = entry.words[match.end_index]
 
-    local matching_text_parts = {}
-    for i = match.start_index, match.end_index do
-      table.insert(matching_text_parts, entry.words[i].text)
-    end
+    local in_window = not options.window
+      or (first_word.start_time >= options.window.start_time
+        and last_word.end_time <= options.window.end_time)
 
-    table.insert(suggestions, {
-      start_time = first_word.start_time,
-      end_time = last_word.end_time,
-      file = first_word.file,
-      matching_text = table.concat(matching_text_parts, " "),
-      track_guids = { audio_track.guid },
-      confidence = match.confidence,
-      matched_count = match.matched_count,
-      match_type = "fuzzy",
-      long_shot = options.long_shot or nil,
-    })
+    if in_window
+      and not self:_claimed_by_other(audio_track.guid, first_word.start_time, last_word.end_time) then
+      local matching_text_parts = {}
+      for i = match.start_index, match.end_index do
+        table.insert(matching_text_parts, entry.words[i].text)
+      end
+
+      table.insert(suggestions, {
+        start_time = first_word.start_time,
+        end_time = last_word.end_time,
+        file = first_word.file,
+        matching_text = table.concat(matching_text_parts, " "),
+        track_guids = { audio_track.guid },
+        confidence = match.confidence,
+        matched_count = match.matched_count,
+        match_type = "fuzzy",
+        long_shot = options.long_shot or nil,
+        gap_inferred = options.gap_inferred or nil,
+      })
+    end
   end
 end
 

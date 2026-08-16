@@ -49,7 +49,7 @@ local function segment_at(t0, text)
   return { words = words, data = { file = 'fake' } }
 end
 
-local function make_workflow()
+local function make_workflow(claims_by_track)
   local track = {
     guid = 'track-1',
     name = 'VO Track',
@@ -57,16 +57,22 @@ local function make_workflow()
       { key = 'transcript', config = { transcript_file = 'fake.json' } },
     },
   }
-  return {
+  local workflow = {
     audio_tracks = function() return { track } end,
     audio_track = function(_self, _guid) return track end,
   }
+  if claims_by_track then
+    workflow.get_claimed_spans = function()
+      return { by_track = function() return claims_by_track end }
+    end
+  end
+  return workflow
 end
 
-local function make_matcher()
+local function make_matcher(claims_by_track)
   return FuzzyWordMatcher.new {
     session_id = 'session-1',
-    workflow = make_workflow(),
+    workflow = make_workflow(claims_by_track),
   }
 end
 
@@ -266,6 +272,77 @@ function TestFuzzyWordMatcher:testVocalizationAsyncParity()
   local results = matcher:get_results()
   lu.assertEquals(#results, 1)
   lu.assertEquals(results[1].match_type, 'vocalization')
+end
+
+-- Span exclusion: territory another needle's accepted take owns is
+-- off the table; a needle's own claim never blocks its re-roll
+
+function TestFuzzyWordMatcher:testClaimedSpanExcludesForeignNeedle()
+  -- Both take occurrences exist (10s and 20s); OTHER's claim on the
+  -- 10s one steers this needle to the 20s occurrence
+  local matcher = make_matcher({
+    ['track-1'] = { { start_time = 10, end_time = 13, needle_guid = 'OTHER' } },
+  })
+
+  local suggestions = matcher:match({ guid = 'ME', content = 'Jammed. Of course.' })
+
+  lu.assertEquals(#suggestions, 1)
+  lu.assertEquals(suggestions[1].start_time, 20)
+end
+
+function TestFuzzyWordMatcher:testOwnClaimDoesNotBlockReroll()
+  local matcher = make_matcher({
+    ['track-1'] = { { start_time = 10, end_time = 13, needle_guid = 'ME' } },
+  })
+
+  local suggestions = matcher:match({ guid = 'ME', content = 'Jammed. Of course.' })
+
+  lu.assertEquals(#suggestions, 2)
+end
+
+function TestFuzzyWordMatcher:testVocalizationRespectsClaims()
+  fake_segments = { segment_at(10, 'Aah! that hurt') }
+  local matcher = make_matcher({
+    ['track-1'] = { { start_time = 9.5, end_time = 11.5, needle_guid = 'OTHER' } },
+  })
+
+  lu.assertEquals(#matcher:match({ guid = 'ME', content = '[Shrieks.]' }), 0)
+end
+
+-- The gap-inference tier: script order names a window; search just
+-- there, below the rescue floor (the window evidence buys it),
+-- marked timeline-reasoned. Fixture 'jammed of anteater marmalade
+-- wombat' scores 0.16 against the stream: below the 0.3 long-shot
+-- floor, above the 0.1 gap floor (measured against the real aligner).
+
+function TestFuzzyWordMatcher:testGapTierFindsBelowRescueFloorInsideWindow()
+  local matcher = make_matcher()
+  local needle = { guid = 'ME', content = 'jammed of anteater marmalade wombat' }
+
+  -- Without a window: every tier comes up empty
+  lu.assertEquals(#matcher:match(needle), 0)
+
+  -- With the script-order window over the take: the gap tier offers
+  local suggestions = matcher:match(needle,
+    { gap_window = { track_guid = 'track-1', start_time = 5, end_time = 18 } })
+
+  lu.assertIsTrue(#suggestions > 0)
+  for _, suggestion in ipairs(suggestions) do
+    lu.assertIsTrue(suggestion.gap_inferred)
+    lu.assertIsTrue(suggestion.long_shot)
+    lu.assertIsTrue(suggestion.confidence < 0.3)
+  end
+end
+
+function TestFuzzyWordMatcher:testGapWindowExcludesMatchesOutsideIt()
+  local matcher = make_matcher()
+  local needle = { guid = 'ME', content = 'jammed of anteater marmalade wombat' }
+
+  -- The window misses the take entirely: still nothing
+  local suggestions = matcher:match(needle,
+    { gap_window = { track_guid = 'track-1', start_time = 100, end_time = 120 } })
+
+  lu.assertEquals(#suggestions, 0)
 end
 
 -- The diagnosis probe searches an arbitrary transcript FILE (no

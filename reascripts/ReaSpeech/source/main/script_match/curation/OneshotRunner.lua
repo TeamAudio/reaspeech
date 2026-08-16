@@ -93,6 +93,16 @@ function OneshotRunner:start(needles, opts)
     end
   end
 
+  -- The full script-ordered list and an index into it: gap inference
+  -- reasons from a straggler's neighbors
+  self.all_needles = needles or {}
+  self.needle_index_by_guid = {}
+  for i, needle in ipairs(self.all_needles) do
+    if needle.guid then
+      self.needle_index_by_guid[needle.guid] = i
+    end
+  end
+
   self.queue = {}
   for _, needle in ipairs(needles or {}) do
     if needle.guid and not suggested[needle.guid] then
@@ -157,9 +167,22 @@ function OneshotRunner:tick()
   end
 end
 
+-- Script-order context for the matcher's gap-inference tier: only
+-- available when the workflow carries the claims service
+function OneshotRunner:match_context(needle)
+  if not self.workflow.get_claimed_spans then return nil end
+
+  local index = self.needle_index_by_guid[needle.guid]
+  if not index then return nil end
+
+  local window = GapInference.window_for(
+    self.all_needles, index, self.workflow:get_claimed_spans():by_needle())
+  return window and { gap_window = window } or nil
+end
+
 function OneshotRunner:tick_matching(needle, state_manager)
 
-    local ok, suggestions = pcall(self.matcher.match, self.matcher, needle)
+    local ok, suggestions = pcall(self.matcher.match, self.matcher, needle, self:match_context(needle))
     if not ok then
       self:log('Oneshot matching failed for needle ' .. tostring(needle.guid) .. ': ' .. tostring(suggestions))
       suggestions = {}
