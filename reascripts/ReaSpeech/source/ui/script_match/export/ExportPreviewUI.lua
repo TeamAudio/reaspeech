@@ -211,9 +211,13 @@ ExportPreviewUI.CARD = {
   HEIGHT = 46,
   ROUNDING = 6,
   PADDING = 12,
-  GAP = 10,
+  GAP = 14,
   PRESS_NUDGE = 1,
   ICON_SIZE = 24,
+  -- Air between the preview frame and the band; the cards read as
+  -- their own zone, not furniture crowding the tree
+  TOP_MARGIN = 14,
+  BOTTOM_PAD = 6,
 }
 
 -- Everything below the tree region: three big pressable cards (Files
@@ -222,7 +226,8 @@ ExportPreviewUI.CARD = {
 -- own previous run). Fixed height so the tree child can reserve
 -- exactly this much.
 function ExportPreviewUI:action_band_height()
-  local h = 6 + ExportPreviewUI.CARD.HEIGHT + 6
+  local c = ExportPreviewUI.CARD
+  local h = c.TOP_MARGIN + c.HEIGHT + c.BOTTOM_PAD
   if self._last_track_export then
     h = h + ImGui.GetTextLineHeightWithSpacing(Ctx())
   end
@@ -245,7 +250,7 @@ function ExportPreviewUI:render_action_band(stats)
     runner:tick()
   end
 
-  ImGui.Dummy(Ctx(), 0, 4)
+  ImGui.Dummy(Ctx(), 0, c.TOP_MARGIN - 8)
   local x, y = ImGui.GetCursorScreenPos(Ctx())
   local avail = ImGui.GetContentRegionAvail(Ctx())
   local card_w = math.floor((avail - c.GAP * 2) / 3)

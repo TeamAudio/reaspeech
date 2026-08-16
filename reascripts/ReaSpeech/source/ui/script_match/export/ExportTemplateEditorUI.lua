@@ -627,14 +627,14 @@ function ExportTemplateEditorUI:render_autocomplete_popup(width)
   ImGui.Dummy(Ctx(), 0, 0)
 end
 
+-- NOTE: the autocomplete overlay is NOT rendered here - the owning
+-- rail (ExportConfigurationUI) submits it as its very last item, so
+-- nothing paints over it or wins the mouse from it
 function ExportTemplateEditorUI:render(width)
   Trap(function()
     self:render_template_input(width)
     self:render_validation_errors(width)
     self:render_live_preview(width)
     self:render_quick_insert_tokens(width)
-    -- Submitted LAST so it paints (and hit-tests) above the controls
-    -- it overlaps
-    self:render_autocomplete_popup(width)
   end)
 end

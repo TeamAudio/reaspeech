@@ -45,6 +45,13 @@ function ExportConfigurationUI:render(width)
 
     -- Audio format and timing settings (always visible)
     self.settings_ui:render(width - 20)
+
+    -- The autocomplete overlay is the rail's LAST submission: child
+    -- draw commands merge into the parent at submission point, so
+    -- anything rendered after it would both paint over it and win
+    -- the mouse from it (the popup was unclickable under the
+    -- settings sections' items)
+    self.template_editor:render_autocomplete_popup(width - 20)
   end)
 
   ImGui.PopItemWidth(Ctx())
