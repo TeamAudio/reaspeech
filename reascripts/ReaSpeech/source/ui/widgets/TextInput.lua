@@ -67,12 +67,21 @@ TextInput.renderer = function (self)
   -- edit ends. on_change still fires per keystroke for live feedback.
   local buffer = self._edit_buffer or self:value()
 
+  -- Optional InputText flags and callback (an ImGui_Function), each a
+  -- value or a function returning one - the callback in particular
+  -- usually needs lazy creation against a live context
+  local flags = type(options.flags) == 'function' and options.flags() or options.flags
+  local callback = type(options.callback) == 'function' and options.callback() or options.callback
+  if callback and not flags then
+    flags = ImGui.InputTextFlags_None()
+  end
+
   local rv, value
   Widgets.disable_if(options.disabled(), function()
     if options.hint and options.hint ~= '' then
-      rv, value = ImGui.InputTextWithHint(Ctx(), imgui_label, options.hint, buffer)
+      rv, value = ImGui.InputTextWithHint(Ctx(), imgui_label, options.hint, buffer, flags, callback)
     else
-      rv, value = ImGui.InputText(Ctx(), imgui_label, buffer)
+      rv, value = ImGui.InputText(Ctx(), imgui_label, buffer, flags, callback)
     end
   end)
 
