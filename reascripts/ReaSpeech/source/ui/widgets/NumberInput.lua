@@ -20,6 +20,7 @@ NumberInput.new = function (options)
   options.step = options.step or nil
   options.step_fast = options.step_fast or nil
   options.format = options.format or nil
+  options.whole = options.whole or nil
 
   local o = ReaSpeechWidget.new({
     state = options.state,
@@ -54,6 +55,11 @@ NumberInput.renderer = function (self)
   local in_bounds = (options.min == nil or value >= options.min) and (options.max == nil or value <= options.max)
 
   if rv and in_bounds then
+    -- InputDouble accepts fractional typed input regardless of step and
+    -- format, so integer settings must round the committed value
+    if options.whole then
+      value = math.floor(value + 0.5)
+    end
     self:set(value)
   end
 end

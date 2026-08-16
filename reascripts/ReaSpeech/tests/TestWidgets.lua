@@ -46,6 +46,34 @@ function TestWidgets:testDisablerWrapping()
   lu.assertEquals(end_marker, false)
 end
 
+function TestWidgets:testSetKeyboardNav()
+  local nav_flag = 4
+  local other_flags = 16
+  local flags = nav_flag | other_flags
+  local writes = {}
+
+  ImGui.ConfigVar_Flags = function() return 'flags' end
+  ImGui.ConfigFlags_NavEnableKeyboard = function() return nav_flag end
+  ImGui.GetConfigVar = function(_ctx, _var) return flags end
+  ImGui.SetConfigVar = function(_ctx, _var, value)
+    flags = value
+    table.insert(writes, value)
+  end
+
+  -- already enabled: no redundant write
+  Widgets.set_keyboard_nav(true)
+  lu.assertEquals(writes, {})
+
+  -- disabling clears only the nav flag
+  Widgets.set_keyboard_nav(false)
+  lu.assertEquals(flags, other_flags)
+
+  -- re-enabling restores it, unrelated flags intact throughout
+  Widgets.set_keyboard_nav(true)
+  lu.assertEquals(flags, nav_flag | other_flags)
+  lu.assertEquals(#writes, 2)
+end
+
 --
 
 os.exit(lu.LuaUnit.run())
