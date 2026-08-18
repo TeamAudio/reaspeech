@@ -48,7 +48,9 @@ function Theme:init()
       { ImGui.StyleVar_FramePadding, 10.0, 6.0 },
       { ImGui.StyleVar_FrameRounding, 12.0 },
       { ImGui.StyleVar_GrabRounding, 4.0 },
+      { ImGui.StyleVar_ItemSpacing, 8.0, 8.0 },
       { ImGui.StyleVar_PopupBorderSize, 1.0 },
+      { ImGui.StyleVar_WindowPadding, 14.0, 12.0 },
       { ImGui.StyleVar_WindowBorderSize, 1.0 },
     }
   }
