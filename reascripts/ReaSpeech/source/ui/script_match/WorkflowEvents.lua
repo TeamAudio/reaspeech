@@ -44,6 +44,12 @@ WorkflowEvents = {
       required = { 'needle_id' },
     },
 
+    -- OneshotRunner -> SessionStatus (diagnosis pass verdict landed)
+    -- Optional: locator, verdict (nil when the diagnosis errored)
+    needle_diagnosed = {
+      required = { 'needle_id' },
+    },
+
     -- CurationCardUI -> CurationSuggestionsUI
     -- Optional: suggestion_count, error_message
     job_status_changed = {
