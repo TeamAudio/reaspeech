@@ -45,6 +45,16 @@ function TestNumberInput:testWholeRoundsTypedValue()
   lu.assertEquals(committed, { 16 })
 end
 
+function TestNumberInput:testWholeRoundsNegativeValueAwayFromZero()
+  ImGui.InputDouble = function() return true, -15.5 end
+
+  local committed = {}
+  Widgets.NumberInput.renderer(
+    fake_widget({ label = 'n', whole = true }, committed))
+
+  lu.assertEquals(committed, { -16 })
+end
+
 function TestNumberInput:testRejectsOutOfBoundsValue()
   ImGui.InputDouble = function() return true, 30 end
 
