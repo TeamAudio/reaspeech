@@ -1,5 +1,7 @@
 ScriptMaterialExcelSpreadsheetUI = Polo {
-  API_ENDPOINT = '/script_match/parse_spreadsheet'
+  MISSING_EXTENSION_MESSAGE = 'the reaper-datasource extension is not installed. '
+    .. 'Install it from the Team Audio ReaPack repository '
+    .. '(Extensions > ReaPack > Browse packages...), restart REAPER, and retry.',
 }
 
 function ScriptMaterialExcelSpreadsheetUI:init()
@@ -28,17 +30,6 @@ end
 
 function ScriptMaterialExcelSpreadsheetUI:render()
   self:save_if_dirty()
-
-  -- An in-flight parse shows its status even when parsed data exists
-  -- (re-parse refreshes over a configured material)
-  if self.parse_request then
-    if self.parse_interval then
-      self.parse_interval:react(reaper.time_precise())
-    end
-
-    self:render_parse_status()
-    return
-  end
 
   if self.parse_error then
     self:render_parse_error()
@@ -257,11 +248,6 @@ function ScriptMaterialExcelSpreadsheetUI:render_worksheet_chip(index, chip_w, c
   ImGui.EndGroup(Ctx())
 end
 
-function ScriptMaterialExcelSpreadsheetUI:render_parse_status()
-  ImGui.Text(Ctx(), "Parsing in progress...")
-  -- Add logic to show parsing status
-end
-
 function ScriptMaterialExcelSpreadsheetUI:render_parse_error()
   ImGui.TextWrapped(Ctx(), 'Could not read the spreadsheet: ' .. self.parse_error)
   if ImGui.Button(Ctx(), 'Retry') then
@@ -269,21 +255,17 @@ function ScriptMaterialExcelSpreadsheetUI:render_parse_error()
   end
 end
 
+-- The reaper-datasource extension parses synchronously in-process; the
+-- only failure modes are a missing extension, an unreadable file, and
+-- undecodable output, each surfaced as a parse error with Retry
 function ScriptMaterialExcelSpreadsheetUI:parse_spreadsheet()
   self.parse_error = nil
 
-  if reaper.DataSource_Parse then
-    self:parse_with_datasource()
-  else
-    self:parse_with_backend()
+  if not reaper.DataSource_Parse then
+    self:fail_parse(self.MISSING_EXTENSION_MESSAGE)
+    return
   end
-end
 
--- The reaper-datasource extension parses natively and synchronously:
--- no backend, no upload, no polling. Its JSON matches the backend's
--- parse_spreadsheet response shape, so both paths share
--- parse_backend_response.
-function ScriptMaterialExcelSpreadsheetUI:parse_with_datasource()
   self:log("Parsing spreadsheet with reaper-datasource: " .. dump(self.material))
 
   local ok, result = reaper.DataSource_Parse(self.material.filepath, '')
@@ -298,47 +280,12 @@ function ScriptMaterialExcelSpreadsheetUI:parse_with_datasource()
     return
   end
 
-  local success, error_msg = self:parse_backend_response(response)
+  local success, error_msg = self:store_parse_response(response)
   if success then
     self:handle_parse_success()
   else
     self:fail_parse(error_msg or 'Unknown error')
   end
-end
-
-function ScriptMaterialExcelSpreadsheetUI:parse_with_backend()
-  self:log("Starting parse for spreadsheet: " .. dump(self.material))
-  self.parse_request = ReaSpeechAPI:post_request(
-    self.API_ENDPOINT,
-    {},
-    { spreadsheet = self.material.filepath }
-  )
-
-  self.parse_interval = IntervalFunction().new(0.3, function()
-    if not self.parse_request or not self.parse_request:ready() then
-      self:log('Waiting for parse request to be ready...')
-      return
-    end
-
-    if self.parse_request:error() then
-      self:fail_parse(self.parse_request:error())
-      self.parse_request = nil
-      self.parse_interval = nil
-      return
-    end
-
-    local response = self.parse_request:result()
-    local success, error_msg = self:parse_backend_response(response)
-
-    self.parse_interval = nil
-    self.parse_request = nil
-
-    if success then
-      self:handle_parse_success()
-    else
-      self:fail_parse(error_msg or 'Unknown error')
-    end
-  end)
 end
 
 function ScriptMaterialExcelSpreadsheetUI:handle_parse_success()
@@ -354,13 +301,13 @@ function ScriptMaterialExcelSpreadsheetUI:fail_parse(message)
   self.parse_error = message
 end
 
-function ScriptMaterialExcelSpreadsheetUI:parse_backend_response(response)
+function ScriptMaterialExcelSpreadsheetUI:store_parse_response(response)
   if not response then
-    return false, 'Empty response from server'
+    return false, 'Empty parser output'
   end
 
   if not response.sheets then
-    return false, 'No worksheets found in Excel file'
+    return false, 'No worksheets found in spreadsheet'
   end
 
   local material = self.material_config

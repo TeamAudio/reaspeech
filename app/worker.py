@@ -59,9 +59,6 @@ STATES = {
 # Import shared celery instance
 from .celery_app import celery
 
-# Import modular tasks (after celery instance is available)
-from .script_match.tasks import parse_spreadsheet as parse_spreadsheet_task
-
 @celery.task(name="transcribe", bind=True)
 def transcribe(
     self,

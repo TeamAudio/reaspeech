@@ -3,14 +3,8 @@ ScriptMaterialExcelSpreadsheet = Polo {
   key = 'excel_spreadsheet',
 }
 
--- What the backend parse endpoint accepts
-ScriptMaterialExcelSpreadsheet.BACKEND_EXTENSIONS = {
-  ['.xls'] = 'Excel Spreadsheet',
-  ['.xlsx'] = 'Excel Spreadsheet',
-}
-
--- What the reaper-datasource extension parses natively
-ScriptMaterialExcelSpreadsheet.NATIVE_EXTENSIONS = {
+-- What the reaper-datasource extension parses
+ScriptMaterialExcelSpreadsheet.SUPPORTED_EXTENSIONS = {
   ['.xls'] = 'Excel Spreadsheet',
   ['.xlsx'] = 'Excel Spreadsheet',
   ['.xlsm'] = 'Excel Spreadsheet',
@@ -20,14 +14,8 @@ ScriptMaterialExcelSpreadsheet.NATIVE_EXTENSIONS = {
   ['.tsv'] = 'CSV/TSV',
 }
 
--- Import gating is capability-conditional: the native parser opens up
--- formats the backend can't take, and both paths produce the same
--- response shape, so the wider list needs no other changes
 function ScriptMaterialExcelSpreadsheet.get_supported_extensions()
-  if reaper.DataSource_Parse then
-    return ScriptMaterialExcelSpreadsheet.NATIVE_EXTENSIONS
-  end
-  return ScriptMaterialExcelSpreadsheet.BACKEND_EXTENSIONS
+  return ScriptMaterialExcelSpreadsheet.SUPPORTED_EXTENSIONS
 end
 
 function ScriptMaterialExcelSpreadsheet:init()
@@ -51,7 +39,7 @@ function ScriptMaterialExcelSpreadsheet:get_default_material_data()
   }
 end
 
--- Sheet config fields the backend parse owns; everything else in a
+-- Sheet config fields the parser owns; everything else in a
 -- sheet's config is the user's (enabled, layers, line finder, ...)
 ScriptMaterialExcelSpreadsheet.PARSE_DERIVED_KEYS = {
   'column_count', 'row_count', 'hidden_rows', 'bold_rows'

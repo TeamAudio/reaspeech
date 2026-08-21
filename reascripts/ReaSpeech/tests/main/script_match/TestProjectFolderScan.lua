@@ -51,7 +51,6 @@ TestProjectFolderScan = {}
 function TestProjectFolderScan:setUp()
   tree = { ['/proj'] = { files = {}, subdirs = {} } }
   heads = {}
-  reaper.DataSource_Parse = nil
 end
 
 function TestProjectFolderScan:testClassifiesTranscriptsAndSpreadsheets()
@@ -65,14 +64,11 @@ function TestProjectFolderScan:testClassifiesTranscriptsAndSpreadsheets()
   lu.assertEquals(results.spreadsheets, { '/proj/lines.xlsx' })
 end
 
--- The spreadsheet list follows import gating: csv counts only when
--- the native parser is present
-function TestProjectFolderScan:testSpreadsheetGatingIsCapabilityAware()
+-- The spreadsheet list follows import gating, which covers every
+-- format reaper-datasource reads
+function TestProjectFolderScan:testDelimitedFilesCountAsSpreadsheets()
   tree['/proj'].files = { 'lines.csv' }
 
-  lu.assertEquals(#scanner():scan().spreadsheets, 0)
-
-  reaper.DataSource_Parse = function() end
   lu.assertEquals(scanner():scan().spreadsheets, { '/proj/lines.csv' })
 end
 

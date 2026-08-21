@@ -27,14 +27,6 @@ ScriptMaterialWorksheetUI = {
   end
 }
 
-IntervalFunction = function()
-  return {
-    new = function(_, fn)
-      return { fn = fn, react = function() fn() end }
-    end
-  }
-end
-
 require('main/script_match/metadata_layers/TagsMetadataLayer')
 require('main/script_match/setup/needle/LineFinder')
 require('main/script_match/setup/needle/ScriptMaterialExcelSpreadsheet')
@@ -62,18 +54,11 @@ local WORKBOOK_JSON = json.encode({
 })
 
 local function make_ui()
-  local recorded = { events = {}, saved = nil, posts = {} }
+  local recorded = { events = {}, saved = nil }
 
   local storage = {
     get = function() return { worksheets = {} } end,
     set = function(_, material) recorded.saved = material end,
-  }
-
-  ReaSpeechAPI = {
-    post_request = function(_, endpoint, params, files)
-      table.insert(recorded.posts, { endpoint = endpoint, params = params, files = files })
-      return recorded.next_request
-    end
   }
 
   local ui = ScriptMaterialExcelSpreadsheetUI.new {
@@ -114,11 +99,9 @@ function TestNativeParse:test_parses_synchronously_via_datasource()
   lu.assertEquals(ui.material_config.is_parsed, true)
   lu.assertEquals(#ui.material_config.worksheets, 1)
   lu.assertEquals(ui.material_config.worksheets[1].config.name, 'Alpha')
-  lu.assertNil(ui.parse_request)
   lu.assertNil(ui.parse_error)
   lu.assertEquals(recorded.events, { 'script_material_updated' })
   lu.assertEquals(recorded.saved, ui.material_config)
-  lu.assertEquals(#recorded.posts, 0, 'native path must not hit the backend')
 end
 
 function TestNativeParse:test_parse_failure_sets_error_without_retry_loop()
@@ -161,54 +144,36 @@ function TestNativeParse:test_retry_clears_previous_error()
   lu.assertEquals(ui.material_config.is_parsed, true)
 end
 
-TestBackendFallback = {}
+TestMissingExtension = {}
 
-function TestBackendFallback:test_posts_to_backend_without_extension()
+-- Without reaper-datasource there is no parser at all: the material
+-- shows an install message with Retry and nothing is stored or emitted
+function TestMissingExtension:test_reports_missing_extension_as_parse_error()
   local ui, recorded = make_ui()
   reaper.DataSource_Parse = nil
-  recorded.next_request = { ready = function() return false end }
 
   ui:parse_spreadsheet()
 
-  lu.assertEquals(#recorded.posts, 1)
-  lu.assertEquals(recorded.posts[1].endpoint, '/script_match/parse_spreadsheet')
-  lu.assertEquals(recorded.posts[1].files, { spreadsheet = '/tmp/lines.xlsx' })
-  lu.assertNotNil(ui.parse_request)
+  lu.assertEquals(ui.parse_error, ScriptMaterialExcelSpreadsheetUI.MISSING_EXTENSION_MESSAGE)
+  lu.assertStrContains(ui.parse_error, 'reaper-datasource')
+  lu.assertNotEquals(ui.material_config.is_parsed, true)
+  lu.assertEquals(recorded.events, {})
+  lu.assertNil(recorded.saved)
 end
 
-function TestBackendFallback:test_request_error_clears_in_flight_state()
-  local ui, recorded = make_ui()
+function TestMissingExtension:test_retry_after_install_parses()
+  local ui = make_ui()
   reaper.DataSource_Parse = nil
-  recorded.next_request = {
-    ready = function() return true end,
-    error = function() return 'could not connect' end,
-  }
-
   ui:parse_spreadsheet()
-  ui.parse_interval.react()
+  lu.assertNotNil(ui.parse_error)
 
-  lu.assertEquals(ui.parse_error, 'could not connect')
-  lu.assertNil(ui.parse_request)
-  lu.assertNil(ui.parse_interval)
-end
-
-function TestBackendFallback:test_response_completes_parse()
-  local ui, recorded = make_ui()
-  reaper.DataSource_Parse = nil
-  recorded.next_request = {
-    ready = function() return true end,
-    error = function() return nil end,
-    result = function() return json.decode(WORKBOOK_JSON) end,
-  }
-
+  reaper.DataSource_Parse = function()
+    return true, WORKBOOK_JSON
+  end
   ui:parse_spreadsheet()
-  ui.parse_interval.react()
 
-  lu.assertEquals(ui.material_config.is_parsed, true)
-  lu.assertNil(ui.parse_request)
-  lu.assertNil(ui.parse_interval)
   lu.assertNil(ui.parse_error)
-  lu.assertEquals(recorded.events, { 'script_material_updated' })
+  lu.assertEquals(ui.material_config.is_parsed, true)
 end
 
 os.exit(lu.LuaUnit.run())

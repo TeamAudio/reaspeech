@@ -22,10 +22,6 @@ reaper = reaper or {}
 
 TestGetSupportedExtensions = {}
 
-function TestGetSupportedExtensions:tearDown()
-  reaper.DataSource_Parse = nil
-end
-
 -- Parse the dialog map into description -> set-of-extensions, order-
 -- insensitively (comma order within a key is pairs()-dependent)
 local function extensions_by_description(result)
@@ -44,20 +40,7 @@ end
 -- The result feeds Widgets.FileSelector.simple_open, which formats each
 -- key as '*.<key>' (comma keys become '*.a;*.b'): keys must be dotless
 -- or the dialog filter matches nothing
-function TestGetSupportedExtensions:testDialogShapeBackendOnly()
-  local fake_service = { handlers = { ScriptMaterialExcelSpreadsheet } }
-
-  local result = ScriptMaterials.get_supported_extensions(fake_service)
-
-  lu.assertEquals(extensions_by_description(result), {
-    ['Excel Spreadsheet'] = { xls = true, xlsx = true },
-  })
-end
-
--- With reaper-datasource present the gate widens to everything the
--- native parser reads
-function TestGetSupportedExtensions:testDialogShapeNativeParser()
-  reaper.DataSource_Parse = function() end
+function TestGetSupportedExtensions:testDialogShape()
   local fake_service = { handlers = { ScriptMaterialExcelSpreadsheet } }
 
   local result = ScriptMaterials.get_supported_extensions(fake_service)

@@ -6,8 +6,8 @@
   Script Matching session most likely wants: transcript JSONs (sniffed
   for a segments field - cheap evidence, the real import still
   validates) and script spreadsheets (whatever the import gating
-  currently accepts, so the list widens with the reaper-datasource
-  extension). Surfaced as QUICK CHOICES in the link-transcript and
+  accepts - every format reaper-datasource reads). Surfaced as QUICK
+  CHOICES in the link-transcript and
   import-material flows, sparing the file browser.
 
 ]]--
