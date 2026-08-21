@@ -15,6 +15,12 @@ NumberInput.new = function (options)
   options.default = options.default or 0
   options.min = options.min or nil
   options.max = options.max or nil
+  -- InputDouble only draws the +/- step buttons when a step is given
+  -- (InputInt defaults step=1, InputDouble defaults step=0)
+  options.step = options.step or nil
+  options.step_fast = options.step_fast or nil
+  options.format = options.format or nil
+  options.whole = options.whole or nil
 
   local o = ReaSpeechWidget.new({
     state = options.state,
@@ -43,11 +49,22 @@ NumberInput.renderer = function (self)
 
   local current_value = self:value()
 
-  local rv, value = ImGui.InputInt(Ctx(), imgui_label, current_value)
+  local rv, value = ImGui.InputDouble(Ctx(), imgui_label, current_value,
+    options.step, options.step_fast, options.format)
 
   local in_bounds = (options.min == nil or value >= options.min) and (options.max == nil or value <= options.max)
 
   if rv and in_bounds then
+    -- InputDouble accepts fractional typed input regardless of step and
+    -- format, so integer settings must round the committed value
+    -- (half away from zero, so negatives round symmetrically)
+    if options.whole then
+      if value >= 0 then
+        value = math.floor(value + 0.5)
+      else
+        value = math.ceil(value - 0.5)
+      end
+    end
     self:set(value)
   end
 end

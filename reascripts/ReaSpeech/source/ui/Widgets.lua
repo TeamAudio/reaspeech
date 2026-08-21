@@ -37,6 +37,37 @@ function Widgets.disable_if(predicate, f, tooltip)
   end
 end
 
+-- Render items that keyboard navigation must not focus or re-activate.
+-- Panels with their own key bindings use this so Space/Enter act on the
+-- panel's focused element instead of the last-clicked button.
+function Widgets.no_nav(f)
+  ImGui.PushItemFlag(Ctx(), ImGui.ItemFlags_NoNav(), true)
+  Trap(f)
+  ImGui.PopItemFlag(Ctx())
+end
+
+-- ImGui keyboard navigation is on by default (and matters for
+-- accessibility), but it conflicts with panels that implement their own
+-- keyboard handling: nav focus makes Space/Enter re-activate the
+-- last-clicked button. ReaSpeechUI re-enables nav at the start of every
+-- frame; a panel that owns the keyboard calls set_keyboard_nav(false)
+-- while it renders, so suppression only lasts as long as the panel does.
+function Widgets.set_keyboard_nav(enabled)
+  local ctx = Ctx()
+  local flags = ImGui.GetConfigVar(ctx, ImGui.ConfigVar_Flags())
+  local desired
+
+  if enabled then
+    desired = flags | ImGui.ConfigFlags_NavEnableKeyboard()
+  else
+    desired = flags & ~ImGui.ConfigFlags_NavEnableKeyboard()
+  end
+
+  if desired ~= flags then
+    ImGui.SetConfigVar(ctx, ImGui.ConfigVar_Flags(), desired)
+  end
+end
+
 function Widgets.icon(icon, id, w, h, tooltip, color, hover_color)
   assert(tooltip, 'missing tooltip for icon')
   color = color or 0xffffffff

@@ -121,6 +121,46 @@ function TestFonts:testErrorHandlerDefault()
   reaper = old_reaper
 end
 
+function TestFonts:testRegisterRequiresArguments()
+  lu.assertErrorMsgContains('name, font_family, and size are required', function()
+    Fonts:register('mono', nil, 2)
+  end)
+end
+
+function TestFonts:testRegisteredFontReloadsWithSizeChanges()
+  local old_create = ImGui.CreateFont
+  local old_attach, old_detach = ImGui.Attach, ImGui.Detach
+  local old_validate = ImGui.ValidatePtr
+  local old_none, old_bold = ImGui.FontFlags_None, ImGui.FontFlags_Bold
+
+  ImGui.CreateFont = function(name, flags) return { name = name, flags = flags } end
+  ImGui.Attach = function() end
+  ImGui.Detach = function() end
+  ImGui.ValidatePtr = function() return true end
+  ImGui.FontFlags_None = function() return 0 end
+  ImGui.FontFlags_Bold = function() return 1 end
+
+  Fonts._attached_ctx = {}
+  Fonts:register('mono', 'monospace', 4)
+  lu.assertTrue(Fonts._has_new_fonts)
+
+  Fonts:load_and_attach('ctx', 10)
+  lu.assertEquals(Fonts.mono.size, 14)
+  lu.assertEquals(Fonts.mono.object.name, 'monospace')
+
+  -- a size change rebuilds registered fonts at the new relative size
+  Fonts:load_and_attach('ctx', 12)
+  lu.assertEquals(Fonts.mono.size, 16)
+
+  Fonts.registered_fonts = nil
+  Fonts.mono = nil
+  Fonts._has_new_fonts = false
+  ImGui.CreateFont = old_create
+  ImGui.Attach, ImGui.Detach = old_attach, old_detach
+  ImGui.ValidatePtr = old_validate
+  ImGui.FontFlags_None, ImGui.FontFlags_Bold = old_none, old_bold
+end
+
 --
 
 os.exit(lu.LuaUnit.run())
