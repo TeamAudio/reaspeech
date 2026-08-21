@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Dict, List, Any
+from typing import Dict, List
 from app.celery_app import celery
 
 logger = logging.getLogger(__name__)
@@ -38,113 +38,6 @@ def read_row_styles(spreadsheet_path: str) -> Dict[str, Dict[str, List[int]]]:
         logger.warning(f"Could not read row style info: {e}")
     return styles
 
-@celery.task(name="script_match.fuzzy_match", bind=True)
-def fuzzy_match(
-    self,
-    needle: Dict[str, Any],
-    audio_tracks: List[Dict[str, Any]],
-    options: Dict[str, Any] = None
-):
-    """
-    Perform fuzzy matching of needle text against audio track transcripts.
-    
-    Args:
-        needle: Dictionary containing script content and metadata
-        audio_tracks: List of audio track objects with transcript data
-        options: Optional matching configuration (algorithms, thresholds, etc.)
-    
-    Returns:
-        List of suggestion objects with confidence scores
-    """
-    needle_text = needle.get('content', '')
-    logger.info(f"Starting fuzzy match for needle: '{needle_text}'")
-    
-    # STEP7_DEBUG: Log task input structure for validation
-    logger.info(f"STEP7_DEBUG: Task received needle keys: {list(needle.keys())}")
-    logger.info(f"STEP7_DEBUG: Task received {len(audio_tracks)} audio tracks")
-    logger.info(f"STEP7_DEBUG: Task options: {options}")
-    
-    # Set default options
-    options = options or {}
-    max_suggestions = options.get('max_suggestions', 10)
-    confidence_threshold = options.get('confidence_threshold', 0.1)
-    
-    # Update progress
-    self.update_state(
-        state='PROCESSING',
-        meta={'progress': {'units': 'tracks', 'total': len(audio_tracks), 'current': 0}}
-    )
-    
-    try:
-        from .matching import FuzzyMatcher
-        
-        matcher = FuzzyMatcher(
-            confidence_threshold=confidence_threshold,
-            progress_callback=lambda current, total: self.update_state(
-                state='PROCESSING',
-                meta={'progress': {'units': 'tracks', 'total': total, 'current': current}}
-            )
-        )
-        
-        suggestions = matcher.match(needle, audio_tracks)
-        
-        # STEP7_DEBUG: Log raw suggestions before filtering
-        logger.info(f"STEP7_DEBUG: Raw suggestions count: {len(suggestions)}")
-        logger.debug(f"STEP7_DEBUG: Raw suggestions type: {type(suggestions[0]) if suggestions else 'N/A'}")
-        
-        # Convert dataclass objects to dictionaries for JSON serialization
-        suggestions_dicts = []
-        for suggestion in suggestions:
-            if hasattr(suggestion, '__dict__'):
-                # It's a dataclass, convert to dict
-                suggestion_dict = {
-                    'start_time': suggestion.start_time,
-                    'end_time': suggestion.end_time,
-                    'matching_text': suggestion.matching_text,
-                    'track_guids': suggestion.track_guids,
-                    'confidence': suggestion.confidence,
-                    'match_type': getattr(suggestion, 'match_type', 'exact'),
-                    'metadata': getattr(suggestion, 'metadata', {})
-                }
-            else:
-                # Already a dict
-                suggestion_dict = suggestion
-            suggestions_dicts.append(suggestion_dict)
-        
-        # Filter and sort suggestions
-        filtered_suggestions = [
-            s for s in suggestions_dicts 
-            if s['confidence'] >= confidence_threshold
-        ]
-        
-        # Limit results
-        if max_suggestions > 0:
-            filtered_suggestions = filtered_suggestions[:max_suggestions]
-        
-        logger.info(f"Fuzzy match completed: {len(filtered_suggestions)} suggestions found")
-        
-        # STEP7_DEBUG: Log response structure for validation
-        result = {
-            'suggestions': filtered_suggestions,
-            'stats': {
-                'needle_text': needle_text,
-                'total_suggestions': len(suggestions_dicts),
-                'filtered_suggestions': len(filtered_suggestions),
-                'tracks_processed': len(audio_tracks)
-            }
-        }
-        
-        logger.info(f"STEP7_DEBUG: Response structure - suggestions: {len(result['suggestions'])}, stats: {result['stats']}")
-        if result['suggestions']:
-            logger.debug(f"STEP7_DEBUG: First suggestion keys: {list(result['suggestions'][0].keys())}")
-        
-        return result
-        
-    except Exception as e:
-        logger.error(f"Fuzzy match error: {str(e)}")
-        raise
-
-
 @celery.task(name="script_match.parse_spreadsheet", bind=True)
 def parse_spreadsheet(
     self,
@@ -152,9 +45,9 @@ def parse_spreadsheet(
     filename: str
 ):
     """
-    Parse uploaded spreadsheet for script matching.
-    This could eventually replace the sync version in webservice.py
-    
+    Parse an uploaded spreadsheet into per-sheet cell data plus row style
+    info (hidden and bold rows).
+
     Args:
         spreadsheet_path: Path to uploaded spreadsheet file
         filename: Original filename
