@@ -82,15 +82,25 @@ function Widgets.icon(icon, id, w, h, tooltip, color, hover_color)
   return rv
 end
 
-function Widgets.icon_button(icon, id, w, h, tooltip, color)
+function Widgets.icon_button(icon, id, w, h, tooltip, color, icon_scale)
   assert(tooltip, 'missing tooltip for icon')
   color = color or 0xffffffff
+  icon_scale = icon_scale or 0.6
   local x, y = ImGui.GetCursorScreenPos(Ctx())
   local rv = ImGui.Button(Ctx(), id, w, h)
   local dl = ImGui.GetWindowDrawList(Ctx())
-  icon(dl, x + w * 0.2, y + h * 0.2, w * 0.6, h * 0.6, color)
+  local inset_x = w * (1 - icon_scale) * 0.5
+  local inset_y = h * (1 - icon_scale) * 0.5
+  icon(dl, x + inset_x, y + inset_y, w * icon_scale, h * icon_scale, color)
   Widgets.tooltip(tooltip)
   return rv
+end
+
+function Widgets.inline_icon(icon, id, w, h, tooltip, color, hover_color)
+  local line_height = ImGui.GetTextLineHeight(Ctx())
+  local offset_y = math.max(0, (line_height - h) * 0.5)
+  ImGui.SetCursorPosY(Ctx(), ImGui.GetCursorPosY(Ctx()) + offset_y)
+  return Widgets.icon(icon, id, w, h, tooltip, color, hover_color)
 end
 
 function Widgets.link(text, onclick, text_color, underline_color)

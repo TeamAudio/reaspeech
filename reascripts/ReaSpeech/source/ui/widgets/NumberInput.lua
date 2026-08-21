@@ -57,8 +57,13 @@ NumberInput.renderer = function (self)
   if rv and in_bounds then
     -- InputDouble accepts fractional typed input regardless of step and
     -- format, so integer settings must round the committed value
+    -- (half away from zero, so negatives round symmetrically)
     if options.whole then
-      value = math.floor(value + 0.5)
+      if value >= 0 then
+        value = math.floor(value + 0.5)
+      else
+        value = math.ceil(value - 0.5)
+      end
     end
     self:set(value)
   end
