@@ -94,6 +94,27 @@ function TestTween:testDocumentation()
   value = tween()
 end
 
+function TestTween:testFunctionEndValue()
+  local time = 0
+  local linear = function(t, b, c, d) return b + c * t / d end
+  local boring_tween = Tween(linear, function() return time end)
+
+  local endpoint = 10
+  local tween = boring_tween(0, function() return endpoint end, 2)
+
+  time = 1
+  lu.assertEquals(tween(), 5)
+
+  -- the endpoint is re-resolved every frame, not captured at creation
+  endpoint = 20
+  lu.assertEquals(tween(), 10)
+
+  -- past the duration, the tween returns the current endpoint
+  time = 2
+  endpoint = 30
+  lu.assertEquals(tween(), 30)
+end
+
 --
 
 os.exit(lu.LuaUnit.run())

@@ -39,11 +39,13 @@ function ReaSpeechControlsUI:init_tabs()
       end,
       render = function()
         if ImGui.BeginPopup(Ctx(), 'new-tab-popup') then
-          for _, menu_item in ipairs(self.plugins:new_tab_menu()) do
-            if ImGui.Selectable(Ctx(), menu_item.label) then
-              menu_item.on_click()
+          Trap(function()
+            for _, menu_item in ipairs(self.plugins:new_tab_menu()) do
+              if ImGui.Selectable(Ctx(), menu_item.label) then
+                menu_item.on_click()
+              end
             end
-          end
+          end)
           ImGui.EndPopup(Ctx())
         end
       end
@@ -111,7 +113,7 @@ function ReaSpeechControlsUI:_render_drop_zone()
   }
 
   for i, drop_zone in ipairs(self._drop_zones) do
-    local child_flags = ImGui.WindowFlags_None() | ImGui.ChildFlags_Border()
+    local child_flags = ImGui.WindowFlags_None() | ImGui.ChildFlags_Borders()
 
     local which_theme = drop_zone.hovered and theme_selected or theme
 
