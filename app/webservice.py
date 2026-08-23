@@ -137,8 +137,7 @@ async def index():
 
 @app.get("/reaspeech", response_class=HTMLResponse, include_in_schema=False)
 async def reaspeech(request: Request):
-    return templates.TemplateResponse("index.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "index.html", {
         "reascript_filename": reascript_filename("ReaSpeech"),
         "docs_url": docs_url,
     })
@@ -146,8 +145,7 @@ async def reaspeech(request: Request):
 @app.get("/reascript", response_class=PlainTextResponse, include_in_schema=False)
 async def reascript(request: Request, name: str, host: str, protocol: str):
     filename = reascript_filename(name)
-    return templates.TemplateResponse("reascript.lua", {
-            "request": request,
+    return templates.TemplateResponse(request, "reascript.lua", {
             "name": name,
             "host": host,
             "protocol": protocol,
