@@ -304,18 +304,25 @@ function CurlRequest._init()
     local uploads = {}
 
     for key, path in pairs(self.file_uploads or {}) do
-      table.insert(uploads, { '-F', self._maybe_quote(key .. '=@"' .. path .. '"') })
+      table.insert(uploads, { self._curl_file_upload_syntax(key, path) })
     end
 
     return table.flatten(uploads)
   end
 
-  function API._maybe_quote(str)
-    if EnvUtil.is_windows() then
-      return str
-    else
-      return "'" .. str .. "'"
+  function API._curl_file_upload_syntax(keyname, filename)
+    local result = '-F' .. keyname .. '=@'
+
+    if filename:find("[,;]") then     -- curl -F key=@"file" syntax
+      filename =  "\"".. filename.. "\""
     end
+
+    if filename:find("[ '\"]") then   -- spaces or quotes
+      result = '`' .. result .. filename .. '`'
+    else
+      result = result .. filename
+    end
+    return ' ' .. result
   end
 
   function API:curl_timeout_argument()
