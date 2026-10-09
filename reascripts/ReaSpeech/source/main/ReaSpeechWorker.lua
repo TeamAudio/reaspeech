@@ -70,13 +70,13 @@ function ReaSpeechWorker:start_next_job()
   local job_options = {
     model = data.model_name or 'small',
     language = data.language or '',
-    translate = data.task == 'translate',
+    translate = data.task == 'translate' and data.model_name ~= 'large-v3-turbo',
     vad = data.vad_filter == true or data.vad_filter == 'true',
     words = true,
     hotwords = data.hotwords or '',
     beamSize = ReaSpeechWorker.BEAM_SIZE,
   }
-  job_options_json = json.encode(job_options)
+  local job_options_json = json.encode(job_options)
   self:log(active.job.path)
   self:debug(job_options_json)
 
@@ -95,7 +95,7 @@ function ReaSpeechWorker:poll_active_job()
     if not event_json or event_json == '' then return end
 
     local ok, event = pcall(json.decode, event_json)
-    if not ok then
+    if not ok or type(event) ~= 'table' or type(event.type) ~= 'string' then
       self:finish_with_error('Could not decode ReaSpeech Lib response: ' .. tostring(event))
       return
     end
@@ -106,6 +106,8 @@ end
 
 function ReaSpeechWorker:handle_event(event)
   local active = self.active_job
+  if active.cancelling and event.type ~= 'completed'
+    and event.type ~= 'cancelled' and event.type ~= 'error' then return end
   if event.type == 'started' then
     active.status = 'Transcribing'
   elseif event.type == 'progress' then
@@ -120,11 +122,12 @@ function ReaSpeechWorker:handle_event(event)
       _job = active.job,
       callback = active.callback,
     }
-    table.insert(self.responses, response)
+    if not active.cancelling then table.insert(self.responses, response) end
     self.active_job = nil
     self:start_next_job()
   elseif event.type == 'cancelled' then
     self.active_job = nil
+    self:start_next_job()
   elseif event.type == 'error' then
     self:finish_with_error(event.error or 'Unknown transcription error')
   end
@@ -159,10 +162,12 @@ function ReaSpeechWorker:status()
 end
 
 function ReaSpeechWorker:cancel()
-  if self.active_job and self.active_job.job_id then
-    reaper.ReaSpeech_Cancel(self.active_job.job_id)
-  end
-  self.active_job = nil
   self.pending_jobs = {}
-  self.job_count = 0
+  local active = self.active_job
+  self.job_count = active and 1 or 0
+  if active and active.job_id and not active.cancelling then
+    active.cancelling = true
+    active.status = 'Cancelling'
+    reaper.ReaSpeech_Cancel(active.job_id)
+  end
 end

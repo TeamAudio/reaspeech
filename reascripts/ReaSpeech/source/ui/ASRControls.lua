@@ -62,7 +62,8 @@ function ASRControls:init()
     state = self.settings.translate,
     label_long = 'Translate to English',
     label_short = 'Translate',
-    width_threshold = ReaSpeechControlsUI.NARROW_COLUMN_WIDTH
+    width_threshold = ReaSpeechControlsUI.NARROW_COLUMN_WIDTH,
+    disabled_if = function() return self.model_name:value() == 'large-v3-turbo' end,
   }
 
   self.hotwords = Widgets.TextInput.new {
@@ -92,13 +93,24 @@ function ASRControls:init()
 end
 
 function ASRControls:init_model_name()
+  if not WhisperModels.get_model_by_name(self.settings.model_name:get()) then
+    self.settings.model_name:set(self.DEFAULT_MODEL_NAME)
+  end
+  self:normalize_translation()
   self.model_name = Widgets.Combo.new {
     state = self.settings.model_name,
     label = 'Model',
     help_text = self.HELP_MODEL,
     items = WhisperModels.get_model_names(self.asr_engine),
     item_labels = self:get_model_labels(),
+    on_change = function() self:normalize_translation() end,
   }
+end
+
+function ASRControls:normalize_translation()
+  if self.settings.model_name:get() == 'large-v3-turbo' then
+    self.settings.translate:set(false)
+  end
 end
 
 function ASRControls:init_asr_info()
@@ -279,6 +291,7 @@ function ASRControls:render_initial_prompt()
 end
 
 function ASRControls:get_request_data()
+  self:normalize_translation()
   local request_data = {
     language = self.language:value(),
     translate = self.translate:value(),
