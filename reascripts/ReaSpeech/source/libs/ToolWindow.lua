@@ -279,7 +279,7 @@ function ToolWindow._render_window(o)
   local state = o._tool_window
 
   if state.position == ToolWindow.POSITION_CENTER then
-    local center = {ImGui.Viewport_GetCenter(ImGui.GetWindowViewport(Ctx()))}
+    local center = {ImGui.Viewport_GetCenter(ImGui.GetMainViewport(Ctx()))}
     ImGui.SetNextWindowPos(Ctx(), center[1], center[2], ImGui.Cond_Appearing(), 0.5, 0.5)
   elseif type(state.position) == 'table' and #state.position == 2 then
     local position = state.position

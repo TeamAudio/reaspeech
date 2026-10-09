@@ -1,23 +1,22 @@
 LUA53=lua5.3
-LUAC53=luac5.3
 LUA54=lua5.4
-LUAC54=luac5.4
 LUACHECK=luacheck
 LUA=lua
+PYTHON=python3
 
-VENDOR=json.lua url.lua
+REASCRIPTS_DIR?=$(abspath ../../../reascripts)
+
+VENDOR=json.lua
 SOURCE_ROOT=source
 TEST_ROOT=tests
 
 # Miscellaneous directly-referenced bundle components
 BUNDLE_INCLUDE=$(SOURCE_ROOT)/include
-BUNDLE_TARGET=build/ReaSpeechBundle.lua
+BUNDLE_TARGET=build/ReaSpeech.lua
 
 # usage: $(call lua_sources,<directory>,<file_prefix>)
 # e.g. $(call lua_sources,tests,Test) -> tests/Test*.lua tests/**/Test*.lua
 lua_sources=$(wildcard $(1)/$(2)*.lua) $(foreach d, $(wildcard $(1)/*), $(call lua_sources, $(d),$(2)))
-
-dest=../../app/static/reascripts/ReaSpeech
 
 SOURCES=libs ui main
 
@@ -35,7 +34,7 @@ main:=$(BUNDLE_INCLUDE)/main.lua
 
 bundle_contents:=$(headers) $(vendor) $(images) $(sources) $(version) $(main)
 
-all: lint test publish
+all: lint test build
 
 lint: $(source)
 	$(LUACHECK) $?
@@ -48,27 +47,19 @@ test-noversion: $(source) $(tests)
 	true $(foreach test, $(tests), && $(LUA) $(test) -v)
 
 .PHONY: build
-build: build/ReaSpeech-5.3.luac build/ReaSpeech-5.4.luac
+build: $(BUNDLE_TARGET)
 
 $(BUNDLE_TARGET): $(bundle_contents)
-	cat $(bundle_contents) > $(BUNDLE_TARGET)
-
-build/ReaSpeech-5.3.luac: $(BUNDLE_TARGET)
-	$(LUAC53) -o build/ReaSpeech-5.3.luac -s $(BUNDLE_TARGET)
-
-build/ReaSpeech-5.4.luac: $(BUNDLE_TARGET)
-	$(LUAC54) -o build/ReaSpeech-5.4.luac -s $(BUNDLE_TARGET)
-
-.PHONY: publish5.3
-publish5.3: build/ReaSpeech-5.3.luac
-	cp build/ReaSpeech-5.3.luac $(dest)/
-
-.PHONY: publish5.4
-publish5.4: build/ReaSpeech-5.4.luac
-	cp build/ReaSpeech-5.4.luac $(dest)/
+	mkdir -p $(dir $(BUNDLE_TARGET))
+	cat $(bundle_contents) | sed 's/@REASPEECH_VERSION@/$(shell sed -n 's/.*VERSION = "\([^"]*\)"/\1/p' version.lua)/' > $(BUNDLE_TARGET)
 
 .PHONY: publish
-publish: publish5.3 publish5.4
+publish: $(BUNDLE_TARGET)
+	$(PYTHON) ../../scripts/publish_reapack.py --reascripts-dir "$(REASCRIPTS_DIR)" "$(BUNDLE_TARGET)"
+
+.PHONY: publish-release
+publish-release: $(BUNDLE_TARGET)
+	$(PYTHON) ../../scripts/publish_reapack.py --release --reascripts-dir "$(REASCRIPTS_DIR)" "$(BUNDLE_TARGET)"
 
 .PHONY: tags
 tags : tagged_paths = $(SOURCE_ROOT)
@@ -81,4 +72,4 @@ tags:
 
 .PHONY: clean
 clean:
-	rm -f build/ReaSpeech-5.3.luac build/ReaSpeech-5.4.luac $(BUNDLE_TARGET) TAGS
+	rm -f $(BUNDLE_TARGET) TAGS

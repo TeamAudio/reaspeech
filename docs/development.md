@@ -1,222 +1,65 @@
 # Development
 
-We expect that roughly 96.7533% of users will have their needs met with things
-as they are, but for that remaining 3.2467% here's how you can make changes
-and rebuild.
+The application is maintained as readable Lua modules under
+`reascripts/ReaSpeech/source`. The release artifact is one self-contained
+`reascripts/ReaSpeech/build/ReaSpeech.lua` file.
 
-## Design Philosophy
+## Requirements
 
-Programming with Lua inside of REAPER - while generally fluid and intuitive,
-once you understand the model that ReaScript provides - can be tricky and
-littered with gotchas that can (and have) left even the most seasoned
-developers in a somewhat-comatose state of crisis, only emitting a faint but
-discernible existential wail.
+- Lua 5.3 and 5.4 for the test suite
+- LuaCheck for linting
+- Make and standard command-line file utilities
+- REAPER with ReaImGui 0.10 or newer
+- ReaSpeech Lib installed in REAPER's `UserPlugins` directory
 
-ReaSpeech code is written to mostly respect the top-level namespace and
-environment of the running Lua interpreter. Use of globals is limited to the
-variables `app` (the single instance of `ReaSpeechUI`) and `ctx` (the ImGui
-context) - both instantiated in `ReaSpeechMain.lua`.
+## Build and test
 
-"Building" the script for distribution consists of concatenating a specified
-collection of Lua source files (everything in `source` and from a common
-library), so any code should be written to not assume that any symbols or
-objects (variables, tables or "classes") are available on the initial parse
-(see `source/libs/IntervalFunction.lua` for an example of how ReaScript-aware
-code is written but deferred). By doing things this way, we avoid confusion
-as to the loading behavior of Lua modules within REAPER, at the expense of
-defining these symbols up-front and independently of any other code.
-
-Having said all this, there are a few guarantees of bundle order. The main
-directories under `source` (`libs`, `ui` & `main`) represent their own stages.
-This means that you can count on symbols from previous stages being bundled
-(and therefore present in the namespace) by the time later stages are
-processed. If you want to confidently use in top-level code any symbols
-within the same stage, it might be best to do the deferred loading described
-above.
-
-Further, directories that exist lower in a hierarchy will be bundled after
-any sibling `*.lua` files. An example here is `source/ui/widgets/*.lua` which
-will appear in the bundle after everything in `source/ui/*.lua`.
-
-## Using Docker Compose
-
-The most straightforward way to work on ReaSpeech is to use Docker Compose.
-This will set up the development environment for you and allow you to make
-changes to the code without having to worry about dependencies. It is also
-possible to run ReaSpeech without Docker, but this requires setting up the
-environment manually. Both methods are described below.
-
-To build and run the ReaSpeech Docker image using Docker Compose, run the
-following command:
-
-### CPU
+From `reascripts/ReaSpeech`, run:
 
 ```sh
-docker compose up --build
+make lint
+make test
+make build
 ```
 
-### GPU
+`make build` concatenates the header, bundled JSON implementation, embedded
+images, application modules, version, and entry point into
+`build/ReaSpeech.lua`. The `build` directory is ignored by Git.
 
-If you have a compatible NVIDIA GPU and would like to run the GPU version of
-the ReaSpeech Docker image using Docker Compose, you can use the following
-command:
+## Publishing
 
-```sh
-docker compose -f docker-compose.gpu.yml up --build
-```
+The release bundle is published through the Team Audio ReaPack repository. By
+default that repository is expected at `../reascripts` relative to this one.
 
-> **_NOTE:_** These instructions assume you are running a version of Docker
-> Compose that supports V2 syntax. If you are using an older version of
-> Docker Compose, you may need to replace "docker compose" with
-> "docker-compose" (hyphenated). See
-> [Migrate to Compose V2](https://docs.docker.com/compose/migrate/)
-> for details.
+Stage the generated package in the ReaPack checkout and inspect the printed
+diff:
 
-This will build the Docker image and run it in a container. You can access the
-ReaSpeech web interface at [http://localhost:9000](http://localhost:9000).
+    make -C reascripts/ReaSpeech publish
 
-You can leave off the `--build` flag if you have already built the image and
-just want to run the container.
+This does not commit or push anything. Restore the staged package after review,
+ensure the ReaPack repository is clean, then create the release commits with:
 
-To stop the Docker container, press `Ctrl+C` in the terminal where Docker
-Compose is running.
+    make -C reascripts/ReaSpeech publish-release
 
-### Filesystem Mounting
+This builds `build/ReaSpeech.lua`, copies it to `ReaSpeech/ReaSpeech.lua` in the
+ReaPack repository, commits the package, runs `reapack-index` to commit the
+updated index, and leaves both commits for review. Push the ReaPack repository
+manually to publish. Override the destination with
+`REASCRIPTS_DIR=/path/to/reascripts` when needed.
+The result is plain Lua and runs on both Lua versions supported by REAPER.
 
-When running the ReaSpeech Docker image with Docker Compose, the "app" directory
-is mounted as a volume in the container. This allows you to make changes to the
-ReaSpeech code and see the changes reflected in the container without having to
-rebuild the image.
+The tests use a mocked REAPER API and can be run without launching REAPER.
+For interactive testing, rebuild `build/ReaSpeech.lua`, add that file to
+REAPER's Actions window, and run it.
 
-## Building ReaScripts
+## Architecture
 
-The ReaSpeech UI and related code are in a set of Lua files in the "reascripts"
-directory. If you have the necessary dependencies (see the Makefile for details),
-you can build the ReaScripts by running:
+`ReaSpeechWorker` translates the UI's existing queued requests into
+`ReaSpeech_StartEx` with JSON options, polls events using `ReaSpeech_Poll`,
+and forwards completed segments into the existing transcript editor.
+Cancellation calls `ReaSpeech_Cancel` and keeps polling until a terminal event
+arrives.
 
-```sh
-cd reascripts/ReaSpeech
-make
-```
-
-You can also build the ReaScripts by running the `make` command within the
-container created by Docker Compose:
-
-```sh
-# CPU version
-docker exec -w /app/reascripts/ReaSpeech reaspeech-reaspeech-1 make
-# GPU version
-docker exec -w /app/reascripts/ReaSpeech reaspeech-reaspeech-gpu-1 make
-```
-
-### Automatic Rebuilding
-
-If you would like the ReaScripts to be automatically rebuilt whenever you make
-changes to the Lua files, you can run the following command:
-
-```sh
-# CPU version
-scripts/reawatch ReaSpeech
-# GPU version
-scripts/reawatch-gpu ReaSpeech
-```
-
-### Build-Free ReaScript Development
-
-A "ReaSpeechDev.lua" file is provided in the "reascripts/ReaSpeech" directory.
-This file loads all of the Lua source files directly each time it runs,
-enabling you to make changes to the Lua files and see the changes reflected in
-REAPER without having to rebuild the ReaScripts. To use this file, add it as
-an action in REAPER.
-
-## Web Service Development
-
-The ReaSpeech web service is written in Python using the FastAPI framework. If
-you make changes to the web service code, you will need to restart the web
-service for the changes to take effect. You can do this by stopping the Docker
-container and running `docker compose up` again. You can also restart the
-container by clicking the "Restart" button in the Docker Desktop interface.
-
-## Environment Variables
-
-You can customize the behavior of the ReaSpeech Docker image by setting
-environment variables when running the container. Here are the available
-environment variables and their default values:
-
-- `ASR_ENGINE`: The ASR engine to use. Options are `faster_whisper` (default),
-  `openai_whisper`, and `whisper_cpp`.
-
-To set an environment variable when running the Docker container, use the `-e`
-flag followed by the variable name and value. For example, to use the
-`openai_whisper` engine, you would run:
-
-```sh
-docker run -d -p 9000:9000 -e ASR_ENGINE=openai_whisper techaudiodoc/reaspeech:latest
-```
-
-When using Docker Compose, you can set environment variables in the
-`docker-compose.yml` or `docker-compose.gpu.yml` file. For example:
-
-```yaml
-services:
-  reaspeech:
-    environment:
-      - ASR_ENGINE=openai_whisper
-```
-
-## Filesystem Permissions
-
-When running the ReaSpeech Docker image with Docker Compose, the "app" and
-"reaspeech" directories are mounted as volumes in the container. This allows
-you to make changes to the ReaSpeech code and see the changes reflected in the
-container without having to rebuild the image. However, the permissions on the
-mounted volume may not match the permissions in the container, which can cause
-issues when running the ReaSpeech service.
-
-To fix this issue, you can use the `SERVICE_UID` and `SERVICE_GID` Dockerfile
-arguments. By default, the service runs as the `service` user with UID 1001
-and GID 1001. If you need to change these values, you can create a `.env` file
-that sets the `SERVICE_UID` and `SERVICE_GID` environment variables. An
-example is provided, which you can copy and modify to taste:
-
-```sh
-cp .env.example .env
-```
-
-This file will be ignored by Docker and Git, so you can use it to customize
-your local environment.
-
-## Restart Behavior
-
-By default, the ReaSpeech Docker container will restart automatically if it
-crashes or is stopped. This behavior can be customized using the `--restart`
-flag when running the container. The available options are:
-
-- `no`: Do not restart the container if it stops or crashes.
-- `always`: Always restart the container if it stops or crashes.
-- `on-failure`: Restart the container only if it stops with a non-zero exit
-  code.
-- `unless-stopped`: Always restart the container unless it is explicitly
-  stopped.
-
-To set the restart behavior when running the Docker container, use the
-`--restart` flag followed by the desired option. For example, to always restart
-the container, you would run:
-
-```sh
-docker run -d -p 9000:9000 --restart always techaudiodoc/reaspeech:latest
-```
-
-When using Docker Compose, you can set the restart behavior in the
-`docker-compose.yml` or `docker-compose.gpu.yml` file. For example:
-
-```yaml
-services:
-  reaspeech:
-    restart: always
-```
-
-## Running Without Docker
-
-If you prefer not to use Docker, you can set up the ReaSpeech environment
-manually. Please see [Running Outside of Docker](no-docker.md) for instructions.
+The UI intentionally exposes only capabilities currently provided by
+ReaSpeech Lib. Additional recognition options can be enabled when the
+extension adds support for them.
