@@ -55,9 +55,10 @@ REAPER's Actions window, and run it.
 ## Architecture
 
 `ReaSpeechWorker` translates the UI's existing queued requests into
-`ReaSpeech_Start`, polls events using `ReaSpeech_Poll`, and forwards completed
-segments into the existing transcript editor. Cancellation calls
-`ReaSpeech_Cancel`.
+`ReaSpeech_StartEx` with JSON options, polls events using `ReaSpeech_Poll`,
+and forwards completed segments into the existing transcript editor.
+Cancellation calls `ReaSpeech_Cancel` and keeps polling until a terminal event
+arrives.
 
 The UI intentionally exposes only capabilities currently provided by
 ReaSpeech Lib. Additional recognition options can be enabled when the
