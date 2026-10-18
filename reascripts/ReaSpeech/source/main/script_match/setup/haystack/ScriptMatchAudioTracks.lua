@@ -18,7 +18,7 @@ end
 function ScriptMatchAudioTracks:get_storage()
   local json_file = self:session_storage_location() .. '/audio_tracks.json'
 
-  return Storage.ProjectJSON(json_file, {
+  return ProjectStorage(json_file, {
     schema_version = 1,
     migrations = {}
   })
@@ -35,7 +35,7 @@ function ScriptMatchAudioTracks:get_track_storage(track_guid)
 
   local storage_location = self:track_storage_location(track_guid)
 
-  return Storage.ProjectJSON(storage_location, {
+  return ProjectStorage(storage_location, {
     schema_version = 1,
     migrations = {}
   }):table('track_config', {})

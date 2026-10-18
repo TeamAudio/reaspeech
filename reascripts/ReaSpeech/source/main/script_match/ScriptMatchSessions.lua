@@ -4,8 +4,8 @@ ScriptMatchSessions = Polo {}
 function ScriptMatchSessions:init()
   Logging().init(self, 'ScriptMatchSessions')
 
-  -- Initialize a ProjectJSON Storage object
-  self.storage = Storage.ProjectJSON('reaspeech/script_match/sessions.json', {
+  -- Initialize a ProjectStorage object
+  self.storage = ProjectStorage('reaspeech/script_match/sessions.json', {
     schema_version = 1,
     migrations = {}
   })

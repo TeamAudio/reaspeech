@@ -27,7 +27,7 @@ function NeedleDiagnosis:init()
   assert(self.workflow, 'NeedleDiagnosis: workflow is required')
   assert(self.matcher, 'NeedleDiagnosis: matcher is required')
 
-  self.storage = Storage.ProjectJSON(
+  self.storage = ProjectStorage(
     ('reaspeech/script_match/sessions/%s/diagnoses.json'):format(self.session_id),
     { schema_version = 1, migrations = {} }
   ):table('diagnoses', {})

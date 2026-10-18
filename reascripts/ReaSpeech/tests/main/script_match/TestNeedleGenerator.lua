@@ -21,20 +21,18 @@ reaper = {
   end
 }
 
--- Minimal storage stand-in: table accessors backed by plain values
-Storage = {
-  ProjectJSON = function()
-    return {
-      table = function(_self, _name, default)
-        local data = default
-        return {
-          get = function() return data end,
-          set = function(_s, value) data = value end,
-        }
-      end
-    }
-  end
-}
+-- Minimal ProjectStorage stand-in: table accessors backed by plain values
+ProjectStorage = function()
+  return {
+    table = function(_self, _name, default)
+      local data = default
+      return {
+        get = function() return data end,
+        set = function(_s, value) data = value end,
+      }
+    end
+  }
+end
 
 -- Classification is content-derived and covered by TestMatchability;
 -- here it just needs to not blow up

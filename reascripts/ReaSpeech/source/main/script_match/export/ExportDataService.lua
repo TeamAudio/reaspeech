@@ -40,7 +40,7 @@ function ExportDataService:init()
 end
 
 function ExportDataService:session_storage_location()
-  -- Project-relative, like every other session store; Storage.ProjectJSON
+  -- Project-relative, like every other session store; ProjectStorage
   -- prepends the project path itself
   return ('reaspeech/script_match/sessions/%s'):format(self.session_id)
 end
@@ -48,7 +48,7 @@ end
 function ExportDataService:get_export_status_storage()
   local json_file = self:session_storage_location() .. '/export_status.json'
 
-  return Storage.ProjectJSON(json_file, {
+  return ProjectStorage(json_file, {
     schema_version = 1,
     migrations = {}
   }):table('file_statuses', {})

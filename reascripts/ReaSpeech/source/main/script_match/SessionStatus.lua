@@ -146,7 +146,7 @@ function SessionStatus:compute_summary()
 end
 
 function SessionStatus:read_diagnoses()
-  return Storage.ProjectJSON(
+  return ProjectStorage(
     ('reaspeech/script_match/sessions/%s/diagnoses.json'):format(self.session_id),
     { schema_version = 1, migrations = {} }
   ):table('diagnoses', {}):get()
@@ -179,7 +179,7 @@ function SessionStatus:live_needle_guids()
   -- Needles have not been generated this session; read the persisted
   -- stores for the linked materials
   for _, material in ipairs(self.workflow:script_materials()) do
-    add(Storage.ProjectJSON(
+    add(ProjectStorage(
       ('reaspeech/script_match/sessions/%s/needles/%s.json'):format(self.session_id, material.guid),
       { schema_version = 1, migrations = {} }
     ):table('needles', {}):get())
@@ -189,7 +189,7 @@ function SessionStatus:live_needle_guids()
 end
 
 function SessionStatus:count_exported()
-  local statuses = Storage.ProjectJSON(
+  local statuses = ProjectStorage(
     ('reaspeech/script_match/sessions/%s/export_status.json'):format(self.session_id),
     { schema_version = 1, migrations = {} }
   ):table('file_statuses', {}):get()

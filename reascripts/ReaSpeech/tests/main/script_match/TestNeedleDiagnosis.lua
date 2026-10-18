@@ -19,23 +19,21 @@ PathUtil = {
   get_filename = function(path) return path:match('[^/]+$') or path end,
 }
 
--- In-memory Storage double: one table per ProjectJSON path
+-- In-memory ProjectStorage double: one table per path
 local stores
 
-Storage = {
-  ProjectJSON = function(path, _opts)
-    return {
-      table = function(_self, key, default)
-        local store_key = path .. '\0' .. key
-        if stores[store_key] == nil then stores[store_key] = default end
-        return {
-          get = function() return stores[store_key] end,
-          set = function(_s, value) stores[store_key] = value end,
-        }
-      end,
-    }
-  end,
-}
+ProjectStorage = function(path, _opts)
+  return {
+    table = function(_self, key, default)
+      local store_key = path .. '\0' .. key
+      if stores[store_key] == nil then stores[store_key] = default end
+      return {
+        get = function() return stores[store_key] end,
+        set = function(_s, value) stores[store_key] = value end,
+      }
+    end,
+  }
+end
 
 require('main/script_match/curation/NeedleDiagnosis')
 

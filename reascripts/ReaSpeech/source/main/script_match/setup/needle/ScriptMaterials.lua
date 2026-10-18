@@ -48,7 +48,7 @@ end
 function ScriptMaterials:get_storage()
   local json_file = self:session_storage_location() .. '/script_materials.json'
 
-  return Storage.ProjectJSON(json_file, {
+  return ProjectStorage(json_file, {
     schema_version = 1,
     migrations = {}
   })
@@ -65,7 +65,7 @@ function ScriptMaterials:get_material_storage(material_guid)
 
   local storage_location = self:material_storage_location(material_guid)
 
-  return Storage.ProjectJSON(storage_location, {
+  return ProjectStorage(storage_location, {
     schema_version = 1,
     migrations = {}
   }):table('material_config', {})
@@ -200,7 +200,7 @@ end
 function ScriptMaterials:sweep_material_files(material_guid)
   local needle_store_subpath =
     ('%s/needles/%s.json'):format(self:session_storage_location(), material_guid)
-  local needles = Storage.ProjectJSON(needle_store_subpath, {
+  local needles = ProjectStorage(needle_store_subpath, {
     schema_version = 1,
     migrations = {}
   }):table('needles', {}):get()
@@ -215,7 +215,7 @@ function ScriptMaterials:sweep_material_files(material_guid)
   local project_path = PathUtil.normalize(reaper.GetProjectPathEx(0))
   for _, subpath in ipairs(self:material_file_subpaths(material_guid, needle_guids)) do
     local filepath = project_path .. '/' .. subpath
-    Storage.JSONFile.invalidate(filepath)
+    JSONStorage.invalidate(filepath)
     if reaper.file_exists(filepath) then
       os.remove(filepath)
       self:log("Swept: " .. subpath)

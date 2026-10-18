@@ -17,7 +17,7 @@ function ScriptMatchPlugin:init()
   self._controls = ScriptMatchControls.new(self)
   self._actions = ScriptMatchActions.new(self)
 
-  self.storage = Storage.ProjectJSON('reaspeech/script_match.json', {
+  self.storage = ProjectStorage('reaspeech/script_match.json', {
     schema_version = 1,
     migrations = {}
   })

@@ -7,7 +7,7 @@ Provides UI components for:
 - Timing controls (pre-roll, post-roll, minimum duration)
 - Export options (overwrite, error handling, post-export actions)
 
-Uses standard Widget components and maintains settings via ProjectJSON storage.
+Uses standard Widget components and maintains settings via ProjectStorage.
 
 ]]--
 

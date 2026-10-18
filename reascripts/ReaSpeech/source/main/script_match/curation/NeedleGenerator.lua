@@ -139,7 +139,7 @@ end
 function NeedleGenerator:get_storage()
   local json_file = self:session_storage_location() .. '/needles.json'
 
-  return Storage.ProjectJSON(json_file, {
+  return ProjectStorage(json_file, {
     schema_version = 1,
     migrations = {}
   })
@@ -156,7 +156,7 @@ function NeedleGenerator:get_material_storage(material_guid)
 
   local storage_location = self:material_storage_location(material_guid)
 
-  return Storage.ProjectJSON(storage_location, {
+  return ProjectStorage(storage_location, {
     schema_version = 1,
     migrations = {}
   }):table('needles', {})

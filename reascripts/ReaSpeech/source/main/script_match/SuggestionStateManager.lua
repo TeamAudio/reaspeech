@@ -47,7 +47,7 @@ function SuggestionStateManager:get_needle_suggestions_storage(needle_guid)
   assert(needle_guid, 'SuggestionStateManager:get_needle_suggestions_storage: needle_guid is required')
 
   local storage_location = self:needle_suggestions_storage_location(needle_guid)
-  return Storage.ProjectJSON(storage_location, {
+  return ProjectStorage(storage_location, {
     schema_version = 1,
     migrations = {}
   }):table('suggestions', {})
@@ -56,7 +56,7 @@ end
 function SuggestionStateManager:get_suggestions_index_storage()
   local json_file = self:session_storage_location() .. '/suggestions.json'
 
-  return Storage.ProjectJSON(json_file, {
+  return ProjectStorage(json_file, {
     schema_version = 1,
     migrations = {}
   }):table('needle_collections', {})

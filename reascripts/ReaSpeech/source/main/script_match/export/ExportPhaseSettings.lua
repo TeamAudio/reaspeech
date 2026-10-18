@@ -45,7 +45,7 @@ end
 function ExportPhaseSettings:get_storage()
   local json_file = self:session_storage_location() .. '/export_settings.json'
 
-  return Storage.ProjectJSON(json_file, {
+  return ProjectStorage(json_file, {
     schema_version = 1,
     migrations = {}
   })
