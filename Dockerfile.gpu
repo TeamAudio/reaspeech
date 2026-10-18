@@ -19,13 +19,15 @@ COPY . /app
 WORKDIR /app
 
 RUN /usr/bin/python${PYTHON_VERSION} -m venv $POETRY_VENV \
-    && $POETRY_VENV/bin/pip install -U pip setuptools \
+    && $POETRY_VENV/bin/pip install -U pip \
     && $POETRY_VENV/bin/pip install poetry==2.0.1
 
 ENV PATH="${PATH}:${POETRY_VENV}/bin"
 
 RUN poetry config virtualenvs.in-project true
-RUN poetry install && rm -rf /app/.cache/pypoetry
+RUN $POETRY_VENV/bin/pip install wheel \
+    && $POETRY_VENV/bin/pip install --no-build-isolation --no-deps "openai-whisper==20240930" \
+    && poetry install && rm -rf /app/.cache/pypoetry
 
 RUN git clone https://github.com/absadiki/pywhispercpp \
     && cd pywhispercpp \
