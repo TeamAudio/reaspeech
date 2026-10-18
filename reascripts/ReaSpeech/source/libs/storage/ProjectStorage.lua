@@ -1,10 +1,14 @@
 --[[
 
-  ProjectJSON.lua - Storage module for project-specific JSON data
+  ProjectStorage.lua - Storage module for project-specific JSON data
 
-  ProjectJSON Example:
+  JSONStorage rooted at the current project's path: the file lives at
+  <project path>/<subpath>. Errors when no project is open or the
+  project has not been saved.
 
-    local project_storage = Storage.ProjectJSON('reaspeech/config.json', {
+  Example:
+
+    local project_storage = ProjectStorage('reaspeech/config.json', {
       schema_version = 3,
       minimum_version = 1,
       migrations = ProjectMigrations
@@ -14,10 +18,21 @@
 
   API:
 
+    ProjectStorage(subpath, options)
+      Create a storage object for the JSON file at subpath, relative
+      to the project path. Options are forwarded to JSONStorage
+      (schema_version, minimum_version, migrations). The
+      options-table form ProjectStorage({ subpath = ..., ... }) is
+      also supported.
+
 ]]--
 
--- Project-specific JSON Storage
-Storage.ProjectJSON = {
+-- Top-level global rather than a Storage member: assigning
+-- Storage.ProjectStorage here would require Storage to have loaded
+-- first, and the production bundle's file order is alphabetical, not
+-- dependency-driven. JSONStorage and PathUtil are referenced only
+-- inside make(), at call time.
+ProjectStorage = {
   make = function (options)
     assert(options.subpath, 'missing subpath')
 
@@ -50,7 +65,7 @@ Storage.ProjectJSON = {
       return project_path .. "/" .. subpath
     end
 
-    return Storage.JSONFile.make {
+    return JSONStorage.make {
       filepath = get_filepath(),
       schema_version = schema_version,
       minimum_version = minimum_version,
@@ -59,17 +74,17 @@ Storage.ProjectJSON = {
   end,
 }
 
--- Add callable metatable to Storage.ProjectJSON for convenience constructor
-setmetatable(Storage.ProjectJSON, {
+-- Add callable metatable to ProjectStorage for convenience constructor
+setmetatable(ProjectStorage, {
   __call = function(self, subpath, options)
     options = options or {}
 
     -- Support both old and new API styles
     if type(subpath) == "table" then
-      -- New API: Storage.ProjectJSON({ subpath = "...", schema_version = 2, ... })
+      -- New API: ProjectStorage({ subpath = "...", schema_version = 2, ... })
       options = subpath
     else
-      -- Convenience API: Storage.ProjectJSON("path", { schema_version = 2, ... })
+      -- Convenience API: ProjectStorage("path", { schema_version = 2, ... })
       options.subpath = subpath
     end
 
