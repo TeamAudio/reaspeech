@@ -8,14 +8,18 @@ require('vendor/json')
 
 require('libs/EnvUtil')
 require('libs/PathUtil')
+-- Deliberately loaded before libs/Storage: JSONStorage and
+-- ProjectStorage define plain globals and must not depend on
+-- Storage existing at load time
+require('libs/storage/JSONStorage')
+require('libs/storage/ProjectStorage')
 require('libs/Storage')
-require('libs/storage/ProjectJSON')
 
 --
 
-TestProjectJSON = {}
+TestProjectStorage = {}
 
-function TestProjectJSON:setUp()
+function TestProjectStorage:setUp()
   reaper.__test_setUp()
 
   self.project_dir = os.tmpname()
@@ -39,10 +43,10 @@ function TestProjectJSON:setUp()
   end
   reaper.GetProjectPathEx = function() return self.project_dir end
 
-  Storage.JSONFile.invalidate()
+  JSONStorage.invalidate()
 end
 
-function TestProjectJSON:tearDown()
+function TestProjectStorage:tearDown()
   reaper.GetOS = self._get_os
   reaper.file_exists = self._file_exists
   reaper.RecursiveCreateDirectory = self._rcd
@@ -51,16 +55,16 @@ function TestProjectJSON:tearDown()
   os.execute('rm -rf "' .. self.project_dir .. '"')
 end
 
-function TestProjectJSON:testErrorsWithoutSavedProject()
+function TestProjectStorage:testErrorsWithoutSavedProject()
   reaper.GetProjectPathEx = function() return '' end
 
   lu.assertErrorMsgContains('No project is open', function()
-    Storage.ProjectJSON('reaspeech/config.json')
+    ProjectStorage('reaspeech/config.json')
   end)
 end
 
-function TestProjectJSON:testWritesUnderProjectPath()
-  local storage = Storage.ProjectJSON('reaspeech/config.json')
+function TestProjectStorage:testWritesUnderProjectPath()
+  local storage = ProjectStorage('reaspeech/config.json')
   storage:string('model', 'small'):set('medium')
 
   local f = assert(io.open(self.project_dir .. '/reaspeech/config.json', 'r'))
@@ -70,20 +74,20 @@ function TestProjectJSON:testWritesUnderProjectPath()
   lu.assertEquals(decoded._data.model, 'medium')
 end
 
-function TestProjectJSON:testNormalizesProjectPath()
+function TestProjectStorage:testNormalizesProjectPath()
   -- Windows-authored project paths can arrive with backslashes
   reaper.GetProjectPathEx = function()
     return (self.project_dir:gsub('/', '\\'))
   end
 
-  Storage.ProjectJSON('config.json'):string('key', ''):set('value')
+  ProjectStorage('config.json'):string('key', ''):set('value')
 
   local f = assert(io.open(self.project_dir .. '/config.json', 'r'))
   f:close()
 end
 
-function TestProjectJSON:testForwardsSchemaOptions()
-  local storage = Storage.ProjectJSON('config.json', { schema_version = 3 })
+function TestProjectStorage:testForwardsSchemaOptions()
+  local storage = ProjectStorage('config.json', { schema_version = 3 })
   storage:string('key', ''):set('value')
 
   local f = assert(io.open(self.project_dir .. '/config.json', 'r'))
