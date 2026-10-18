@@ -243,4 +243,51 @@ function TestPathUtil:testJoin()
 
 end
 
+function TestPathUtil:testNormalizeOnWindows()
+  reaper.GetOS = function() return 'Win64' end
+
+  lu.assertEquals(PathUtil.normalize("C:\\proj\\.\\Media"), "C:\\proj\\Media")
+  lu.assertEquals(PathUtil.normalize("C:\\proj\\Media"), "C:\\proj\\Media")
+  lu.assertEquals(PathUtil.normalize("C:\\proj\\Media\\."), "C:\\proj\\Media")
+end
+
+function TestPathUtil:testNormalizeOnMac()
+  reaper.GetOS = function() return 'OSX64' end
+
+  -- Windows-authored record path (".\Media") joined into a mac path
+  lu.assertEquals(
+    PathUtil.normalize("/Volumes/X/My Project/.\\Media/reaspeech"),
+    "/Volumes/X/My Project/Media/reaspeech")
+  lu.assertEquals(PathUtil.normalize("/a/./b"), "/a/b")
+  lu.assertEquals(PathUtil.normalize("/a/././b"), "/a/b")
+  lu.assertEquals(PathUtil.normalize("/a/b/."), "/a/b")
+  lu.assertEquals(PathUtil.normalize("/.hidden/file"), "/.hidden/file")
+  lu.assertEquals(PathUtil.normalize("/plain/path"), "/plain/path")
+end
+
+function TestPathUtil:testNormalizeLeadingDot()
+  reaper.GetOS = function() return 'OSX64' end
+
+  lu.assertEquals(PathUtil.normalize("./Media"), "Media")
+  lu.assertEquals(PathUtil.normalize(".\\Media"), "Media")
+  lu.assertEquals(PathUtil.normalize("../Media"), "../Media")
+end
+
+function TestPathUtil:testGetOpenFolderCommand()
+  local windows_path = "C:\\path\\to\\folder"
+  local mac_and_other_path = "/path/to/folder"
+
+  reaper.GetOS = function() return "Win64" end
+  lu.assertEquals(PathUtil.get_open_folder_command(windows_path),
+    '%SystemRoot%\\explorer.exe "' .. windows_path .. '"')
+
+  reaper.GetOS = function() return "OSX64" end
+  lu.assertEquals(PathUtil.get_open_folder_command(mac_and_other_path),
+    '/usr/bin/env open "' .. mac_and_other_path .. '"')
+
+  reaper.GetOS = function() return "Other" end
+  lu.assertEquals(PathUtil.get_open_folder_command(mac_and_other_path),
+    '/usr/bin/env xdg-open "' .. mac_and_other_path .. '"')
+end
+
 os.exit(lu.LuaUnit.run())
