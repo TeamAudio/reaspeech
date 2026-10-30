@@ -56,7 +56,7 @@ PathUtil.get_real_path = function(path_arg)
   end
 
   local project_path = reaper.GetProjectPath()
-  return project_path .. PathUtil._path_separator() .. path_arg
+  return PathUtil.normalize(project_path .. PathUtil._path_separator() .. path_arg)
 end
 
 -- Returns the command to reveal the given path in the OS file explorer.
@@ -69,6 +69,40 @@ PathUtil.get_reveal_command = function(path_arg)
   else
     return '/usr/bin/env xdg-open "' .. path_arg .. '"'
   end
+end
+
+-- Returns the command to open the given directory in the OS file explorer.
+PathUtil.get_open_folder_command = function(path_arg)
+  if EnvUtil.is_windows() then
+    return '%SystemRoot%\\explorer.exe "' .. path_arg .. '"'
+  elseif EnvUtil.is_mac() then
+    return '/usr/bin/env open "' .. path_arg .. '"'
+  else
+    return '/usr/bin/env xdg-open "' .. path_arg .. '"'
+  end
+end
+
+-- Normalize separators and redundant "." segments in a path.
+-- Windows-authored projects can carry backslash record paths (e.g.
+-- ".\Media") into REAPER's project-path APIs; on macOS/Linux the
+-- backslash would otherwise be treated as part of the file name.
+PathUtil.normalize = function(path)
+  if not EnvUtil.is_windows() then
+    path = path:gsub("\\", "/")
+  end
+
+  local previous
+  repeat
+    previous = path
+    path = path:gsub("([/\\])%.[/\\]", "%1")
+  until path == previous
+
+  -- a leading "./" has no separator before the dot, so the loop above
+  -- can't see it ("../" does not match: the dot must be followed by a
+  -- separator)
+  path = path:gsub("^%.[/\\]+", "")
+
+  return (path:gsub("[/\\]%.$", ""))
 end
 
 -- Returns true if the given path is a full path, false otherwise.
