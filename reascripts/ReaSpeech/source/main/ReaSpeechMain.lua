@@ -14,9 +14,70 @@ function ReaSpeechMain:main()
 
   self:init_logging()
   self:init_ctx()
-
   Theme:init()
+
+  if not self:check_reaspeech_lib() then
+    self:show_reaspeech_lib_required()
+    return
+  end
+
   app = ReaSpeechUI.new()
+  app:present()
+
+  reaper.defer(self:loop())
+end
+
+function ReaSpeechMain:check_reaspeech_lib()
+  return reaper.ReaSpeech_StartEx
+    and reaper.ReaSpeech_Poll
+    and reaper.ReaSpeech_Cancel
+end
+
+function ReaSpeechMain:show_reaspeech_lib_required()
+  local repository_url = 'https://github.com/TeamAudio/reascripts/raw/main/index.xml'
+
+  app = AlertPopup.new {
+    title = 'ReaSpeech Lib required',
+    WIDTH = 600,
+  }
+
+  app.msg = function()
+    ImGui.Text(Ctx(), 'This script requires ReaSpeech Lib, which can be installed from ReaPack.')
+    ImGui.Spacing(Ctx())
+    ImGui.Text(Ctx(), '1. If needed, import the TeamAudio repository:')
+    ImGui.SetNextItemWidth(Ctx(), -1)
+    ImGui.InputText(Ctx(), '##repository-url', repository_url, ImGui.InputTextFlags_ReadOnly())
+    if ImGui.Button(Ctx(), 'Copy repository URL') then
+      ImGui.SetClipboardText(Ctx(), repository_url)
+    end
+    ImGui.Spacing(Ctx())
+    ImGui.Text(Ctx(), '2. Install ReaSpeech Lib from:')
+    ImGui.Text(Ctx(), 'Extensions > ReaPack > Browse packages...')
+    ImGui.Spacing(Ctx())
+    ImGui.Text(Ctx(), '3. Restart REAPER after installation.')
+
+    if not EnvUtil.is_mac() then
+      ImGui.Spacing(Ctx())
+      ImGui.Separator(Ctx())
+      ImGui.Spacing(Ctx())
+      ImGui.Text(Ctx(), 'CUDA note:')
+      ImGui.TextWrapped(Ctx(),
+        'CUDA versions require the matching NVIDIA CUDA Toolkit and may still '
+        .. 'be incompatible with your GPU. If this dialog appears after you '
+        .. 'install a matching CUDA version, try installing the CPU version instead.')
+    end
+
+    ImGui.Spacing(Ctx())
+    ImGui.Separator(Ctx())
+    ImGui.Spacing(Ctx())
+    if ImGui.Button(Ctx(), 'OK', app.BUTTON_WIDTH, 0) then
+      app:close()
+    end
+  end
+
+  app.react = function(self)
+    self:render()
+  end
   app:present()
 
   reaper.defer(self:loop())

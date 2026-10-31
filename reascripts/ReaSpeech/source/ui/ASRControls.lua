@@ -62,7 +62,8 @@ function ASRControls:init()
     state = self.settings.translate,
     label_long = 'Translate to English',
     label_short = 'Translate',
-    width_threshold = ReaSpeechControlsUI.NARROW_COLUMN_WIDTH
+    width_threshold = ReaSpeechControlsUI.NARROW_COLUMN_WIDTH,
+    disabled_if = function() return self.model_name:value() == 'large-v3-turbo' end,
   }
 
   self.hotwords = Widgets.TextInput.new {
@@ -92,56 +93,37 @@ function ASRControls:init()
 end
 
 function ASRControls:init_model_name()
+  if not WhisperModels.get_model_by_name(self.settings.model_name:get()) then
+    self.settings.model_name:set(self.DEFAULT_MODEL_NAME)
+  end
+  self:normalize_translation()
   self.model_name = Widgets.Combo.new {
     state = self.settings.model_name,
     label = 'Model',
     help_text = self.HELP_MODEL,
     items = WhisperModels.get_model_names(self.asr_engine),
     item_labels = self:get_model_labels(),
+    on_change = function() self:normalize_translation() end,
   }
+end
+
+function ASRControls:normalize_translation()
+  if self.settings.model_name:get() == 'large-v3-turbo' then
+    self.settings.translate:set(false)
+  end
 end
 
 function ASRControls:init_asr_info()
-  self.asr_engine = nil
-  self.asr_options = {}
-
-  local request = CurlRequest().async {
-    url = ReaSpeechAPI:get_api_url('asr_info'),
-    method = 'GET',
+  self.asr_engine = 'reaspeech_lib'
+  self.asr_options = {
+    hotwords = true,
+    language = true,
+    vad_filter = true,
   }
-
-  self.asr_info_request = request:execute()
 end
 
 function ASRControls:check_asr_info()
-  if self.asr_engine or not self.asr_info_request then return end
-
-  if self.asr_info_request:error() then
-    self.alert_popup.onclose = function()
-      self:init_asr_info()
-      self.alert_popup.onclose = nil
-    end
-
-    self.alert_popup:show('Whoops!', self.asr_info_request:error())
-    self.asr_info_request = nil
-    return
-  end
-
-  if self.asr_info_request:ready() then
-    local asr_info = self.asr_info_request:result()
-    self:debug(dump(asr_info))
-
-    self.asr_engine = asr_info and asr_info.engine
-
-    if asr_info and asr_info.options then
-      for _, option in pairs(asr_info.options) do
-        self.asr_options[option] = true
-      end
-    end
-
-    self:init_model_name()
-    self:init_advanced_layout()
-  end
+  -- Capabilities are supplied by the installed ReaSpeech extension.
 end
 
 function ASRControls:init_layouts()
@@ -180,7 +162,7 @@ function ASRControls:_get_renderers()
     table.insert(renderers, {
       self.render_hotwords
     })
-  else
+  elseif self.asr_options.initial_prompt then
     table.insert(renderers, {
       self.render_initial_prompt
     })
@@ -309,6 +291,7 @@ function ASRControls:render_initial_prompt()
 end
 
 function ASRControls:get_request_data()
+  self:normalize_translation()
   local request_data = {
     language = self.language:value(),
     translate = self.translate:value(),

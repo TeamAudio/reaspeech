@@ -20,7 +20,6 @@ require('ui/KeyMap')
 require('ui/ReaSpeechControlsUI')
 require('ui/ReaSpeechPlugins')
 require('ui/ReaSpeechUI')
-require('ui/ReaSpeechWelcomeUI')
 require('ui/ReaSpeechWidgets')
 require('ui/Theme')
 require('ui/TranscriptAnnotations')
@@ -40,7 +39,6 @@ require('ui/widgets/ListBox')
 require('ui/widgets/TabBar')
 require('ui/widgets/TextInput')
 
-require('main/ReaSpeechAPI')
 require('main/ReaSpeechWorker')
 require('main/Transcript')
 
@@ -50,9 +48,6 @@ TestReaSpeechUI = {}
 
 function TestReaSpeechUI:setUp()
   reaper.__test_setUp()
-  Script = {
-    host = "localhost:9000"
-  }
   self.app = ReaSpeechUI.new()
 end
 

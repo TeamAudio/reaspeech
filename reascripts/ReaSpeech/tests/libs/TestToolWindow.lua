@@ -213,7 +213,7 @@ function TestToolWindow:testRender()
   ImGui.Cond_Appearing = function() return 1 end
   ImGui.Cond_FirstUseEver = function() return 2 end
   ImGui.End = function(_) end
-  ImGui.GetWindowViewport = function() end
+  ImGui.GetMainViewport = function() end
   ImGui.SetNextWindowFocus = function(_) end
   ImGui.SetNextWindowPos = function(_, _, _, _, _, _) end
   ImGui.SetNextWindowSize = function(_, _, _, _) end

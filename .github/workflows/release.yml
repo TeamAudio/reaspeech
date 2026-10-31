@@ -1,26 +1,48 @@
-name: Publish GitHub Release Notes to website repo
+name: Publish Release to website repo
 
 on:
   release:
-    types: [edited]
-  workflow_dispatch: 
+    # released: the one-shot sync when a release goes live ('released' rather
+    # than 'published' so a prerelease promoted to a full release also fires).
+    # Deliberately NOT 'edited': publishing a draft empirically emits both
+    # 'released' and 'edited', so listening to both races two identical
+    # website PRs (observed on v1.1.0). Post-publish notes corrections are
+    # covered by the workflow_dispatch path below.
+    types: [released]
+  workflow_dispatch:
     inputs:
       project_id:
         description: 'Project ID'
         required: true
         default: 'reaspeech'
       project_name:
-        description: 'Test project name'
+        description: 'Project name'
         required: true
         default: 'ReaSpeech'
       project_repository:
         description: 'GitHub repository where the project is hosted'
         required: true
-        default: 'reaspeech'
+        default: 'TeamAudio/reaspeech'
+      version_tag:
+        description: 'Version tag (vX.Y.Z)'
+        required: true
+        default: 'v0.0.1-test'
       release_body:
         description: 'Release body content'
         required: true
-        default: 'Release body for Reaspeech'
+        default: 'Release body content goes here'
+      source_ref:
+        description: 'Product repo ref to read the manual from (default: the tag). Set to main or release/x.y to publish a docs hotfix without cutting a release.'
+        required: false
+        default: ''
+      manual_only:
+        description: 'Publish only the manual (docs hotfix mode); skips release notes and blog post.'
+        required: false
+        default: 'false'
+      publish_manual:
+        description: 'Set to false to skip the manual step (eg. wiring tests with placeholder tags).'
+        required: false
+        default: 'true'
 
 # All pushes/PRs happen in other repos via the service token; this workflow
 # needs nothing from its own repo token.
@@ -29,17 +51,21 @@ permissions:
 
 jobs:
   publish-release-notes:
+    # GitHub already filters draft releases out of created/edited triggers; the
+    # draft check is defense-in-depth. Prereleases are skipped deliberately.
+    if: ${{ github.event_name == 'workflow_dispatch' || (!github.event.release.draft && !github.event.release.prerelease) }}
     runs-on: ubuntu-latest
-    # if: ${{ github.event.release.prerelease == false }} 
 
     steps:
-      - name: Checkout repository
+      - name: Checkout techaudio-web
         uses: actions/checkout@v6
         with:
           repository: TeamAudio/techaudio-web
+          # Pinned to main: a selectable ref would let any dispatcher run
+          # arbitrary action code with the service token.
           ref: main
-          fetch-depth: 0  # Fetch all history for accurate versioning
-          token: ${{ secrets.PUBLISH_RELEASE_SERVICE_TOKEN}}
+          fetch-depth: 0
+          token: ${{ secrets.PUBLISH_RELEASE_SERVICE_TOKEN }}
           # This checkout only resolves the action; it never pushes.
           persist-credentials: false
           path: techaudio-web
@@ -47,11 +73,13 @@ jobs:
       - name: Call publish-release action
         uses: ./techaudio-web/.github/actions/publish-release
         with:
-          project_id: reaspeech
-          project_name: ReaSpeech
-          project_repository: ${{ github.repository }}
-          version_tag: ${{ github.event.release.tag_name || 'v0.0.1-test' }}
-          release_body: ${{ github.event.release.body }}
+          project_id: ${{ github.event.inputs.project_id || 'reaspeech' }}
+          project_name: ${{ github.event.inputs.project_name || 'ReaSpeech' }}
+          project_repository: ${{ github.event.inputs.project_repository || github.repository }}
+          version_tag: ${{ github.event.inputs.version_tag || github.event.release.tag_name }}
+          release_body: ${{ github.event.inputs.release_body || github.event.release.body }}
+          source_ref: ${{ github.event.inputs.source_ref || '' }}
+          manual_only: ${{ github.event.inputs.manual_only || 'false' }}
+          publish_manual: ${{ github.event.inputs.publish_manual || 'true' }}
           service_token: ${{ secrets.PUBLISH_RELEASE_SERVICE_TOKEN }}
-          latest_release_url: ${{ vars.LATEST_RELEASE_URL || 'https://hub.docker.com/r/techaudiodoc/reaspeech' }}
-  
+          latest_release_url: ${{ vars.LATEST_RELEASE_URL || '' }}

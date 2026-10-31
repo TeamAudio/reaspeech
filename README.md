@@ -1,67 +1,97 @@
 # ReaSpeech
-![Lint & Test](https://github.com/teamaudio/reaspeech/actions/workflows/check-reascripts.yml/badge.svg)
 
-### Painless speech-to-text transcription inside of REAPER
-ReaSpeech is a ReaScript frontend that will take your project's media items and run them through a Docker-hosted Whisper backend, building a searchable, project-marker based index of the resulting transcription. That's right - not only do you reap (zing!) the benefits of a staff of transcribers, but you get to add "familiar with Docker" to your resume.
+![Lint & Test](https://github.com/TeamAudio/reaspeech/actions/workflows/check-reascripts.yml/badge.svg)
 
-![Screenshot](docs/assets/img/reaspeech-screenshot.png)
+### Painless speech-to-text transcription inside REAPER
 
-# Quick Usage
+ReaSpeech is a ReaScript interface for transcribing REAPER media items. It
+builds a searchable, project-marker-based transcript while keeping REAPER
+responsive during recognition. Find that perfect take, jump to a spoken phrase,
+or give your scrubbing finger a well-earned break.
 
-* Install [Docker](https://www.docker.com/)
-* Run the [Docker image](https://hub.docker.com/r/techaudiodoc/reaspeech)
-* Navigate to [localhost:9000](http://localhost:9000/)
+![ReaSpeech screenshot](docs/assets/img/reaspeech-screenshot.png)
 
-## Docker Commands
+## Requirements
 
-### CPU
+- REAPER
+- [ReaImGui](https://github.com/cfillion/reaimgui) 0.10 or newer
+- ReaSpeech Lib installed in REAPER's `UserPlugins` directory
 
-    docker run -d -p 9000:9000 --name reaspeech techaudiodoc/reaspeech:latest
+## Install
 
-### GPU: Windows/NVIDIA
+Add the Team Audio repository to ReaPack:
 
-    docker run -d --gpus all -p 9000:9000 --name reaspeech-gpu techaudiodoc/reaspeech:latest-gpu
+    https://github.com/TeamAudio/reascripts/raw/main/index.xml
 
-### GPU: Apple Silicon
+Install **ReaSpeech** and one **ReaSpeech Lib** backend from ReaPack, then run
+ReaSpeech from REAPER's Actions window. The script is self-contained; its only
+runtime dependencies are ReaImGui and ReaSpeech Lib.
 
-Please see our [Apple Silicon GPU instructions](docs/no-docker.md#apple-silicon-gpu)
+Select one or more media items and click **Transcribe Selected Items**.
+Recognition runs asynchronously, with progress and cancellation available in
+the existing ReaSpeech interface.
 
----
+## Coming from the Docker version?
 
-For more detailed instructions, see [Docker Usage](docs/docker.md)
+Starting with ReaSpeech 1.0, transcription runs through ReaSpeech Lib instead of
+the Docker-hosted web service. Docker and the local web server are no longer
+required. To move from 0.7.x or another Docker-based version:
 
-# Documentation
+1. Close the old ReaSpeech window. Install **ReaSpeech** and one **ReaSpeech
+   Lib** backend through ReaPack using the instructions above, then restart
+   REAPER to load the extension.
+2. In REAPER's Actions window, run the ReaPack-installed ReaSpeech script.
+   Update any shortcuts or toolbar buttons that launch your old downloaded
+   script to use this action instead. The old script still expects the web
+   service; installing the new version does not update that separate copy.
+3. Transcribe a media item to check your new setup. Once it works, stop your
+   old ReaSpeech Docker container and disable any automatic startup for it.
+   You can remove the old script's action once your shortcuts have been updated.
 
-* [Docker Usage](docs/docker.md)
-* [Running Outside of Docker](docs/no-docker.md)
-* [Contributing](docs/CONTRIBUTING.md)
-* [Development](docs/development.md)
+You do not need to uninstall Docker or remove containers used by other tools.
 
-# Credits
+If you still need an older Docker-based version, the legacy images remain on
+[Docker Hub](https://hub.docker.com/r/techaudiodoc/reaspeech). We will continue
+hosting them for a limited time, so please plan to move to the new version.
+The old setup instructions are preserved in the
+[0.7.3 documentation](https://github.com/TeamAudio/reaspeech/tree/v0.7.3/docs).
 
-## ReaSpeech Team
+## Get involved
 
-* [Dave Benjamin](https://github.com/ramen)
-* [Jason Nanna](https://github.com/smrl)
-* [Kyle Vande Slunt](https://github.com/kvande-standingwave)
-* [Michael DeFreitas](https://github.com/mikeylove)
-* [Roel Sanchez](https://github.com/roelsan)
+Found a bug, have a question, or want to help? Visit the
+[issue tracker](https://github.com/TeamAudio/reaspeech/issues), read our
+[contribution guidelines](docs/CONTRIBUTING.md), or see
+[Development](docs/development.md) to build and test ReaSpeech.
 
-## Third-Party Software
+## Credits
 
-ReaSpeech's initial web service and Docker setup were based on the [Whisper ASR Webservice](https://github.com/ahmetoner/whisper-asr-webservice) project.
+### ReaSpeech team
 
-Transcription is provided by the [Faster Whisper](https://github.com/SYSTRAN/faster-whisper) library.
+- [Dave Benjamin](https://github.com/ramen)
+- [Jason Nanna](https://github.com/smrl)
+- [Kyle Vande Slunt](https://github.com/kvande-standingwave)
+- [Michael DeFreitas](https://github.com/mikeylove)
+- [Roel Sanchez](https://github.com/roelsan)
 
-ReaSpeech uses [ReaImGui](https://github.com/cfillion/reaimgui) by Christian Fillion for its user interface toolkit.
+### Open source projects
 
-Emoji icons by [OpenMoji](https://openmoji.org) — the open-source emoji and icon project. License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+- [ReaSpeech Lib](https://github.com/TeamAudio/reaspeech-lib) provides the
+  transcription engine.
+- [ReaImGui](https://github.com/cfillion/reaimgui) by Christian Fillion powers
+  the user interface.
+- [OpenMoji](https://openmoji.org) provides the emoji icons, licensed under
+  [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+- [json.lua](https://github.com/rxi/json.lua) by rxi handles JSON, and
+  [LuaUnit](https://github.com/bluebird75/luaunit) supports our tests.
 
-# Licensing
+Our earlier Docker-based versions built on
+[Whisper ASR Webservice](https://github.com/ahmetoner/whisper-asr-webservice)
+and [Faster Whisper](https://github.com/SYSTRAN/faster-whisper). Thank you to
+their contributors for helping ReaSpeech get its start.
 
-ReaSpeech is licensed under the terms of the
-[GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html).
-Portions are derived from the
-[whisper-asr-webservice](https://github.com/ahmetoner/whisper-asr-webservice)
-project, which is MIT-licensed. All source files in this repository should be
-considered GPL-licensed unless otherwise specified.
+## License
+
+ReaSpeech is distributed under the GNU General Public License v3.0. See
+[LICENSE](LICENSE). Third-party components retain their own licenses; the
+earlier web service included code derived from the MIT-licensed Whisper ASR
+Webservice project.
