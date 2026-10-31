@@ -28,6 +28,27 @@ images, application modules, version, and entry point into
 
 ## Publishing
 
+Publishing a full GitHub release triggers two workflows, following the XY Pad
+release pipeline:
+
+- `.github/workflows/reapack-publish.yml` builds the Lua bundle, copies it to
+  `ReaSpeech/ReaSpeech.lua` in `TeamAudio/reascripts`, commits the package and
+  updated ReaPack index, and opens a PR for review.
+- `.github/workflows/release.yml` opens a PR in `TeamAudio/techaudio-web` with
+  the release notes and announcement through its shared publish-release action.
+
+Drafts and prereleases do not publish. Promoting a prerelease to a full release
+does publish. Both workflows also support manual runs; use the ReaPack workflow's
+`tag` input to retry a release and its optional `source_ref` to test a fix without
+moving the tag. The website workflow supports rerunning corrected release notes.
+
+Configure `REASCRIPTS_PUBLISH_TOKEN` with permission to push branches and open
+PRs in `TeamAudio/reascripts`, and `PUBLISH_RELEASE_SERVICE_TOKEN` for the website
+publishing action. The optional `LATEST_RELEASE_URL` repository variable overrides
+the website's release link. Merge the generated PRs after reviewing them.
+
+### Local publishing
+
 The release bundle is published through the Team Audio ReaPack repository. By
 default that repository is expected at `../reascripts` relative to this one.
 

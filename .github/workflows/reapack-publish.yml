@@ -1,0 +1,113 @@
+name: Publish to ReaPack (PR to reascripts)
+
+on:
+  release:
+    # 'released' (not 'published') so a prerelease later promoted to a full
+    # release still publishes; it fires exactly once per go-live (a normal
+    # publish emits both events, so listening to both would double-run).
+    # Prereleases and drafts never fire this type.
+    types: [released]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish (vX.Y.Z)'
+        required: true
+        default: 'v0.0.0-test'
+      source_ref:
+        description: 'Ref to run from (branch/tag/SHA). Leave empty to use the tag.'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  reapack-publish:
+    # Publishing the GitHub release is the ship-it gate; prereleases don't publish.
+    if: ${{ github.event_name == 'workflow_dispatch' || !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout ReaSpeech
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # For manual runs, default to checking out the tag, but allow overriding to test fixes
+          # without moving an existing tag.
+          ref: ${{ github.event.inputs.source_ref || github.event.inputs.tag || github.event.release.tag_name }}
+
+      - name: Checkout reascripts
+        uses: actions/checkout@v4
+        with:
+          repository: TeamAudio/reascripts
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.REASCRIPTS_PUBLISH_TOKEN }}
+          path: reapack-repo
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install reapack-index
+        run: |
+          gem install reapack-index
+
+      - name: Build and stage ReaSpeech bundle
+        run: |
+          make -C reascripts/ReaSpeech build
+          python3 scripts/publish_reapack.py reascripts/ReaSpeech/build/ReaSpeech.lua --reascripts-dir reapack-repo
+
+      - name: Create PR in reascripts
+        env:
+          TAG: ${{ github.event.inputs.tag || github.event.release.tag_name }}
+          GH_TOKEN: ${{ secrets.REASCRIPTS_PUBLISH_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BRANCH="reapack/reaspeech/${TAG}-${GITHUB_RUN_ID}"
+
+          pushd reapack-repo >/dev/null
+
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          git checkout -b "$BRANCH"
+          git add -A -- ReaSpeech/ReaSpeech.lua
+
+          if git diff --cached --quiet; then
+            echo "No changes staged; nothing to PR."
+            exit 0
+          fi
+
+          git commit -m "ReaPack: ReaSpeech ${TAG}"
+
+          # Update index.xml and let the indexer create its own commit (matches existing reascripts history).
+          # Note: some reapack-index versions don't accept symbolic revs like `HEAD` for --scan.
+          # Use the concrete SHA of the commit we just created.
+          SCAN_SHA="$(git rev-parse HEAD)"
+          reapack-index --commit --scan "${SCAN_SHA}"
+
+          git push origin "$BRANCH"
+
+          gh label create reapack --description "ReaPack publish" --color "0e8a16" --force
+          gh label create reaspeech --description "ReaSpeech" --color "1d76db" --force
+
+          gh pr create \
+            --title "ReaPack: ReaSpeech ${TAG}" \
+            --body "Automated ReaPack publish for ${TAG}." \
+            --base main \
+            --head "$BRANCH" \
+            --label reapack \
+            --label reaspeech
+
+          popd >/dev/null
