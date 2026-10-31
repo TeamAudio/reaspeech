@@ -1,6 +1,0 @@
-.env
-.git
-.venv
-venv
-app/output/*/
-*.sqlite
