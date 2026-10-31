@@ -11,6 +11,16 @@ Changelog
 - Added asynchronous progress reporting and cancellation through ReaSpeech Lib
 - Simplified installation and development setup
 
+### Upgrading from Docker-based versions
+
+Install ReaSpeech and a ReaSpeech Lib backend through ReaPack, restart REAPER,
+and switch your shortcuts and toolbar buttons to the ReaPack-installed action.
+The old downloaded script still requires the Docker web service. After testing
+the new version, stop the old ReaSpeech container and disable its automatic
+startup. See the [migration instructions](README.md#coming-from-the-docker-version)
+for details. Legacy [Docker images](https://hub.docker.com/r/techaudiodoc/reaspeech)
+will remain hosted for a limited time.
+
 [0.5.0] (2025-01-16)
 --------------------
 
