@@ -1,0 +1,34 @@
+name: Attach ReaSpeech release asset
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag to build and upload (vX.Y.Z)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.inputs.tag || github.event.release.tag_name }}
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+
+      - name: Build ReaSpeech
+        run: make -C reascripts/ReaSpeech build
+
+      - name: Attach Lua bundle to existing release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release upload "$TAG" reascripts/ReaSpeech/build/ReaSpeech.lua --clobber

@@ -28,7 +28,12 @@ images, application modules, version, and entry point into
 
 ## Publishing
 
-Publishing a full GitHub release triggers two workflows, following the XY Pad
+Publishing a GitHub release builds `ReaSpeech.lua` from its tag and attaches it
+as a downloadable asset through `.github/workflows/release-assets.yml`. This
+also runs for prereleases. To retry an upload, run that workflow manually with
+the existing release tag; it replaces the asset with a fresh build of that tag.
+
+Publishing a full GitHub release also triggers two workflows, following the XY Pad
 release pipeline:
 
 - `.github/workflows/reapack-publish.yml` builds the Lua bundle, copies it to
@@ -37,7 +42,7 @@ release pipeline:
 - `.github/workflows/release.yml` opens a PR in `TeamAudio/techaudio-web` with
   the release notes and announcement through its shared publish-release action.
 
-Drafts and prereleases do not publish. Promoting a prerelease to a full release
+Drafts and prereleases do not publish to ReaPack or the website. Promoting a prerelease to a full release
 does publish. Both workflows also support manual runs; use the ReaPack workflow's
 `tag` input to retry a release and its optional `source_ref` to test a fix without
 moving the tag. The website workflow supports rerunning corrected release notes.
