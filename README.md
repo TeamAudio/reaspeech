@@ -35,15 +35,26 @@ the existing ReaSpeech interface.
 
 Starting with ReaSpeech 1.0, transcription runs through ReaSpeech Lib instead of
 the Docker-hosted web service. Docker and the local web server are no longer
-required. Install ReaSpeech and a ReaSpeech Lib backend through ReaPack using
-the instructions above; your existing Docker container is not used by this
-version.
+required. To move from 0.7.x or another Docker-based version:
+
+1. Close the old ReaSpeech window. Install **ReaSpeech** and one **ReaSpeech
+   Lib** backend through ReaPack using the instructions above, then restart
+   REAPER to load the extension.
+2. In REAPER's Actions window, run the ReaPack-installed ReaSpeech script.
+   Update any shortcuts or toolbar buttons that launch your old downloaded
+   script to use this action instead. The old script still expects the web
+   service; installing the new version does not update that separate copy.
+3. Transcribe a media item to check your new setup. Once it works, stop your
+   old ReaSpeech Docker container and disable any automatic startup for it.
+   You can remove the old script's action once your shortcuts have been updated.
+
+You do not need to uninstall Docker or remove containers used by other tools.
 
 If you still need an older Docker-based version, the legacy images remain on
 [Docker Hub](https://hub.docker.com/r/techaudiodoc/reaspeech). We will continue
 hosting them for a limited time, so please plan to move to the new version.
 The old setup instructions are preserved in the
-[0.5.0 documentation](https://github.com/TeamAudio/reaspeech/tree/v0.5.0/docs).
+[0.7.3 documentation](https://github.com/TeamAudio/reaspeech/tree/v0.7.3/docs).
 
 ## Get involved
 
