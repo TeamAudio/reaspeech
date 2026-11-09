@@ -11,7 +11,7 @@ TranscriptUI = Polo {
   FLOAT_FORMAT = '%.4f',
 
   COLUMN_WIDTH = 55,
-  LARGE_COLUMN_WIDTH = 300,
+  FILE_COLUMN_WIDTH = 110,
 
   ACTIONS_MARGIN = 8,
   ACTIONS_PADDING = 8,
@@ -37,7 +37,6 @@ TranscriptUI.table_flags = function (sortable)
     | ImGui.TableFlags_Resizable()
     | ImGui.TableFlags_Reorderable()
     | ImGui.TableFlags_RowBg()
-    | ImGui.TableFlags_ScrollX()
     | ImGui.TableFlags_ScrollY()
     | ImGui.TableFlags_SizingFixedFit()
   )
@@ -470,8 +469,11 @@ function TranscriptUI:render_table()
           column_flags = column_flags | ImGui.TableColumnFlags_DefaultHide()
         end
         local init_width = self.COLUMN_WIDTH
-        if column == "text" or column == "file" then
-          init_width = self.LARGE_COLUMN_WIDTH
+        if column == "text" then
+          column_flags = column_flags | ImGui.TableColumnFlags_WidthStretch()
+          init_width = 1
+        elseif column == "file" then
+          init_width = self.FILE_COLUMN_WIDTH
         end
         -- reaper.ShowConsoleMsg(string.format('column %s: %s / flags: %s\n', column, default_hide, column_flags))
         ImGui.TableSetupColumn(Ctx(), column, column_flags, init_width)
