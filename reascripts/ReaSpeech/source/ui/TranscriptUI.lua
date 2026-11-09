@@ -31,7 +31,8 @@ TranscriptUI.table_flags = function (sortable)
   end
   return (
     sort_flags
-    | ImGui.TableFlags_Borders()
+    | ImGui.TableFlags_BordersOuter()
+    | ImGui.TableFlags_BordersInnerH()
     | ImGui.TableFlags_Hideable()
     | ImGui.TableFlags_Resizable()
     | ImGui.TableFlags_Reorderable()
@@ -418,7 +419,7 @@ end
 function TranscriptUI:render_search(column)
   ImGui.PushItemWidth(Ctx(), column.width)
   Trap(function()
-    local search_changed, search = ImGui.InputTextWithHint(Ctx(), '##search', 'Search', self.transcript.search)
+    local search_changed, search = ImGui.InputTextWithHint(Ctx(), '##search', 'Search…', self.transcript.search)
     if search_changed then
       self:handle_search(search)
     end
@@ -527,9 +528,11 @@ function TranscriptUI:render_table_cell(segment, column)
   elseif column == "score" then
     self:render_score(segment:get(column, 0.0))
   elseif column == 'start' then
-    ImGui.Text(Ctx(), reaper.format_timestr(segment:timeline_start_time(), ''))
+    local time = reaper.format_timestr(segment:timeline_start_time(), '')
+    Widgets.link(time, function() segment:navigate(nil, self.autoplay) end, Theme.COLORS.link)
   elseif column == 'end' then
-    ImGui.Text(Ctx(), reaper.format_timestr(segment:timeline_end_time(), ''))
+    ImGui.TextColored(Ctx(), Theme.COLORS.muted,
+      reaper.format_timestr(segment:timeline_end_time(), ''))
   else
     local value = segment:get(column)
     if type(value) == 'table' then
@@ -550,7 +553,7 @@ function TranscriptUI:render_text(segment, column)
 end
 
 function TranscriptUI:render_text_simple(segment, column)
-  Widgets.link(segment:get(column, ""), function () segment:navigate(nil,self.autoplay) end)
+  Widgets.link(segment:get(column, ""), function () segment:navigate(nil, self.autoplay) end, Theme.COLORS.text)
 end
 
 function TranscriptUI:render_text_words(segment, _)
@@ -571,15 +574,19 @@ function TranscriptUI:render_text_words(segment, _)
 end
 
 function TranscriptUI:render_score(value)
-  local w, h = 50 * value, 3
+  local width, height = 50, 3
+  local draw_list = ImGui.GetWindowDrawList(Ctx())
+  local x, y = ImGui.GetCursorScreenPos(Ctx())
+  local line_height = ImGui.GetTextLineHeight(Ctx())
+  y = y + (line_height - height) / 2
+
+  ImGui.DrawList_AddRectFilled(draw_list, x, y, x + width, y + height, Theme.COLORS.border)
   local color = self.score_color(value)
   if color then
-    local draw_list = ImGui.GetWindowDrawList(Ctx())
-    local x, y = ImGui.GetCursorScreenPos(Ctx())
-    y = y + 7
-    ImGui.DrawList_AddRectFilled(draw_list, x, y, x + w, y + h, color)
+    local fill_width = width * math.min(value, 1)
+    ImGui.DrawList_AddRectFilled(draw_list, x, y, x + fill_width, y + height, color)
   end
-  ImGui.Dummy(Ctx(), w, h)
+  ImGui.Dummy(Ctx(), width, line_height)
 end
 
 function TranscriptUI.score_color(value)
