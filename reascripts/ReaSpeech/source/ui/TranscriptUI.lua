@@ -548,10 +548,18 @@ function TranscriptUI:render_table_cell(segment, column)
 end
 
 function TranscriptUI:render_text(segment, column)
-  if self.words then
-    self:render_text_words(segment, column)
+  local available_width = ImGui.GetContentRegionAvail(Ctx())
+  ImGui.BeginGroup(Ctx())
+  if self.words and segment.words and #segment.words > 0 then
+    self:render_text_words(segment)
   else
     self:render_text_simple(segment, column)
+  end
+  ImGui.EndGroup(Ctx())
+
+  local text_width = ImGui.GetItemRectSize(Ctx())
+  if text_width > available_width then
+    Widgets.tooltip(segment:get(column, ""))
   end
 end
 
@@ -559,7 +567,7 @@ function TranscriptUI:render_text_simple(segment, column)
   Widgets.link(segment:get(column, ""), function () segment:navigate(nil, self.autoplay) end)
 end
 
-function TranscriptUI:render_text_words(segment, _)
+function TranscriptUI:render_text_words(segment)
   if segment.words then
     for i, word in pairs(segment.words) do
       if i > 1 then
