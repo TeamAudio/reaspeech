@@ -41,8 +41,6 @@ function ReaSpeechWidget:render_label(label)
     ImGui.SameLine(Ctx())
     self:render_help_icon()
   end
-
-  ImGui.Dummy(Ctx(), 0, 0)
 end
 
 function ReaSpeechWidget:value()
