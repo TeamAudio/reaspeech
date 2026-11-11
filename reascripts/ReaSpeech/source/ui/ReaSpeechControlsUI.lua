@@ -73,7 +73,8 @@ function ReaSpeechControlsUI:render()
   end)
   ImGui.EndGroup(Ctx())
 
-  ImGui.SameLine(Ctx())
+  local logo_margin = ImGui.GetStyleVar(Ctx(), ImGui.StyleVar_WindowPadding())
+  ImGui.SameLine(Ctx(), 0, logo_margin)
 
   ImGui.BeginGroup(Ctx())
   Trap(function()

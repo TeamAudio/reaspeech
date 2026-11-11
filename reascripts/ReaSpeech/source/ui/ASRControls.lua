@@ -141,9 +141,6 @@ function ASRControls:init_form_layout()
 
   self.form_layout = ColumnLayout.new {
     column_padding = ReaSpeechControlsUI.COLUMN_PADDING,
-    margin_bottom = ReaSpeechControlsUI.MARGIN_BOTTOM,
-    margin_left = ReaSpeechControlsUI.MARGIN_LEFT,
-    margin_right = ReaSpeechControlsUI.MARGIN_RIGHT,
     num_columns = #renderers,
 
     render_column = function (column)
@@ -190,7 +187,6 @@ end
 function ASRControls:init_actions_layout()
   self.actions_layout = ColumnLayout.new {
     column_padding = 10,
-    margin_left = ReaSpeechControlsUI.MARGIN_LEFT,
     num_columns = 1,
     render_column = function(_column)
       self:render_actions()
@@ -203,8 +199,11 @@ function ASRControls:render_bg()
 end
 
 function ASRControls:render()
-  self.form_layout:render()
-  ImGui.Spacing(Ctx())
+  local panel_flags = ImGui.ChildFlags_Borders() | ImGui.ChildFlags_AutoResizeY()
+  if ImGui.BeginChild(Ctx(), 'asr-form', 0, 0, panel_flags) then
+    Trap(function() self.form_layout:render() end)
+    ImGui.EndChild(Ctx())
+  end
   self.actions_layout:render()
   self.alert_popup:render()
 end
