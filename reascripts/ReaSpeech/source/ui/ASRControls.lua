@@ -202,8 +202,8 @@ function ASRControls:render()
   local panel_flags = ImGui.ChildFlags_Borders() | ImGui.ChildFlags_AutoResizeY()
   if ImGui.BeginChild(Ctx(), 'asr-form', 0, 0, panel_flags) then
     Trap(function() self.form_layout:render() end)
-    ImGui.EndChild(Ctx())
   end
+  ImGui.EndChild(Ctx())
   self.actions_layout:render()
   self.alert_popup:render()
 end
