@@ -19,6 +19,7 @@ Theme = {
     primary_active = 0x0A58CAFF,
     link = 0x6EA8FEFF,
     bold_red = 0xEA868FFF,
+    pink_opaque = 0xE24097FF,
   }
 }
 
@@ -33,7 +34,7 @@ function Theme:init()
       { ImGui.Col_Button, colors.secondary },
       { ImGui.Col_ButtonActive, colors.secondary_active },
       { ImGui.Col_ButtonHovered, colors.secondary_hover },
-      { ImGui.Col_CheckMark, colors.link },
+      { ImGui.Col_CheckMark, colors.pink_opaque },
       { ImGui.Col_FrameBg, colors.body },
       { ImGui.Col_FrameBgActive, colors.border },
       { ImGui.Col_FrameBgHovered, colors.surface },
