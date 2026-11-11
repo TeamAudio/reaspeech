@@ -476,7 +476,8 @@ function TranscriptUI:render_table()
           init_width = self.FILE_COLUMN_WIDTH
         end
         -- reaper.ShowConsoleMsg(string.format('column %s: %s / flags: %s\n', column, default_hide, column_flags))
-        ImGui.TableSetupColumn(Ctx(), column, column_flags, init_width)
+        local heading = column:gsub("^%l", string.upper)
+        ImGui.TableSetupColumn(Ctx(), heading, column_flags, init_width)
       end
 
       ImGui.TableSetupScrollFreeze(Ctx(), 0, 1)
