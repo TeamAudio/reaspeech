@@ -555,7 +555,7 @@ function TranscriptUI:render_text(segment, column)
 end
 
 function TranscriptUI:render_text_simple(segment, column)
-  Widgets.link(segment:get(column, ""), function () segment:navigate(nil, self.autoplay) end, Theme.COLORS.text)
+  Widgets.link(segment:get(column, ""), function () segment:navigate(nil, self.autoplay) end)
 end
 
 function TranscriptUI:render_text_words(segment, _)
