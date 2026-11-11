@@ -577,7 +577,8 @@ function TranscriptUI:render_text_words(segment, _)
 end
 
 function TranscriptUI:render_score(value)
-  local width, height = 50, 3
+  local available_width = ImGui.GetContentRegionAvail(Ctx())
+  local width, height = math.max(0, available_width), 3
   local draw_list = ImGui.GetWindowDrawList(Ctx())
   local x, y = ImGui.GetCursorScreenPos(Ctx())
   local line_height = ImGui.GetTextLineHeight(Ctx())
