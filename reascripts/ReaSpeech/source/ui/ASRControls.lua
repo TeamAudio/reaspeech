@@ -122,20 +122,24 @@ function ASRControls:init_asr_info()
   }
 end
 
-function ASRControls:check_asr_info()
-  -- Capabilities are supplied by the installed ReaSpeech extension.
-end
-
 function ASRControls:init_layouts()
-  self:init_simple_layout()
-  self:init_advanced_layout()
+  self:init_form_layout()
   self:init_actions_layout()
 end
 
-function ASRControls:init_simple_layout()
-  local renderers = {self.render_model}
+function ASRControls:init_form_layout()
+  local renderers = {
+    self.render_model,
+    self.render_language,
+  }
 
-  self.simple_layout = ColumnLayout.new {
+  if self.asr_options.hotwords then
+    table.insert(renderers, self.render_hotwords)
+  elseif self.asr_options.initial_prompt then
+    table.insert(renderers, self.render_initial_prompt)
+  end
+
+  self.form_layout = ColumnLayout.new {
     column_padding = ReaSpeechControlsUI.COLUMN_PADDING,
     margin_bottom = ReaSpeechControlsUI.MARGIN_BOTTOM,
     margin_left = ReaSpeechControlsUI.MARGIN_LEFT,
@@ -145,52 +149,6 @@ function ASRControls:init_simple_layout()
     render_column = function (column)
       ImGui.PushItemWidth(Ctx(), column.width)
       Trap(function () renderers[column.num](self, column) end)
-      ImGui.PopItemWidth(Ctx())
-    end
-  }
-end
-
-function ASRControls:_get_renderers()
-  local renderers = {}
-  if self.asr_options.vad_filter then
-    table.insert(renderers, {
-      self.render_vad_filter
-    })
-  end
-
-  if self.asr_options.hotwords then
-    table.insert(renderers, {
-      self.render_hotwords
-    })
-  elseif self.asr_options.initial_prompt then
-    table.insert(renderers, {
-      self.render_initial_prompt
-    })
-  end
-
-  table.insert(renderers, {
-    self.render_language
-  })
-
-  return renderers
-end
-
-function ASRControls:init_advanced_layout()
-  local renderers = self:_get_renderers()
-
-  self.advanced_layout = ColumnLayout.new {
-    column_padding = ReaSpeechControlsUI.COLUMN_PADDING,
-    margin_bottom = ReaSpeechControlsUI.MARGIN_BOTTOM,
-    margin_left = ReaSpeechControlsUI.MARGIN_LEFT,
-    margin_right = ReaSpeechControlsUI.MARGIN_RIGHT,
-    num_columns = #renderers,
-
-    render_column = function (column)
-      ImGui.PushItemWidth(Ctx(), column.width)
-      for row, renderer in ipairs(renderers[column.num]) do
-        if row > 1 then ImGui.Spacing(Ctx()) end
-        Trap(function () renderer(self, column) end)
-      end
       ImGui.PopItemWidth(Ctx())
     end
   }
@@ -245,42 +203,29 @@ function ASRControls:render_bg()
 end
 
 function ASRControls:render()
-  self:check_asr_info()
-  self.simple_layout:render()
-  ImGui.Unindent(Ctx())
-  ImGui.Dummy(Ctx(), ReaSpeechControlsUI.MARGIN_LEFT, 0)
-  ImGui.SameLine(Ctx())
-  if ImGui.TreeNode(Ctx(), "Advanced Options") then
-    self.advanced_layout:render()
-    ImGui.TreePop(Ctx())
-  end
-  ImGui.Indent(Ctx())
+  self.form_layout:render()
   ImGui.Spacing(Ctx())
   self.actions_layout:render()
-self.alert_popup:render()
+  self.alert_popup:render()
 end
 
 function ASRControls:render_language(column)
   if self.asr_options.language then
     self.language:render()
-    ImGui.Spacing(Ctx())
     self.translate:render(column)
   end
 end
 
-function ASRControls:render_model()
+function ASRControls:render_model(column)
   self.model_name:render()
+  if self.asr_options.vad_filter then
+    self.vad_filter:render(column)
+  end
 end
 
 function ASRControls:render_hotwords()
   if self.asr_options.hotwords then
     self.hotwords:render()
-  end
-end
-
-function ASRControls:render_vad_filter(column)
-  if self.asr_options.vad_filter then
-    self.vad_filter:render(column)
   end
 end
 
