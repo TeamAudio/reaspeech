@@ -376,8 +376,6 @@ function TranscriptUI:render_result_actions()
   self:render_annotations_button()
   ImGui.SameLine(Ctx())
   self:render_export()
-  ImGui.SameLine(Ctx())
-  self:render_clear()
 end
 
 function TranscriptUI:render_annotations_button()
@@ -389,12 +387,6 @@ end
 function TranscriptUI:render_export()
   if ImGui.Button(Ctx(), "Export") then
     self:handle_export()
-  end
-end
-
-function TranscriptUI:render_clear()
-  if ImGui.Button(Ctx(), "Clear") then
-    self:handle_transcript_clear()
   end
 end
 
@@ -437,10 +429,6 @@ end
 
 function TranscriptUI:handle_export()
   self.transcript_exporter:present()
-end
-
-function TranscriptUI:handle_transcript_clear()
-  self.transcript:clear()
 end
 
 function TranscriptUI:handle_search(search)
