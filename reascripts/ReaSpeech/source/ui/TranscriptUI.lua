@@ -56,17 +56,20 @@ function TranscriptUI:init()
     default = self.transcript.name,
     on_cancel = function()
       self.editing_name = false
-      self.transcript.name = self._original_transcript_name
+      if self.transcript.name ~= self._original_transcript_name then
+        self.transcript.name = self._original_transcript_name
+        self:mark_transcript_changed()
+      end
       self._original_transcript_name = nil
     end,
     on_change = function(value)
       self.transcript.name = value
-      self._transcript_saved = false
+      self:mark_transcript_changed()
     end,
     on_enter = function()
       self.transcript.name = self.name_editor:value()
       self.editing_name = false
-      self._transcript_saved = false
+      self:mark_transcript_changed()
     end,
   }
 
@@ -77,19 +80,24 @@ function TranscriptUI:init()
   self.transcript_editor = TranscriptEditor.new {
     transcript = self.transcript,
     on_save = function()
-      self._transcript_saved = false
+      self:mark_transcript_changed()
     end
   }
 
   self.transcript_exporter = TranscriptExporter.new {
     transcript = self.transcript,
+    get_revision = function() return self._transcript_revision end,
     on_export = function()
       self._transcript_saved = true
+      if self._close_after_export then
+        app.plugins:remove_plugin(self)
+      end
     end
   }
   self.annotations = TranscriptAnnotationsUI.new { transcript = self.transcript }
 
   self._transcript_saved = self._transcript_saved or false
+  self._transcript_revision = 0
 
   self:init_layouts()
 end
@@ -140,6 +148,11 @@ function TranscriptUI:new_tab_menu()
   }
 end
 
+function TranscriptUI:mark_transcript_changed()
+  self._transcript_revision = self._transcript_revision + 1
+  self._transcript_saved = false
+end
+
 function TranscriptUI:confirm_close()
   if self._transcript_saved then
     return true
@@ -161,10 +174,7 @@ function TranscriptUI:confirm_close()
     ImGui.SameLine(Ctx())
     if ImGui.Button(Ctx(), 'Save') then
       self.confirmation_popup:close()
-      self.transcript_exporter.on_export = function()
-        app.plugins:remove_plugin(self)
-      end
-      self.transcript_exporter:present()
+      self:handle_export(true)
     end
   end)
 
@@ -333,6 +343,15 @@ end
 
 function TranscriptUI:render()
   self:render_name()
+  if self.transcription_request then
+    local worker = self.app.worker
+    local progress, status = worker:progress(self.transcription_request)
+    if progress then
+      ReaSpeechWidget.render_transcription_progress(worker, progress, status, self.transcription_request)
+    else
+      self.transcription_request = nil
+    end
+  end
   self.actions_layout:render()
   self:render_table()
 
@@ -367,8 +386,6 @@ function TranscriptUI:render_result_actions()
   self:render_annotations_button()
   ImGui.SameLine(Ctx())
   self:render_export()
-  ImGui.SameLine(Ctx())
-  self:render_clear()
 end
 
 function TranscriptUI:render_annotations_button()
@@ -380,12 +397,6 @@ end
 function TranscriptUI:render_export()
   if ImGui.Button(Ctx(), "Export") then
     self:handle_export()
-  end
-end
-
-function TranscriptUI:render_clear()
-  if ImGui.Button(Ctx(), "Clear") then
-    self:handle_transcript_clear()
   end
 end
 
@@ -426,12 +437,9 @@ function TranscriptUI:render_search(column)
   ImGui.PopItemWidth(Ctx())
 end
 
-function TranscriptUI:handle_export()
+function TranscriptUI:handle_export(close_after_export)
+  self._close_after_export = close_after_export
   self.transcript_exporter:present()
-end
-
-function TranscriptUI:handle_transcript_clear()
-  self.transcript:clear()
 end
 
 function TranscriptUI:handle_search(search)
@@ -622,7 +630,7 @@ function TranscriptUI:sort_table()
   if not specs_dirty then return end
 
   if not has_specs then
-    self.transcript:update()
+    self.transcript:sort(nil)
     return
   end
 

@@ -70,16 +70,19 @@ function ASRPlugin:asr(jobs)
       audio_file = function(job) return job.path end
     },
     jobs = consolidated_jobs,
-    callback = self:handle_response(#consolidated_jobs)
+    stream_segments = true,
   }
+  request.callback = self:handle_response(request)
 
   self.app:submit_request(request)
 end
 
-function ASRPlugin:handle_response(job_count)
+function ASRPlugin:handle_response(request)
+  local job_count = #request.jobs
   local transcript = Transcript.new {
     name = self.new_transcript_name(),
   }
+  local plugin
 
   return function(response)
     if not response[1] or not response[1].segments then
@@ -89,28 +92,36 @@ function ASRPlugin:handle_response(job_count)
     local segments = response[1].segments
     local job = response._job
 
-    for _, project_entry in pairs(job.project_entries) do
+    local added_segments = false
+    for _, project_entry in ipairs(job.project_entries) do
       local item = project_entry.item
       local take = project_entry.take
 
-      for _, segment in pairs(segments) do
+      for _, segment in ipairs(segments) do
         local from_whisper = TranscriptSegment.from_whisper(segment, item, take)
 
         for _, s in pairs(from_whisper) do
           -- do we get a lot of textless segments? thinking emoji
           if s:get('text') then
             transcript:add_segment(s)
+            added_segments = true
           end
         end
       end
     end
 
-    transcript:update()
+    if added_segments then
+      transcript:update()
+      if plugin then plugin:mark_transcript_changed() end
+    end
+    if not response.partial then job_count = job_count - 1 end
 
-    job_count = job_count - 1
-
-    if job_count == 0 then
-      local plugin = TranscriptUI.new { transcript = transcript }
+    if not plugin and (added_segments or job_count == 0) then
+      plugin = TranscriptUI.new {
+        transcript = transcript,
+        app = self.app,
+        transcription_request = request,
+      }
       self.app.plugins:add_plugin(plugin)
     end
   end
