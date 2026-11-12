@@ -622,7 +622,7 @@ function TranscriptUI:sort_table()
   if not specs_dirty then return end
 
   if not has_specs then
-    self.transcript:update()
+    self.transcript:sort(nil)
     return
   end
 

@@ -47,6 +47,7 @@ function ReaSpeechWorker:expand_jobs_from_request(request)
         job = job,
         data = request.data or {},
         callback = request.callback,
+        stream_segments = request.stream_segments,
         segments = {},
         progress = 0,
         status = 'Waiting',
@@ -92,7 +93,10 @@ function ReaSpeechWorker:poll_active_job()
   local active = self.active_job
   while active and self.active_job == active do
     local event_json = reaper.ReaSpeech_Poll(active.job_id)
-    if not event_json or event_json == '' then return end
+    if not event_json or event_json == '' then
+      self:publish_segments(active)
+      return
+    end
 
     local ok, event = pcall(json.decode, event_json)
     if not ok or type(event) ~= 'table' or type(event.type) ~= 'string' then
@@ -126,11 +130,24 @@ function ReaSpeechWorker:handle_event(event)
     self.active_job = nil
     self:start_next_job()
   elseif event.type == 'cancelled' then
+    self:publish_segments(active)
     self.active_job = nil
     self:start_next_job()
   elseif event.type == 'error' then
     self:finish_with_error(event.error or 'Unknown transcription error')
   end
+end
+
+function ReaSpeechWorker:publish_segments(active)
+  if not active.stream_segments or active.cancelling or #active.segments == 0 then return end
+
+  table.insert(self.responses, {
+    { segments = active.segments },
+    _job = active.job,
+    callback = active.callback,
+    partial = true,
+  })
+  active.segments = {}
 end
 
 function ReaSpeechWorker:convert_segment(segment)
@@ -144,6 +161,7 @@ function ReaSpeechWorker:convert_segment(segment)
 end
 
 function ReaSpeechWorker:finish_with_error(message)
+  self:publish_segments(self.active_job)
   table.insert(self.responses, { error = tostring(message) })
   self.active_job = nil
   self.pending_jobs = {}
