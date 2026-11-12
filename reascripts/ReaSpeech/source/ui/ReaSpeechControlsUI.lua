@@ -73,7 +73,8 @@ function ReaSpeechControlsUI:render()
   end)
   ImGui.EndGroup(Ctx())
 
-  ImGui.SameLine(Ctx())
+  local logo_margin = ImGui.GetStyleVar(Ctx(), ImGui.StyleVar_WindowPadding())
+  ImGui.SameLine(Ctx(), 0, logo_margin)
 
   ImGui.BeginGroup(Ctx())
   Trap(function()
@@ -186,7 +187,11 @@ end
 
 function ReaSpeechControlsUI:render_heading()
   local button_size = ImGui.GetFrameHeight(Ctx())
+  local colors = Theme.COLORS
   ImGui.PushStyleVar(Ctx(), ImGui.StyleVar_FrameRounding(), 4)
+  ImGui.PushStyleColor(Ctx(), ImGui.Col_Button(), colors.body)
+  ImGui.PushStyleColor(Ctx(), ImGui.Col_ButtonHovered(), colors.border)
+  ImGui.PushStyleColor(Ctx(), ImGui.Col_ButtonActive(), colors.surface)
   Trap(function ()
     if Widgets.icon_button(Icons.gear, '##settings', button_size, button_size, 'Settings', nil, 0.72) then
       local settings_plugin = self.plugins:get_plugin(SettingsPlugin.PLUGIN_KEY)
@@ -198,6 +203,7 @@ function ReaSpeechControlsUI:render_heading()
       end
     end
   end)
+  ImGui.PopStyleColor(Ctx(), 3)
   ImGui.PopStyleVar(Ctx())
   ImGui.SameLine(Ctx(), 0, self.HEADING_SPACING)
 

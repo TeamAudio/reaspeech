@@ -33,6 +33,7 @@ function ASRActions:selected_tracks_button()
   if selected_track_count == 0 then
     self._selected_tracks_button = Widgets.Button.new({
       label = "Process Selected Tracks",
+      primary = true,
       disabled = true,
     })
     return self._selected_tracks_button
@@ -43,6 +44,7 @@ function ASRActions:selected_tracks_button()
 
   self._selected_tracks_button = Widgets.Button.new({
     label = button_text,
+    primary = true,
     on_click = function ()
       self:process_jobs(self.jobs_for_selected_tracks)
     end,
@@ -63,6 +65,7 @@ function ASRActions:selected_items_button()
   if selected_item_count == 0 then
     self._selected_items_button = Widgets.Button.new({
       label = "Process Selected Items",
+      primary = true,
       disabled = true,
     })
     return self._selected_items_button
@@ -73,6 +76,7 @@ function ASRActions:selected_items_button()
 
   self._selected_items_button = Widgets.Button.new({
     label = button_text,
+    primary = true,
     disabled = function()
       return self.plugin.app.worker:progress()
     end,
@@ -91,6 +95,7 @@ function ASRActions:all_items_button()
 
   self._all_items_button = Widgets.Button.new({
     label = "Process All Items",
+    primary = true,
     on_click = function ()
       self:process_jobs(self.jobs_for_all_items)
     end,

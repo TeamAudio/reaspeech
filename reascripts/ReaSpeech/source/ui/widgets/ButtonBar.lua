@@ -29,8 +29,8 @@ ButtonBar.new = function (options)
   })
 
   local with_button_color = function (selected, f)
-    local color = Theme.COLORS.dark_gray_translucent
-    if selected then color = Theme.COLORS.medium_gray_opaque end
+    local color = Theme.COLORS.body
+    if selected then color = Theme.COLORS.secondary end
     ImGui.PushStyleColor(Ctx(), ImGui.Col_Button(), color)
     ImGui.PushStyleColor(Ctx(), ImGui.Col_ButtonHovered(), color)
     Trap(f)

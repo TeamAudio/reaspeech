@@ -11,7 +11,7 @@ TranscriptUI = Polo {
   FLOAT_FORMAT = '%.4f',
 
   COLUMN_WIDTH = 55,
-  LARGE_COLUMN_WIDTH = 300,
+  FILE_COLUMN_WIDTH = 110,
 
   ACTIONS_MARGIN = 8,
   ACTIONS_PADDING = 8,
@@ -31,12 +31,12 @@ TranscriptUI.table_flags = function (sortable)
   end
   return (
     sort_flags
-    | ImGui.TableFlags_Borders()
+    | ImGui.TableFlags_BordersOuter()
+    | ImGui.TableFlags_BordersInnerH()
     | ImGui.TableFlags_Hideable()
     | ImGui.TableFlags_Resizable()
     | ImGui.TableFlags_Reorderable()
     | ImGui.TableFlags_RowBg()
-    | ImGui.TableFlags_ScrollX()
     | ImGui.TableFlags_ScrollY()
     | ImGui.TableFlags_SizingFixedFit()
   )
@@ -418,7 +418,7 @@ end
 function TranscriptUI:render_search(column)
   ImGui.PushItemWidth(Ctx(), column.width)
   Trap(function()
-    local search_changed, search = ImGui.InputTextWithHint(Ctx(), '##search', 'Search', self.transcript.search)
+    local search_changed, search = ImGui.InputTextWithHint(Ctx(), '##search', 'Search…', self.transcript.search)
     if search_changed then
       self:handle_search(search)
     end
@@ -469,11 +469,15 @@ function TranscriptUI:render_table()
           column_flags = column_flags | ImGui.TableColumnFlags_DefaultHide()
         end
         local init_width = self.COLUMN_WIDTH
-        if column == "text" or column == "file" then
-          init_width = self.LARGE_COLUMN_WIDTH
+        if column == "text" then
+          column_flags = column_flags | ImGui.TableColumnFlags_WidthStretch()
+          init_width = 1
+        elseif column == "file" then
+          init_width = self.FILE_COLUMN_WIDTH
         end
         -- reaper.ShowConsoleMsg(string.format('column %s: %s / flags: %s\n', column, default_hide, column_flags))
-        ImGui.TableSetupColumn(Ctx(), column, column_flags, init_width)
+        local heading = column:gsub("^%l", string.upper)
+        ImGui.TableSetupColumn(Ctx(), heading, column_flags, init_width)
       end
 
       ImGui.TableSetupScrollFreeze(Ctx(), 0, 1)
@@ -527,9 +531,11 @@ function TranscriptUI:render_table_cell(segment, column)
   elseif column == "score" then
     self:render_score(segment:get(column, 0.0))
   elseif column == 'start' then
-    ImGui.Text(Ctx(), reaper.format_timestr(segment:timeline_start_time(), ''))
+    local time = reaper.format_timestr(segment:timeline_start_time(), '')
+    Widgets.link(time, function() segment:navigate(nil, self.autoplay) end, Theme.COLORS.link)
   elseif column == 'end' then
-    ImGui.Text(Ctx(), reaper.format_timestr(segment:timeline_end_time(), ''))
+    ImGui.TextColored(Ctx(), Theme.COLORS.muted,
+      reaper.format_timestr(segment:timeline_end_time(), ''))
   else
     local value = segment:get(column)
     if type(value) == 'table' then
@@ -542,18 +548,26 @@ function TranscriptUI:render_table_cell(segment, column)
 end
 
 function TranscriptUI:render_text(segment, column)
-  if self.words then
-    self:render_text_words(segment, column)
+  local available_width = ImGui.GetContentRegionAvail(Ctx())
+  ImGui.BeginGroup(Ctx())
+  if self.words and segment.words and #segment.words > 0 then
+    self:render_text_words(segment)
   else
     self:render_text_simple(segment, column)
+  end
+  ImGui.EndGroup(Ctx())
+
+  local text_width = ImGui.GetItemRectSize(Ctx())
+  if text_width > available_width then
+    Widgets.tooltip(segment:get(column, ""))
   end
 end
 
 function TranscriptUI:render_text_simple(segment, column)
-  Widgets.link(segment:get(column, ""), function () segment:navigate(nil,self.autoplay) end)
+  Widgets.link(segment:get(column, ""), function () segment:navigate(nil, self.autoplay) end)
 end
 
-function TranscriptUI:render_text_words(segment, _)
+function TranscriptUI:render_text_words(segment)
   if segment.words then
     for i, word in pairs(segment.words) do
       if i > 1 then
@@ -571,15 +585,20 @@ function TranscriptUI:render_text_words(segment, _)
 end
 
 function TranscriptUI:render_score(value)
-  local w, h = 50 * value, 3
+  local available_width = ImGui.GetContentRegionAvail(Ctx())
+  local width, height = math.max(0, available_width), 3
+  local draw_list = ImGui.GetWindowDrawList(Ctx())
+  local x, y = ImGui.GetCursorScreenPos(Ctx())
+  local line_height = ImGui.GetTextLineHeight(Ctx())
+  y = y + (line_height - height) / 2
+
+  ImGui.DrawList_AddRectFilled(draw_list, x, y, x + width, y + height, Theme.COLORS.border)
   local color = self.score_color(value)
   if color then
-    local draw_list = ImGui.GetWindowDrawList(Ctx())
-    local x, y = ImGui.GetCursorScreenPos(Ctx())
-    y = y + 7
-    ImGui.DrawList_AddRectFilled(draw_list, x, y, x + w, y + h, color)
+    local fill_width = width * math.min(value, 1)
+    ImGui.DrawList_AddRectFilled(draw_list, x, y, x + fill_width, y + height, color)
   end
-  ImGui.Dummy(Ctx(), w, h)
+  ImGui.Dummy(Ctx(), width, line_height)
 end
 
 function TranscriptUI.score_color(value)

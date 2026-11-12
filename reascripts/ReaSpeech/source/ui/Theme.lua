@@ -6,47 +6,74 @@
 
 Theme = {
   COLORS = {
-    black_near_transparent = 0x000000E8,
-    dark_blue_gray_opaque = 0x4A5459FF,
-    dark_gray_opaque = 0x404040FF,
-    dark_gray_semi_opaque = 0x404040FB,
-    dark_gray_semi_transparent = 0x4040408A,
-    dark_gray_translucent = 0x2B2B2B8A,
-    medium_gray_opaque = 0x5C5C5CFF,
+    body = 0x212529FF,
+    surface = 0x2B3035FF,
+    border = 0x495057FF,
+    text = 0xDEE2E6FF,
+    muted = 0xADB5BDFF,
+    secondary = 0x6C757DFF,
+    secondary_hover = 0x5C636AFF,
+    secondary_active = 0x565E64FF,
+    primary = 0x0D6EFDFF,
+    primary_hover = 0x0B5ED7FF,
+    primary_active = 0x0A58CAFF,
+    link = 0x6EA8FEFF,
+    bold_red = 0xEA868FFF,
     pink_opaque = 0xE24097FF,
-    very_dark_gray_semi_opaque = 0x1A1A1AFB,
-    bold_red = 0xff0000ff,
   }
 }
 
 function Theme:init()
+  local colors = self.COLORS
+
   self.main = ImGuiTheme.new {
     colors = {
-      { ImGui.Col_Border, self.COLORS.black_near_transparent },
-      { ImGui.Col_Button, self.COLORS.medium_gray_opaque },
-      { ImGui.Col_ButtonActive, self.COLORS.dark_gray_opaque },
-      { ImGui.Col_ButtonHovered, self.COLORS.dark_gray_translucent },
-      { ImGui.Col_CheckMark, self.COLORS.pink_opaque },
-      { ImGui.Col_FrameBg, self.COLORS.dark_gray_translucent },
-      { ImGui.Col_FrameBgActive, self.COLORS.pink_opaque },
-      { ImGui.Col_FrameBgHovered, self.COLORS.dark_gray_translucent },
-      { ImGui.Col_Header, self.COLORS.dark_gray_semi_opaque },
-      { ImGui.Col_HeaderActive, self.COLORS.dark_gray_semi_transparent },
-      { ImGui.Col_HeaderHovered, self.COLORS.dark_gray_semi_opaque },
-      { ImGui.Col_Tab, self.COLORS.dark_gray_opaque },
-      { ImGui.Col_TabActive, self.COLORS.medium_gray_opaque },
-      { ImGui.Col_TabHovered, self.COLORS.dark_gray_translucent },
-      { ImGui.Col_TabSelected, self.COLORS.medium_gray_opaque },
-      { ImGui.Col_TitleBg, self.COLORS.dark_gray_semi_opaque },
-      { ImGui.Col_TitleBgActive, self.COLORS.dark_blue_gray_opaque },
-      { ImGui.Col_WindowBg, self.COLORS.dark_gray_semi_opaque },
+      { ImGui.Col_Text, colors.text },
+      { ImGui.Col_TextDisabled, colors.muted },
+      { ImGui.Col_Border, colors.border },
+      { ImGui.Col_Button, colors.secondary },
+      { ImGui.Col_ButtonActive, colors.secondary_active },
+      { ImGui.Col_ButtonHovered, colors.secondary_hover },
+      { ImGui.Col_CheckMark, colors.pink_opaque },
+      { ImGui.Col_FrameBg, colors.body },
+      { ImGui.Col_FrameBgActive, colors.border },
+      { ImGui.Col_FrameBgHovered, colors.surface },
+      { ImGui.Col_Header, colors.surface },
+      { ImGui.Col_HeaderActive, colors.primary_active },
+      { ImGui.Col_HeaderHovered, colors.border },
+      { ImGui.Col_Tab, colors.body },
+      { ImGui.Col_TabActive, colors.border },
+      { ImGui.Col_TabHovered, colors.secondary_hover },
+      { ImGui.Col_TabSelected, colors.border },
+      { ImGui.Col_TitleBg, colors.body },
+      { ImGui.Col_TitleBgActive, colors.surface },
+      { ImGui.Col_WindowBg, colors.surface },
+      { ImGui.Col_PopupBg, colors.body },
+      { ImGui.Col_Separator, colors.border },
+      { ImGui.Col_ScrollbarBg, colors.body },
+      { ImGui.Col_ScrollbarGrab, colors.border },
+      { ImGui.Col_ScrollbarGrabHovered, colors.secondary },
+      { ImGui.Col_ScrollbarGrabActive, colors.muted },
+      { ImGui.Col_TableHeaderBg, colors.body },
+      { ImGui.Col_TableBorderStrong, colors.border },
+      { ImGui.Col_TableBorderLight, colors.border },
+      { ImGui.Col_TableRowBg, colors.surface },
+      { ImGui.Col_TableRowBgAlt, colors.body },
+      { ImGui.Col_TextSelectedBg, colors.primary_active },
+      { ImGui.Col_SliderGrab, colors.link },
+      { ImGui.Col_SliderGrabActive, colors.primary },
     },
 
     styles = {
       { ImGui.StyleVar_Alpha, 1.0 },
       { ImGui.StyleVar_FrameBorderSize, 1.0 },
       { ImGui.StyleVar_FramePadding, 10.0, 6.0 },
-      { ImGui.StyleVar_FrameRounding, 12.0 },
+      { ImGui.StyleVar_FrameRounding, 6.0 },
+      { ImGui.StyleVar_CellPadding, 10.0, 5.0 },
+      { ImGui.StyleVar_ChildRounding, 6.0 },
+      { ImGui.StyleVar_PopupRounding, 6.0 },
+      { ImGui.StyleVar_TabRounding, 6.0 },
+      { ImGui.StyleVar_WindowRounding, 8.0 },
       { ImGui.StyleVar_GrabRounding, 4.0 },
       { ImGui.StyleVar_ItemSpacing, 8.0, 8.0 },
       { ImGui.StyleVar_PopupBorderSize, 1.0 },
@@ -55,9 +82,18 @@ function Theme:init()
     }
   }
 
+  self.primary_button = ImGuiTheme.new {
+    colors = {
+      { ImGui.Col_Text, 0xFFFFFFFF },
+      { ImGui.Col_Button, colors.primary },
+      { ImGui.Col_ButtonHovered, colors.primary_hover },
+      { ImGui.Col_ButtonActive, colors.primary_active },
+    }
+  }
+
   self.popup = ImGuiTheme.new {
     colors = {
-      { ImGui.Col_WindowBg, self.COLORS.very_dark_gray_semi_opaque },
+      { ImGui.Col_WindowBg, colors.body },
     },
 
     styles = {

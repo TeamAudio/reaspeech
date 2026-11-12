@@ -37,11 +37,14 @@ Button.renderer = function(self)
     disabled = disabled()
   end
 
+  local theme = options.primary and Theme.primary_button
+  if theme then theme:push(Ctx()) end
   Widgets.disable_if(disabled, function()
     if ImGui.Button(Ctx(), options.label, options.width) then
       Trap(options.on_click)
     end
   end)
+  if theme then theme:pop(Ctx()) end
 end
 
 return Button
