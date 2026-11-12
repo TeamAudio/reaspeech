@@ -112,7 +112,7 @@ function ASRPlugin:handle_response(request)
 
     if added_segments then
       transcript:update()
-      if plugin then plugin._transcript_saved = false end
+      if plugin then plugin:mark_transcript_changed() end
     end
     if not response.partial then job_count = job_count - 1 end
 
