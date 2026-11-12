@@ -31,6 +31,7 @@ end
 function ReaSpeechWorker:handle_request(request)
   self:log('Processing speech...')
   local jobs = self:expand_jobs_from_request(request)
+  request.job_count = #jobs
   self.job_count = self.job_count + #jobs
   for _, job in ipairs(jobs) do
     table.insert(self.pending_jobs, job)
@@ -45,6 +46,7 @@ function ReaSpeechWorker:expand_jobs_from_request(request)
       seen_path[job.path] = true
       table.insert(jobs, {
         job = job,
+        request = request,
         data = request.data or {},
         callback = request.callback,
         stream_segments = request.stream_segments,
@@ -168,22 +170,54 @@ function ReaSpeechWorker:finish_with_error(message)
   self.job_count = 0
 end
 
-function ReaSpeechWorker:progress()
+function ReaSpeechWorker:progress(request)
+  local active = self.active_job
+  if request then
+    if active and active.request ~= request then active = nil end
+    if active and active.cancelling then return active.cancel_progress, active.status end
+
+    local remaining = active and 1 or 0
+    for _, job in ipairs(self.pending_jobs) do
+      if job.request == request then remaining = remaining + 1 end
+    end
+    if remaining == 0 then return nil end
+
+    local progress = active and active.progress or 0
+    return (request.job_count - remaining + progress) / request.job_count,
+      active and active.status or 'Waiting'
+  end
+
   if self.job_count == 0 then return nil end
-  local remaining = #self.pending_jobs + (self.active_job and 1 or 0)
-  local active_progress = self.active_job and self.active_job.progress or 0
-  return (self.job_count - remaining + active_progress) / self.job_count
+  local remaining = #self.pending_jobs + (active and 1 or 0)
+  local active_progress = active and active.progress or 0
+  return (self.job_count - remaining + active_progress) / self.job_count, self:status()
 end
 
 function ReaSpeechWorker:status()
   return self.active_job and self.active_job.status or nil
 end
 
-function ReaSpeechWorker:cancel()
-  self.pending_jobs = {}
+function ReaSpeechWorker:cancel(request)
   local active = self.active_job
-  self.job_count = active and 1 or 0
-  if active and active.job_id and not active.cancelling then
+  local cancel_active = active and (not request or active.request == request)
+    and active.job_id and not active.cancelling
+  if cancel_active then
+    active.cancel_progress = self:progress(active.request)
+  end
+
+  if request then
+    for i = #self.pending_jobs, 1, -1 do
+      if self.pending_jobs[i].request == request then
+        table.remove(self.pending_jobs, i)
+        self.job_count = self.job_count - 1
+      end
+    end
+  else
+    self.pending_jobs = {}
+    self.job_count = active and 1 or 0
+  end
+
+  if cancel_active then
     active.cancelling = true
     active.status = 'Cancelling'
     reaper.ReaSpeech_Cancel(active.job_id)

@@ -333,6 +333,15 @@ end
 
 function TranscriptUI:render()
   self:render_name()
+  if self.transcription_request then
+    local worker = self.app.worker
+    local progress, status = worker:progress(self.transcription_request)
+    if progress then
+      ReaSpeechWidget.render_transcription_progress(worker, progress, status, self.transcription_request)
+    else
+      self.transcription_request = nil
+    end
+  end
   self.actions_layout:render()
   self:render_table()
 

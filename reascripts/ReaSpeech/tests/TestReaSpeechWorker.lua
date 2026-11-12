@@ -218,6 +218,38 @@ function TestReaSpeechWorker:testCompletionRacingCancellation()
   lu.assertEquals(self.worker.responses, {})
 end
 
+function TestReaSpeechWorker:testProgressAndCancellationAreScopedToRequest()
+  local first = { jobs = { { path = 'one.wav' }, { path = 'two.wav' }, { path = 'three.wav' } } }
+  local second = { jobs = { { path = 'other.wav' } } }
+  self.worker.requests = { first, second }
+  self.worker:react()
+
+  self:event { type = 'completed' }
+  self.worker:react()
+  self:event { type = 'progress', completed = 1, total = 2, message = 'Working' }
+  self.worker:react()
+
+  lu.assertEquals({ self.worker:progress(first) }, { 0.5, 'Working' })
+  lu.assertEquals({ self.worker:progress(second) }, { 0, 'Waiting' })
+
+  self.worker:cancel(first)
+  self.worker:cancel(first)
+  lu.assertEquals(self.cancels, { 'job-2' })
+  lu.assertEquals({ self.worker:progress(first) }, { 0.5, 'Cancelling' })
+
+  self:event { type = 'cancelled' }
+  self.worker:react()
+  lu.assertNil(self.worker:progress(first))
+  lu.assertEquals({ self.worker:progress(second) }, { 0, 'Starting' })
+  lu.assertEquals(self.starts[3].path, 'other.wav')
+
+  self.worker:cancel(first)
+  lu.assertEquals(self.cancels, { 'job-2' })
+  self:event { type = 'completed' }
+  self.worker:react()
+  lu.assertNil(self.worker:progress(second))
+end
+
 function TestReaSpeechWorker:testNewRequestWaitsForCancellation()
   self:start()
   self.worker:cancel()

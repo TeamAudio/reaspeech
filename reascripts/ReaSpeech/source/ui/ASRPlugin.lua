@@ -71,13 +71,14 @@ function ASRPlugin:asr(jobs)
     },
     jobs = consolidated_jobs,
     stream_segments = true,
-    callback = self:handle_response(#consolidated_jobs)
   }
+  request.callback = self:handle_response(request)
 
   self.app:submit_request(request)
 end
 
-function ASRPlugin:handle_response(job_count)
+function ASRPlugin:handle_response(request)
+  local job_count = #request.jobs
   local transcript = Transcript.new {
     name = self.new_transcript_name(),
   }
@@ -116,7 +117,11 @@ function ASRPlugin:handle_response(job_count)
     if not response.partial then job_count = job_count - 1 end
 
     if not plugin and (added_segments or job_count == 0) then
-      plugin = TranscriptUI.new { transcript = transcript }
+      plugin = TranscriptUI.new {
+        transcript = transcript,
+        app = self.app,
+        transcription_request = request,
+      }
       self.app.plugins:add_plugin(plugin)
     end
   end
