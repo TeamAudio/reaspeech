@@ -90,7 +90,7 @@ function TranscriptUI:init()
     on_export = function()
       self._transcript_saved = true
       if self._close_after_export then
-        app.plugins:remove_plugin(self)
+        self:close()
       end
     end
   }
@@ -131,7 +131,7 @@ function TranscriptUI:tabs()
           return self:confirm_close()
         end,
         on_close = function()
-          app.plugins:remove_plugin(self)
+          self:close()
         end
       }
     )
@@ -153,28 +153,48 @@ function TranscriptUI:mark_transcript_changed()
   self._transcript_saved = false
 end
 
+function TranscriptUI:close()
+  if self.transcription_request then
+    self.app.worker:cancel(self.transcription_request)
+    self.transcription_request = nil
+  end
+  self._closed = true
+  self.app.plugins:remove_plugin(self)
+end
+
 function TranscriptUI:confirm_close()
-  if self._transcript_saved then
+  local transcribing = self.transcription_request
+    and self.app.worker:progress(self.transcription_request) ~= nil
+  if self._transcript_saved and not transcribing then
     return true
   end
 
-  self.confirmation_popup:show('Transcript not saved!', function()
-    ImGui.Text(Ctx(), "This transcript hasn't been saved/exported. Are you sure you want to close it?")
+  local title = self._transcript_saved and 'Close Transcript?' or 'Transcript not saved!'
+  self.confirmation_popup:show(title, function()
+    if not self._transcript_saved then
+      ImGui.Text(Ctx(), "This transcript hasn't been saved/exported. Are you sure you want to close it?")
+    end
+    if transcribing then
+      ImGui.Text(Ctx(), 'Closing this tab will stop the transcription.')
+    end
     ImGui.Separator(Ctx())
     if ImGui.Button(Ctx(), 'Cancel') then
       self.confirmation_popup:close()
     end
 
     ImGui.SameLine(Ctx())
-    if ImGui.Button(Ctx(), 'Close without Saving') then
+    local close_label = self._transcript_saved and 'Close' or 'Close without Saving'
+    if ImGui.Button(Ctx(), close_label) then
       self.confirmation_popup:close()
-      app.plugins:remove_plugin(self)
+      self:close()
     end
 
-    ImGui.SameLine(Ctx())
-    if ImGui.Button(Ctx(), 'Save') then
-      self.confirmation_popup:close()
-      self:handle_export(true)
+    if not self._transcript_saved then
+      ImGui.SameLine(Ctx())
+      if ImGui.Button(Ctx(), 'Save') then
+        self.confirmation_popup:close()
+        self:handle_export(true)
+      end
     end
   end)
 

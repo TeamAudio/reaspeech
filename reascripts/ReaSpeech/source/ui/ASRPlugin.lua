@@ -85,6 +85,7 @@ function ASRPlugin:handle_response(request)
   local plugin
 
   return function(response)
+    if plugin and plugin._closed then return end
     if not response[1] or not response[1].segments then
       return
     end
