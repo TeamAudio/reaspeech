@@ -3,7 +3,9 @@
 -- @author Tech Audio
 -- @link https://github.com/TeamAudio/reaspeech
 -- @changelog
---   Replaced the Docker/PyTorch/curl backend with ReaSpeech Lib.
+--   Streaming transcription results: preview transcript while processing
+--   Refreshed color scheme and transcript table layout
+--   Simplified transcription form
 
 -- ReaSpeech is licensed under the GNU General Public License v3.0,
 -- except where otherwise specified.
