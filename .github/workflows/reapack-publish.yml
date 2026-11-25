@@ -74,6 +74,42 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Retry a command with exponential backoff (15s, 30s, 60s, 120s), to
+          # ride out transient GitHub API/git errors. A command inside `until`
+          # runs without errexit, so functions passed here must return their
+          # own failures explicitly.
+          retry() {
+            local max=5 delay=15 n=1
+            until "$@"; do
+              if [ "$n" -ge "$max" ]; then
+                echo "::error::'$*' failed after ${max} attempts"
+                return 1
+              fi
+              echo "::warning::'$*' failed (attempt ${n}/${max}); retrying in ${delay}s"
+              sleep "$delay"
+              n=$((n + 1))
+              delay=$((delay * 2))
+            done
+          }
+
+          # Idempotent: GitHub can report an error after the PR was actually
+          # created, so adopt an existing open PR instead of opening a duplicate.
+          open_pr() {
+            local existing
+            existing="$(gh pr list --head "$BRANCH" --base main --state open --json url --jq '.[0].url // empty')" || return 1
+            if [ -n "$existing" ]; then
+              echo "PR already open: ${existing}"
+              return 0
+            fi
+            gh pr create \
+              --title "ReaPack: ReaSpeech ${TAG}" \
+              --body "Automated ReaPack publish for ${TAG}." \
+              --base main \
+              --head "$BRANCH" \
+              --label reapack \
+              --label reaspeech
+          }
+
           BRANCH="reapack/reaspeech/${TAG}-${GITHUB_RUN_ID}"
 
           pushd reapack-repo >/dev/null
@@ -97,17 +133,15 @@ jobs:
           SCAN_SHA="$(git rev-parse HEAD)"
           reapack-index --commit --scan "${SCAN_SHA}"
 
-          git push origin "$BRANCH"
+          # --force: the branch name is unique to this workflow run, so the only
+          # thing it can overwrite is an earlier attempt of this same run. That
+          # is what lets "Re-run failed jobs" succeed after a push went through
+          # but the PR step failed (the rebuilt commits have new SHAs).
+          retry git push --force origin "$BRANCH"
 
-          gh label create reapack --description "ReaPack publish" --color "0e8a16" --force
-          gh label create reaspeech --description "ReaSpeech" --color "1d76db" --force
+          retry gh label create reapack --description "ReaPack publish" --color "0e8a16" --force
+          retry gh label create reaspeech --description "ReaSpeech" --color "1d76db" --force
 
-          gh pr create \
-            --title "ReaPack: ReaSpeech ${TAG}" \
-            --body "Automated ReaPack publish for ${TAG}." \
-            --base main \
-            --head "$BRANCH" \
-            --label reapack \
-            --label reaspeech
+          retry open_pr
 
           popd >/dev/null
