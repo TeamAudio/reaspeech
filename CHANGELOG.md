@@ -1,6 +1,18 @@
 Changelog
 =========
 
+[1.1.0] (2026-11-25)
+--------------------
+
+### Added
+
+- Streaming transcription results: preview transcript while processing
+
+### Changed
+
+- Refreshed color scheme and transcript table layout
+- Simplified transcription form
+
 [1.0.0] (2026-10-31)
 --------------------
 
