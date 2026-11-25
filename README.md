@@ -9,7 +9,9 @@ builds a searchable, project-marker-based transcript while keeping REAPER
 responsive during recognition. Find that perfect take, jump to a spoken phrase,
 or give your scrubbing finger a well-earned break.
 
-![ReaSpeech screenshot](docs/assets/img/reaspeech-screenshot.png)
+![ReaSpeech transcription form with model, language, and processing options](docs/assets/img/reaspeech-transcription-form.png)
+
+![ReaSpeech transcript results with timestamps, text, and confidence scores](docs/assets/img/reaspeech-transcript-results.png)
 
 ## Requirements
 
