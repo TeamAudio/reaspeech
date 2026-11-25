@@ -29,6 +29,7 @@ function TranscriptExporter:init()
       | ImGui.WindowFlags_NoDocking()
   })
 
+  self.get_revision = self.get_revision or function() end
   self.on_export = self.on_export or function() end
 
   self.export_formats = TranscriptExporterFormats.new {
@@ -129,9 +130,12 @@ function TranscriptExporter:update_target_filename_ui()
 end
 
 function TranscriptExporter:show_success()
+  local exported_revision = self.get_revision()
   self.alert_popup.onclose = function ()
     self.alert_popup.onclose = nil
-    self.on_export()
+    if exported_revision == self.get_revision() then
+      self.on_export()
+    end
     self:close()
   end
 

@@ -154,9 +154,9 @@ end
 function ASRControls:render_actions()
   local worker = self.plugin.app.worker
 
-  local progress
+  local progress, status
   Trap(function ()
-    progress = worker:progress()
+    progress, status = worker:progress()
   end)
 
   Widgets.disable_if(progress, function()
@@ -169,18 +169,7 @@ function ASRControls:render_actions()
 
   if progress then
     ImGui.SameLine(Ctx())
-
-    if ImGui.Button(Ctx(), "Cancel") then
-      worker:cancel()
-    end
-
-    ImGui.SameLine(Ctx())
-    local overlay = string.format("%.0f%%", progress * 100)
-    local status = worker:status()
-    if status then
-      overlay = overlay .. ' - ' .. status
-    end
-    ImGui.ProgressBar(Ctx(), progress, nil, nil, overlay)
+    ReaSpeechWidget.render_transcription_progress(worker, progress, status)
   end
 end
 

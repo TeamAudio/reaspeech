@@ -28,6 +28,7 @@ require('ui/TranscriptEditor')
 require('ui/TranscriptExporter')
 require('ui/TranscriptImporter')
 require('ui/TranscriptUI')
+require('ui/Tween')
 require('ui/WhisperLanguages')
 require('ui/Widgets')
 require('ui/widgets/Button')
@@ -54,6 +55,24 @@ end
 function TestReaSpeechUI:testInit()
   lu.assertEquals(#self.app.requests, 0)
   lu.assertEquals(#self.app.responses, 0)
+end
+
+function TestReaSpeechUI:testExportDismissalUsesWrittenRevision()
+  local transcript_ui = TranscriptUI.new {
+    app = self.app,
+    transcript = Transcript.new { name = 'Streaming transcript' },
+  }
+  local exporter = transcript_ui.transcript_exporter
+  exporter:show_success()
+
+  transcript_ui:mark_transcript_changed()
+  exporter.alert_popup.onclose()
+  lu.assertFalse(transcript_ui._transcript_saved)
+  lu.assertFalse(transcript_ui:confirm_close())
+
+  exporter:show_success()
+  exporter.alert_popup.onclose()
+  lu.assertTrue(transcript_ui:confirm_close())
 end
 
 --

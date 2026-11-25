@@ -31,6 +31,8 @@ function Transcript:clear()
   self.filtered_data = {}
   self.data = {}
   self.search = ''
+  self.sort_column = nil
+  self.sort_ascending = nil
 end
 
 function Transcript:get_columns()
@@ -172,6 +174,13 @@ function Transcript:set_name(name)
 end
 
 function Transcript:sort(column, ascending)
+  self.sort_column = column
+  self.sort_ascending = ascending
+  if not column then
+    self.data = self.filtered_data
+    return
+  end
+
   self.data = {table.unpack(self.filtered_data)}
   table.sort(self.data, function (a, b)
     local a_val, b_val = a:get(column), b:get(column)
@@ -266,5 +275,5 @@ function Transcript:update()
     self.filtered_data = self.init_data
   end
 
-  self.data = self.filtered_data
+  self:sort(self.sort_column, self.sort_ascending)
 end

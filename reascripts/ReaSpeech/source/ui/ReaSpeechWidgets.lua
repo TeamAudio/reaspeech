@@ -51,3 +51,14 @@ function ReaSpeechWidget:set(value)
   self.state:set(value)
   if self.on_set then self:on_set() end
 end
+
+function ReaSpeechWidget.render_transcription_progress(worker, progress, status, request)
+  Widgets.disable_if(status == 'Cancelling', function()
+    if ImGui.Button(Ctx(), "Cancel") then worker:cancel(request) end
+  end)
+
+  ImGui.SameLine(Ctx())
+  local overlay = string.format("%.0f%%", progress * 100)
+  if status then overlay = overlay .. ' - ' .. status end
+  ImGui.ProgressBar(Ctx(), progress, nil, nil, overlay)
+end

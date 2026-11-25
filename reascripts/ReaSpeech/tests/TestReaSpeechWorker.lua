@@ -139,6 +139,42 @@ function TestReaSpeechWorker:testStartFailure()
   lu.assertNil(self.worker:progress())
 end
 
+function TestReaSpeechWorker:testStreamsNewSegmentsBeforeCompletion()
+  local job = { path = 'audio.wav' }
+  local callback = function() end
+  table.insert(self.worker.requests, {
+    jobs = { job },
+    callback = callback,
+    stream_segments = true,
+  })
+  self.worker:react()
+
+  self:event { type = 'segment', segment = { text = 'First' } }
+  self:event { type = 'segment', segment = { text = 'Second' } }
+  self.worker:react()
+
+  local partial = self.worker.responses[1]
+  lu.assertEquals(#self.worker.responses, 1)
+  lu.assertTrue(partial.partial)
+  lu.assertEquals(partial._job, job)
+  lu.assertEquals(partial.callback, callback)
+  lu.assertEquals(#partial[1].segments, 2)
+  lu.assertEquals(partial[1].segments[1].text, 'First')
+  lu.assertEquals(partial[1].segments[2].text, 'Second')
+  lu.assertNotNil(self.worker.active_job)
+
+  self:event { type = 'segment', segment = { text = 'Last' } }
+  self:event { type = 'completed' }
+  self.worker:react()
+
+  local completed = self.worker.responses[2]
+  lu.assertNil(completed.partial)
+  lu.assertEquals(#completed[1].segments, 1)
+  lu.assertEquals(completed[1].segments[1].text, 'Last')
+  lu.assertEquals(#partial[1].segments, 2)
+  lu.assertNil(self.worker.active_job)
+end
+
 function TestReaSpeechWorker:testTurboCannotTranslate()
   self:start { model_name = 'large-v3-turbo', task = 'translate' }
   lu.assertFalse(self.starts[1].options.translate)
@@ -180,6 +216,38 @@ function TestReaSpeechWorker:testCompletionRacingCancellation()
   lu.assertNil(self.worker.active_job)
   lu.assertNil(self.worker:progress())
   lu.assertEquals(self.worker.responses, {})
+end
+
+function TestReaSpeechWorker:testProgressAndCancellationAreScopedToRequest()
+  local first = { jobs = { { path = 'one.wav' }, { path = 'two.wav' }, { path = 'three.wav' } } }
+  local second = { jobs = { { path = 'other.wav' } } }
+  self.worker.requests = { first, second }
+  self.worker:react()
+
+  self:event { type = 'completed' }
+  self.worker:react()
+  self:event { type = 'progress', completed = 1, total = 2, message = 'Working' }
+  self.worker:react()
+
+  lu.assertEquals({ self.worker:progress(first) }, { 0.5, 'Working' })
+  lu.assertEquals({ self.worker:progress(second) }, { 0, 'Waiting' })
+
+  self.worker:cancel(first)
+  self.worker:cancel(first)
+  lu.assertEquals(self.cancels, { 'job-2' })
+  lu.assertEquals({ self.worker:progress(first) }, { 0.5, 'Cancelling' })
+
+  self:event { type = 'cancelled' }
+  self.worker:react()
+  lu.assertNil(self.worker:progress(first))
+  lu.assertEquals({ self.worker:progress(second) }, { 0, 'Starting' })
+  lu.assertEquals(self.starts[3].path, 'other.wav')
+
+  self.worker:cancel(first)
+  lu.assertEquals(self.cancels, { 'job-2' })
+  self:event { type = 'completed' }
+  self.worker:react()
+  lu.assertNil(self.worker:progress(second))
 end
 
 function TestReaSpeechWorker:testNewRequestWaitsForCancellation()
